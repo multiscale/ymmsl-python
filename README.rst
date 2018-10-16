@@ -1,5 +1,5 @@
-.. image:: https://api.travis-ci.org/MD-Studio/cerulean.svg?branch=develop
-    :target: https://travis-ci.org/MD-Studio/cerulean
+.. image:: https://api.travis-ci.org/multiscale/ymmsl-python.svg?branch=develop
+    :target: https://travis-ci.org/multiscale/ymmsl-python
     :alt: Build Status
 
 ################################################################################
