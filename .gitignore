@@ -7,6 +7,7 @@ build
 dist
 .cache
 __pycache__
+.mypy_cache
 
 htmlcov
 .coverage
@@ -20,3 +21,4 @@ docs/apidocs
 .idea
 .eclipse
 .vscode
+*.swp

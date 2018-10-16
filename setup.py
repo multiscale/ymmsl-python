@@ -34,7 +34,9 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     test_suite='tests',
-    install_requires=[],  # FIXME: add your package's dependencies to this list
+    install_requires=[
+        'yatiml>=0.2.0'
+    ],
     setup_requires=[
         # dependency for `python setup.py test`
         'pytest-runner',
@@ -44,8 +46,10 @@ setup(
         'sphinx_rtd_theme'
     ],
     tests_require=[
+        'yatiml>=0.2.0',
         'pytest',
         'pytest-cov',
+        'pytest-mypy',
         'pycodestyle',
     ],
     extras_require={
