@@ -84,7 +84,7 @@ todo_include_todos = False
 def run_apidoc(_):
     here = os.path.dirname(__file__)
     out = os.path.abspath(os.path.join(here, 'apidocs'))
-    src = os.path.abspath(os.path.join(here, '..', 'ymmsl-python'))
+    src = os.path.abspath(os.path.join(here, '..', 'ymmsl'))
 
     ignore_paths = []
 
@@ -146,7 +146,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'ymmsl-python_doc'
+htmlhelp_basename = 'ymmsl_doc'
 
 
 # -- Options for LaTeX output ---------------------------------------------

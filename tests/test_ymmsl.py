@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Tests for the ymmsl-python module.
+"""Tests for the ymmsl module.
 """
 import pytest
 
-from ymmsl-python import ymmsl-python
+from ymmsl import ymmsl
 
 
 def test_something():
@@ -24,5 +24,5 @@ def an_object():
     return {}
 
 
-def test_ymmsl-python(an_object):
+def test_ymmsl(an_object):
     assert an_object == {}

@@ -17,7 +17,7 @@ API Reference
 .. toctree::
   :maxdepth: 2
 
-  ymmsl-python <apidocs/ymmsl-python.rst>
+  ymmsl <apidocs/ymmsl.rst>
 
 
 Indices and tables

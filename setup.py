@@ -7,7 +7,7 @@ with open('README.rst') as readme_file:
     readme = readme_file.read()
 
 setup(
-    name='ymmsl-python',
+    name='ymmsl',
     version='0.0.0.dev0',
     description="Python bindings for the YAML version of the Multiscale Modeling and Simulation Language",
     long_description=readme + '\n\n',
@@ -15,14 +15,14 @@ setup(
     author_email='l.veen@esciencecenter.nl',
     url='https://github.com/multiscale/ymmsl-python',
     packages=[
-        'ymmsl-python',
+        'ymmsl',
     ],
-    package_dir={'ymmsl-python':
-                 'ymmsl-python'},
+    package_dir={'ymmsl':
+                 'ymmsl'},
     include_package_data=True,
     license="Apache Software License 2.0",
     zip_safe=False,
-    keywords='ymmsl-python',
+    keywords='yMMSL multiscale modeling simulation YAML',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
