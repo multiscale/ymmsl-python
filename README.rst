@@ -1,3 +1,7 @@
+.. image:: https://readthedocs.org/projects/ymmsl-python/badge/?version=latest
+    :target: https://ymmsl-python.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Build Status
+
 .. image:: https://api.travis-ci.org/multiscale/ymmsl-python.svg?branch=develop
     :target: https://travis-ci.org/multiscale/ymmsl-python
     :alt: Build Status
