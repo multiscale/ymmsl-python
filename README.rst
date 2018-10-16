@@ -2,6 +2,10 @@
     :target: https://travis-ci.org/multiscale/ymmsl-python
     :alt: Build Status
 
+.. image:: https://requires.io/github/multiscale/ymmsl-python/requirements.svg?branch=develop
+    :target: https://requires.io/github/multiscale/ymmsl-python/requirements/?branch=develop
+    :alt: Requirements Status
+
 ################################################################################
 yMMSL Python bindings
 ################################################################################
