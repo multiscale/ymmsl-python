@@ -1,9 +1,9 @@
+"""This module contains all the definitions for yMMSL."""
 import re
 from collections import UserString
 from typing import Any, Dict, List, Union
 
 import yatiml
-"""This module contains all the definitions for yMMSL."""
 
 
 class Identifier(UserString):

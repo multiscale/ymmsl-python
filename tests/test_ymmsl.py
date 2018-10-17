@@ -1,13 +1,12 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+"""Tests for the ymmsl module.
+"""
 
 from typing import Dict, List, Union
 
 from ymmsl import ymmsl
 
 import pytest
-"""Tests for the ymmsl module.
-"""
 
 
 def test_identifier() -> None:
@@ -84,7 +83,9 @@ def test_experiment() -> None:
     ]
     experiment = ymmsl.Experiment(model, [x, y, t], parameter_values)
     assert str(experiment.model) == 'isr2d'
-    assert experiment.scale_values[0].scale.parts == ['submodel', 'muscle', 'x']
+    assert experiment.scale_values[0].scale.parts == [
+        'submodel', 'muscle', 'x'
+    ]
     assert experiment.scale_values[1].extent == 3.0
     assert experiment.scale_values[2].grain == 0.001
     assert experiment.parameter_values[0].parameter.parts == ['bf', 'velocity']
