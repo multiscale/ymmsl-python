@@ -6,6 +6,14 @@
     :target: https://travis-ci.org/multiscale/ymmsl-python
     :alt: Build Status
 
+.. image:: https://api.codacy.com/project/badge/Grade/77d0caaf9c44473caf02670df04f02b2
+    :target: https://www.codacy.com/app/LourensVeen/ymmsl-python
+    :alt: Codacy Grade
+
+.. image:: https://api.codacy.com/project/badge/Coverage/77d0caaf9c44473caf02670df04f02b2
+    :target: https://www.codacy.com/app/LourensVeen/ymmsl-python
+    :alt: Code Coverage
+
 .. image:: https://requires.io/github/multiscale/ymmsl-python/requirements.svg?branch=develop
     :target: https://requires.io/github/multiscale/ymmsl-python/requirements/?branch=develop
     :alt: Requirements Status
