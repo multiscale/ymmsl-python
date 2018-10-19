@@ -137,6 +137,23 @@ def test_scale_value() -> None:
     assert scale.extent == 3.0
 
 
+def test_setting() -> None:
+    setting = ymmsl.Setting(ymmsl.Reference('submodel.test'), 12)
+    assert str(setting.parameter) == 'submodel.test'
+    assert isinstance(setting.value, int)
+    assert setting.value == 12
+
+    setting = ymmsl.Setting(ymmsl.Reference('par1'), 'test')
+    assert str(setting.parameter) == 'par1'
+    assert isinstance(setting.value, str)
+    assert setting.value == 'test'
+
+    setting = ymmsl.Setting(ymmsl.Reference('submodel.par1[3]'), 3.14159)
+    assert str(setting.parameter) == 'submodel.par1[3]'
+    assert isinstance(setting.value, float)
+    assert setting.value == 3.14159
+
+
 def test_experiment() -> None:
     model = ymmsl.Reference('isr2d')
     x = ymmsl.ScaleValues(ymmsl.Reference('submodel.muscle.x'), 0.01, 10.0)
