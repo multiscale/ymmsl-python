@@ -138,6 +138,9 @@ class ScaleValues:
         self.extent = extent
 
 
+ParameterValue = Union[str, int, float, List[float], List[List[float]]]
+
+
 class Setting:
     """Settings for arbitrary parameters.
 
@@ -146,8 +149,7 @@ class Setting:
         value: The value to set it to.
     """
 
-    def __init__(self, parameter: Reference,
-                 value: Union[str, int, float]) -> None:
+    def __init__(self, parameter: Reference, value: ParameterValue) -> None:
         # TODO: Expression, (nested) lists
         self.parameter = parameter
         self.value = value

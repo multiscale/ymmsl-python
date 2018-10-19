@@ -153,6 +153,19 @@ def test_setting() -> None:
     assert isinstance(setting.value, float)
     assert setting.value == 3.14159
 
+    setting = ymmsl.Setting(ymmsl.Reference('submodel.par1'), [1.0, 2.0, 3.0])
+    assert str(setting.parameter) == 'submodel.par1'
+    assert isinstance(setting.value, list)
+    assert len(setting.value) == 3
+    assert setting.value == [1.0, 2.0, 3.0]
+
+    setting = ymmsl.Setting(ymmsl.Reference('submodel.par1'), [[1.0, 2.0], [3.0, 4.0]])
+    assert str(setting.parameter) == 'submodel.par1'
+    assert isinstance(setting.value, list)
+    assert len(setting.value) == 2
+    assert setting.value[0] == [1.0, 2.0]
+    assert setting.value[1] == [3.0, 4.0]
+
 
 def test_experiment() -> None:
     model = ymmsl.Reference('isr2d')
