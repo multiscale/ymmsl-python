@@ -63,6 +63,71 @@ def test_compute_element_identifier() -> None:
     with pytest.raises(ValueError):
         ymmsl.ComputeElementIdentifier('[4]test')
 
+    with pytest.raises(ValueError):
+        ymmsl.ComputeElementIdentifier('test[x]')
+
+
+def test_reference() -> None:
+    test_ref = ymmsl.Reference('_testing')
+    assert str(test_ref) == '_testing'
+    assert len(test_ref.parts) == 1
+    assert isinstance(test_ref.parts[0], ymmsl.Identifier)
+    assert str(test_ref.parts[0]) == '_testing'
+
+    with pytest.raises(ValueError):
+        ymmsl.Reference('1test')
+
+    test_ref = ymmsl.Reference('test.testing')
+    assert str(test_ref) == 'test.testing'
+    assert len(test_ref.parts) == 2
+    assert isinstance(test_ref.parts[0], ymmsl.Identifier)
+    assert str(test_ref.parts[0]) == 'test'
+    assert isinstance(test_ref.parts[1], ymmsl.Identifier)
+    assert str(test_ref.parts[1]) == 'testing'
+
+    test_ref = ymmsl.Reference('test[12]')
+    assert str(test_ref) == 'test[12]'
+    assert len(test_ref.parts) == 2
+    assert isinstance(test_ref.parts[0], ymmsl.Identifier)
+    assert str(test_ref.parts[0]) == 'test'
+    assert isinstance(test_ref.parts[1], int)
+    assert test_ref.parts[1] == 12
+
+    test_ref = ymmsl.Reference('test[12].testing.ok.index[3][5]')
+    assert str(test_ref) == 'test[12].testing.ok.index[3][5]'
+    assert len(test_ref.parts) == 7
+    assert isinstance(test_ref.parts[0], ymmsl.Identifier)
+    assert str(test_ref.parts[0]) == 'test'
+    assert isinstance(test_ref.parts[1], int)
+    assert test_ref.parts[1] == 12
+    assert isinstance(test_ref.parts[2], ymmsl.Identifier)
+    assert str(test_ref.parts[2]) == 'testing'
+    assert isinstance(test_ref.parts[3], ymmsl.Identifier)
+    assert str(test_ref.parts[3]) == 'ok'
+    assert isinstance(test_ref.parts[4], ymmsl.Identifier)
+    assert str(test_ref.parts[4]) == 'index'
+    assert isinstance(test_ref.parts[5], int)
+    assert test_ref.parts[5] == 3
+    assert isinstance(test_ref.parts[6], int)
+    assert test_ref.parts[6] == 5
+
+    with pytest.raises(ValueError):
+        ymmsl.Reference('ua",.u8[')
+
+    with pytest.raises(ValueError):
+        ymmsl.Reference('test[4')
+
+    with pytest.raises(ValueError):
+        ymmsl.Reference('test4]')
+
+    with pytest.raises(ValueError):
+        ymmsl.Reference('test[_t]')
+
+    with pytest.raises(ValueError):
+        ymmsl.Reference('testing_{3}')
+
+    with pytest.raises(ValueError):
+        ymmsl.Reference('test.(x)')
 
 def test_scale_value() -> None:
     reference = ymmsl.Reference('submodel.muscle.x')
