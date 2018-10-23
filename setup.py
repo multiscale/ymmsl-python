@@ -49,7 +49,7 @@ setup(
     tests_require=[
         'ruamel.yaml<=0.15.64',
         'yatiml>=0.3.0',
-        'pytest',
+        'pytest>=3.3',
         'pytest-cov',
         'pytest-mypy',
         'pycodestyle',
