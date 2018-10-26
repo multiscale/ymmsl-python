@@ -312,11 +312,13 @@ class Simulation:
 
     @classmethod
     def yatiml_savorize(cls, node: yatiml.Node) -> None:
-        node.map_attribute_to_seq('compute_elements', 'name')
+        node.map_attribute_to_seq('compute_elements', 'name', 'implementation')
+        node.map_attribute_to_seq('conduits', 'sender', 'receiver')
 
     @classmethod
     def yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        node.seq_attribute_to_map('compute_elements', 'name')
+        node.seq_attribute_to_map('compute_elements', 'name', 'implementation')
+        node.seq_attribute_to_map('conduits', 'sender', 'receiver')
 
 
 class ScaleSettings:
@@ -370,10 +372,27 @@ class Experiment:
     """
 
     def __init__(self, model: Reference, scales: List[ScaleSettings],
-                 parameter_values: List[Setting]) -> None:
+                 parameter_values: Optional[List[Setting]] = None) -> None:
         self.model = model
         self.scales = scales
-        self.parameter_values = parameter_values
+        self.parameter_values = parameter_values if parameter_values else list()
+
+    @classmethod
+    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        pass
+
+    @classmethod
+    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+        node.map_attribute_to_seq('scales', 'scale')
+        node.map_attribute_to_seq('parameter_values', 'parameter', 'value')
+
+    @classmethod
+    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        node.seq_attribute_to_map('scales', 'scale')
+        if len(node.get_attribute('parameter_values').seq_items()) == 0:
+            node.remove_attribute('parameter_values')
+        else:
+            node.seq_attribute_to_map('parameter_values', 'parameter', 'value')
 
 
 class Ymmsl:
