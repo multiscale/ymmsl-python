@@ -225,7 +225,7 @@ def test_ymmsl() -> None:
     model = Reference.from_string('isr2d')
     parameter_values = []  # type: List[Setting]
     experiment = Experiment(model, [], parameter_values)
-    doc = Ymmsl(experiment)
+    doc = Ymmsl('v0.1', experiment)
     assert isinstance(doc.experiment.model, Reference)
     assert str(doc.experiment.model) == 'isr2d'
     assert doc.experiment.model.parts[0] == 'isr2d'
@@ -234,10 +234,11 @@ def test_ymmsl() -> None:
 
 
 def test_loader(caplog: Any) -> None:
-    #yatiml.logger.setLevel(logging.DEBUG)
-    #caplog.set_level(logging.DEBUG)
+    yatiml.logger.setLevel(logging.DEBUG)
+    caplog.set_level(logging.DEBUG)
 
-    text = ('experiment:\n'
+    text = ('version: v0.1\n'
+            'experiment:\n'
             '  model: test_model\n'
             '  scales:\n'
             '  - scale: domain1.x\n'
@@ -253,6 +254,30 @@ def test_loader(caplog: Any) -> None:
             '    value: 13\n'
             '  - parameter: test_list\n'
             '    value: [12.3, 1.3]\n'
+            'simulation:\n'
+            '  name: test_model\n'
+            '  compute_elements:\n'
+            '    ic:\n'
+            '      implementation: isr2d.initial_conditions\n'
+            '    smc:\n'
+            '      implementation: isr2d.smc\n'
+            '    bf:\n'
+            '      implementation: isr2d.blood_flow\n'
+            '    smc2bf:\n'
+            '      implementation: isr2d.smc2bf\n'
+            '    bf2smc:\n'
+            '      implementation: isr2d.bf2smc\n'
+            '  conduits:\n'
+            '  - sender: ic.out\n'
+            '    receiver: smc.initial_state\n'
+            '  - sender: smc.cell_positions\n'
+            '    receiver: smc2bf.in\n'
+            '  - sender: smc2bf.out\n'
+            '    receiver: bf.initial_domain\n'
+            '  - sender: bf.wss_out\n'
+            '    receiver: bf2smc.in\n'
+            '  - sender: bf2smc.out\n'
+            '    receiver: smc.wss_in\n'
             )
     document = yaml.load(text, Loader=ymmsl.loader)
     experiment = document.experiment
@@ -273,9 +298,10 @@ def test_dumper() -> None:
     submodel1_t = ScaleSettings(Reference.from_string('submodel1.t'), 0.001, 100.0)
     scales = [domain1_x, submodel1_t]
     experiment = Experiment(Reference.from_string('test_model'), scales, [])
-    document = Ymmsl(experiment)
+    document = Ymmsl('v0.1', experiment)
     text = yaml.dump(document, Dumper=ymmsl.dumper)
-    assert text == ('experiment:\n'
+    assert text == ('version: v0.1\n'
+                    'experiment:\n'
                     '  model: test_model\n'
                     '  scales:\n'
                     '  - scale: domain1.x\n'

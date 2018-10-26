@@ -1,7 +1,8 @@
 """This module contains all the definitions for yMMSL."""
+import logging
 import re
 from collections import OrderedDict, UserString
-from typing import Any, cast, Dict, List, Union
+from typing import Any, cast, Dict, List, Optional, Union
 
 import yatiml
 from ruamel import yaml
@@ -16,6 +17,7 @@ class Identifier(UserString):
 
     def __init__(self, seq: Any) -> None:
         super().__init__(seq)
+        logging.debug('Identifier from {}'.format(seq))
         if not re.fullmatch(
                 '[a-zA-Z_]\w*', self.data, flags=re.ASCII):  # type: ignore
             raise ValueError('Identifiers must consist only of'
@@ -304,6 +306,18 @@ class Simulation:
         self.compute_elements = compute_elements
         self.conduits = conduits
 
+    @classmethod
+    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        pass
+
+    @classmethod
+    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+        node.map_attribute_to_seq('compute_elements', 'name')
+
+    @classmethod
+    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        node.seq_attribute_to_map('compute_elements', 'name')
+
 
 class ScaleSettings:
     """Settings for a spatial or temporal scale.
@@ -371,5 +385,14 @@ class Ymmsl:
         experiment: An experiment to run.
     """
 
-    def __init__(self, experiment: Experiment) -> None:
+    def __init__(self, version: str, experiment: Experiment, simulation: Optional[Simulation] = None) -> None:
+        self.version = version
         self.experiment = experiment
+        self.simulation = simulation
+
+    @classmethod
+    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        if node.get_attribute('experiment').is_scalar(type(None)):
+            node.remove_attribute('experiment')
+        if node.get_attribute('simulation').is_scalar(type(None)):
+            node.remove_attribute('simulation')
