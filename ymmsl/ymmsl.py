@@ -385,7 +385,11 @@ class Ymmsl:
         experiment: An experiment to run.
     """
 
-    def __init__(self, version: str, experiment: Experiment, simulation: Optional[Simulation] = None) -> None:
+    def __init__(self,
+            version: str,
+            experiment: Optional[Experiment] = None,
+            simulation: Optional[Simulation] = None
+            ) -> None:
         self.version = version
         self.experiment = experiment
         self.simulation = simulation

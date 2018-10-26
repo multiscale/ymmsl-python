@@ -226,6 +226,7 @@ def test_ymmsl() -> None:
     parameter_values = []  # type: List[Setting]
     experiment = Experiment(model, [], parameter_values)
     doc = Ymmsl('v0.1', experiment)
+    assert isinstance(doc.experiment, Experiment)
     assert isinstance(doc.experiment.model, Reference)
     assert str(doc.experiment.model) == 'isr2d'
     assert doc.experiment.model.parts[0] == 'isr2d'
