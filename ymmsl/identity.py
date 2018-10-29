@@ -61,6 +61,9 @@ class Reference:
     def __str__(self) -> str:
         return self.__parts_to_string(self.parts)
 
+    def __len__(self) -> int:
+        return len(self.parts)
+
     def __getitem__(self, key: Union[int, slice]) -> 'Reference':
         if isinstance(key, int):
             return Reference([self.parts[key]])
@@ -96,19 +99,15 @@ class Reference:
         node.make_mapping()
         node.set_attribute('parts', ynode)
 
-    def yatiml_attributes(self) -> OrderedDict:
-        return OrderedDict([('parts', self.parts)])
-
     @classmethod
     def yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        parts_nodes = node.get_attribute('parts').seq_items()
-        parts_list = list(map(yatiml.Node.get_value, parts_nodes))
-        text = str(parts_list[0])
-        for part in parts_list[1:]:
-            if isinstance(part, str):
-                text += '.{}'.format(part)
-            elif isinstance(part, int):
-                text += '[{}]'.format(part)
+        parts = node.get_attribute('parts').seq_items()
+        text = str(parts[0].get_value())
+        for part in parts[1:]:
+            if part.is_scalar(str):
+                text += '.{}'.format(part.get_value())
+            elif part.is_scalar(int):
+                text += '[{}]'.format(part.get_value())
             else:
                 raise RuntimeError('Cannot serialise invalid reference')
         node.set_value(text)

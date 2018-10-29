@@ -5,6 +5,8 @@
 from ymmsl import Identifier, Reference
 
 import pytest
+import yatiml
+from ruamel import yaml
 
 
 def test_identifier() -> None:
@@ -83,6 +85,22 @@ def test_reference() -> None:
     assert test_ref.parts[6] == 5
     assert str(test_ref) == 'test[12].testing.ok.index[3][5]'
 
+    assert len(test_ref) == 7
+    assert str(test_ref[0]) == 'test'
+    with pytest.raises(ValueError):
+        test_ref[1]
+    assert str(test_ref[3]) == 'ok'
+    assert str(test_ref[:3]) == 'test[12].testing'
+    assert str(test_ref[2:]) == 'testing.ok.index[3][5]'
+    with pytest.raises(ValueError):
+        test_ref[1:]
+
+    with pytest.raises(ValueError):
+        Reference([4])
+
+    with pytest.raises(ValueError):
+        Reference([3, Identifier('test')])
+
     with pytest.raises(ValueError):
         Reference.from_string('ua",.u8[')
 
@@ -100,3 +118,31 @@ def test_reference() -> None:
 
     with pytest.raises(ValueError):
         Reference.from_string('test.(x)')
+
+    with pytest.raises(ValueError):
+        Reference.from_string('[3]test')
+
+    with pytest.raises(ValueError):
+        Reference.from_string('[4].test')
+
+
+def test_reference_io() -> None:
+    class Loader(yatiml.Loader):
+        pass
+
+    yatiml.add_to_loader(Loader, [Identifier, Reference])
+    yatiml.set_document_type(Loader, Reference)
+
+    text = 'test[12]'
+    doc = yaml.load(text, Loader=Loader)
+    assert str(doc.parts[0]) == 'test'
+    assert doc.parts[1] == 12
+
+    class Dumper(yatiml.Dumper):
+        pass
+
+    yatiml.add_to_dumper(Dumper, [Identifier, Reference])
+
+    doc = Reference.from_string('test[12].testing.ok.index[3][5]')
+    text = yaml.dump(doc, Dumper=Dumper)
+    assert text == 'test[12].testing.ok.index[3][5]\n...\n'
