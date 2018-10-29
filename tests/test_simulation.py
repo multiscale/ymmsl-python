@@ -5,6 +5,8 @@
 from ymmsl import ComputeElementDecl, Conduit, Identifier, Reference, Simulation
 
 import pytest
+import yatiml
+from ruamel import yaml
 
 
 def test_compute_element_declaration() -> None:
@@ -44,6 +46,10 @@ def test_conduit() -> None:
 
     test_conduit2 = Conduit(Reference.from_string('x.y[1]'), test_ref)
     assert test_conduit2.sender.parts[2] == 1
+    assert str(test_conduit2.sending_compute_element()) == 'x'
+    assert str(test_conduit2.sending_port()) == 'y[1]'
+    assert str(test_conduit2.receiving_compute_element()) == 'submodel1'
+    assert str(test_conduit2.receiving_port()) == 'port1'
 
     test_conduit3 = Conduit(Reference.from_string('x[1].y'), test_ref)
     assert test_conduit3.sender.parts[1] == 1
@@ -74,3 +80,73 @@ def test_simulation() -> None:
     assert str(sim.name) == 'test_sim'
     assert sim.compute_elements == comp_els
     assert sim.conduits == conduits
+
+
+def test_load_simulation() -> None:
+    class Loader(yatiml.Loader):
+        pass
+
+    yatiml.add_to_loader(Loader, [ComputeElementDecl, Conduit, Identifier,
+                                  Reference, Simulation])
+    yatiml.set_document_type(Loader, Simulation)
+
+    text = ('name: test_model\n'
+            'compute_elements:\n'
+            '  ic: isr2d.initial_conditions\n'
+            '  smc: isr2d.smc\n'
+            '  bf: isr2d.blood_flow\n'
+            '  smc2bf: isr2d.smc2bf\n'
+            '  bf2smc: isr2d.bf2smc\n'
+            'conduits:\n'
+            '  ic.out: smc.initial_state\n'
+            '  smc.cell_positions: smc2bf.in\n'
+            '  smc2bf.out: bf.initial_domain\n'
+            '  bf.wss_out: bf2smc.in\n'
+            '  bf2smc.out: smc.wss_in\n'
+            )
+    simulation = yaml.load(text, Loader=Loader)
+    assert str(simulation.name) == 'test_model'
+    assert len(simulation.compute_elements) == 5
+    assert str(simulation.compute_elements[2].implementation) == 'isr2d.blood_flow'
+    assert str(simulation.compute_elements[4].name) == 'bf2smc'
+
+    assert len(simulation.conduits) == 5
+    assert str(simulation.conduits[0].sending_compute_element()) == 'ic'
+    assert str(simulation.conduits[0].sending_port()) == 'out'
+    assert str(simulation.conduits[3].receiving_compute_element()) == 'bf2smc'
+    assert str(simulation.conduits[3].receiving_port()) == 'in'
+
+
+def test_dump_simulation() -> None:
+    class Dumper(yatiml.Dumper):
+        pass
+
+    yatiml.add_to_dumper(Dumper, [ComputeElementDecl, Conduit, Identifier,
+                                  Reference, Simulation])
+
+    impl1 = Reference.from_string('test.impl1')
+    impl2 = Reference.from_string('test.impl2')
+    ce1 = ComputeElementDecl(Identifier('ce1'), impl1)
+    ce2 = ComputeElementDecl(Identifier('ce2'), impl2)
+    ce1_out = Reference.from_string('ce1.state_out')
+    ce2_in = Reference.from_string('ce2.init_in')
+    ce2_out = Reference.from_string('ce2.fini_out')
+    ce1_in = Reference.from_string('ce1.boundary_in')
+    cd1 = Conduit(ce1_out, ce2_in)
+    cd2 = Conduit(ce2_out, ce1_in)
+    simulation = Simulation(Identifier('test_sim'), [ce1, ce2], [cd1, cd2])
+
+    text = yaml.dump(simulation, Dumper=Dumper)
+    print(text)
+    assert text == ('name: test_sim\n'
+                    'compute_elements:\n'
+                    '  ce1:\n'
+                    '    implementation: test.impl1\n'
+                    '    count: 1\n'
+                    '  ce2:\n'
+                    '    implementation: test.impl2\n'
+                    '    count: 1\n'
+                    'conduits:\n'
+                    '  ce1.state_out: ce2.init_in\n'
+                    '  ce2.fini_out: ce1.boundary_in\n'
+                    )
