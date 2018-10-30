@@ -107,6 +107,16 @@ def run_apidoc(_):
         argv.insert(0, apidoc.__file__)
         apidoc.main(argv)
 
+    index_file = os.path.join(out, 'ymmsl.rst')
+    with open(index_file, 'r') as f:
+        lines = f.readlines()
+
+    with open(index_file, 'w') as f:
+        for line in lines:
+            if line.startswith('Submodules'):
+                break
+            f.write(line)
+
 
 def setup(app):
     app.connect('builder-inited', run_apidoc)

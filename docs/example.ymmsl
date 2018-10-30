@@ -1,0 +1,27 @@
+version: v0.1
+
+simulation:
+name: macro_micro_model
+compute_elements:
+  macro: my.macro_model
+  micro: my.micro_model
+conduits:
+  macro.state_out: micro.init_in
+  micro.final_out: macro.update_in
+
+experiment:
+model: macro_micro_model
+scales:
+  domain.x:
+    grain: 0.01
+    extent: 1.0
+  macro.t:
+    grain: 10.0
+    extent: 1000.0
+  micro.t:
+    grain: 0.01
+    extent: 1.0
+parameter_values:
+  k: 1.0
+  micro.d: 2.3
+  interpolation_method: linear
