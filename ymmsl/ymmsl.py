@@ -7,7 +7,7 @@ from ymmsl.experiment import Experiment
 from ymmsl.simulation import Simulation
 
 
-class Ymmsl:
+class YmmslDocument:
     """A yMMSL document.
 
     This is the top-level class for yMMSL data.

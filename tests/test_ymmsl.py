@@ -5,7 +5,7 @@
 import logging
 from typing import Any, List
 
-from ymmsl import Experiment, Reference, ScaleSettings, Setting, Ymmsl
+from ymmsl import Experiment, Reference, ScaleSettings, Setting, YmmslDocument
 
 import pytest
 import yatiml
@@ -17,7 +17,7 @@ def test_ymmsl() -> None:
     model = Reference.from_string('isr2d')
     parameter_values = []  # type: List[Setting]
     experiment = Experiment(model, [], parameter_values)
-    doc = Ymmsl('v0.1', experiment)
+    doc = YmmslDocument('v0.1', experiment)
     assert isinstance(doc.experiment, Experiment)
     assert isinstance(doc.experiment.model, Reference)
     assert str(doc.experiment.model) == 'isr2d'
@@ -94,7 +94,7 @@ def test_dumper() -> None:
     submodel1_t = ScaleSettings(Reference.from_string('submodel1.t'), 0.001, 100.0)
     scales = [domain1_x, submodel1_t]
     experiment = Experiment(Reference.from_string('test_model'), scales, [])
-    document = Ymmsl('v0.1', experiment)
+    document = YmmslDocument('v0.1', experiment)
     text = yaml.dump(document, Dumper=ymmsl.dumper)
     assert text == ('version: v0.1\n'
                     'experiment:\n'

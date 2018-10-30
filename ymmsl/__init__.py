@@ -1,4 +1,8 @@
-"""yMMSL Python bindings"""
+"""Python bindings for yMMSL
+
+This package contains all the classes needed to represent a yMMSL file,
+as well as to read and write yMMSL files.
+"""
 
 __version__ = '0.0.0.dev0'
 
@@ -12,7 +16,7 @@ from typing import Type
 from ymmsl.experiment import ScaleSettings, Setting, Experiment
 from ymmsl.identity import Identifier, Reference
 from ymmsl.simulation import ComputeElementDecl, Conduit, Simulation
-from ymmsl.ymmsl import Ymmsl
+from ymmsl.ymmsl import YmmslDocument
 
 
 def _loader() -> Type:
@@ -20,8 +24,9 @@ def _loader() -> Type:
         pass
     yatiml.add_to_loader(YmmslLoader,
                          [ComputeElementDecl, Conduit, Experiment, Identifier,
-                          Reference, ScaleSettings, Setting, Simulation, Ymmsl])
-    yatiml.set_document_type(YmmslLoader, Ymmsl)
+                          Reference, ScaleSettings, Setting, Simulation,
+                          YmmslDocument])
+    yatiml.set_document_type(YmmslLoader, YmmslDocument)
     return YmmslLoader
 
 
@@ -30,12 +35,23 @@ def _dumper() -> Type:
         pass
     yatiml.add_to_dumper(YmmslDumper,
                          [ComputeElementDecl, Conduit, Experiment, Identifier,
-                          Reference, ScaleSettings, Setting, Simulation, Ymmsl])
+                          Reference, ScaleSettings, Setting, Simulation,
+                          YmmslDocument])
     return YmmslDumper
 
 
 loader = _loader()
+"""A loader class for yMMSL, for use with yaml.load.
+
+Usage:
+    doc = yaml.load(text, Loader=ymmsl.loader)
+"""
 dumper = _dumper()
+"""A dumper class for yMMSL, for use with yaml.dump.
+
+Usage:
+    text = yaml.dump(doc, Dumper=ymmsl.dumper)
+"""
 
 
 __all__ = ['ComputeElementDecl', 'Conduit', 'Experiment', 'Identifier',
