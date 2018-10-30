@@ -55,5 +55,5 @@ Usage:
 
 
 __all__ = ['ComputeElementDecl', 'Conduit', 'Experiment', 'Identifier',
-           'Reference', 'ScaleSettings', 'Setting', 'Simulation', 'Ymmsl',
-           'loader', 'dumper']
+           'Reference', 'ScaleSettings', 'Setting', 'Simulation',
+           'YmmslDocument', 'loader', 'dumper']
