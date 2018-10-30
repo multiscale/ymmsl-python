@@ -1,4 +1,5 @@
 """This module contains all the definitions for yMMSL."""
+import logging
 from typing import List, Optional, Union
 
 import yatiml
@@ -20,6 +21,11 @@ class ScaleSettings:
         self.grain = grain
         self.extent = extent
         self.origin = origin
+
+    @classmethod
+    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        if float(str(node.get_attribute('origin').get_value())) == 0.0:
+            node.remove_attribute('origin')
 
 
 ParameterValue = Union[str, int, float, List[float], List[List[float]]]

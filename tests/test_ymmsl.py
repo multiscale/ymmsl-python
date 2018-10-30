@@ -87,9 +87,7 @@ def test_dumper() -> None:
                     '    domain1.x:\n'
                     '      grain: 0.01\n'
                     '      extent: 1.5\n'
-                    '      origin: 0.0\n'
                     '    submodel1.t:\n'
                     '      grain: 0.001\n'
                     '      extent: 100.0\n'
-                    '      origin: 0.0\n'
                     )
