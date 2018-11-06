@@ -13,7 +13,7 @@ __email__ = 'l.veen@esciencecenter.nl'
 import yatiml
 from typing import Type
 
-from ymmsl.experiment import ScaleSettings, Setting, Experiment
+from ymmsl.experiment import Setting, Experiment
 from ymmsl.identity import Identifier, Reference
 from ymmsl.simulation import ComputeElementDecl, Conduit, Simulation
 from ymmsl.ymmsl import YmmslDocument
@@ -24,7 +24,7 @@ def _loader() -> Type:
         pass
     yatiml.add_to_loader(YmmslLoader,
                          [ComputeElementDecl, Conduit, Experiment, Identifier,
-                          Reference, ScaleSettings, Setting, Simulation,
+                          Reference, Setting, Simulation,
                           YmmslDocument])
     yatiml.set_document_type(YmmslLoader, YmmslDocument)
     return YmmslLoader
@@ -35,7 +35,7 @@ def _dumper() -> Type:
         pass
     yatiml.add_to_dumper(YmmslDumper,
                          [ComputeElementDecl, Conduit, Experiment, Identifier,
-                          Reference, ScaleSettings, Setting, Simulation,
+                          Reference, Setting, Simulation,
                           YmmslDocument])
     return YmmslDumper
 
@@ -55,5 +55,5 @@ Usage:
 
 
 __all__ = ['ComputeElementDecl', 'Conduit', 'Experiment', 'Identifier',
-           'Reference', 'ScaleSettings', 'Setting', 'Simulation',
+           'Reference', 'Setting', 'Simulation',
            'YmmslDocument', 'loader', 'dumper']

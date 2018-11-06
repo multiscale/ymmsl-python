@@ -5,7 +5,7 @@
 import logging
 from typing import Any, List
 
-from ymmsl import Experiment, Reference, ScaleSettings, Setting, YmmslDocument
+from ymmsl import Experiment, Reference, Setting, YmmslDocument
 
 import pytest
 import yatiml
@@ -16,14 +16,13 @@ from ruamel import yaml
 def test_ymmsl() -> None:
     model = Reference.from_string('isr2d')
     parameter_values = []  # type: List[Setting]
-    experiment = Experiment(model, [], parameter_values)
+    experiment = Experiment(model, parameter_values)
     doc = YmmslDocument('v0.1', experiment)
     assert isinstance(doc.experiment, Experiment)
     assert isinstance(doc.experiment.model, Reference)
     assert str(doc.experiment.model) == 'isr2d'
     assert doc.experiment.model.parts[0] == 'isr2d'
     assert doc.experiment.parameter_values == []
-    assert doc.experiment.scales == []
 
 
 def test_loader(caplog: Any) -> None:
@@ -33,13 +32,6 @@ def test_loader(caplog: Any) -> None:
     text = ('version: v0.1\n'
             'experiment:\n'
             '  model: test_model\n'
-            '  scales:\n'
-            '    domain1.x:\n'
-            '      grain: 0.01\n'
-            '      extent: 1.5\n'
-            '    submodel1.t:\n'
-            '      grain: 0.001\n'
-            '      extent: 100.0\n'
             '  parameter_values:\n'
             '    test_str: value\n'
             '    test_int: 13\n'
@@ -48,13 +40,6 @@ def test_loader(caplog: Any) -> None:
     document = yaml.load(text, Loader=ymmsl.loader)
     experiment = document.experiment
     assert str(experiment.model) == 'test_model'
-    assert len(experiment.scales) == 2
-    assert str(experiment.scales[0].scale) == 'domain1.x'
-    assert experiment.scales[0].grain == 0.01
-    assert experiment.scales[0].extent == 1.5
-    assert str(experiment.scales[1].scale) == 'submodel1.t'
-    assert experiment.scales[1].grain == 0.001
-    assert experiment.scales[1].extent == 100.0
     assert len(experiment.parameter_values) == 3
     assert experiment.parameter_values[2].value[1] == 1.3
 
@@ -90,20 +75,10 @@ def test_loader(caplog: Any) -> None:
 
 
 def test_dumper() -> None:
-    domain1_x = ScaleSettings(Reference.from_string('domain1.x'), 0.01, 1.5)
-    submodel1_t = ScaleSettings(Reference.from_string('submodel1.t'), 0.001, 100.0)
-    scales = [domain1_x, submodel1_t]
-    experiment = Experiment(Reference.from_string('test_model'), scales, [])
+    experiment = Experiment(Reference.from_string('test_model'), [])
     document = YmmslDocument('v0.1', experiment)
     text = yaml.dump(document, Dumper=ymmsl.dumper)
     assert text == ('version: v0.1\n'
                     'experiment:\n'
                     '  model: test_model\n'
-                    '  scales:\n'
-                    '    domain1.x:\n'
-                    '      grain: 0.01\n'
-                    '      extent: 1.5\n'
-                    '    submodel1.t:\n'
-                    '      grain: 0.001\n'
-                    '      extent: 100.0\n'
                     )

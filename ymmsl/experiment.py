@@ -7,27 +7,6 @@ import yatiml
 from ymmsl.identity import Reference
 
 
-class ScaleSettings:
-    """Settings for a spatial or temporal scale.
-
-    Attributes:
-        scale: Reference to the scale these values are for.
-        grain: The step size, grid spacing or resolution.
-        extent: The overall size.
-    """
-
-    def __init__(self, scale: Reference, grain: float, extent: float, origin: float = 0.0) -> None:
-        self.scale = scale
-        self.grain = grain
-        self.extent = extent
-        self.origin = origin
-
-    @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        if float(str(node.get_attribute('origin').get_value())) == 0.0:
-            node.remove_attribute('origin')
-
-
 ParameterValue = Union[str, int, float, List[float], List[List[float]]]
 
 
@@ -57,15 +36,13 @@ class Experiment:
 
     Attributes:
         model: The identifier of the model to run.
-        scale: The scales to run the submodels at.
         parameter_values: The parameter values to initialise the models \
                 with.
     """
 
-    def __init__(self, model: Reference, scales: List[ScaleSettings],
+    def __init__(self, model: Reference,
                  parameter_values: Optional[List[Setting]] = None) -> None:
         self.model = model
-        self.scales = scales
         self.parameter_values = parameter_values if parameter_values else list()
 
     @classmethod
@@ -74,12 +51,10 @@ class Experiment:
 
     @classmethod
     def yatiml_savorize(cls, node: yatiml.Node) -> None:
-        node.map_attribute_to_seq('scales', 'scale')
         node.map_attribute_to_seq('parameter_values', 'parameter', 'value')
 
     @classmethod
     def yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        node.seq_attribute_to_map('scales', 'scale')
         if len(node.get_attribute('parameter_values').seq_items()) == 0:
             node.remove_attribute('parameter_values')
         else:
