@@ -1,5 +1,4 @@
 """This module contains all the definitions for yMMSL."""
-import logging
 from typing import List, Optional, Union
 
 import yatiml

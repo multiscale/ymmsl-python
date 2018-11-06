@@ -1,15 +1,3 @@
-"""Python bindings for yMMSL
-
-This package contains all the classes needed to represent a yMMSL file,
-as well as to read and write yMMSL files.
-"""
-
-__version__ = '0.0.0.dev0'
-
-__author__ = 'Lourens Veen'
-__email__ = 'l.veen@esciencecenter.nl'
-
-
 import yatiml
 from typing import Type
 
@@ -17,6 +5,17 @@ from ymmsl.experiment import Setting, Experiment
 from ymmsl.identity import Identifier, Reference
 from ymmsl.simulation import ComputeElementDecl, Conduit, Simulation
 from ymmsl.ymmsl import YmmslDocument
+
+
+"""Python bindings for yMMSL
+
+This package contains all the classes needed to represent a yMMSL file,
+as well as to read and write yMMSL files.
+"""
+
+__version__ = '0.0.0.dev0'
+__author__ = 'Lourens Veen'
+__email__ = 'l.veen@esciencecenter.nl'
 
 
 def _loader() -> Type:

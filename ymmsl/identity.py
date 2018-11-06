@@ -1,7 +1,7 @@
 """This module contains all the definitions for yMMSL."""
 import logging
 import re
-from collections import OrderedDict, UserString
+from collections import UserString
 from typing import Any, List, Union
 
 import yatiml

@@ -2,12 +2,11 @@
 """Tests for the ymmsl module.
 """
 
-import logging
-from typing import Any, List
+#import logging
+from typing import Any, List  # noqa: F401
 
-from ymmsl import Experiment, Reference, Setting, YmmslDocument
+from ymmsl import Experiment, Reference, Setting, YmmslDocument  # noqa: F401
 
-import pytest
 import yatiml
 import ymmsl
 from ruamel import yaml
