@@ -11,17 +11,13 @@ conduits:
 
 experiment:
 model: macro_micro_model
-scales:
-  domain.x:
-    grain: 0.01
-    extent: 1.0
-  macro.t:
-    grain: 10.0
-    extent: 1000.0
-  micro.t:
-    grain: 0.01
-    extent: 1.0
 parameter_values:
+  domain._muscle_grain: 0.01
+  domain._muscle_extent: 1.0
+  macro._muscle_timestep: 10.0
+  macro._muscle_total_time: 1000.0
+  micro._muscle_timestep: 0.01
+  micro._muscle_total_time: 1.0
   k: 1.0
   micro.d: 2.3
   interpolation_method: linear

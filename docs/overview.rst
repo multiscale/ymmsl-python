@@ -37,18 +37,18 @@ Experiments
 
 An experiment in yMMSL is a combination of a simulation model and a collection
 of settings to run it with. The ``model`` attribute contains a reference to the
-model. The ``scales`` attribute configures the scales at which the domains
-should be represented, both in time and in space. In this example, there is only
-a single, one-dimensional domain named ``domain`` and having a single scale
-``x``, but the two submodels have diffent time scales. Each scale has an
-attribute ``grain``, which gives the step size or grid cell size, and an
-attribute ``extent``, which gives the overall size of the domain along that
-axis.
-
-Finally, there is an attribute ``parameter_values`` under which the model
+model. Next there is an attribute ``parameter_values`` under which the model
 parameters can be configured. Parameter values may be strings, integers,
 floating point numbers, lists of floating point numbers (vectors), or lists of
 lists of floating point numbers (arrays).
+
+In this example, the two submodels share a one-dimensional domain, which is
+named domain, has a length of 1.0, and a grid spacing of 0.01. The macro model
+has a time step of 10 and a total run time of 1000 (so it will run for 100
+steps), while the micro model has a time step of 0.01 and a total run time of
+1.0. Furthermore, there are some model parameters, a shared parameter ``k``, a
+parameter ``d`` that is specific to the micromodel, and a shared parameter
+``interpolation_method``.
 
 Identifiers and References
 --------------------------
