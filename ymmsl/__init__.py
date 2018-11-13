@@ -1,6 +1,7 @@
 import yatiml
 from typing import Type
 
+from ymmsl.compute_element import Operator
 from ymmsl.experiment import Setting, Experiment
 from ymmsl.identity import Identifier, Reference
 from ymmsl.simulation import ComputeElementDecl, Conduit, Simulation
@@ -54,5 +55,5 @@ Usage:
 
 
 __all__ = ['ComputeElementDecl', 'Conduit', 'Experiment', 'Identifier',
-           'Reference', 'Setting', 'Simulation',
+           'Operator', 'Reference', 'Setting', 'Simulation',
            'YmmslDocument', 'loader', 'dumper']
