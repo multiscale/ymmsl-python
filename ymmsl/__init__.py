@@ -1,7 +1,7 @@
 import yatiml
 from typing import Type
 
-from ymmsl.compute_element import Operator
+from ymmsl.compute_element import Endpoint, Operator
 from ymmsl.experiment import Setting, Experiment
 from ymmsl.identity import Identifier, Reference
 from ymmsl.simulation import ComputeElementDecl, Conduit, Simulation
@@ -54,6 +54,6 @@ Usage:
 """
 
 
-__all__ = ['ComputeElementDecl', 'Conduit', 'Experiment', 'Identifier',
-           'Operator', 'Reference', 'Setting', 'Simulation',
+__all__ = ['ComputeElementDecl', 'Conduit', 'Endpoint', 'Experiment',
+           'Identifier', 'Operator', 'Reference', 'Setting', 'Simulation',
            'YmmslDocument', 'loader', 'dumper']
