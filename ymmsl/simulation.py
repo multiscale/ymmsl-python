@@ -1,5 +1,5 @@
 """This module contains all the definitions for yMMSL."""
-from typing import List
+from typing import cast, List
 
 import yatiml
 
@@ -38,21 +38,16 @@ class ComputeElementDecl:
 class Conduit:
     """A conduit transports data between compute elements.
 
-    The references to the sender and receiver must be of one of the \
-    following forms:
+    A conduit has two endpoints, which are references to a Port on a
+    Compute Element. These references must be of one of the following
+    forms:
 
     - submodel.port
     - namespace.submodel.port (or several namespace prefixes)
-    - submodel[3].port (for any value of 3)
-    - submodel.port[5] (for any value of 5)
-
-    Or a combination, e.g. namespace.submodel[3].port[4]
 
     Attributes:
-        sender: The sending port that this conduit is connected to. Of \
-                the form 'submodel.port_name'.
-        receiver: The receiving port that this conduit is connected to. \
-                Of the form 'submodel.port_name'.
+        sender: The sending port that this conduit is connected to.
+        receiver: The receiving port that this conduit is connected to.
     """
     def __init__(self, sender: Reference,
                  receiver: Reference) -> None:
@@ -63,71 +58,40 @@ class Conduit:
         self.__check_reference(receiver)
 
     def __check_reference(self, ref: Reference) -> None:
-        # find last Identifier
-        i = len(ref.parts) - 1
-        while i >= 0 and isinstance(ref.parts[i], int):
-            i -= 1
+        """Checks an endpoint for validity."""
+        # check that there are no subscripts
+        for part in ref.parts:
+            if not isinstance(part, Identifier):
+                raise ValueError('Reference {} contains a subscript, which'
+                                 ' is not allowed in conduits.'.format(ref))
 
-        # check port subscript, if any
-        if len(ref.parts) - 1 - i > 1:
-            raise ValueError('In reference {}: Ports can only have a single'
-                             ' subscript.'.format(ref))
-
-        # move to before last Identifier
-        i -= 1
-
-        # skip model subscripts, if any
-        while i >= 0 and isinstance(ref.parts[i], int):
-            i -= 1
-
-        if i < 0:
-            raise ValueError('Reference {} does not reference any compute'
-                             ' element. You need both a compute element part'
-                             ' and a port name part.'.format(ref))
-
-        # check that model designator is a list of only identifiers
-        while i >= 0:
-            if not isinstance(ref.parts[i], Identifier):
-                raise ValueError('Reference {} contains a subscript inside the'
-                                 ' compute element part.'.format(ref))
-            i -= 1
+        # check that the length is at least 2
+        if len(ref.parts) < 2:
+            raise ValueError('Senders and receivers in conduits must have'
+                             ' a compute element name, a period, and then'
+                             ' a port name. Reference {} is missing either'
+                             ' the compute element or the port'.format(ref))
 
     def sending_compute_element(self) -> Reference:
-        """Returns a reference to the sending compute element."""
-        return self.__compute_element_part(self.sender)
-
-    def sending_port(self) -> Reference:
-        """Returns a reference to the sending port.
-
-        This is either a single Identifier, or an Identifier followed \
-        by an int, if a particular slot in the port was referred to.
+        """Returns a reference to the sending compute element.
         """
-        return self.__port_name_part(self.sender)
+        return self.sender[:-1]
+
+    def sending_port(self) -> Identifier:
+        """Returns the identity of the sending port.
+        """
+        # We've checked that it's an Identifier during construction
+        return cast(Identifier, self.sender.parts[-1])
 
     def receiving_compute_element(self) -> Reference:
-        """Returns a reference to the receiving compute element."""
-        return self.__compute_element_part(self.receiver)
-
-    def receiving_port(self) -> Reference:
-        """Returns the identity of the receiving port.
-
-        This is either a single Identifier, or an Identifier followed \
-        by an int, if a particular slot in the port was referred to.
+        """Returns a reference to the receiving compute element.
         """
-        return self.__port_name_part(self.receiver)
+        return self.receiver[:-1]
 
-    def __compute_element_part(self, ref: Reference) -> Reference:
-        return ref[0:self.__port_name_index(ref)]
-
-    def __port_name_part(self, ref: Reference) -> Reference:
-        return ref[self.__port_name_index(ref):]
-
-    def __port_name_index(self, ref: Reference) -> int:
-        # last identifier is the port name
-        i = len(ref.parts) - 1
-        while i >= 0 and isinstance(ref.parts[i], int):
-            i -= 1
-        return i
+    def receiving_port(self) -> Identifier:
+        """Returns the identity of the receiving port.
+        """
+        return cast(Identifier, self.receiver.parts[-1])
 
 
 class Simulation:

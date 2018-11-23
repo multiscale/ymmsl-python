@@ -1,6 +1,6 @@
 from enum import Enum
 
-from ymmsl.identity import Reference
+from ymmsl.identity import Identifier
 
 
 class Operator(Enum):
@@ -18,17 +18,17 @@ class Operator(Enum):
     MAP = 6
 
 
-class Endpoint:
-    """An endpoint on a compute element.
+class Port:
+    """A port on a compute element.
 
-    Endpoints are used by compute elements to send or receive messages
+    Ports are used by compute elements to send or receive messages
     on. They are connected by conduits to enable communication between
     compute elements.
 
     Attributes:
-        name: The name of the endpoint.
+        name: The name of the port.
         operator: The MMSL operator in which this endpoint is used.
     """
-    def __init__(self, name: Reference, operator: Operator) -> None:
-        self.name = name  # type: Reference
+    def __init__(self, name: Identifier, operator: Operator) -> None:
+        self.name = name  # type: Identifier
         self.operator = operator  # type: Operator

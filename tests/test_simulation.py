@@ -44,16 +44,6 @@ def test_conduit() -> None:
     assert str(test_conduit.receiving_compute_element()) == 'submodel2'
     assert str(test_conduit.receiving_port()) == 'port2'
 
-    test_conduit2 = Conduit(Reference.from_string('x.y[1]'), test_ref)
-    assert test_conduit2.sender.parts[2] == 1
-    assert str(test_conduit2.sending_compute_element()) == 'x'
-    assert str(test_conduit2.sending_port()) == 'y[1]'
-    assert str(test_conduit2.receiving_compute_element()) == 'submodel1'
-    assert str(test_conduit2.receiving_port()) == 'port1'
-
-    test_conduit3 = Conduit(Reference.from_string('x[1].y'), test_ref)
-    assert test_conduit3.sender.parts[1] == 1
-
     with pytest.raises(ValueError):
         Conduit(Reference.from_string('x.y[1][2]'), test_ref)
 
