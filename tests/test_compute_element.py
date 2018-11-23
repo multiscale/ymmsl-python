@@ -2,7 +2,7 @@
 """Tests for the compute_element module.
 """
 
-from ymmsl import Endpoint, Operator, Reference
+from ymmsl import Operator, Port, Identifier
 
 
 def test_operator() -> None:
@@ -15,8 +15,8 @@ def test_operator() -> None:
     assert op3 == Operator.MAP
 
 
-def test_endpoint() -> None:
-    ep1 = Endpoint(Reference.from_string('test_in'), Operator.F_INIT)
+def test_port() -> None:
+    ep1 = Port(Identifier('test_in'), Operator.F_INIT)
 
     assert str(ep1.name == 'test_in')
     assert ep1.operator == Operator.F_INIT
