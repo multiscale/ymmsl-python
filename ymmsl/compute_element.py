@@ -17,6 +17,23 @@ class Operator(Enum):
     O_F = 5
     MAP = 6
 
+    def allows_sending(self) -> bool:
+        return self in {
+                Operator.NONE,
+                Operator.O_I,
+                Operator.O_F,
+                Operator.MAP
+                }
+
+    def allows_receiving(self) -> bool:
+        return self in {
+                Operator.NONE,
+                Operator.F_INIT,
+                Operator.S,
+                Operator.B,
+                Operator.MAP
+                }
+
 
 class Port:
     """A port on a compute element.
@@ -27,7 +44,7 @@ class Port:
 
     Attributes:
         name: The name of the port.
-        operator: The MMSL operator in which this endpoint is used.
+        operator: The MMSL operator in which this port is used.
     """
     def __init__(self, name: Identifier, operator: Operator) -> None:
         self.name = name  # type: Identifier
