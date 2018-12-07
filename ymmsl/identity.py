@@ -64,6 +64,12 @@ class Reference:
     def __len__(self) -> int:
         return len(self.parts)
 
+    def __eq__(self, other: Any) -> bool:
+        return self.parts == other.parts
+
+    def __ne__(self, other: Any) -> bool:
+        return self.parts != other.parts
+
     def __getitem__(self, key: Union[int, slice]) -> 'Reference':
         if isinstance(key, int):
             return Reference([self.parts[key]])

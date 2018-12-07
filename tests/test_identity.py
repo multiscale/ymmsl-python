@@ -40,6 +40,12 @@ def test_identifier() -> None:
     with pytest.raises(ValueError):
         Identifier('test/slash')
 
+    assert Identifier('test') == Identifier('test')
+    assert Identifier('test1') != Identifier('test2')
+
+    test_dict = {Identifier('test'): 1}
+    assert test_dict[Identifier('test')] == 1
+
 
 def test_reference() -> None:
     test_ref = Reference.from_string('_testing')
@@ -124,6 +130,13 @@ def test_reference() -> None:
 
     with pytest.raises(ValueError):
         Reference.from_string('[4].test')
+
+
+def test_reference_equivalence() -> None:
+    assert Reference.from_string('test.test[3]') == Reference.from_string(
+            'test.test[3]')
+    assert Reference.from_string('test.test[3]') != Reference.from_string(
+            'test1.test[3]')
 
 
 def test_reference_io() -> None:
