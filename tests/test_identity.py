@@ -50,51 +50,50 @@ def test_identifier() -> None:
 def test_reference() -> None:
     test_ref = Reference.from_string('_testing')
     assert str(test_ref) == '_testing'
-    assert len(test_ref.parts) == 1
-    assert isinstance(test_ref.parts[0], Identifier)
-    assert str(test_ref.parts[0]) == '_testing'
+    assert len(test_ref) == 1
+    assert isinstance(test_ref[0], Identifier)
+    assert str(test_ref[0]) == '_testing'
 
     with pytest.raises(ValueError):
         Reference.from_string('1test')
 
     test_ref = Reference.from_string('test.testing')
-    assert len(test_ref.parts) == 2
-    assert isinstance(test_ref.parts[0], Identifier)
-    assert str(test_ref.parts[0]) == 'test'
-    assert isinstance(test_ref.parts[1], Identifier)
-    assert str(test_ref.parts[1]) == 'testing'
+    assert len(test_ref) == 2
+    assert isinstance(test_ref[0], Identifier)
+    assert str(test_ref[0]) == 'test'
+    assert isinstance(test_ref[1], Identifier)
+    assert str(test_ref[1]) == 'testing'
     assert str(test_ref) == 'test.testing'
 
     test_ref = Reference.from_string('test[12]')
-    assert len(test_ref.parts) == 2
-    assert isinstance(test_ref.parts[0], Identifier)
-    assert str(test_ref.parts[0]) == 'test'
-    assert isinstance(test_ref.parts[1], int)
-    assert test_ref.parts[1] == 12
+    assert len(test_ref) == 2
+    assert isinstance(test_ref[0], Identifier)
+    assert str(test_ref[0]) == 'test'
+    assert isinstance(test_ref[1], int)
+    assert test_ref[1] == 12
     assert str(test_ref) == 'test[12]'
 
     test_ref = Reference.from_string('test[12].testing.ok.index[3][5]')
-    assert len(test_ref.parts) == 7
-    assert isinstance(test_ref.parts[0], Identifier)
-    assert str(test_ref.parts[0]) == 'test'
-    assert isinstance(test_ref.parts[1], int)
-    assert test_ref.parts[1] == 12
-    assert isinstance(test_ref.parts[2], Identifier)
-    assert str(test_ref.parts[2]) == 'testing'
-    assert isinstance(test_ref.parts[3], Identifier)
-    assert str(test_ref.parts[3]) == 'ok'
-    assert isinstance(test_ref.parts[4], Identifier)
-    assert str(test_ref.parts[4]) == 'index'
-    assert isinstance(test_ref.parts[5], int)
-    assert test_ref.parts[5] == 3
-    assert isinstance(test_ref.parts[6], int)
-    assert test_ref.parts[6] == 5
+    assert len(test_ref) == 7
+    assert isinstance(test_ref[0], Identifier)
+    assert str(test_ref[0]) == 'test'
+    assert isinstance(test_ref[1], int)
+    assert test_ref[1] == 12
+    assert isinstance(test_ref[2], Identifier)
+    assert str(test_ref[2]) == 'testing'
+    assert isinstance(test_ref[3], Identifier)
+    assert str(test_ref[3]) == 'ok'
+    assert isinstance(test_ref[4], Identifier)
+    assert str(test_ref[4]) == 'index'
+    assert isinstance(test_ref[5], int)
+    assert test_ref[5] == 3
+    assert isinstance(test_ref[6], int)
+    assert test_ref[6] == 5
     assert str(test_ref) == 'test[12].testing.ok.index[3][5]'
 
     assert len(test_ref) == 7
     assert str(test_ref[0]) == 'test'
-    with pytest.raises(ValueError):
-        test_ref[1]
+    assert test_ref[1] == 12
     assert str(test_ref[3]) == 'ok'
     assert str(test_ref[:3]) == 'test[12].testing'
     assert str(test_ref[2:]) == 'testing.ok.index[3][5]'
@@ -148,8 +147,8 @@ def test_reference_io() -> None:
 
     text = 'test[12]'
     doc = yaml.load(text, Loader=Loader)
-    assert str(doc.parts[0]) == 'test'
-    assert doc.parts[1] == 12
+    assert str(doc[0]) == 'test'
+    assert doc[1] == 12
 
     class Dumper(yatiml.Dumper):
         pass

@@ -1,8 +1,8 @@
 """This module contains all the definitions for yMMSL."""
 import logging
 import re
-from collections import UserString
-from typing import Any, List, Union
+from collections import OrderedDict, UserString
+from typing import Any, Generator, List, Union
 
 import yatiml
 from ruamel import yaml
@@ -50,32 +50,48 @@ class Reference:
     def __init__(self, parts: List[ReferencePart]) -> None:
         if len(parts) > 0 and not isinstance(parts[0], Identifier):
             raise ValueError('The first part of a Reference must be an Identifier')
-        self.parts = parts
+        self.__parts = parts
 
     @classmethod
     def from_string(cls, text: str) -> 'Reference':
         result = Reference(list())
-        result.parts = cls.__string_to_parts(text)
+        result.__parts = cls.__string_to_parts(text)
         return result
 
     def __str__(self) -> str:
-        return self.__parts_to_string(self.parts)
+        return self.__parts_to_string(self.__parts)
 
     def __len__(self) -> int:
-        return len(self.parts)
+        return len(self.__parts)
 
     def __eq__(self, other: Any) -> bool:
-        return self.parts == other.parts
+        if isinstance(other, Reference):
+            return self.__parts == other.__parts
+        if isinstance(other, str):
+            return str(self) == other
+        return NotImplemented
 
     def __ne__(self, other: Any) -> bool:
-        return self.parts != other.parts
+        if isinstance(other, Reference):
+            return self.__parts != other.__parts
+        if isinstance(other, str):
+            return str(self) != other
+        return NotImplemented
 
-    def __getitem__(self, key: Union[int, slice]) -> 'Reference':
+    def __iter__(self) -> Generator[ReferencePart, None, None]:
+        for part in self.__parts:
+            yield part
+
+    def __getitem__(self, key: Union[int, slice]) -> Union['Reference', ReferencePart]:
         if isinstance(key, int):
-            return Reference([self.parts[key]])
+            return self.__parts[key]
         if isinstance(key, slice):
-            return Reference(self.parts[key])
+            return Reference(self.__parts[key])
         raise ValueError('Subscript must be either an int or a slice')
+
+    def __setitem__(self, key: Union[int, slice], value: Any) -> None:
+        raise RuntimeError('Reference objects are immutable, please don\'t try'
+                           ' to change them.')
 
     @classmethod
     def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
@@ -104,6 +120,9 @@ class Reference:
                                   start_mark, end_mark)
         node.make_mapping()
         node.set_attribute('parts', ynode)
+
+    def yatiml_attributes(self) -> OrderedDict:
+        return OrderedDict([('parts', self.__parts)])
 
     @classmethod
     def yatiml_sweeten(cls, node: yatiml.Node) -> None:

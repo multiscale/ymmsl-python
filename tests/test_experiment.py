@@ -52,12 +52,12 @@ def test_experiment() -> None:
     ]
     experiment = Experiment(model, parameter_values)
     assert str(experiment.model) == 'isr2d'
-    assert experiment.parameter_values[0].parameter.parts == [
+    assert list(experiment.parameter_values[0].parameter) == [
         'submodel', '_muscle_grain'
     ]
     assert cast(List[float], experiment.parameter_values[1].value)[1] == 3.0
     assert experiment.parameter_values[2].value == 0.001
-    assert experiment.parameter_values[4].parameter.parts == ['bf', 'velocity']
+    assert list(experiment.parameter_values[4].parameter) == ['bf', 'velocity']
     assert experiment.parameter_values[5].value == 0.11
 
 

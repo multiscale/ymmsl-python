@@ -26,7 +26,7 @@ class ComputeElementDecl:
         self.implementation = implementation
         self.count = count
 
-        for part in self.implementation.parts:
+        for part in self.implementation:
             if isinstance(part, int):
                 raise ValueError('Compute element implementation {} contains a'
                                  ' subscript which is not allowed.'.format(self.name))
@@ -60,13 +60,13 @@ class Conduit:
     def __check_reference(self, ref: Reference) -> None:
         """Checks an endpoint for validity."""
         # check that there are no subscripts
-        for part in ref.parts:
+        for part in ref:
             if not isinstance(part, Identifier):
                 raise ValueError('Reference {} contains a subscript, which'
                                  ' is not allowed in conduits.'.format(ref))
 
         # check that the length is at least 2
-        if len(ref.parts) < 2:
+        if len(ref) < 2:
             raise ValueError('Senders and receivers in conduits must have'
                              ' a compute element name, a period, and then'
                              ' a port name. Reference {} is missing either'
@@ -75,23 +75,23 @@ class Conduit:
     def sending_compute_element(self) -> Reference:
         """Returns a reference to the sending compute element.
         """
-        return self.sender[:-1]
+        return cast(Reference, self.sender[:-1])
 
     def sending_port(self) -> Identifier:
         """Returns the identity of the sending port.
         """
         # We've checked that it's an Identifier during construction
-        return cast(Identifier, self.sender.parts[-1])
+        return cast(Identifier, self.sender[-1])
 
     def receiving_compute_element(self) -> Reference:
         """Returns a reference to the receiving compute element.
         """
-        return self.receiver[:-1]
+        return cast(Reference, self.receiver[:-1])
 
     def receiving_port(self) -> Identifier:
         """Returns the identity of the receiving port.
         """
-        return cast(Identifier, self.receiver.parts[-1])
+        return cast(Identifier, self.receiver[-1])
 
 
 class Simulation:

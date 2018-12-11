@@ -20,7 +20,7 @@ def test_ymmsl() -> None:
     assert isinstance(doc.experiment, Experiment)
     assert isinstance(doc.experiment.model, Reference)
     assert str(doc.experiment.model) == 'isr2d'
-    assert doc.experiment.model.parts[0] == 'isr2d'
+    assert doc.experiment.model[0] == 'isr2d'
     assert doc.experiment.parameter_values == []
 
 

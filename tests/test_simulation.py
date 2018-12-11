@@ -34,10 +34,10 @@ def test_conduit() -> None:
     test_ref = Reference.from_string('submodel1.port1')
     test_ref2 = Reference.from_string('submodel2.port2')
     test_conduit = Conduit(test_ref, test_ref2)
-    assert str(test_conduit.sender.parts[0]) == 'submodel1'
-    assert str(test_conduit.sender.parts[1]) == 'port1'
-    assert str(test_conduit.receiver.parts[0]) == 'submodel2'
-    assert str(test_conduit.receiver.parts[1]) == 'port2'
+    assert str(test_conduit.sender[0]) == 'submodel1'
+    assert str(test_conduit.sender[1]) == 'port1'
+    assert str(test_conduit.receiver[0]) == 'submodel2'
+    assert str(test_conduit.receiver[1]) == 'port2'
 
     assert str(test_conduit.sending_compute_element()) == 'submodel1'
     assert str(test_conduit.sending_port()) == 'port1'
