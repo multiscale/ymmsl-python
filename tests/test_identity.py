@@ -9,7 +9,7 @@ import yatiml
 from ruamel import yaml
 
 
-def test_identifier() -> None:
+def test_create_identifier() -> None:
     part = Identifier('testing')
     assert str(part) == 'testing'
 
@@ -40,14 +40,23 @@ def test_identifier() -> None:
     with pytest.raises(ValueError):
         Identifier('test/slash')
 
+
+def test_compare_identifier() -> None:
     assert Identifier('test') == Identifier('test')
     assert Identifier('test1') != Identifier('test2')
 
+    assert Identifier('test') == 'test'
+    assert 'test' == Identifier('test')
+    assert Identifier('test') != 'test2'
+    assert 'test2' != Identifier('test')
+
+
+def test_identifier_dict_key() -> None:
     test_dict = {Identifier('test'): 1}
     assert test_dict[Identifier('test')] == 1
 
 
-def test_reference() -> None:
+def test_create_reference() -> None:
     test_ref = Reference.from_string('_testing')
     assert str(test_ref) == '_testing'
     assert len(test_ref) == 1
@@ -91,12 +100,6 @@ def test_reference() -> None:
     assert test_ref[6] == 5
     assert str(test_ref) == 'test[12].testing.ok.index[3][5]'
 
-    assert len(test_ref) == 7
-    assert str(test_ref[0]) == 'test'
-    assert test_ref[1] == 12
-    assert str(test_ref[3]) == 'ok'
-    assert str(test_ref[:3]) == 'test[12].testing'
-    assert str(test_ref[2:]) == 'testing.ok.index[3][5]'
     with pytest.raises(ValueError):
         test_ref[1:]
 
@@ -130,6 +133,20 @@ def test_reference() -> None:
     with pytest.raises(ValueError):
         Reference.from_string('[4].test')
 
+
+def test_reference_slicing() -> None:
+    test_ref = Reference.from_string('test[12].testing.ok.index[3][5]')
+
+    assert test_ref[0] == 'test'
+    assert test_ref[1] == 12
+    assert test_ref[3] == 'ok'
+    assert test_ref[:3] == 'test[12].testing'
+    assert test_ref[2:] == 'testing.ok.index[3][5]'
+
+    with pytest.raises(RuntimeError):
+        test_ref[0] = 'test2'
+
+def test_reference_dict_key() -> None:
     test_dict = {Reference.from_string('test[4]'): 1}
     assert test_dict[Reference.from_string('test[4]')] == 1
 
@@ -140,6 +157,10 @@ def test_reference_equivalence() -> None:
     assert Reference.from_string('test.test[3]') != Reference.from_string(
             'test1.test[3]')
 
+    assert Reference.from_string('test.test[3]') == 'test.test[3]'
+    assert Reference.from_string('test.test[3]') != 'test1.test[3]'
+    assert 'test.test[3]' == Reference.from_string('test.test[3]')
+    assert 'test1.test[3]' != Reference.from_string('test.test[3]')
 
 def test_reference_io() -> None:
     class Loader(yatiml.Loader):
