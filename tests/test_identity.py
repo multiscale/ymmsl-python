@@ -130,6 +130,9 @@ def test_reference() -> None:
     with pytest.raises(ValueError):
         Reference.from_string('[4].test')
 
+    test_dict = {Reference.from_string('test[4]'): 1}
+    assert test_dict[Reference.from_string('test[4]')] == 1
+
 
 def test_reference_equivalence() -> None:
     assert Reference.from_string('test.test[3]') == Reference.from_string(

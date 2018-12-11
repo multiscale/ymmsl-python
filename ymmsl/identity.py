@@ -64,6 +64,9 @@ class Reference:
     def __len__(self) -> int:
         return len(self.__parts)
 
+    def __hash__(self) -> int:
+        return hash(str(self))
+
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, Reference):
             return self.__parts == other.__parts
