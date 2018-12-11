@@ -47,16 +47,13 @@ class Reference:
         parts: List of parts, as described above.
     """
 
-    def __init__(self, parts: List[ReferencePart]) -> None:
-        if len(parts) > 0 and not isinstance(parts[0], Identifier):
+    def __init__(self, parts: Union[str, List[ReferencePart]]) -> None:
+        if isinstance(parts, str):
+            self.__parts = self.__string_to_parts(parts)
+        elif len(parts) > 0 and not isinstance(parts[0], Identifier):
             raise ValueError('The first part of a Reference must be an Identifier')
-        self.__parts = parts
-
-    @classmethod
-    def from_string(cls, text: str) -> 'Reference':
-        result = Reference(list())
-        result.__parts = cls.__string_to_parts(text)
-        return result
+        else:
+            self.__parts = parts
 
     def __str__(self) -> str:
         return self.__parts_to_string(self.__parts)

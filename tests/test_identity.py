@@ -57,16 +57,16 @@ def test_identifier_dict_key() -> None:
 
 
 def test_create_reference() -> None:
-    test_ref = Reference.from_string('_testing')
+    test_ref = Reference('_testing')
     assert str(test_ref) == '_testing'
     assert len(test_ref) == 1
     assert isinstance(test_ref[0], Identifier)
     assert str(test_ref[0]) == '_testing'
 
     with pytest.raises(ValueError):
-        Reference.from_string('1test')
+        Reference('1test')
 
-    test_ref = Reference.from_string('test.testing')
+    test_ref = Reference('test.testing')
     assert len(test_ref) == 2
     assert isinstance(test_ref[0], Identifier)
     assert str(test_ref[0]) == 'test'
@@ -74,7 +74,7 @@ def test_create_reference() -> None:
     assert str(test_ref[1]) == 'testing'
     assert str(test_ref) == 'test.testing'
 
-    test_ref = Reference.from_string('test[12]')
+    test_ref = Reference('test[12]')
     assert len(test_ref) == 2
     assert isinstance(test_ref[0], Identifier)
     assert str(test_ref[0]) == 'test'
@@ -82,7 +82,7 @@ def test_create_reference() -> None:
     assert test_ref[1] == 12
     assert str(test_ref) == 'test[12]'
 
-    test_ref = Reference.from_string('test[12].testing.ok.index[3][5]')
+    test_ref = Reference('test[12].testing.ok.index[3][5]')
     assert len(test_ref) == 7
     assert isinstance(test_ref[0], Identifier)
     assert str(test_ref[0]) == 'test'
@@ -110,32 +110,32 @@ def test_create_reference() -> None:
         Reference([3, Identifier('test')])
 
     with pytest.raises(ValueError):
-        Reference.from_string('ua",.u8[')
+        Reference('ua",.u8[')
 
     with pytest.raises(ValueError):
-        Reference.from_string('test[4')
+        Reference('test[4')
 
     with pytest.raises(ValueError):
-        Reference.from_string('test4]')
+        Reference('test4]')
 
     with pytest.raises(ValueError):
-        Reference.from_string('test[_t]')
+        Reference('test[_t]')
 
     with pytest.raises(ValueError):
-        Reference.from_string('testing_{3}')
+        Reference('testing_{3}')
 
     with pytest.raises(ValueError):
-        Reference.from_string('test.(x)')
+        Reference('test.(x)')
 
     with pytest.raises(ValueError):
-        Reference.from_string('[3]test')
+        Reference('[3]test')
 
     with pytest.raises(ValueError):
-        Reference.from_string('[4].test')
+        Reference('[4].test')
 
 
 def test_reference_slicing() -> None:
-    test_ref = Reference.from_string('test[12].testing.ok.index[3][5]')
+    test_ref = Reference('test[12].testing.ok.index[3][5]')
 
     assert test_ref[0] == 'test'
     assert test_ref[1] == 12
@@ -147,20 +147,18 @@ def test_reference_slicing() -> None:
         test_ref[0] = 'test2'
 
 def test_reference_dict_key() -> None:
-    test_dict = {Reference.from_string('test[4]'): 1}
-    assert test_dict[Reference.from_string('test[4]')] == 1
+    test_dict = {Reference('test[4]'): 1}
+    assert test_dict[Reference('test[4]')] == 1
 
 
 def test_reference_equivalence() -> None:
-    assert Reference.from_string('test.test[3]') == Reference.from_string(
-            'test.test[3]')
-    assert Reference.from_string('test.test[3]') != Reference.from_string(
-            'test1.test[3]')
+    assert Reference('test.test[3]') == Reference('test.test[3]')
+    assert Reference('test.test[3]') != Reference('test1.test[3]')
 
-    assert Reference.from_string('test.test[3]') == 'test.test[3]'
-    assert Reference.from_string('test.test[3]') != 'test1.test[3]'
-    assert 'test.test[3]' == Reference.from_string('test.test[3]')
-    assert 'test1.test[3]' != Reference.from_string('test.test[3]')
+    assert Reference('test.test[3]') == 'test.test[3]'
+    assert Reference('test.test[3]') != 'test1.test[3]'
+    assert 'test.test[3]' == Reference('test.test[3]')
+    assert 'test1.test[3]' != Reference('test.test[3]')
 
 def test_reference_io() -> None:
     class Loader(yatiml.Loader):
@@ -179,6 +177,6 @@ def test_reference_io() -> None:
 
     yatiml.add_to_dumper(Dumper, [Identifier, Reference])
 
-    doc = Reference.from_string('test[12].testing.ok.index[3][5]')
+    doc = Reference('test[12].testing.ok.index[3][5]')
     text = yaml.dump(doc, Dumper=Dumper)
     assert text == 'test[12].testing.ok.index[3][5]\n...\n'

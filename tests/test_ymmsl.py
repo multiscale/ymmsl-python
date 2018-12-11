@@ -13,7 +13,7 @@ from ruamel import yaml
 
 
 def test_ymmsl() -> None:
-    model = Reference.from_string('isr2d')
+    model = Reference('isr2d')
     parameter_values = []  # type: List[Setting]
     experiment = Experiment(model, parameter_values)
     doc = YmmslDocument('v0.1', experiment)
@@ -74,7 +74,7 @@ def test_loader(caplog: Any) -> None:
 
 
 def test_dumper() -> None:
-    experiment = Experiment(Reference.from_string('test_model'), [])
+    experiment = Experiment(Reference('test_model'), [])
     document = YmmslDocument('v0.1', experiment)
     text = yaml.dump(document, Dumper=ymmsl.dumper)
     assert text == ('version: v0.1\n'
