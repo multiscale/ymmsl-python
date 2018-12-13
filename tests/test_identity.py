@@ -101,9 +101,6 @@ def test_create_reference() -> None:
     assert str(test_ref) == 'test[12].testing.ok.index[3][5]'
 
     with pytest.raises(ValueError):
-        test_ref[1:]
-
-    with pytest.raises(ValueError):
         Reference([4])
 
     with pytest.raises(ValueError):
@@ -146,6 +143,10 @@ def test_reference_slicing() -> None:
     with pytest.raises(RuntimeError):
         test_ref[0] = 'test2'
 
+    with pytest.raises(ValueError):
+        test_ref[1:]
+
+
 def test_reference_dict_key() -> None:
     test_dict = {Reference('test[4]'): 1}
     assert test_dict[Reference('test[4]')] == 1
@@ -159,6 +160,20 @@ def test_reference_equivalence() -> None:
     assert Reference('test.test[3]') != 'test1.test[3]'
     assert 'test.test[3]' == Reference('test.test[3]')
     assert 'test1.test[3]' != Reference('test.test[3]')
+
+
+def test_reference_concatenation() -> None:
+    assert Reference('test') + Reference('test2') == 'test.test2'
+    assert Reference('test') + Identifier('test2') == 'test.test2'
+    assert Reference('test') + 5 == 'test[5]'
+    assert Reference('test') + [Identifier('test2'), 5] == 'test.test2[5]'
+
+    assert Reference('test[5]') + Reference('test2[3]') == 'test[5].test2[3]'
+    assert Reference('test[5]') + Identifier('test2') == 'test[5].test2'
+    assert Reference('test[5]') + 3 == 'test[5][3]'
+    assert (Reference('test[5]') + [3, Identifier('test2')] ==
+            'test[5][3].test2')
+
 
 def test_reference_io() -> None:
     class Loader(yatiml.Loader):

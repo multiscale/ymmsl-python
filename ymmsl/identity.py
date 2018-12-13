@@ -1,8 +1,9 @@
-"""This module contains all the definitions for yMMSL."""
+"""This module contains definitions for identity."""
+from copy import copy
 import logging
 import re
 from collections import OrderedDict, UserString
-from typing import Any, Generator, List, Union
+from typing import Any, Generator, Iterable, List, Union
 
 import yatiml
 from ruamel import yaml
@@ -173,6 +174,30 @@ class Reference:
         """
         raise RuntimeError('Reference objects are immutable, please don\'t try'
                            ' to change them.')
+
+    def __add__(self, other: Union['Reference', Iterable[ReferencePart],
+                ReferencePart]) -> 'Reference':
+        """Concatenates something onto a Reference.
+
+        The object to add on can be another Reference, a list of
+        reference parts (either int or Identifier), or an int or an
+        Identifier. A new Reference will be created equal to the
+        original one with the new part attached on the right.
+
+        Args:
+            other: The object to concatenate.
+
+        Returns:
+            A new concatenated Reference.
+        """
+        ret = Reference(copy(self.__parts))
+        if isinstance(other, Reference):
+            ret.__parts.extend(other.__parts)
+        elif isinstance(other, int) or isinstance(other, Identifier):
+            ret.__parts.append(other)
+        elif hasattr(other, '__iter__'):
+            ret.__parts.extend(other)
+        return ret
 
     @classmethod
     def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
