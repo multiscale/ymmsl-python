@@ -3,7 +3,7 @@ from copy import copy
 import logging
 import re
 from collections import OrderedDict, UserString
-from typing import Any, Generator, Iterable, List, Union
+from typing import Any, Generator, Iterable, List, Union, overload
 
 import yatiml
 from ruamel import yaml
@@ -91,6 +91,11 @@ class Reference:
         """
         return self.__parts_to_string(self.__parts)
 
+    def __repr__(self) -> str:
+        """Produce a representation in string form.
+        """
+        return 'Reference("{}")'.format(str(self))
+
     def __len__(self) -> int:
         """Return the number of parts in the Reference.
         """
@@ -139,6 +144,14 @@ class Reference:
         """
         for part in self.__parts:
             yield part
+
+    @overload
+    def __getitem__(self, key: int) -> ReferencePart:
+        ...
+
+    @overload
+    def __getitem__(self, key: slice) -> 'Reference':
+        ...
 
     def __getitem__(self, key: Union[int, slice]) -> Union['Reference', ReferencePart]:
         """Get a part or a slice.
