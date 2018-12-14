@@ -11,14 +11,14 @@ from ruamel import yaml
 
 def test_compute_element_declaration() -> None:
     test_decl = ComputeElementDecl(
-            Identifier('test'), Reference.from_string('ns.model'))
+            Identifier('test'), Reference('ns.model'))
     assert str(test_decl.name) == 'test'
     assert str(test_decl.implementation) == 'ns.model'
     assert test_decl.count == 1
     assert str(test_decl) == 'test[1]'
 
     test_decl = ComputeElementDecl(
-            Identifier('test'), Reference.from_string('ns2.model2'), 2)
+            Identifier('test'), Reference('ns2.model2'), 2)
     assert isinstance(test_decl.name, Identifier)
     assert str(test_decl.name) == 'test'
     assert str(test_decl.implementation) == 'ns2.model2'
@@ -27,17 +27,17 @@ def test_compute_element_declaration() -> None:
 
     with pytest.raises(ValueError):
         test_decl = ComputeElementDecl(
-                Identifier('test'), Reference.from_string('ns2.model2[1]'))
+                Identifier('test'), Reference('ns2.model2[1]'))
 
 
 def test_conduit() -> None:
-    test_ref = Reference.from_string('submodel1.port1')
-    test_ref2 = Reference.from_string('submodel2.port2')
+    test_ref = Reference('submodel1.port1')
+    test_ref2 = Reference('submodel2.port2')
     test_conduit = Conduit(test_ref, test_ref2)
-    assert str(test_conduit.sender.parts[0]) == 'submodel1'
-    assert str(test_conduit.sender.parts[1]) == 'port1'
-    assert str(test_conduit.receiver.parts[0]) == 'submodel2'
-    assert str(test_conduit.receiver.parts[1]) == 'port2'
+    assert str(test_conduit.sender[0]) == 'submodel1'
+    assert str(test_conduit.sender[1]) == 'port1'
+    assert str(test_conduit.receiver[0]) == 'submodel2'
+    assert str(test_conduit.receiver[1]) == 'port2'
 
     assert str(test_conduit.sending_compute_element()) == 'submodel1'
     assert str(test_conduit.sending_port()) == 'port1'
@@ -45,25 +45,25 @@ def test_conduit() -> None:
     assert str(test_conduit.receiving_port()) == 'port2'
 
     with pytest.raises(ValueError):
-        Conduit(Reference.from_string('x.y[1][2]'), test_ref)
+        Conduit(Reference('x.y[1][2]'), test_ref)
 
     with pytest.raises(ValueError):
-        Conduit(Reference.from_string('x'), test_ref)
+        Conduit(Reference('x'), test_ref)
 
     with pytest.raises(ValueError):
-        Conduit(Reference.from_string('x[3].y.z'), test_ref)
+        Conduit(Reference('x[3].y.z'), test_ref)
 
 
 def test_simulation() -> None:
     macro = ComputeElementDecl(
-            Identifier('macro'), Reference.from_string('my.macro'))
+            Identifier('macro'), Reference('my.macro'))
     micro = ComputeElementDecl(
-            Identifier('micro'), Reference.from_string('my.micro'))
+            Identifier('micro'), Reference('my.micro'))
     comp_els = [macro, micro]
-    conduit1 = Conduit(Reference.from_string('macro.intermediate_state'),
-                       Reference.from_string('micro.initial_state'))
-    conduit2 = Conduit(Reference.from_string('micro.final_state'),
-                       Reference.from_string('macro.state_update'))
+    conduit1 = Conduit(Reference('macro.intermediate_state'),
+                       Reference('micro.initial_state'))
+    conduit2 = Conduit(Reference('micro.final_state'),
+                       Reference('macro.state_update'))
     conduits = [conduit1, conduit2]
     sim = Simulation(Identifier('test_sim'), comp_els, conduits)
 
@@ -114,14 +114,14 @@ def test_dump_simulation() -> None:
     yatiml.add_to_dumper(Dumper, [ComputeElementDecl, Conduit, Identifier,
                                   Reference, Simulation])
 
-    impl1 = Reference.from_string('test.impl1')
-    impl2 = Reference.from_string('test.impl2')
+    impl1 = Reference('test.impl1')
+    impl2 = Reference('test.impl2')
     ce1 = ComputeElementDecl(Identifier('ce1'), impl1)
     ce2 = ComputeElementDecl(Identifier('ce2'), impl2)
-    ce1_out = Reference.from_string('ce1.state_out')
-    ce2_in = Reference.from_string('ce2.init_in')
-    ce2_out = Reference.from_string('ce2.fini_out')
-    ce1_in = Reference.from_string('ce1.boundary_in')
+    ce1_out = Reference('ce1.state_out')
+    ce2_in = Reference('ce2.init_in')
+    ce2_out = Reference('ce2.fini_out')
+    ce1_in = Reference('ce1.boundary_in')
     cd1 = Conduit(ce1_out, ce2_in)
     cd2 = Conduit(ce2_out, ce1_in)
     simulation = Simulation(Identifier('test_sim'), [ce1, ce2], [cd1, cd2])

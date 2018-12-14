@@ -11,28 +11,28 @@ from ruamel import yaml
 
 
 def test_setting() -> None:
-    setting = Setting(Reference.from_string('submodel.test'), 12)
+    setting = Setting(Reference('submodel.test'), 12)
     assert str(setting.parameter) == 'submodel.test'
     assert isinstance(setting.value, int)
     assert setting.value == 12
 
-    setting = Setting(Reference.from_string('par1'), 'test')
+    setting = Setting(Reference('par1'), 'test')
     assert str(setting.parameter) == 'par1'
     assert isinstance(setting.value, str)
     assert setting.value == 'test'
 
-    setting = Setting(Reference.from_string('submodel.par1[3]'), 3.14159)
+    setting = Setting(Reference('submodel.par1[3]'), 3.14159)
     assert str(setting.parameter) == 'submodel.par1[3]'
     assert isinstance(setting.value, float)
     assert setting.value == 3.14159
 
-    setting = Setting(Reference.from_string('submodel.par1'), [1.0, 2.0, 3.0])
+    setting = Setting(Reference('submodel.par1'), [1.0, 2.0, 3.0])
     assert str(setting.parameter) == 'submodel.par1'
     assert isinstance(setting.value, list)
     assert len(setting.value) == 3
     assert setting.value == [1.0, 2.0, 3.0]
 
-    setting = Setting(Reference.from_string('submodel.par1'), [[1.0, 2.0], [3.0, 4.0]])
+    setting = Setting(Reference('submodel.par1'), [[1.0, 2.0], [3.0, 4.0]])
     assert str(setting.parameter) == 'submodel.par1'
     assert isinstance(setting.value, list)
     assert len(setting.value) == 2
@@ -41,23 +41,23 @@ def test_setting() -> None:
 
 
 def test_experiment() -> None:
-    model = Reference.from_string('isr2d')
+    model = Reference('isr2d')
     parameter_values = [
-        Setting(Reference.from_string('submodel._muscle_grain'), [0.01, 0.01]),
-        Setting(Reference.from_string('submodel._muscle_extent'), [10.0, 3.0]),
-        Setting(Reference.from_string('submodel._muscle_timestep'), 0.001),
-        Setting(Reference.from_string('submodel._muscle_total_time'), 0.1),
-        Setting(Reference.from_string('bf.velocity'), 0.48),
-        Setting(Reference.from_string('init.max_depth'), 0.11)
+        Setting(Reference('submodel._muscle_grain'), [0.01, 0.01]),
+        Setting(Reference('submodel._muscle_extent'), [10.0, 3.0]),
+        Setting(Reference('submodel._muscle_timestep'), 0.001),
+        Setting(Reference('submodel._muscle_total_time'), 0.1),
+        Setting(Reference('bf.velocity'), 0.48),
+        Setting(Reference('init.max_depth'), 0.11)
     ]
     experiment = Experiment(model, parameter_values)
     assert str(experiment.model) == 'isr2d'
-    assert experiment.parameter_values[0].parameter.parts == [
+    assert list(experiment.parameter_values[0].parameter) == [
         'submodel', '_muscle_grain'
     ]
     assert cast(List[float], experiment.parameter_values[1].value)[1] == 3.0
     assert experiment.parameter_values[2].value == 0.001
-    assert experiment.parameter_values[4].parameter.parts == ['bf', 'velocity']
+    assert list(experiment.parameter_values[4].parameter) == ['bf', 'velocity']
     assert experiment.parameter_values[5].value == 0.11
 
 
@@ -99,7 +99,7 @@ def test_dump_experiment() -> None:
 
     yatiml.add_to_dumper(Dumper, [Experiment, Identifier, Reference, Setting])
 
-    ref = Reference.from_string
+    ref = Reference
 
     model = ref('test_model')
     parameter_values = [Setting(ref('domain1._muscle_grain'), [0.01]),
