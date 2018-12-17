@@ -19,7 +19,8 @@ class ComputeElementDecl:
     Attributes:
         name: The name of this compute element.
         implementation: A reference to the implementation to use.
-        count: The number of instances that execute simultaneously.
+        multiplicity: The shape of the array of instances that execute
+                simultaneously.
     """
 
     def __init__(self, name: Reference, implementation: Reference,
