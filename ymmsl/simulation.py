@@ -1,5 +1,5 @@
 """This module contains all the definitions for yMMSL."""
-from typing import cast, List
+from typing import Any, List, cast
 
 from ruamel import yaml
 import yatiml
@@ -87,6 +87,14 @@ class Conduit:
 
         self.__check_reference(sender)
         self.__check_reference(receiver)
+
+    def __str__(self) -> str:
+        return 'Conduit({} -> {})'.format(self.sender, self.receiver)
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Conduit):
+            return NotImplemented
+        return self.sender == other.sender and self.receiver == other.receiver
 
     def __check_reference(self, ref: Reference) -> None:
         """Checks an endpoint for validity."""

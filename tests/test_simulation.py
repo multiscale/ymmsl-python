@@ -53,6 +53,17 @@ def test_conduit() -> None:
     with pytest.raises(ValueError):
         Conduit(Reference('x[3].y.z'), test_ref)
 
+    test_conduit2 = Conduit(test_ref, test_ref2)
+    assert test_conduit == test_conduit2
+
+    test_conduit3 = Conduit(Reference('submodel1.port1'),
+                            Reference('submodel2.port2'))
+    assert test_conduit == test_conduit3
+
+    assert 'Conduit' in str(test_conduit)
+    assert 'submodel1.port1' in str(test_conduit)
+    assert 'submodel2.port2' in str(test_conduit)
+
 
 def test_simulation() -> None:
     macro = ComputeElementDecl(
