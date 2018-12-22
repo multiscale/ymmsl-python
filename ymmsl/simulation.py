@@ -1,6 +1,7 @@
 """This module contains all the definitions for yMMSL."""
-from typing import cast, List
+from typing import Any, List, cast
 
+from ruamel import yaml
 import yatiml
 
 from ymmsl.identity import Identifier, Reference
@@ -18,13 +19,15 @@ class ComputeElementDecl:
     Attributes:
         name: The name of this compute element.
         implementation: A reference to the implementation to use.
-        count: The number of instances that execute simultaneously.
+        multiplicity: The shape of the array of instances that execute
+                simultaneously.
     """
 
-    def __init__(self, name: Identifier, implementation: Reference, count: int = 1) -> None:
+    def __init__(self, name: Reference, implementation: Reference,
+                 multiplicity: List[int] = []) -> None:
         self.name = name
         self.implementation = implementation
-        self.count = count
+        self.multiplicity = multiplicity
 
         for part in self.implementation:
             if isinstance(part, int):
@@ -32,7 +35,35 @@ class ComputeElementDecl:
                                  ' subscript which is not allowed.'.format(self.name))
 
     def __str__(self) -> str:
-        return '{}[{}]'.format(self.name, self.count)
+        result = str(self.name)
+        for dim in self.multiplicity:
+            result += '[{}]'.format(dim)
+        return result
+
+    @classmethod
+    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        node.require_attribute('name', str)
+        node.require_attribute('implementation', str)
+
+    @classmethod
+    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+        if node.has_attribute('multiplicity'):
+            if node.has_attribute_type('multiplicity', int):
+                attr = node.get_attribute('multiplicity')
+                start_mark = attr.yaml_node.start_mark
+                end_mark = attr.yaml_node.end_mark
+                new_seq = yaml.nodes.SequenceNode('tag:yaml.org,2002:seq',
+                                                  [attr.yaml_node], start_mark, end_mark)
+                node.set_attribute('multiplicity', new_seq)
+
+    @classmethod
+    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        multiplicity = node.get_attribute('multiplicity')
+        items = multiplicity.seq_items()
+        if len(items) == 0:
+            node.remove_attribute('multiplicity')
+        elif len(items) == 1:
+            node.set_attribute('multiplicity', items[0].get_value())
 
 
 class Conduit:
@@ -56,6 +87,14 @@ class Conduit:
 
         self.__check_reference(sender)
         self.__check_reference(receiver)
+
+    def __str__(self) -> str:
+        return 'Conduit({} -> {})'.format(self.sender, self.receiver)
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Conduit):
+            return NotImplemented
+        return self.sender == other.sender and self.receiver == other.receiver
 
     def __check_reference(self, ref: Reference) -> None:
         """Checks an endpoint for validity."""
