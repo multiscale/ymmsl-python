@@ -5,6 +5,22 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.5.1
+*****
+
+Changed
+-------
+
+* Remove MAP operator (mappers should use F_INIT and O_F)
+
+Added
+-----
+
+* Support for slots on Conduits
+* Support for simulation parameters of type bool
+* Export ParameterValue type
+
+
 0.5.0
 *****
 
