@@ -41,17 +41,19 @@ def test_conduit() -> None:
 
     assert str(test_conduit.sending_compute_element()) == 'submodel1'
     assert str(test_conduit.sending_port()) == 'port1'
+    assert test_conduit.sending_slot() == []
     assert str(test_conduit.receiving_compute_element()) == 'submodel2'
     assert str(test_conduit.receiving_port()) == 'port2'
-
-    with pytest.raises(ValueError):
-        Conduit(Reference('x.y[1][2]'), test_ref)
+    assert test_conduit.receiving_slot() == []
 
     with pytest.raises(ValueError):
         Conduit(Reference('x'), test_ref)
 
     with pytest.raises(ValueError):
         Conduit(Reference('x[3].y.z'), test_ref)
+
+    with pytest.raises(ValueError):
+        Conduit(Reference('x[3]'), test_ref)
 
     test_conduit2 = Conduit(test_ref, test_ref2)
     assert test_conduit == test_conduit2
@@ -63,6 +65,17 @@ def test_conduit() -> None:
     assert 'Conduit' in str(test_conduit)
     assert 'submodel1.port1' in str(test_conduit)
     assert 'submodel2.port2' in str(test_conduit)
+
+    test_conduit4 = Conduit(Reference('x.y[1][2]'), Reference('a.b[3]'))
+    assert test_conduit4.sender[2] == 1
+    assert test_conduit4.sender[3] == 2
+    assert str(test_conduit4.sending_compute_element()) == 'x'
+    assert str(test_conduit4.sending_port()) == 'y'
+    assert test_conduit4.sending_slot() == [1, 2]
+    assert test_conduit4.receiver[2] == 3
+    assert str(test_conduit4.receiving_compute_element()) == 'a'
+    assert str(test_conduit4.receiving_port()) == 'b'
+    assert test_conduit4.receiving_slot() == [3]
 
 
 def test_simulation() -> None:

@@ -6,7 +6,7 @@ import yatiml
 from ymmsl.identity import Reference
 
 
-ParameterValue = Union[str, int, float, List[float], List[List[float]]]
+ParameterValue = Union[str, int, float, bool, List[float], List[List[float]]]
 
 
 class Setting:

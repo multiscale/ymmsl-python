@@ -97,40 +97,90 @@ class Conduit:
         return self.sender == other.sender and self.receiver == other.receiver
 
     def __check_reference(self, ref: Reference) -> None:
-        """Checks an endpoint for validity."""
-        # check that there are no subscripts
-        for part in ref:
-            if not isinstance(part, Identifier):
-                raise ValueError('Reference {} contains a subscript, which'
-                                 ' is not allowed in conduits.'.format(ref))
+        """Checks an endpoint for validity.
+        """
+        # check that subscripts are at the end
+        for i, part in enumerate(ref):
+            if isinstance(part, int):
+                if (i+1) < len(ref) and isinstance(ref[i+1], Identifier):
+                    raise ValueError('Reference {} contains a subscript that'
+                                     ' is not at the end, which is not allowed'
+                                     ' in conduits.'.format(ref))
 
         # check that the length is at least 2
-        if len(ref) < 2:
+        if len(self.__stem(ref)) < 2:
             raise ValueError('Senders and receivers in conduits must have'
                              ' a compute element name, a period, and then'
-                             ' a port name. Reference {} is missing either'
-                             ' the compute element or the port'.format(ref))
+                             ' a port name and optionally a slot. Reference {}'
+                             ' is missing either the compute element or the'
+                             ' port'.format(ref))
 
     def sending_compute_element(self) -> Reference:
         """Returns a reference to the sending compute element.
         """
-        return cast(Reference, self.sender[:-1])
+        return cast(Reference, self.__stem(self.sender)[:-1])
 
     def sending_port(self) -> Identifier:
         """Returns the identity of the sending port.
         """
         # We've checked that it's an Identifier during construction
-        return cast(Identifier, self.sender[-1])
+        return cast(Identifier, self.__stem(self.sender)[-1])
+
+    def sending_slot(self) -> List[int]:
+        """Returns the slot on the sending port.
+
+        If no slot was given, an empty list is returned.
+
+        Returns:
+            A list of slot indexes.
+        """
+        return self.__slot(self.sender)
 
     def receiving_compute_element(self) -> Reference:
         """Returns a reference to the receiving compute element.
         """
-        return cast(Reference, self.receiver[:-1])
+        return cast(Reference, self.__stem(self.receiver)[:-1])
 
     def receiving_port(self) -> Identifier:
         """Returns the identity of the receiving port.
         """
-        return cast(Identifier, self.receiver[-1])
+        return cast(Identifier, self.__stem(self.receiver)[-1])
+
+    def receiving_slot(self) -> List[int]:
+        """Returns the slot on the receiving port.
+
+        If no slot was given, an empty list is returned.
+
+        Returns:
+            A list of slot indexes.
+        """
+        return self.__slot(self.receiver)
+
+    @staticmethod
+    def __slot(reference: Reference) -> List[int]:
+        """Extracts the slot from the given reference.
+
+        The slot is the list of contiguous ints at the end of the
+        reference. If the reference does not end in an int, returns
+        an empty list.
+        """
+        result = list()     # type: List[int]
+        i = len(reference) - 1
+        while isinstance(reference[i], int):
+            result.insert(0, cast(int, reference[i]))
+            i -= 1
+        return result
+
+    @staticmethod
+    def __stem(reference: Reference) -> Reference:
+        """Extracts the part of the reference before the slot.
+
+        If there is no slot, returns the whole reference.
+        """
+        i = len(reference)
+        while isinstance(reference[i-1], int):
+            i -= 1
+        return reference[:i]
 
 
 class Simulation:

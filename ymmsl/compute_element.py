@@ -15,14 +15,12 @@ class Operator(Enum):
     S = 3
     B = 4
     O_F = 5
-    MAP = 6
 
     def allows_sending(self) -> bool:
         return self in {
                 Operator.NONE,
                 Operator.O_I,
-                Operator.O_F,
-                Operator.MAP
+                Operator.O_F
                 }
 
     def allows_receiving(self) -> bool:
@@ -30,8 +28,7 @@ class Operator(Enum):
                 Operator.NONE,
                 Operator.F_INIT,
                 Operator.S,
-                Operator.B,
-                Operator.MAP
+                Operator.B
                 }
 
 
