@@ -26,6 +26,11 @@ def test_setting() -> None:
     assert isinstance(setting.value, float)
     assert setting.value == 3.14159
 
+    setting = Setting(Reference('extra_accuracy'), True)
+    assert str(setting.parameter) == 'extra_accuracy'
+    assert isinstance(setting.value, bool)
+    assert setting.value is True
+
     setting = Setting(Reference('submodel.par1'), [1.0, 2.0, 3.0])
     assert str(setting.parameter) == 'submodel.par1'
     assert isinstance(setting.value, list)
@@ -76,11 +81,12 @@ def test_load_experiment() -> None:
             '  submodel1._muscle_total_time: 100.0\n'
             '  test_str: value\n'
             '  test_int: 13\n'
+            '  test_bool: true\n'
             '  test_list: [12.3, 1.3]\n')
 
     experiment = yaml.load(text, Loader=Loader)
     assert str(experiment.model) == 'test_model'
-    assert len(experiment.parameter_values) == 7
+    assert len(experiment.parameter_values) == 8
     assert str(experiment.parameter_values[0].parameter) == 'domain1._muscle_grain'
     assert experiment.parameter_values[0].value[0] == 0.01
     assert experiment.parameter_values[3].value == 100.0
@@ -89,8 +95,9 @@ def test_load_experiment() -> None:
     assert ([str(s.parameter) for s in experiment.parameter_values]
             == ['domain1._muscle_grain', 'domain1._muscle_extent',
                 'submodel1._muscle_timestep', 'submodel1._muscle_total_time',
-                'test_str', 'test_int', 'test_list'])
-    assert experiment.parameter_values[6].value == [12.3, 1.3]
+                'test_str', 'test_int', 'test_bool', 'test_list'])
+    assert experiment.parameter_values[6].value is True
+    assert experiment.parameter_values[7].value == [12.3, 1.3]
 
 
 def test_dump_experiment() -> None:
@@ -108,6 +115,7 @@ def test_dump_experiment() -> None:
                         Setting(ref('submodel1._muscle_total_time'), 100.0),
                         Setting(ref('test_str'), 'value'),
                         Setting(ref('test_int'), 12),
+                        Setting(ref('test_bool'), True),
                         Setting(ref('test_list'), [12.3, 1.3])]
     experiment = Experiment(model, parameter_values)
 
@@ -123,6 +131,7 @@ def test_dump_experiment() -> None:
                     '  submodel1._muscle_total_time: 100.0\n'
                     '  test_str: value\n'
                     '  test_int: 12\n'
+                    '  test_bool: true\n'
                     '  test_list:\n'
                     '  - 12.3\n'
                     '  - 1.3\n')
