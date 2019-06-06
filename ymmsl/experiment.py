@@ -1,5 +1,5 @@
 """This module contains all the definitions for yMMSL."""
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import yatiml
 
@@ -37,13 +37,30 @@ class Experiment:
     Attributes:
         model: The identifier of the model to run.
         parameter_values: The parameter values to initialise the models \
-                with.
+                with, as a list of Settings.
     """
 
-    def __init__(self, model: str,
-                 parameter_values: Optional[List[Setting]] = None) -> None:
+    def __init__(
+            self, model: str,
+            parameter_values: Optional[
+                Union[Dict[str, ParameterValue], List[Setting]]] = None
+            ) -> None:
+        """Create an Experiment.
+
+        Args:
+            model: Identifier of the model to run.
+            parameter_values: The parameter values to initialise the models
+                    with, as a list of Settings or as a dictionary.
+        """
         self.model = Reference(model)
-        self.parameter_values = parameter_values if parameter_values else list()
+        self.parameter_values = list()  # type: List[Setting]
+
+        if parameter_values:
+            if isinstance(parameter_values, dict):
+                for key, value in parameter_values.items():
+                    self.parameter_values.append(Setting(key, value))
+            else:
+                self.parameter_values = parameter_values
 
     @classmethod
     def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:

@@ -65,6 +65,25 @@ def test_experiment() -> None:
     assert experiment.parameter_values[5].value == 0.11
 
 
+def test_experiment_from_dict() -> None:
+    experiment = Experiment('isr2d', {
+        'submodel._muscle_grain': [0.01, 0.01],
+        'submodel._muscle_extent': [10.0, 3.0],
+        'submodel._muscle_timestep': 0.001,
+        'submodel._muscle_total_time': 0.1,
+        'bf.velocity': 0.48,
+        'init.max_depth': 0.11})
+
+    assert str(experiment.model) == 'isr2d'
+    assert list(experiment.parameter_values[0].parameter) == [
+        'submodel', '_muscle_grain'
+    ]
+    assert cast(List[float], experiment.parameter_values[1].value)[1] == 3.0
+    assert experiment.parameter_values[2].value == 0.001
+    assert list(experiment.parameter_values[4].parameter) == ['bf', 'velocity']
+    assert experiment.parameter_values[5].value == 0.11
+
+
 def test_load_experiment() -> None:
     class Loader(yatiml.Loader):
         pass
