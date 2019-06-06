@@ -5,11 +5,11 @@
 #import logging
 from typing import Any, List  # noqa: F401
 
-from ymmsl import Experiment, Reference, Setting, YmmslDocument  # noqa: F401
+from ymmsl import (Experiment, Reference, Setting, Simulation,
+                   YmmslDocument)  # noqa: F401
 
 import yatiml
 import ymmsl
-from ruamel import yaml
 
 
 def test_ymmsl() -> None:
@@ -35,14 +35,16 @@ def test_loader(caplog: Any) -> None:
             '    test_int: 13\n'
             '    test_list: [12.3, 1.3]\n'
             )
-    document = yaml.load(text, Loader=ymmsl.loader)
+    document = ymmsl.load(text)
     experiment = document.experiment
+    assert experiment is not None
     assert str(experiment.model) == 'test_model'
     assert len(experiment.parameter_values) == 3
+    assert isinstance(experiment.parameter_values[2].value, list)
     assert experiment.parameter_values[2].value[1] == 1.3
 
     text = 'version: v0.1\n'
-    document = yaml.load(text, Loader=ymmsl.loader)
+    document = ymmsl.load(text)
     assert document.version == 'v0.1'
 
     text = ('version: v0.1\n'
@@ -60,8 +62,9 @@ def test_loader(caplog: Any) -> None:
             '    smc2bf.out: bf.initial_domain\n'
             '    bf.wss_out: bf2smc.in\n'
             '    bf2smc.out: smc.wss_in\n')
-    document = yaml.load(text, Loader=ymmsl.loader)
+    document = ymmsl.load(text)
     simulation = document.simulation
+    assert isinstance(simulation, Simulation)
     assert str(simulation.name) == 'test_model'
     assert len(simulation.compute_elements) == 5
     assert str(simulation.compute_elements[4].name) == 'bf2smc'
@@ -75,7 +78,7 @@ def test_loader(caplog: Any) -> None:
 def test_dumper() -> None:
     experiment = Experiment('test_model', [])
     document = YmmslDocument('v0.1', experiment)
-    text = yaml.dump(document, Dumper=ymmsl.dumper)
+    text = ymmsl.save(document)
     assert text == ('version: v0.1\n'
                     'experiment:\n'
                     '  model: test_model\n'
