@@ -75,13 +75,15 @@ def test_experiment_from_dict() -> None:
         'init.max_depth': 0.11})
 
     assert str(experiment.model) == 'isr2d'
-    assert list(experiment.parameter_values[0].parameter) == [
-        'submodel', '_muscle_grain'
-    ]
-    assert cast(List[float], experiment.parameter_values[1].value)[1] == 3.0
-    assert experiment.parameter_values[2].value == 0.001
-    assert list(experiment.parameter_values[4].parameter) == ['bf', 'velocity']
-    assert experiment.parameter_values[5].value == 0.11
+
+    assert ['submodel', '_muscle_grain'] in [
+            list(s.parameter) for s in experiment.parameter_values]
+
+    assert ('submodel._muscle_extent', [10.0, 3.0]) in [
+            (str(s.parameter), s.value) for s in experiment.parameter_values]
+
+    assert ('submodel._muscle_timestep', 0.001) in [
+            (str(s.parameter), s.value) for s in experiment.parameter_values]
 
 
 def test_load_experiment() -> None:
