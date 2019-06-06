@@ -23,10 +23,10 @@ class ComputeElementDecl:
                 simultaneously.
     """
 
-    def __init__(self, name: Reference, implementation: Reference,
+    def __init__(self, name: str, implementation: str,
                  multiplicity: List[int] = []) -> None:
-        self.name = name
-        self.implementation = implementation
+        self.name = Reference(name)
+        self.implementation = Reference(implementation)
         self.multiplicity = multiplicity
 
         for part in self.implementation:
@@ -80,13 +80,12 @@ class Conduit:
         sender: The sending port that this conduit is connected to.
         receiver: The receiving port that this conduit is connected to.
     """
-    def __init__(self, sender: Reference,
-                 receiver: Reference) -> None:
-        self.sender = sender
-        self.receiver = receiver
+    def __init__(self, sender: str, receiver: str) -> None:
+        self.sender = Reference(sender)
+        self.receiver = Reference(receiver)
 
-        self.__check_reference(sender)
-        self.__check_reference(receiver)
+        self.__check_reference(self.sender)
+        self.__check_reference(self.receiver)
 
     def __str__(self) -> str:
         return 'Conduit({} -> {})'.format(self.sender, self.receiver)

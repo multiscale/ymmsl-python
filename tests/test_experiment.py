@@ -11,33 +11,33 @@ from ruamel import yaml
 
 
 def test_setting() -> None:
-    setting = Setting(Reference('submodel.test'), 12)
+    setting = Setting('submodel.test', 12)
     assert str(setting.parameter) == 'submodel.test'
     assert isinstance(setting.value, int)
     assert setting.value == 12
 
-    setting = Setting(Reference('par1'), 'test')
+    setting = Setting('par1', 'test')
     assert str(setting.parameter) == 'par1'
     assert isinstance(setting.value, str)
     assert setting.value == 'test'
 
-    setting = Setting(Reference('submodel.par1[3]'), 3.14159)
+    setting = Setting('submodel.par1[3]', 3.14159)
     assert str(setting.parameter) == 'submodel.par1[3]'
     assert isinstance(setting.value, float)
     assert setting.value == 3.14159
 
-    setting = Setting(Reference('extra_accuracy'), True)
+    setting = Setting('extra_accuracy', True)
     assert str(setting.parameter) == 'extra_accuracy'
     assert isinstance(setting.value, bool)
     assert setting.value is True
 
-    setting = Setting(Reference('submodel.par1'), [1.0, 2.0, 3.0])
+    setting = Setting('submodel.par1', [1.0, 2.0, 3.0])
     assert str(setting.parameter) == 'submodel.par1'
     assert isinstance(setting.value, list)
     assert len(setting.value) == 3
     assert setting.value == [1.0, 2.0, 3.0]
 
-    setting = Setting(Reference('submodel.par1'), [[1.0, 2.0], [3.0, 4.0]])
+    setting = Setting('submodel.par1', [[1.0, 2.0], [3.0, 4.0]])
     assert str(setting.parameter) == 'submodel.par1'
     assert isinstance(setting.value, list)
     assert len(setting.value) == 2
@@ -46,16 +46,15 @@ def test_setting() -> None:
 
 
 def test_experiment() -> None:
-    model = Reference('isr2d')
     parameter_values = [
-        Setting(Reference('submodel._muscle_grain'), [0.01, 0.01]),
-        Setting(Reference('submodel._muscle_extent'), [10.0, 3.0]),
-        Setting(Reference('submodel._muscle_timestep'), 0.001),
-        Setting(Reference('submodel._muscle_total_time'), 0.1),
-        Setting(Reference('bf.velocity'), 0.48),
-        Setting(Reference('init.max_depth'), 0.11)
+        Setting('submodel._muscle_grain', [0.01, 0.01]),
+        Setting('submodel._muscle_extent', [10.0, 3.0]),
+        Setting('submodel._muscle_timestep', 0.001),
+        Setting('submodel._muscle_total_time', 0.1),
+        Setting('bf.velocity', 0.48),
+        Setting('init.max_depth', 0.11)
     ]
-    experiment = Experiment(model, parameter_values)
+    experiment = Experiment('isr2d', parameter_values)
     assert str(experiment.model) == 'isr2d'
     assert list(experiment.parameter_values[0].parameter) == [
         'submodel', '_muscle_grain'
@@ -106,21 +105,17 @@ def test_dump_experiment() -> None:
 
     yatiml.add_to_dumper(Dumper, [Experiment, Identifier, Reference, Setting])
 
-    ref = Reference
-
-    model = ref('test_model')
-    parameter_values = [Setting(ref('domain1._muscle_grain'), [0.01]),
-                        Setting(ref('domain1._muscle_extent'), [1.5]),
-                        Setting(ref('submodel1._muscle_timestep'), 0.001),
-                        Setting(ref('submodel1._muscle_total_time'), 100.0),
-                        Setting(ref('test_str'), 'value'),
-                        Setting(ref('test_int'), 12),
-                        Setting(ref('test_bool'), True),
-                        Setting(ref('test_list'), [12.3, 1.3])]
-    experiment = Experiment(model, parameter_values)
+    parameter_values = [Setting('domain1._muscle_grain', [0.01]),
+                        Setting('domain1._muscle_extent', [1.5]),
+                        Setting('submodel1._muscle_timestep', 0.001),
+                        Setting('submodel1._muscle_total_time', 100.0),
+                        Setting('test_str', 'value'),
+                        Setting('test_int', 12),
+                        Setting('test_bool', True),
+                        Setting('test_list', [12.3, 1.3])]
+    experiment = Experiment('test_model', parameter_values)
 
     text = yaml.dump(experiment, Dumper=Dumper)
-    print(text)
     assert text == ('model: test_model\n'
                     'parameter_values:\n'
                     '  domain1._muscle_grain:\n'

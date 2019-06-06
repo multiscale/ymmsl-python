@@ -18,9 +18,9 @@ class Setting:
         value: The value to set it to.
     """
 
-    def __init__(self, parameter: Reference, value: ParameterValue) -> None:
+    def __init__(self, parameter: str, value: ParameterValue) -> None:
         # TODO: Expression
-        self.parameter = parameter
+        self.parameter = Reference(parameter)
         self.value = value
 
     @classmethod
@@ -40,9 +40,9 @@ class Experiment:
                 with.
     """
 
-    def __init__(self, model: Reference,
+    def __init__(self, model: str,
                  parameter_values: Optional[List[Setting]] = None) -> None:
-        self.model = model
+        self.model = Reference(model)
         self.parameter_values = parameter_values if parameter_values else list()
 
     @classmethod
