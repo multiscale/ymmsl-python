@@ -139,15 +139,11 @@ def test_dump_experiment() -> None:
     text = yaml.dump(experiment, Dumper=Dumper)
     assert text == ('model: test_model\n'
                     'parameter_values:\n'
-                    '  domain1._muscle_grain:\n'
-                    '  - 0.01\n'
-                    '  domain1._muscle_extent:\n'
-                    '  - 1.5\n'
+                    '  domain1._muscle_grain: [0.01]\n'
+                    '  domain1._muscle_extent: [1.5]\n'
                     '  submodel1._muscle_timestep: 0.001\n'
                     '  submodel1._muscle_total_time: 100.0\n'
                     '  test_str: value\n'
                     '  test_int: 12\n'
                     '  test_bool: true\n'
-                    '  test_list:\n'
-                    '  - 12.3\n'
-                    '  - 1.3\n')
+                    '  test_list: [12.3, 1.3]\n')

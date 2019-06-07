@@ -28,6 +28,19 @@ class Setting:
         node.require_mapping()
 
 
+    @classmethod
+    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        # format lists and arrays nicely
+        value = node.get_attribute('value')
+        if value.is_sequence():
+            if len(value.seq_items()) > 0:
+                if not value.seq_items()[0].is_sequence():
+                    value.yaml_node.flow_style = True
+                else:
+                    value.yaml_node.flow_style = False
+                    for row in value.seq_items():
+                        row.yaml_node.flow_style = True
+
 class Experiment:
     """Settings for doing an experiment.
 
