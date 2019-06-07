@@ -5,6 +5,21 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.6.0
+*****
+
+Changed
+-------
+
+* Easier-to-use API (not backwards compatible!)
+
+Fixed
+-----
+
+* Boolean-valued Experiment parameter values
+* Improved output formatting of list and array settings values
+
+
 0.5.1
 *****
 
