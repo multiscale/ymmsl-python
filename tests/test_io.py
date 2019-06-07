@@ -69,6 +69,11 @@ def test_doc2() -> YmmslDocument:
     return YmmslDocument('v0.1', None, simulation)
 
 
+@pytest.fixture
+def tmpdir_path(tmpdir: Any) -> Path:
+    return Path(str(tmpdir))
+
+
 def test_load_string1(test_yaml1: str) -> None:
     document = load(test_yaml1)
     experiment = document.experiment
@@ -97,8 +102,8 @@ def test_load_string2(test_yaml2: str) -> None:
     assert str(simulation.conduits[3].receiving_compute_element()) == 'bf2smc'
 
 
-def test_load_file(test_yaml1: str, tmpdir: Path) -> None:
-    test_file = tmpdir / 'test_yaml1.ymmsl'
+def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
+    test_file = tmpdir_path / 'test_yaml1.ymmsl'
     with test_file.open('w') as f:
         f.write(test_yaml1)
 
@@ -109,8 +114,8 @@ def test_load_file(test_yaml1: str, tmpdir: Path) -> None:
     assert str(document.experiment.model) == 'test_model'
 
 
-def test_load_path(test_yaml1: str, tmpdir: Any) -> None:
-    test_file = Path(tmpdir) / 'test_yaml1.ymmsl'
+def test_load_path(test_yaml1: str, tmpdir_path: Path) -> None:
+    test_file = tmpdir_path / 'test_yaml1.ymmsl'
     with test_file.open('w') as f:
         f.write(test_yaml1)
 
@@ -129,9 +134,9 @@ def test_dump2(test_yaml2: str, test_doc2: YmmslDocument) -> None:
     assert text == test_yaml2
 
 
-def test_save_str(test_doc1: YmmslDocument, test_yaml1: str, tmpdir: Path
+def test_save_str(test_doc1: YmmslDocument, test_yaml1: str, tmpdir_path: Path
                   ) -> None:
-    test_file = tmpdir / 'test_yaml1.ymmsl'
+    test_file = tmpdir_path / 'test_yaml1.ymmsl'
 
     save(test_doc1, str(test_file))
 
@@ -141,9 +146,9 @@ def test_save_str(test_doc1: YmmslDocument, test_yaml1: str, tmpdir: Path
     assert yaml_out == test_yaml1
 
 
-def test_save_path(test_doc2: YmmslDocument, test_yaml2: str, tmpdir: Path
+def test_save_path(test_doc2: YmmslDocument, test_yaml2: str, tmpdir_path: Path
                    ) -> None:
-    test_file = tmpdir / 'test_yaml1.ymmsl'
+    test_file = tmpdir_path / 'test_yaml1.ymmsl'
 
     save(test_doc2, test_file)
 
@@ -153,9 +158,9 @@ def test_save_path(test_doc2: YmmslDocument, test_yaml2: str, tmpdir: Path
     assert yaml_out == test_yaml2
 
 
-def test_save_file(test_doc2: YmmslDocument, test_yaml2: str, tmpdir: Path
+def test_save_file(test_doc2: YmmslDocument, test_yaml2: str, tmpdir_path: Path
                    ) -> None:
-    test_file = tmpdir / 'test_yaml1.ymmsl'
+    test_file = tmpdir_path / 'test_yaml1.ymmsl'
 
     with test_file.open('w') as f:
         save(test_doc2, f)
