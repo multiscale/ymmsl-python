@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from pathlib import Path
 from typing import Any, IO
 
@@ -22,10 +23,10 @@ def test_yaml1() -> str:
 
 @pytest.fixture
 def test_doc1() -> YmmslDocument:
-    experiment = Experiment('test_model', {
-        'test_str': 'value',
-        'test_int': 13,
-        'test_list': [12.3, 1.3]})
+    experiment = Experiment('test_model', OrderedDict([
+        ('test_str', 'value'),
+        ('test_int', 13),
+        ('test_list', [12.3, 1.3])]))
     return YmmslDocument('v0.1', experiment)
 
 
