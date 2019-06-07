@@ -19,57 +19,42 @@ or you can add it to your dependencies as usual.
 Reading yMMSL files
 -------------------
 
-yMMSL files are YAML files, so we use a YAML library to read them. Python has
-two YAML libraries, the original PyYAML which has security issues and is not
-supported very actively, and the fork ruamel.yaml, which is better security-wise
-and more actively maintained. We therefore use ruamel.yaml. It is a dependency
-of the ``ymmsl`` package, so it should have been installed automatically, but
-it's a good idea to add it to your dependencies explicitly, since you'll be
-using it explicitly to load yMMSL files.
-
 Here is an example of loading a yMMSL file:
 
 .. code-block:: python
 
    import ymmsl
-   from ruamel import yaml
 
    with open('example.ymmsl', 'r') as f:
-       doc = yaml.load(f, Loader=ymmsl.loader)
+       doc = ymmsl.load(f)
 
 This makes ``doc`` an object of type :class:`ymmsl.YmmslDocument`, which is the
-top-level class describing a yMMSL document. Note that this is almost completely
-identical to the way you would normally load a YAML document, the only
-difference is that the ``Loader`` argument is set to ``ymms.loader``. This has a
-big effect however, since the value returned from ``yaml.load`` is now not a
-dictionary containing more dictionaries, but an object of a class defined by the
-``ymmsl`` library.
+top-level class describing a yMMSL document.
 
 If the file is valid YAML, but not recognized as a yMMSL file, the library will
 raise a :class:`ymmsl.RecognitionError` with a message describing in detail what
 is wrong, so that you can easily fix the file.
 
-Note that you can use ``yaml.safe_load`` if you want, but since
-``ymmsl.loader`` is a SafeLoader, the input will always be loaded safely
-whichever function you use.
+Note that the ``load()`` function uses the safe loading functionality of the
+underlying YAML library, so you can safely load files from untrusted sources.
 
 Writing yMMSL files
 -------------------
 
 To write a yMMSL file with the contents of a :class:`ymmsl.YmmslDocument`, we
-use ``yaml.dump``:
+use ``ymmsl.save``:
 
 .. code-block:: python
 
    import ymmsl
-   from ruamel import yaml
+
+   doc = ymmsl.Ymmsl('v0.1', [], [])
 
    with open('out.ymmsl', 'w') as f:
-       yaml.dump(doc, Dumper=ymmsl.dumper)
+       ymmsl.save(doc, f)
 
-This is again the normal way of writing a YAML file, except this time with a
-custom dumper that knows how to convert objects from the ``ymmsl`` library to
-easy-to-read YAML text.
+This produces a text file with a YAML description of the given object. If you
+want to have the YAML as a string, use ``ymmsl.dump(doc)`` instead.
 
 Working with yMMSL objects
 --------------------------
@@ -101,9 +86,8 @@ experiment part is in ``doc.simulation.conduits``, which is a list of
 
 On the :class:`ymmsl.Experiment` side, things work similarly, with the model to
 be run being reached via ``doc.experiment.model``, which is an object of class
-:class:`ymmsl.Reference`. ``doc.experiment.scales`` is a list of
-:class:`ymmsl.ScaleSettings` objects, and ``doc.experiment.parameter_values`` a
-list of :class:`ymmsl.Setting` objects.
+:class:`ymmsl.Reference`. ``doc.experiment.parameter_values`` is a list of
+:class:`ymmsl.Setting` objects.
 
 These are all ordinary Python objects, so you can modify the document by
 creating new objects and assigning them to attributes of other objects, or
