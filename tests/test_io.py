@@ -4,7 +4,7 @@ from typing import Any, IO
 
 import pytest
 
-from ymmsl import (ComputeElementDecl, Conduit, dump, Experiment, Identifier,
+from ymmsl import (ComputeElement, Conduit, dump, Experiment, Identifier,
                    load, save, Simulation, YmmslDocument)
 
 
@@ -55,11 +55,11 @@ def test_doc2() -> YmmslDocument:
     simulation = Simulation(
             Identifier('test_model'),
             [
-                ComputeElementDecl('ic', 'isr2d.initial_conditions'),
-                ComputeElementDecl('smc', 'isr2d.smc'),
-                ComputeElementDecl('bf', 'isr2d.blood_flow'),
-                ComputeElementDecl('smc2bf', 'isr2d.smc2bf'),
-                ComputeElementDecl('bf2smc', 'isr2d.bf2smc')],
+                ComputeElement('ic', 'isr2d.initial_conditions'),
+                ComputeElement('smc', 'isr2d.smc'),
+                ComputeElement('bf', 'isr2d.blood_flow'),
+                ComputeElement('smc2bf', 'isr2d.smc2bf'),
+                ComputeElement('bf2smc', 'isr2d.bf2smc')],
             [
                 Conduit('ic.out', 'smc.initial_state'),
                 Conduit('smc.cell_positions', 'smc2bf.in'),

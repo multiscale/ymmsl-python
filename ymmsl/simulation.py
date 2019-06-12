@@ -7,7 +7,7 @@ import yatiml
 from ymmsl.identity import Identifier, Reference
 
 
-class ComputeElementDecl:
+class ComputeElement:
     """An object declaring a compute element.
 
     Compute elements are things like submodels, scale bridges, proxies, \
@@ -199,7 +199,7 @@ class Simulation:
         conduits: A list of conduits connecting the compute elements.
     """
     def __init__(self, name: Identifier,
-                 compute_elements: List[ComputeElementDecl],
+                 compute_elements: List[ComputeElement],
                  conduits: List[Conduit]) -> None:
         self.name = name
         self.compute_elements = compute_elements

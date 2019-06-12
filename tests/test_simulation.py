@@ -2,7 +2,7 @@
 """Tests for the ymmsl module.
 """
 
-from ymmsl import ComputeElementDecl, Conduit, Identifier, Reference, Simulation
+from ymmsl import ComputeElement, Conduit, Identifier, Reference, Simulation
 
 import pytest
 import yatiml
@@ -10,19 +10,19 @@ from ruamel import yaml
 
 
 def test_compute_element_declaration() -> None:
-    test_decl = ComputeElementDecl('test', 'ns.model')
+    test_decl = ComputeElement('test', 'ns.model')
     assert str(test_decl.name) == 'test'
     assert str(test_decl.implementation) == 'ns.model'
     assert test_decl.multiplicity == []
     assert str(test_decl) == 'test'
 
-    test_decl = ComputeElementDecl('test', 'ns.model', 10)
+    test_decl = ComputeElement('test', 'ns.model', 10)
     assert isinstance(test_decl.name, Reference)
     assert str(test_decl.name) == 'test'
     assert test_decl.multiplicity == [10]
     assert str(test_decl) == 'test[10]'
 
-    test_decl = ComputeElementDecl('test', 'ns2.model2', [1, 2])
+    test_decl = ComputeElement('test', 'ns2.model2', [1, 2])
     assert isinstance(test_decl.name, Reference)
     assert str(test_decl.name) == 'test'
     assert str(test_decl.implementation) == 'ns2.model2'
@@ -30,7 +30,7 @@ def test_compute_element_declaration() -> None:
     assert str(test_decl) == 'test[1][2]'
 
     with pytest.raises(ValueError):
-        test_decl = ComputeElementDecl('test', 'ns2.model2[1]')
+        test_decl = ComputeElement('test', 'ns2.model2[1]')
 
 
 def test_conduit() -> None:
@@ -76,8 +76,8 @@ def test_conduit() -> None:
 
 
 def test_simulation() -> None:
-    macro = ComputeElementDecl('macro', 'my.macro')
-    micro = ComputeElementDecl('micro', 'my.micro')
+    macro = ComputeElement('macro', 'my.macro')
+    micro = ComputeElement('micro', 'my.micro')
     comp_els = [macro, micro]
     conduit1 = Conduit('macro.intermediate_state', 'micro.initial_state')
     conduit2 = Conduit('micro.final_state', 'macro.state_update')
@@ -93,7 +93,7 @@ def test_load_simulation() -> None:
     class Loader(yatiml.Loader):
         pass
 
-    yatiml.add_to_loader(Loader, [ComputeElementDecl, Conduit, Identifier,
+    yatiml.add_to_loader(Loader, [ComputeElement, Conduit, Identifier,
                                   Reference, Simulation])
     yatiml.set_document_type(Loader, Simulation)
 
@@ -128,11 +128,11 @@ def test_dump_simulation() -> None:
     class Dumper(yatiml.Dumper):
         pass
 
-    yatiml.add_to_dumper(Dumper, [ComputeElementDecl, Conduit, Identifier,
+    yatiml.add_to_dumper(Dumper, [ComputeElement, Conduit, Identifier,
                                   Reference, Simulation])
 
-    ce1 = ComputeElementDecl('ce1', 'test.impl1')
-    ce2 = ComputeElementDecl('ce2', 'test.impl2')
+    ce1 = ComputeElement('ce1', 'test.impl1')
+    ce2 = ComputeElement('ce2', 'test.impl2')
     ce1_out = Reference('ce1.state_out')
     ce2_in = Reference('ce2.init_in')
     ce2_out = Reference('ce2.fini_out')
