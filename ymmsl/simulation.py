@@ -1,5 +1,5 @@
 """This module contains all the definitions for yMMSL."""
-from typing import Any, List, cast
+from typing import Any, List, Union, cast
 
 from ruamel import yaml
 import yatiml
@@ -24,7 +24,10 @@ class ComputeElementDecl:
     """
 
     def __init__(self, name: str, implementation: str,
-                 multiplicity: List[int] = []) -> None:
+                 multiplicity: Union[int, List[int]] = []) -> None:
+
+        if isinstance(multiplicity, int):
+            multiplicity = [multiplicity]
         self.name = Reference(name)
         self.implementation = Reference(implementation)
         self.multiplicity = multiplicity

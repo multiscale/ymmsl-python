@@ -16,6 +16,12 @@ def test_compute_element_declaration() -> None:
     assert test_decl.multiplicity == []
     assert str(test_decl) == 'test'
 
+    test_decl = ComputeElementDecl('test', 'ns.model', 10)
+    assert isinstance(test_decl.name, Reference)
+    assert str(test_decl.name) == 'test'
+    assert test_decl.multiplicity == [10]
+    assert str(test_decl) == 'test[10]'
+
     test_decl = ComputeElementDecl('test', 'ns2.model2', [1, 2])
     assert isinstance(test_decl.name, Reference)
     assert str(test_decl.name) == 'test'
