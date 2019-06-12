@@ -56,12 +56,12 @@ This repository is set up with Python versions:
 * 3.5
 * 3.6
 
-Add or remove Python versions based on project requirements. `The guide <https://guide.esciencecenter.nl/best_practices/language_guides/python.html>`_ contains more information about Python versions and writing Python 2 and 3 compatible code.
+Add or remove Python versions based on project requirements. The guide contains more information about Python versions and writing Python 2 and 3 compatible code.
 
 Package management and dependencies
 -----------------------------------
 
-You can use either `pip` or `conda` for installing dependencies and package management. This repository does not force you to use one or the other, as project requirements differ. For advice on what to use, please check `the relevant section of the guide <https://guide.esciencecenter.nl/best_practices/language_guides/python.html#dependencies-and-package-management>`_.
+You can use either `pip` or `conda` for installing dependencies and package management. This repository does not force you to use one or the other, as project requirements differ. For advice on what to use, please check the relevant section of the guide.
 
 * Dependencies should be added to `setup.py` in the `install_requires` list.
 
@@ -88,7 +88,6 @@ Testing and code coverage
   - `Getting started with Travis CI <https://docs.travis-ci.com/user/getting-started/>`_
 
 * TODO: add something about code quality/coverage tool?
-* `Relevant section in the guide <https://guide.esciencecenter.nl/best_practices/language_guides/python.html#testing>`_
 
 Documentation
 -------------
@@ -109,21 +108,17 @@ Documentation
 
   - Include the link to the documentation in this README_.
 
-* `Relevant section in the guide <https://guide.esciencecenter.nl/best_practices/language_guides/python.html#writingdocumentation>`_
-
 Coding style conventions and code quality
 -----------------------------------------
 
 * Check your code style with ``prospector``
 * You may need run ``pip install .[dev]`` first, to install the required dependencies
 * You can use ``yapf`` to fix the readability of your code style and ``isort`` to format and group your imports
-* `Relevant section in the guide <https://guide.esciencecenter.nl/best_practices/language_guides/python.html#coding-style-conventions>`_
 
 CHANGELOG.rst
 -------------
 
 * Document changes to your software package
-* `Relevant section in the guide <https://guide.esciencecenter.nl/software/releases.html#changelogmd>`_
 
 CITATION.cff
 ------------
@@ -131,31 +126,26 @@ CITATION.cff
 * To allow others to cite your software, add a ``CITATION.cff`` file
 * It only makes sense to do this once there is something to cite (e.g., a software release with a DOI).
 * To generate a CITATION.cff file given a DOI, use `doi2cff <https://github.com/citation-file-format/doi2cff>`_.
-* `Relevant section in the guide <https://guide.esciencecenter.nl/software/documentation.html#citation-file>`_
 
 CODE_OF_CONDUCT.rst
 -------------------
 
 * Information about how to behave professionally
-* `Relevant section in the guide <https://guide.esciencecenter.nl/software/documentation.html#code-of-conduct>`_
 
 CONTRIBUTING.rst
 ----------------
 
 * Information about how to contribute to this software package
-* `Relevant section in the guide <https://guide.esciencecenter.nl/software/documentation.html#contribution-guidelines>`_
 
 MANIFEST.in
 -----------
 
 * List non-Python files that should be included in a source distribution
-* `Relevant section in the guide <https://guide.esciencecenter.nl/best_practices/language_guides/python.html#building-and-packaging-code>`_
 
 NOTICE
 ------
 
 * List of attributions of this project and Apache-license dependencies
-* `Relevant section in the guide <https://guide.esciencecenter.nl/best_practices/licensing.html#notice>`_
 
 Installation
 ------------
