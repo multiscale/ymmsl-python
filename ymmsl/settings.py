@@ -41,31 +41,28 @@ class Setting:
                     for row in value.seq_items():
                         row.yaml_node.flow_style = True
 
-class Experiment:
+class Settings:
     """Settings for doing an experiment.
 
     An experiment is done by running a model with particular settings, \
     for the submodel scales and other parameters.
 
     Attributes:
-        model: The identifier of the model to run.
         parameter_values: The parameter values to initialise the models \
                 with, as a list of Settings.
     """
 
     def __init__(
-            self, model: str,
+            self,
             parameter_values: Optional[
                 Union[Dict[str, ParameterValue], List[Setting]]] = None
             ) -> None:
-        """Create an Experiment.
+        """Create a Settings object.
 
         Args:
-            model: Identifier of the model to run.
             parameter_values: The parameter values to initialise the models
                     with, as a list of Settings or as a dictionary.
         """
-        self.model = Reference(model)
         self.parameter_values = list()  # type: List[Setting]
 
         if parameter_values:

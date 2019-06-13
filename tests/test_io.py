@@ -4,8 +4,8 @@ from typing import Any, IO
 
 import pytest
 
-from ymmsl import (ComputeElement, Conduit, dump, Experiment, Identifier,
-                   load, save, Model, ModelReference, YmmslDocument)
+from ymmsl import (ComputeElement, Conduit, dump, Identifier, load, save,
+                   Model, ModelReference, YmmslDocument)
 
 
 @pytest.fixture
@@ -15,12 +15,11 @@ def tmpdir_path(tmpdir: Any) -> Path:
 
 def test_load_string1(test_yaml1: str) -> None:
     document = load(test_yaml1)
-    experiment = document.experiment
-    assert experiment is not None
-    assert str(experiment.model) == 'test_model'
-    assert len(experiment.parameter_values) == 3
-    assert isinstance(experiment.parameter_values[2].value, list)
-    assert experiment.parameter_values[2].value[1] == 1.3
+    settings = document.settings
+    assert settings is not None
+    assert len(settings.parameter_values) == 3
+    assert isinstance(settings.parameter_values[2].value, list)
+    assert settings.parameter_values[2].value[1] == 1.3
 
     text = 'version: v0.1\n'
     document = load(text)
@@ -55,8 +54,7 @@ def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
     with test_file.open('r') as f:
         document = load(f)
 
-    assert document.experiment is not None
-    assert str(document.experiment.model) == 'test_model'
+    assert document.settings is not None
 
 
 def test_load_path(test_yaml1: str, tmpdir_path: Path) -> None:
@@ -65,8 +63,7 @@ def test_load_path(test_yaml1: str, tmpdir_path: Path) -> None:
         f.write(test_yaml1)
 
     document = load(test_file)
-    assert document.experiment is not None
-    assert str(document.experiment.model) == 'test_model'
+    assert document.settings is not None
 
 
 def test_dump1(test_yaml1: str, test_doc1: YmmslDocument) -> None:

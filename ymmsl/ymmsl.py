@@ -3,7 +3,7 @@ from typing import Optional
 
 import yatiml
 
-from ymmsl.experiment import Experiment
+from ymmsl.settings import Settings
 from ymmsl.model import ModelReference
 
 
@@ -13,21 +13,22 @@ class YmmslDocument:
     This is the top-level class for yMMSL data.
 
     Attributes:
-        experiment: An experiment to run.
+        model: A model to run.
+        settings: Settings to run the model with.
     """
 
     def __init__(self,
                  version: str,
-                 experiment: Optional[Experiment] = None,
-                 model: Optional[ModelReference] = None
+                 model: Optional[ModelReference] = None,
+                 settings: Optional[Settings] = None
                  ) -> None:
         self.version = version
-        self.experiment = experiment
         self.model = model
+        self.settings = settings
 
     @classmethod
     def yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        if node.get_attribute('experiment').is_scalar(type(None)):
-            node.remove_attribute('experiment')
+        if node.get_attribute('settings').is_scalar(type(None)):
+            node.remove_attribute('settings')
         if node.get_attribute('model').is_scalar(type(None)):
             node.remove_attribute('model')
