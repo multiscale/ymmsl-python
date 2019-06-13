@@ -5,7 +5,7 @@ from ymmsl.compute_element import Operator, Port
 from ymmsl.experiment import Setting, Experiment, ParameterValue
 from ymmsl.identity import Identifier, Reference
 from ymmsl.io import load, dump, save
-from ymmsl.simulation import ComputeElement, Conduit, Simulation
+from ymmsl.model import ComputeElement, Conduit, Model, ModelReference
 from ymmsl.ymmsl import YmmslDocument
 
 
@@ -21,5 +21,5 @@ __email__ = 'l.veen@esciencecenter.nl'
 
 
 __all__ = ['ComputeElement', 'Conduit', 'dump', 'Experiment', 'Identifier',
-           'load', 'Operator', 'ParameterValue', 'Port', 'Reference',
-           'Setting', 'Simulation', 'YmmslDocument', 'save']
+           'load', 'Model', 'ModelReference', 'Operator', 'ParameterValue',
+           'Port', 'Reference', 'Setting', 'YmmslDocument', 'save']

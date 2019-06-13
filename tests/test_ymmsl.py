@@ -5,7 +5,7 @@
 from typing import Any, List  # noqa: F401
 
 from ymmsl import (Experiment, Reference, Setting,
-                   YmmslDocument)  # noqa: F401
+                   YmmslDocument, load)  # noqa: F401
 
 
 def test_ymmsl() -> None:

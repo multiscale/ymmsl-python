@@ -4,7 +4,7 @@ from typing import Optional
 import yatiml
 
 from ymmsl.experiment import Experiment
-from ymmsl.simulation import Simulation
+from ymmsl.model import ModelReference
 
 
 class YmmslDocument:
@@ -19,15 +19,15 @@ class YmmslDocument:
     def __init__(self,
                  version: str,
                  experiment: Optional[Experiment] = None,
-                 simulation: Optional[Simulation] = None
+                 model: Optional[ModelReference] = None
                  ) -> None:
         self.version = version
         self.experiment = experiment
-        self.simulation = simulation
+        self.model = model
 
     @classmethod
     def yatiml_sweeten(cls, node: yatiml.Node) -> None:
         if node.get_attribute('experiment').is_scalar(type(None)):
             node.remove_attribute('experiment')
-        if node.get_attribute('simulation').is_scalar(type(None)):
-            node.remove_attribute('simulation')
+        if node.get_attribute('model').is_scalar(type(None)):
+            node.remove_attribute('model')

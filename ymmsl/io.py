@@ -6,7 +6,7 @@ import yatiml
 
 from ymmsl.experiment import Setting, Experiment
 from ymmsl.identity import Identifier, Reference
-from ymmsl.simulation import ComputeElement, Conduit, Simulation
+from ymmsl.model import ComputeElement, Conduit, Model, ModelReference
 from ymmsl.ymmsl import YmmslDocument
 
 
@@ -15,7 +15,7 @@ def _loader() -> Type:
         pass
     yatiml.add_to_loader(YmmslLoader,
                          [ComputeElement, Conduit, Experiment, Identifier,
-                          Reference, Setting, Simulation,
+                          Model, ModelReference, Reference, Setting,
                           YmmslDocument])
     yatiml.set_document_type(YmmslLoader, YmmslDocument)
     return YmmslLoader
@@ -26,7 +26,7 @@ def _dumper() -> Type:
         pass
     yatiml.add_to_dumper(YmmslDumper,
                          [ComputeElement, Conduit, Experiment, Identifier,
-                          Reference, Setting, Simulation,
+                          Model, ModelReference, Reference, Setting,
                           YmmslDocument])
     return YmmslDumper
 
