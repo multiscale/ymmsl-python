@@ -4,7 +4,7 @@ from typing import Any, IO, Type, Union
 from ruamel import yaml
 import yatiml
 
-from ymmsl.settings import Setting, Settings
+from ymmsl.settings import Settings
 from ymmsl.identity import Identifier, Reference
 from ymmsl.model import ComputeElement, Conduit, Model, ModelReference
 from ymmsl.ymmsl import YmmslDocument
@@ -15,8 +15,7 @@ def _loader() -> Type:
         pass
     yatiml.add_to_loader(YmmslLoader,
                          [ComputeElement, Conduit, Identifier, Model,
-                          ModelReference, Reference, Setting, Settings,
-                          YmmslDocument])
+                          ModelReference, Reference, Settings, YmmslDocument])
     yatiml.set_document_type(YmmslLoader, YmmslDocument)
     return YmmslLoader
 
@@ -26,8 +25,7 @@ def _dumper() -> Type:
         pass
     yatiml.add_to_dumper(YmmslDumper,
                          [ComputeElement, Conduit, Identifier, Model,
-                          ModelReference, Reference, Setting, Settings,
-                          YmmslDocument])
+                          ModelReference, Reference, Settings, YmmslDocument])
     return YmmslDumper
 
 

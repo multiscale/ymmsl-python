@@ -1,5 +1,6 @@
-"""This module contains all the definitions for yMMSL."""
-from typing import Dict, List, Optional, Union
+from collections import OrderedDict, MutableMapping
+from copy import deepcopy
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 import yatiml
 
@@ -10,79 +11,126 @@ ParameterValue = Union[str, int, float, bool,
                        List[float], List[List[float]], yatiml.bool_union_fix]
 
 
-class Setting:
-    """Settings for arbitrary parameters.
-
-    Attributes:
-        parameter: Reference to the parameter to set.
-        value: The value to set it to.
-    """
-
-    def __init__(self, parameter: str, value: ParameterValue) -> None:
-        # TODO: Expression
-        self.parameter = Reference(parameter)
-        self.value = value
-
-    @classmethod
-    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
-        node.require_mapping()
-
-
-    @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        # format lists and arrays nicely
-        value = node.get_attribute('value')
-        if value.is_sequence():
-            if len(value.seq_items()) > 0:
-                if not value.seq_items()[0].is_sequence():
-                    value.yaml_node.flow_style = True
-                else:
-                    value.yaml_node.flow_style = False
-                    for row in value.seq_items():
-                        row.yaml_node.flow_style = True
-
-class Settings:
+class Settings(MutableMapping):
     """Settings for doing an experiment.
 
     An experiment is done by running a model with particular settings, \
     for the submodel scales and other parameters.
-
-    Attributes:
-        parameter_values: The parameter values to initialise the models \
-                with, as a list of Settings.
     """
-
     def __init__(
             self,
-            parameter_values: Optional[
-                Union[Dict[str, ParameterValue], List[Setting]]] = None
+            settings: Optional[Dict[str, ParameterValue]] = None
             ) -> None:
         """Create a Settings object.
 
-        Args:
-            parameter_values: The parameter values to initialise the models
-                    with, as a list of Settings or as a dictionary.
-        """
-        self.parameter_values = list()  # type: List[Setting]
+        This will make a deep copy of the settings argument, if
+        given.
 
-        if parameter_values:
-            if isinstance(parameter_values, dict):
-                for key, value in parameter_values.items():
-                    self.parameter_values.append(Setting(key, value))
-            else:
-                self.parameter_values = parameter_values
+        Args:
+            settings: Parameter values to initialise a model with.
+        """
+        self._store = OrderedDict()  # type: OrderedDict[Reference, ParameterValue]
+
+        if settings is not None:
+            for key, value in settings.items():
+                self[key] = deepcopy(value)
+
+    def __eq__(self, other: Any) -> bool:
+        """Returns whether keys and values are identical.
+        """
+        if not isinstance(other, Settings):
+            return NotImplemented
+        return self._store == other._store
+
+    def __str__(self) -> str:
+        """Represent as a string.
+        """
+        return str(self.as_ordered_dict())
+
+    def __getitem__(self, key: Union[str, Reference]) -> ParameterValue:
+        """Returns an item, implements settings[name]
+        """
+        if isinstance(key, str):
+            key = Reference(key)
+        return self._store[key]
+
+    def __setitem__(self, key: Union[str, Reference], value: ParameterValue
+                    ) -> None:
+        """Sets a value, implements settings[name] = value.
+        """
+        if isinstance(key, str):
+            key = Reference(key)
+        self._store[key] = value
+
+    def __delitem__(self, key: Union[str, Reference]) -> None:
+        """Deletes a value, implements del(settings[name]).
+        """
+        if isinstance(key, str):
+            key = Reference(key)
+        del(self._store[key])
+
+    def __iter__(self) -> Iterator[Tuple[Reference, ParameterValue]]:
+        """Iterate through the settings' key, value pairs.
+        """
+        return iter(self._store)  # type: ignore
+
+    def __len__(self) -> int:
+        """Returns the number of parameter settings.
+        """
+        return len(self._store)
+
+    def ordered_items(self) -> List[Tuple[Reference, ParameterValue]]:
+        """Return settings as a list of tuples.
+        """
+        result = list()
+        for key, value in self._store.items():
+            result.append((key, value))
+        return result
+
+    def copy(self) -> 'Settings':
+        """Makes a shallow copy of these settings and returns it.
+        """
+        new_settings = Settings()
+        new_settings._store = self._store.copy()
+        return new_settings
+
+    def as_ordered_dict(self) -> OrderedDict:
+        """Represent as a dictionary of plain built-in types.
+
+        Returns: A dictionary that uses only built-in types, containing
+            the configuration.
+        """
+        odict = OrderedDict()     # type: OrderedDict[str, ParameterValue]
+        for key, value in self._store.items():
+            odict[str(key)] = value
+        return odict
 
     @classmethod
     def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
-        pass
+        # In the YAML file, a Settings is just a mapping...
+        node.require_mapping()
+
+    def yatiml_attributes(self) -> OrderedDict:
+        # ...so we just give YAtiML our internal mapping to serialise
+        return self._store
 
     @classmethod
     def yatiml_savorize(cls, node: yatiml.Node) -> None:
-        node.map_attribute_to_seq('parameter_values', 'parameter', 'value')
+        # wrap the existing mapping into a new mapping with attribute settings
+        parameter_values = node.yaml_node
+        node.make_mapping()
+        node.set_attribute('settings', parameter_values)
 
     @classmethod
     def yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        if len(node.get_attribute('parameter_values').seq_items()) == 0:
-            node.remove_attribute('parameter_values')
-        else:
-            node.seq_attribute_to_map('parameter_values', 'parameter', 'value')
+        # format lists and arrays nicely
+        for _, value_node in node.yaml_node.value:
+            if value_node.tag == 'tag:yaml.org,2002:seq':
+                # this attribute is a list or list-of-list
+                if len(value_node.value) > 0:
+                    if value_node.value[0].tag != 'tag:yaml.org,2002:seq':
+                        value_node.flow_style = True
+                    else:
+                        value_node.value.flow_style = False
+                        for row_node in value_node.value:
+                            row_node.flow_style = True

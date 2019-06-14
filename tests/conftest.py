@@ -10,10 +10,9 @@ from ymmsl import (ComputeElement, Conduit, Identifier, Model, ModelReference,
 def test_yaml1() -> str:
     text = ('version: v0.1\n'
             'settings:\n'
-            '  parameter_values:\n'
-            '    test_str: value\n'
-            '    test_int: 13\n'
-            '    test_list: [12.3, 1.3]\n'
+            '  test_str: value\n'
+            '  test_int: 13\n'
+            '  test_list: [12.3, 1.3]\n'
             )
     return text
 

@@ -17,9 +17,9 @@ def test_load_string1(test_yaml1: str) -> None:
     document = load(test_yaml1)
     settings = document.settings
     assert settings is not None
-    assert len(settings.parameter_values) == 3
-    assert isinstance(settings.parameter_values[2].value, list)
-    assert settings.parameter_values[2].value[1] == 1.3
+    assert len(settings) == 3
+    assert isinstance(settings['test_list'], list)
+    assert settings['test_list'][1] == 1.3
 
     text = 'version: v0.1\n'
     document = load(text)

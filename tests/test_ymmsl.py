@@ -1,16 +1,12 @@
-#!/usr/bin/env python
-"""Tests for the ymmsl module.
-"""
-
+from collections import OrderedDict
 from typing import Any, List  # noqa: F401
 
-from ymmsl import (Reference, Setting, Settings, YmmslDocument,
-                   load)  # noqa: F401
+from ymmsl import (ParameterValue, Reference, Settings, YmmslDocument, load)  # noqa: F401
 
 
 def test_ymmsl() -> None:
-    parameter_values = []  # type: List[Setting]
+    parameter_values = OrderedDict()    # type: OrderedDict[str, ParameterValue]
     settings = Settings(parameter_values)
     doc = YmmslDocument('v0.1', None, settings)
     assert isinstance(doc.settings, Settings)
-    assert doc.settings.parameter_values == []
+    assert len(doc.settings) == 0
