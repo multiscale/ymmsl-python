@@ -113,7 +113,7 @@ def test_model() -> None:
     conduit1 = Conduit('macro.intermediate_state', 'micro.initial_state')
     conduit2 = Conduit('micro.final_state', 'macro.state_update')
     conduits = [conduit1, conduit2]
-    model = Model(Identifier('test_sim'), comp_els, conduits)
+    model = Model('test_sim', comp_els, conduits)
 
     assert str(model.name) == 'test_sim'
     assert model.compute_elements == comp_els
@@ -170,7 +170,7 @@ def test_dump_model() -> None:
     ce1_in = Reference('ce1.boundary_in')
     cd1 = Conduit('ce1.state_out', 'ce2.init_in')
     cd2 = Conduit('ce2.fini_out', 'ce1.boundary_in')
-    model = Model(Identifier('test_model'), [ce1, ce2], [cd1, cd2])
+    model = Model('test_model', [ce1, ce2], [cd1, cd2])
 
     text = yaml.dump(model, Dumper=Dumper)
     assert text == ('name: test_model\n'
