@@ -1,23 +1,26 @@
 version: v0.1
 
-simulation:
-name: macro_micro_model
-compute_elements:
-  macro: my.macro_model
-  micro: my.micro_model
-conduits:
-  macro.state_out: micro.init_in
-  micro.final_out: macro.update_in
+model:
+  name: macro_micro_model
+  compute_elements:
+    macro: my.macro_model
+    micro: my.micro_model
+  conduits:
+    macro.state_out: micro.init_in
+    micro.final_out: macro.update_in
 
-experiment:
-model: macro_micro_model
-parameter_values:
+settings:
+  # Scales
   domain._muscle_grain: 0.01
   domain._muscle_extent: 1.0
   macro._muscle_timestep: 10.0
   macro._muscle_total_time: 1000.0
   micro._muscle_timestep: 0.01
   micro._muscle_total_time: 1.0
+
+  # Global settings
   k: 1.0
-  micro.d: 2.3
   interpolation_method: linear
+
+  # Submodel-specific setting
+  micro.d: 2.3

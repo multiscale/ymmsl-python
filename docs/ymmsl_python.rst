@@ -65,9 +65,9 @@ sugar has been added to make the files easier to read and write by hand.
 
 So, for instance, assuming that you have a variable ``doc`` read from
 ``example.ymmsl`` as described above, the version of the file will be available
-as ``doc.version``, the ``experiment`` part as ``doc.experiment`` and the
-``simulation`` part as ``doc.simulation``. Note that both the simulation and the
-experiment part are optional, so you'll want to check that they're not ``None``
+as ``doc.version``, the ``model`` part as ``doc.model`` and the
+``settings`` part as ``doc.settings``. Note that both the model and the
+settings part are optional, so you'll want to check that they're not ``None``
 before doing anything with them.
 
 You will find the first bit of syntactic sugar in
@@ -84,10 +84,10 @@ in handy when resolving them.  The other bit of syntactic sugar in the
 experiment part is in ``doc.simulation.conduits``, which is a list of
 :class:`ymmsl.Conduit` objects (see the API documentation).
 
-On the :class:`ymmsl.Experiment` side, things work similarly, with the model to
-be run being reached via ``doc.experiment.model``, which is an object of class
-:class:`ymmsl.Reference`. ``doc.experiment.parameter_values`` is a list of
-:class:`ymmsl.Setting` objects.
+On the settings side, the settings are described as a dictionary
+(or mapping, in YAML-speak) in the YAML file, and they are a
+:class:`ymmsl.Settings` object on the Python side, which is a custom class that
+behaves like a dictionary.
 
 These are all ordinary Python objects, so you can modify the document by
 creating new objects and assigning them to attributes of other objects, or
