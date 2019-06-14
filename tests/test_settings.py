@@ -29,7 +29,10 @@ def test_load_settings() -> None:
     class Loader(yatiml.Loader):
         pass
 
-    yatiml.add_to_loader(Loader, [Identifier, Reference, Settings])
+    # The below fails mypy on Travis with
+    # List item 1 has incompatible type "Type[Reference]"; expected "ABCMeta"
+    # Overrode, no idea where to start looking...
+    yatiml.add_to_loader(Loader, [Identifier, Reference, Settings])     # type: ignore
     yatiml.set_document_type(Loader, Settings)
 
     text = ('domain1._muscle_grain: [0.01]\n'
@@ -60,7 +63,10 @@ def test_dump_settings() -> None:
     class Dumper(yatiml.Dumper):
         pass
 
-    yatiml.add_to_dumper(Dumper, [Identifier, Reference, Settings])
+    # The below fails mypy on Travis with
+    # List item 1 has incompatible type "Type[Reference]"; expected "ABCMeta"
+    # Overrode, no idea where to start looking...
+    yatiml.add_to_dumper(Dumper, [Identifier, Reference, Settings])     # type: ignore
 
     settings = Settings(OrderedDict([
             ('domain1._muscle_grain', [0.01]),
