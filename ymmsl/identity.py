@@ -28,7 +28,7 @@ class Identifier(UserString):
         super().__init__(seq)
         logging.debug('Identifier from {}'.format(seq))
         if not re.fullmatch(
-                '[a-zA-Z_]\w*', self.data, flags=re.ASCII):  # type: ignore
+                r'[a-zA-Z_]\w*', self.data, flags=re.ASCII):
             raise ValueError('Identifiers must consist only of'
                              ' lower- and uppercase letters, digits and'
                              ' underscores, must start with a letter or'

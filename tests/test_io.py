@@ -4,69 +4,8 @@ from typing import Any, IO
 
 import pytest
 
-from ymmsl import (ComputeElementDecl, Conduit, dump, Experiment, Identifier,
-                   load, save, Simulation, YmmslDocument)
-
-
-@pytest.fixture
-def test_yaml1() -> str:
-    text = ('version: v0.1\n'
-            'experiment:\n'
-            '  model: test_model\n'
-            '  parameter_values:\n'
-            '    test_str: value\n'
-            '    test_int: 13\n'
-            '    test_list: [12.3, 1.3]\n'
-            )
-    return text
-
-
-@pytest.fixture
-def test_doc1() -> YmmslDocument:
-    experiment = Experiment('test_model', OrderedDict([
-        ('test_str', 'value'),
-        ('test_int', 13),
-        ('test_list', [12.3, 1.3])]))
-    return YmmslDocument('v0.1', experiment)
-
-
-@pytest.fixture
-def test_yaml2() -> str:
-    text = ('version: v0.1\n'
-            'simulation:\n'
-            '  name: test_model\n'
-            '  compute_elements:\n'
-            '    ic: isr2d.initial_conditions\n'
-            '    smc: isr2d.smc\n'
-            '    bf: isr2d.blood_flow\n'
-            '    smc2bf: isr2d.smc2bf\n'
-            '    bf2smc: isr2d.bf2smc\n'
-            '  conduits:\n'
-            '    ic.out: smc.initial_state\n'
-            '    smc.cell_positions: smc2bf.in\n'
-            '    smc2bf.out: bf.initial_domain\n'
-            '    bf.wss_out: bf2smc.in\n'
-            '    bf2smc.out: smc.wss_in\n')
-    return text
-
-
-@pytest.fixture
-def test_doc2() -> YmmslDocument:
-    simulation = Simulation(
-            Identifier('test_model'),
-            [
-                ComputeElementDecl('ic', 'isr2d.initial_conditions'),
-                ComputeElementDecl('smc', 'isr2d.smc'),
-                ComputeElementDecl('bf', 'isr2d.blood_flow'),
-                ComputeElementDecl('smc2bf', 'isr2d.smc2bf'),
-                ComputeElementDecl('bf2smc', 'isr2d.bf2smc')],
-            [
-                Conduit('ic.out', 'smc.initial_state'),
-                Conduit('smc.cell_positions', 'smc2bf.in'),
-                Conduit('smc2bf.out', 'bf.initial_domain'),
-                Conduit('bf.wss_out', 'bf2smc.in'),
-                Conduit('bf2smc.out', 'smc.wss_in')])
-    return YmmslDocument('v0.1', None, simulation)
+from ymmsl import (ComputeElement, Conduit, dump, Identifier, load, save,
+                   Model, ModelReference, YmmslDocument)
 
 
 @pytest.fixture
@@ -76,12 +15,11 @@ def tmpdir_path(tmpdir: Any) -> Path:
 
 def test_load_string1(test_yaml1: str) -> None:
     document = load(test_yaml1)
-    experiment = document.experiment
-    assert experiment is not None
-    assert str(experiment.model) == 'test_model'
-    assert len(experiment.parameter_values) == 3
-    assert isinstance(experiment.parameter_values[2].value, list)
-    assert experiment.parameter_values[2].value[1] == 1.3
+    settings = document.settings
+    assert settings is not None
+    assert len(settings) == 3
+    assert isinstance(settings['test_list'], list)
+    assert settings['test_list'][1] == 1.3
 
     text = 'version: v0.1\n'
     document = load(text)
@@ -90,16 +28,22 @@ def test_load_string1(test_yaml1: str) -> None:
 
 def test_load_string2(test_yaml2: str) -> None:
     document = load(test_yaml2)
-    simulation = document.simulation
-    assert isinstance(simulation, Simulation)
-    assert str(simulation.name) == 'test_model'
-    assert len(simulation.compute_elements) == 5
-    assert str(simulation.compute_elements[4].name) == 'bf2smc'
-    assert str(simulation.compute_elements[2].implementation) == 'isr2d.blood_flow'
-    assert len(simulation.conduits) == 5
-    assert str(simulation.conduits[0].sender) == 'ic.out'
-    assert str(simulation.conduits[1].sending_port()) == 'cell_positions'
-    assert str(simulation.conduits[3].receiving_compute_element()) == 'bf2smc'
+    model = document.model
+    assert isinstance(model, Model)
+    assert str(model.name) == 'test_model'
+    assert len(model.compute_elements) == 5
+    assert str(model.compute_elements[4].name) == 'bf2smc'
+    assert str(model.compute_elements[2].implementation) == 'isr2d.blood_flow'
+    assert len(model.conduits) == 5
+    assert str(model.conduits[0].sender) == 'ic.out'
+    assert str(model.conduits[1].sending_port()) == 'cell_positions'
+    assert str(model.conduits[3].receiving_compute_element()) == 'bf2smc'
+
+
+def test_load_string3(test_yaml3: str) -> None:
+    document = load(test_yaml3)
+    assert isinstance(document.model, ModelReference)
+    assert str(document.model.name) == 'test_model'
 
 
 def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
@@ -110,8 +54,7 @@ def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
     with test_file.open('r') as f:
         document = load(f)
 
-    assert document.experiment is not None
-    assert str(document.experiment.model) == 'test_model'
+    assert document.settings is not None
 
 
 def test_load_path(test_yaml1: str, tmpdir_path: Path) -> None:
@@ -120,8 +63,7 @@ def test_load_path(test_yaml1: str, tmpdir_path: Path) -> None:
         f.write(test_yaml1)
 
     document = load(test_file)
-    assert document.experiment is not None
-    assert str(document.experiment.model) == 'test_model'
+    assert document.settings is not None
 
 
 def test_dump1(test_yaml1: str, test_doc1: YmmslDocument) -> None:
@@ -132,6 +74,11 @@ def test_dump1(test_yaml1: str, test_doc1: YmmslDocument) -> None:
 def test_dump2(test_yaml2: str, test_doc2: YmmslDocument) -> None:
     text = dump(test_doc2)
     assert text == test_yaml2
+
+
+def test_dump3(test_yaml3: str, test_doc3: YmmslDocument) -> None:
+    text = dump(test_doc3)
+    assert text == test_yaml3
 
 
 def test_save_str(test_doc1: YmmslDocument, test_yaml1: str, tmpdir_path: Path

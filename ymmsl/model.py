@@ -1,5 +1,5 @@
 """This module contains all the definitions for yMMSL."""
-from typing import Any, List, cast
+from typing import Any, List, Union, cast
 
 from ruamel import yaml
 import yatiml
@@ -7,11 +7,11 @@ import yatiml
 from ymmsl.identity import Identifier, Reference
 
 
-class ComputeElementDecl:
+class ComputeElement:
     """An object declaring a compute element.
 
     Compute elements are things like submodels, scale bridges, proxies, \
-    and any other program that makes up a simulation. This class \
+    and any other program that makes up a model. This class \
     represents a declaration of an array of instances of a compute \
     element, and it's used to describe which instances are needed to \
     perform a certain simulation.
@@ -24,7 +24,10 @@ class ComputeElementDecl:
     """
 
     def __init__(self, name: str, implementation: str,
-                 multiplicity: List[int] = []) -> None:
+                 multiplicity: Union[int, List[int]] = []) -> None:
+
+        if isinstance(multiplicity, int):
+            multiplicity = [multiplicity]
         self.name = Reference(name)
         self.implementation = Reference(implementation)
         self.multiplicity = multiplicity
@@ -182,7 +185,22 @@ class Conduit:
         return reference[:i]
 
 
-class Simulation:
+class ModelReference:
+    """Describes a reference (by name) to a model.
+
+    Attributes:
+        name: The name of the simulation model this refers to.
+    """
+    def __init__(self, name: str) -> None:
+        """Create a ModelReference.
+
+        Arguments:
+            name: Name of the model to refer to.
+        """
+        self.name = Identifier(name)
+
+
+class Model(ModelReference):
     """Describes a simulation model.
 
     A model consists of a number of compute elements connected by \
@@ -192,19 +210,30 @@ class Simulation:
         name: The name by which this simulation model is known to \
                 the system.
         compute_elements: A list of compute elements making up the \
-                simulation.
+                model.
         conduits: A list of conduits connecting the compute elements.
     """
-    def __init__(self, name: Identifier,
-                 compute_elements: List[ComputeElementDecl],
+    def __init__(self, name: str,
+                 compute_elements: List[ComputeElement],
                  conduits: List[Conduit]) -> None:
-        self.name = name
+        """Create a Model.
+
+        Arguments:
+            name: Name of this model.
+            compute_elements: A list of compute elements making up the
+                    model.
+            conduits: A list of conduits connecting the compute
+                    elements.
+        """
+        super().__init__(name)
         self.compute_elements = compute_elements
         self.conduits = conduits
 
     @classmethod
     def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
-        pass
+        node.require_mapping()
+        node.require_attribute('name')
+        node.require_attribute('compute_elements')
 
     @classmethod
     def yatiml_savorize(cls, node: yatiml.Node) -> None:

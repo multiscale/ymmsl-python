@@ -15,10 +15,10 @@ needed for MUSCLE 3 to be able to coordinate model execution.
 As the format may develop over time, files are required to carry a version, in
 this case v0.1, which is currently the only version of yMMSL.
 
-Simulations
------------
+Models
+------
 
-The ``simulation`` section describes the simulation model. It has a name, which
+The ``model`` section describes the simulation model. It has a name, which
 is an :class:`Identifier` (see below), a list of compute elements, and conduits
 between them. Compute elements are submodels, scale bridges, proxies, and any
 other program that makes up the coupled simulation. In this case there are two,
@@ -32,23 +32,21 @@ element to a port on another compute element. In this model, port ``state_out``
 on compute element ``macro`` is connected to port ``init_in`` on compute element
 ``micro``. Both sides of the description here are :class:`Reference` s.
 
-Experiments
------------
+Settings
+--------
 
-An experiment in yMMSL is a combination of a simulation model and a collection
-of settings to run it with. The ``model`` attribute contains a reference to the
-model. Next there is an attribute ``parameter_values`` under which the model
-parameters can be configured. Parameter values may be strings, integers,
-floating point numbers, lists of floating point numbers (vectors), or lists of
-lists of floating point numbers (arrays).
+The settings section contains a set of parameter settings for the model.
+Parameter values may be strings, integers, floating point numbers, lists of
+floating point numbers (vectors), or lists of lists of floating point numbers
+(arrays).
 
 In this example, the two submodels share a one-dimensional domain, which is
 named domain, has a length of 1.0, and a grid spacing of 0.01. The macro model
 has a time step of 10 and a total run time of 1000 (so it will run for 100
 steps), while the micro model has a time step of 0.01 and a total run time of
-1.0. Furthermore, there are some model parameters, a shared parameter ``k``, a
-parameter ``d`` that is specific to the micromodel, and a shared parameter
-``interpolation_method``.
+1.0. Furthermore, there are some model parameters, shared parameters ``k`` and
+``interpolation_method``, and a parameter ``d`` that is specific to the
+micromodel.
 
 Identifiers and References
 --------------------------
