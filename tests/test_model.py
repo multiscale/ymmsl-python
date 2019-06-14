@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-"""Tests for the ymmsl module.
-"""
 from typing import Union
 
 from ymmsl import (ComputeElement, Conduit, Identifier, Model, ModelReference,

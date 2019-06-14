@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-"""Tests for the ymmsl module.
-"""
-
 from ymmsl import Identifier, Reference
 
 import pytest

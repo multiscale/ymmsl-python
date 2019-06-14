@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-"""Tests for the ymmsl module.
-"""
-
-from ymmsl.settings import ParameterValue, Settings
-from ymmsl.identity import Identifier, Reference
+from ymmsl import Identifier, ParameterValue, Reference, Settings
 
 from collections import OrderedDict
 from typing import cast, List
