@@ -191,13 +191,13 @@ class ModelReference:
     Attributes:
         name: The name of the simulation model this refers to.
     """
-    def __init__(self, name: Identifier) -> None:
+    def __init__(self, name: str) -> None:
         """Create a ModelReference.
 
         Arguments:
             name: Name of the model to refer to.
         """
-        self.name = name
+        self.name = Identifier(name)
 
 
 class Model(ModelReference):
@@ -213,7 +213,7 @@ class Model(ModelReference):
                 model.
         conduits: A list of conduits connecting the compute elements.
     """
-    def __init__(self, name: Identifier,
+    def __init__(self, name: str,
                  compute_elements: List[ComputeElement],
                  conduits: List[Conduit]) -> None:
         """Create a Model.

@@ -49,7 +49,7 @@ def test_yaml2() -> str:
 @pytest.fixture
 def test_doc2() -> YmmslDocument:
     model = Model(
-            Identifier('test_model'),
+            'test_model',
             [
                 ComputeElement('ic', 'isr2d.initial_conditions'),
                 ComputeElement('smc', 'isr2d.smc'),
@@ -75,5 +75,5 @@ def test_yaml3() -> str:
 
 @pytest.fixture
 def test_doc3() -> YmmslDocument:
-    model = ModelReference(Identifier('test_model'))
+    model = ModelReference('test_model')
     return YmmslDocument('v0.1', model)
