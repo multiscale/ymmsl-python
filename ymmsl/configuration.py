@@ -7,10 +7,8 @@ from ymmsl.settings import Settings
 from ymmsl.model import ModelReference
 
 
-class YmmslDocument:
-    """A yMMSL document.
-
-    This is the top-level class for yMMSL data.
+class Configuration:
+    """Top-level class for all information in a yMMSL file.
 
     Attributes:
         model: A model to run.
