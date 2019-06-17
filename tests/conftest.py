@@ -8,7 +8,7 @@ from ymmsl import (ComputeElement, Conduit, Configuration, Identifier, Model,
 
 @pytest.fixture
 def test_yaml1() -> str:
-    text = ('version: v0.1\n'
+    text = ('ymmsl_version: v0.1\n'
             'settings:\n'
             '  test_str: value\n'
             '  test_int: 13\n'
@@ -28,7 +28,7 @@ def test_config1() -> Configuration:
 
 @pytest.fixture
 def test_yaml2() -> str:
-    text = ('version: v0.1\n'
+    text = ('ymmsl_version: v0.1\n'
             'model:\n'
             '  name: test_model\n'
             '  compute_elements:\n'
@@ -67,7 +67,7 @@ def test_config2() -> Configuration:
 
 @pytest.fixture
 def test_yaml3() -> str:
-    text = ('version: v0.1\n'
+    text = ('ymmsl_version: v0.1\n'
             'model:\n'
             '  name: test_model\n')
     return text

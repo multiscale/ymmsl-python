@@ -16,11 +16,11 @@ class Configuration:
     """
 
     def __init__(self,
-                 version: str,
+                 ymmsl_version: str,
                  model: Optional[ModelReference] = None,
                  settings: Optional[Settings] = None
                  ) -> None:
-        self.version = version
+        self.ymmsl_version = ymmsl_version
         self.model = model
         self.settings = settings
 
