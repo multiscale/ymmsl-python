@@ -4,8 +4,8 @@ from typing import Any, IO
 
 import pytest
 
-from ymmsl import (ComputeElement, Conduit, dump, Identifier, load, save,
-                   Model, ModelReference, YmmslDocument)
+from ymmsl import (ComputeElement, Conduit, Configuration, dump, Identifier,
+                   load, save, Model, ModelReference)
 
 
 @pytest.fixture
@@ -14,21 +14,21 @@ def tmpdir_path(tmpdir: Any) -> Path:
 
 
 def test_load_string1(test_yaml1: str) -> None:
-    document = load(test_yaml1)
-    settings = document.settings
+    configuration = load(test_yaml1)
+    settings = configuration.settings
     assert settings is not None
     assert len(settings) == 3
     assert isinstance(settings['test_list'], list)
     assert settings['test_list'][1] == 1.3
 
-    text = 'version: v0.1\n'
-    document = load(text)
-    assert document.version == 'v0.1'
+    text = 'ymmsl_version: v0.1\n'
+    configuration = load(text)
+    assert configuration.ymmsl_version == 'v0.1'
 
 
 def test_load_string2(test_yaml2: str) -> None:
-    document = load(test_yaml2)
-    model = document.model
+    configuration = load(test_yaml2)
+    model = configuration.model
     assert isinstance(model, Model)
     assert str(model.name) == 'test_model'
     assert len(model.compute_elements) == 5
@@ -41,9 +41,9 @@ def test_load_string2(test_yaml2: str) -> None:
 
 
 def test_load_string3(test_yaml3: str) -> None:
-    document = load(test_yaml3)
-    assert isinstance(document.model, ModelReference)
-    assert str(document.model.name) == 'test_model'
+    configuration = load(test_yaml3)
+    assert isinstance(configuration.model, ModelReference)
+    assert str(configuration.model.name) == 'test_model'
 
 
 def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
@@ -52,9 +52,9 @@ def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
         f.write(test_yaml1)
 
     with test_file.open('r') as f:
-        document = load(f)
+        configuration = load(f)
 
-    assert document.settings is not None
+    assert configuration.settings is not None
 
 
 def test_load_path(test_yaml1: str, tmpdir_path: Path) -> None:
@@ -62,30 +62,30 @@ def test_load_path(test_yaml1: str, tmpdir_path: Path) -> None:
     with test_file.open('w') as f:
         f.write(test_yaml1)
 
-    document = load(test_file)
-    assert document.settings is not None
+    configuration = load(test_file)
+    assert configuration.settings is not None
 
 
-def test_dump1(test_yaml1: str, test_doc1: YmmslDocument) -> None:
-    text = dump(test_doc1)
+def test_dump1(test_yaml1: str, test_config1: Configuration) -> None:
+    text = dump(test_config1)
     assert text == test_yaml1
 
 
-def test_dump2(test_yaml2: str, test_doc2: YmmslDocument) -> None:
-    text = dump(test_doc2)
+def test_dump2(test_yaml2: str, test_config2: Configuration) -> None:
+    text = dump(test_config2)
     assert text == test_yaml2
 
 
-def test_dump3(test_yaml3: str, test_doc3: YmmslDocument) -> None:
-    text = dump(test_doc3)
+def test_dump3(test_yaml3: str, test_config3: Configuration) -> None:
+    text = dump(test_config3)
     assert text == test_yaml3
 
 
-def test_save_str(test_doc1: YmmslDocument, test_yaml1: str, tmpdir_path: Path
-                  ) -> None:
+def test_save_str(test_config1: Configuration, test_yaml1: str,
+                  tmpdir_path: Path) -> None:
     test_file = tmpdir_path / 'test_yaml1.ymmsl'
 
-    save(test_doc1, str(test_file))
+    save(test_config1, str(test_file))
 
     with test_file.open('r') as f:
         yaml_out = f.read()
@@ -93,11 +93,11 @@ def test_save_str(test_doc1: YmmslDocument, test_yaml1: str, tmpdir_path: Path
     assert yaml_out == test_yaml1
 
 
-def test_save_path(test_doc2: YmmslDocument, test_yaml2: str, tmpdir_path: Path
-                   ) -> None:
+def test_save_path(test_config2: Configuration, test_yaml2: str,
+                   tmpdir_path: Path) -> None:
     test_file = tmpdir_path / 'test_yaml1.ymmsl'
 
-    save(test_doc2, test_file)
+    save(test_config2, test_file)
 
     with test_file.open('r') as f:
         yaml_out = f.read()
@@ -105,12 +105,12 @@ def test_save_path(test_doc2: YmmslDocument, test_yaml2: str, tmpdir_path: Path
     assert yaml_out == test_yaml2
 
 
-def test_save_file(test_doc2: YmmslDocument, test_yaml2: str, tmpdir_path: Path
-                   ) -> None:
+def test_save_file(test_config2: Configuration, test_yaml2: str,
+                   tmpdir_path: Path) -> None:
     test_file = tmpdir_path / 'test_yaml1.ymmsl'
 
     with test_file.open('w') as f:
-        save(test_doc2, f)
+        save(test_config2, f)
 
     with test_file.open('r') as f:
         yaml_out = f.read()

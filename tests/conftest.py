@@ -2,13 +2,13 @@ from collections import OrderedDict
 
 import pytest
 
-from ymmsl import (ComputeElement, Conduit, Identifier, Model, ModelReference,
-                   Settings, YmmslDocument)
+from ymmsl import (ComputeElement, Conduit, Configuration, Identifier, Model,
+                   ModelReference, Settings)
 
 
 @pytest.fixture
 def test_yaml1() -> str:
-    text = ('version: v0.1\n'
+    text = ('ymmsl_version: v0.1\n'
             'settings:\n'
             '  test_str: value\n'
             '  test_int: 13\n'
@@ -18,17 +18,17 @@ def test_yaml1() -> str:
 
 
 @pytest.fixture
-def test_doc1() -> YmmslDocument:
+def test_config1() -> Configuration:
     settings = Settings(OrderedDict([
         ('test_str', 'value'),
         ('test_int', 13),
         ('test_list', [12.3, 1.3])]))
-    return YmmslDocument('v0.1', None, settings)
+    return Configuration('v0.1', None, settings)
 
 
 @pytest.fixture
 def test_yaml2() -> str:
-    text = ('version: v0.1\n'
+    text = ('ymmsl_version: v0.1\n'
             'model:\n'
             '  name: test_model\n'
             '  compute_elements:\n'
@@ -47,7 +47,7 @@ def test_yaml2() -> str:
 
 
 @pytest.fixture
-def test_doc2() -> YmmslDocument:
+def test_config2() -> Configuration:
     model = Model(
             'test_model',
             [
@@ -62,18 +62,18 @@ def test_doc2() -> YmmslDocument:
                 Conduit('smc2bf.out', 'bf.initial_domain'),
                 Conduit('bf.wss_out', 'bf2smc.in'),
                 Conduit('bf2smc.out', 'smc.wss_in')])
-    return YmmslDocument('v0.1', model)
+    return Configuration('v0.1', model)
 
 
 @pytest.fixture
 def test_yaml3() -> str:
-    text = ('version: v0.1\n'
+    text = ('ymmsl_version: v0.1\n'
             'model:\n'
             '  name: test_model\n')
     return text
 
 
 @pytest.fixture
-def test_doc3() -> YmmslDocument:
+def test_config3() -> Configuration:
     model = ModelReference('test_model')
-    return YmmslDocument('v0.1', model)
+    return Configuration('v0.1', model)

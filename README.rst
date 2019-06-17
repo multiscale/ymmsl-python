@@ -18,6 +18,9 @@
     :target: https://requires.io/github/multiscale/ymmsl-python/requirements/?branch=master
     :alt: Requirements Status
 
+.. image:: https://zenodo.org/badge/153272345.svg
+   :target: https://zenodo.org/badge/latestdoi/153272345
+
 ################################################################################
 yMMSL Python bindings
 ################################################################################

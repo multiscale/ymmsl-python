@@ -7,10 +7,8 @@ from ymmsl.settings import Settings
 from ymmsl.model import ModelReference
 
 
-class YmmslDocument:
-    """A yMMSL document.
-
-    This is the top-level class for yMMSL data.
+class Configuration:
+    """Top-level class for all information in a yMMSL file.
 
     Attributes:
         model: A model to run.
@@ -18,11 +16,11 @@ class YmmslDocument:
     """
 
     def __init__(self,
-                 version: str,
+                 ymmsl_version: str,
                  model: Optional[ModelReference] = None,
                  settings: Optional[Settings] = None
                  ) -> None:
-        self.version = version
+        self.ymmsl_version = ymmsl_version
         self.model = model
         self.settings = settings
 
