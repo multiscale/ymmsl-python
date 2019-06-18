@@ -26,10 +26,10 @@ Here is an example of loading a yMMSL file:
    import ymmsl
 
    with open('example.ymmsl', 'r') as f:
-       doc = ymmsl.load(f)
+       config = ymmsl.load(f)
 
-This makes ``doc`` an object of type :class:`ymmsl.YmmslDocument`, which is the
-top-level class describing a yMMSL document.
+This makes ``config`` an object of type :class:`ymmsl.Configuration`, which is
+the top-level class describing a yMMSL document.
 
 If the file is valid YAML, but not recognized as a yMMSL file, the library will
 raise a :class:`ymmsl.RecognitionError` with a message describing in detail what
@@ -41,17 +41,19 @@ underlying YAML library, so you can safely load files from untrusted sources.
 Writing yMMSL files
 -------------------
 
-To write a yMMSL file with the contents of a :class:`ymmsl.YmmslDocument`, we
+To write a yMMSL file with the contents of a :class:`ymmsl.Configuration`, we
 use ``ymmsl.save``:
 
 .. code-block:: python
 
-   import ymmsl
+   from ymmsl import ComputeElement, Configuration, Model, Settings
 
-   doc = ymmsl.Ymmsl('v0.1', [], [])
+   model = Model('test_model', [ComputeElement('macro')], [])
+   settings = Settings(OrderedDict([('test_parameter', 42)]))
+   config = Configuration(model, settings)
 
    with open('out.ymmsl', 'w') as f:
-       ymmsl.save(doc, f)
+       ymmsl.save(config, f)
 
 This produces a text file with a YAML description of the given object. If you
 want to have the YAML as a string, use ``ymmsl.dump(doc)`` instead.
@@ -63,15 +65,17 @@ Generally speaking, the object model used by the ``ymmsl`` library follows the
 structure of the YAML document, but there are a few places where some syntactic
 sugar has been added to make the files easier to read and write by hand.
 
-So, for instance, assuming that you have a variable ``doc`` read from
-``example.ymmsl`` as described above, the version of the file will be available
-as ``doc.version``, the ``model`` part as ``doc.model`` and the
-``settings`` part as ``doc.settings``. Note that both the model and the
-settings part are optional, so you'll want to check that they're not ``None``
-before doing anything with them.
+So, for instance, assuming that you have a variable ``config`` read from
+``example.ymmsl`` as described above, the ``model`` part of the file will be
+available as ``doc.model`` and the ``settings`` part as ``doc.settings``.
+Note that both the model and the settings part are optional, so you'll want to
+check that they're not ``None`` before doing anything with them. The
+``ymmsl_version`` attribute is checked by the library and then removed, and it
+is added again automatically when you save a :class:`ymmsl.Configuration`. So
+you don't have to worry about it.
 
 You will find the first bit of syntactic sugar in
-``doc.simulation.compute_elements``. This is a list of compute elements, each of
+``config.model.compute_elements``. This is a list of compute elements, each of
 which have attributes ``name`` and ``implementation`` containing, respectively,
 an :class:`ymmsl.Identifier` and a :class:`ymmsl.Reference`. The list is
 automatically converted from the dictionary when reading, and converted back on
@@ -81,8 +85,9 @@ Note that an :class:`ymmsl.Identifier` is almost a string, but the class ensures
 that the string is a valid identifier, and :class:`ymmsl.Reference` does the
 same, and also offers access to individual parts of the reference, which comes
 in handy when resolving them.  The other bit of syntactic sugar in the
-experiment part is in ``doc.simulation.conduits``, which is a list of
-:class:`ymmsl.Conduit` objects (see the API documentation).
+experiment part is in ``doc.model.conduits``, which is a list of
+:class:`ymmsl.Conduit` objects (see the API documentation). It's mapped to and
+from a dictionary in the same way as the ComputeElements are.
 
 On the settings side, the settings are described as a dictionary
 (or mapping, in YAML-speak) in the YAML file, and they are a
@@ -92,7 +97,7 @@ behaves like a dictionary.
 These are all ordinary Python objects, so you can modify the document by
 creating new objects and assigning them to attributes of other objects, or
 create a document from scratch just by instantiating
-:class:`ymmsl.YmmslDocument`.
+:class:`ymmsl.Configuration`.
 
 For details about these classes and what you can do with them, we refer to the
 API documentation.

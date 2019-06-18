@@ -1,4 +1,4 @@
-version: v0.1
+ymmsl_version: v0.1
 
 model:
   name: macro_micro_model
