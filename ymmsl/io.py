@@ -5,6 +5,7 @@ from ruamel import yaml
 import yatiml
 
 from ymmsl.configuration import Configuration
+from ymmsl.document import Document
 from ymmsl.settings import Settings
 from ymmsl.identity import Identifier, Reference
 from ymmsl.model import ComputeElement, Conduit, Model, ModelReference
@@ -14,8 +15,9 @@ def _loader() -> Type:
     class YmmslLoader(yatiml.Loader):
         pass
     yatiml.add_to_loader(YmmslLoader,
-                         [ComputeElement, Conduit, Configuration, Identifier,
-                          Model, ModelReference, Reference, Settings])
+                         [ComputeElement, Conduit, Configuration, Document,
+                          Identifier, Model, ModelReference, Reference,
+                          Settings])
     yatiml.set_document_type(YmmslLoader, Configuration)
     return YmmslLoader
 
@@ -24,8 +26,9 @@ def _dumper() -> Type:
     class YmmslDumper(yatiml.Dumper):
         pass
     yatiml.add_to_dumper(YmmslDumper,
-                         [ComputeElement, Conduit, Configuration, Identifier,
-                          Model, ModelReference, Reference, Settings])
+                         [ComputeElement, Conduit, Configuration, Document,
+                          Identifier, Model, ModelReference, Reference,
+                          Settings])
     return YmmslDumper
 
 

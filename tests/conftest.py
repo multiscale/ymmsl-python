@@ -23,7 +23,7 @@ def test_config1() -> Configuration:
         ('test_str', 'value'),
         ('test_int', 13),
         ('test_list', [12.3, 1.3])]))
-    return Configuration('v0.1', None, settings)
+    return Configuration(None, settings)
 
 
 @pytest.fixture
@@ -62,7 +62,7 @@ def test_config2() -> Configuration:
                 Conduit('smc2bf.out', 'bf.initial_domain'),
                 Conduit('bf.wss_out', 'bf2smc.in'),
                 Conduit('bf2smc.out', 'smc.wss_in')])
-    return Configuration('v0.1', model)
+    return Configuration(model)
 
 
 @pytest.fixture
@@ -76,4 +76,4 @@ def test_yaml3() -> str:
 @pytest.fixture
 def test_config3() -> Configuration:
     model = ModelReference('test_model')
-    return Configuration('v0.1', model)
+    return Configuration(model)
