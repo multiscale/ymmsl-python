@@ -3,11 +3,12 @@ from typing import Optional
 
 import yatiml
 
+from ymmsl.document import Document
 from ymmsl.settings import Settings
 from ymmsl.model import ModelReference
 
 
-class Configuration:
+class Configuration(Document):
     """Top-level class for all information in a yMMSL file.
 
     Attributes:
@@ -16,11 +17,9 @@ class Configuration:
     """
 
     def __init__(self,
-                 ymmsl_version: str,
                  model: Optional[ModelReference] = None,
                  settings: Optional[Settings] = None
                  ) -> None:
-        self.ymmsl_version = ymmsl_version
         self.model = model
         self.settings = settings
 

@@ -21,9 +21,11 @@ def test_load_string1(test_yaml1: str) -> None:
     assert isinstance(settings['test_list'], list)
     assert settings['test_list'][1] == 1.3
 
-    text = 'ymmsl_version: v0.1\n'
-    configuration = load(text)
-    assert configuration.ymmsl_version == 'v0.1'
+    configuration = load(test_yaml1)
+    assert configuration.settings is not None
+    assert configuration.settings['test_str'] == 'value'
+    assert configuration.settings['test_int'] == 13
+    assert configuration.settings['test_list'] == [12.3, 1.3]
 
 
 def test_load_string2(test_yaml2: str) -> None:

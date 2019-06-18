@@ -5,6 +5,20 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.9.0
+*****
+
+Changed
+-------
+
+* Automatically handle ymmsl_version attribute, no longer user-available
+
+Fixed
+-----
+
+* Resynchronized documentation with recent API changes
+* Removed yatiml helper functions from documentation
+
 0.8.0
 *****
 

@@ -15,7 +15,7 @@ This package contains all the classes needed to represent a yMMSL file,
 as well as to read and write yMMSL files.
 """
 
-__version__ = '0.8.0'
+__version__ = '0.9.0'
 __author__ = 'Lourens Veen'
 __email__ = 'l.veen@esciencecenter.nl'
 
