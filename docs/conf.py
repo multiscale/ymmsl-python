@@ -78,6 +78,9 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+# Autodoc options
+autodoc_default_options = {
+        'exclude-members': 'yatiml_recognize, yatiml_sweeten, yatiml_savorize'}
 
 # -- Run apidoc plug-in manually, as readthedocs doesn't support it -------
 # See https://github.com/rtfd/readthedocs.org/issues/1139
