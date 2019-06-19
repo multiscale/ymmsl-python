@@ -1,6 +1,5 @@
 """This module contains definitions for identity."""
 from copy import copy
-import logging
 import re
 from collections import OrderedDict, UserString
 from typing import Any, Generator, Iterable, List, Union, overload
@@ -26,7 +25,6 @@ class Identifier(UserString):
                     not form a valid Identifier.
         """
         super().__init__(seq)
-        logging.debug('Identifier from {}'.format(seq))
         if not re.fullmatch(
                 r'[a-zA-Z_]\w*', self.data, flags=re.ASCII):
             raise ValueError('Identifiers must consist only of'
