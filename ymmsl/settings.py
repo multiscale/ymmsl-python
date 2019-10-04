@@ -7,7 +7,7 @@ import yatiml
 from ymmsl.identity import Reference
 
 
-ParameterValue = Union[str, int, float, bool,
+SettingValue = Union[str, int, float, bool,
                        List[float], List[List[float]], yatiml.bool_union_fix]
 
 
@@ -15,11 +15,11 @@ class Settings(MutableMapping):
     """Settings for doing an experiment.
 
     An experiment is done by running a model with particular settings, \
-    for the submodel scales and other parameters.
+    for the submodel scales, model parameters and any other configuration.
     """
     def __init__(
             self,
-            settings: Optional[Dict[str, ParameterValue]] = None
+            settings: Optional[Dict[str, SettingValue]] = None
             ) -> None:
         """Create a Settings object.
 
@@ -27,9 +27,9 @@ class Settings(MutableMapping):
         given.
 
         Args:
-            settings: Parameter values to initialise a model with.
+            settings: Setting values to initialise a model with.
         """
-        self._store = OrderedDict()  # type: OrderedDict[Reference, ParameterValue]
+        self._store = OrderedDict()  # type: OrderedDict[Reference, SettingValue]
 
         if settings is not None:
             for key, value in settings.items():
@@ -47,14 +47,14 @@ class Settings(MutableMapping):
         """
         return str(self.as_ordered_dict())
 
-    def __getitem__(self, key: Union[str, Reference]) -> ParameterValue:
+    def __getitem__(self, key: Union[str, Reference]) -> SettingValue:
         """Returns an item, implements settings[name]
         """
         if isinstance(key, str):
             key = Reference(key)
         return self._store[key]
 
-    def __setitem__(self, key: Union[str, Reference], value: ParameterValue
+    def __setitem__(self, key: Union[str, Reference], value: SettingValue
                     ) -> None:
         """Sets a value, implements settings[name] = value.
         """
@@ -69,17 +69,17 @@ class Settings(MutableMapping):
             key = Reference(key)
         del(self._store[key])
 
-    def __iter__(self) -> Iterator[Tuple[Reference, ParameterValue]]:
+    def __iter__(self) -> Iterator[Tuple[Reference, SettingValue]]:
         """Iterate through the settings' key, value pairs.
         """
         return iter(self._store)  # type: ignore
 
     def __len__(self) -> int:
-        """Returns the number of parameter settings.
+        """Returns the number of settings.
         """
         return len(self._store)
 
-    def ordered_items(self) -> List[Tuple[Reference, ParameterValue]]:
+    def ordered_items(self) -> List[Tuple[Reference, SettingValue]]:
         """Return settings as a list of tuples.
         """
         result = list()
@@ -100,7 +100,7 @@ class Settings(MutableMapping):
         Returns: A dictionary that uses only built-in types, containing
             the configuration.
         """
-        odict = OrderedDict()     # type: OrderedDict[str, ParameterValue]
+        odict = OrderedDict()     # type: OrderedDict[str, SettingValue]
         for key, value in self._store.items():
             odict[str(key)] = value
         return odict
@@ -117,9 +117,9 @@ class Settings(MutableMapping):
     @classmethod
     def yatiml_savorize(cls, node: yatiml.Node) -> None:
         # wrap the existing mapping into a new mapping with attribute settings
-        parameter_values = node.yaml_node
+        setting_values = node.yaml_node
         node.make_mapping()
-        node.set_attribute('settings', parameter_values)
+        node.set_attribute('settings', setting_values)
 
     @classmethod
     def yatiml_sweeten(cls, node: yatiml.Node) -> None:

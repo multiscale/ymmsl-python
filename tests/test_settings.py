@@ -1,4 +1,4 @@
-from ymmsl import Identifier, ParameterValue, Reference, Settings
+from ymmsl import Identifier, SettingValue, Reference, Settings
 
 from collections import OrderedDict
 from typing import cast, List
@@ -18,15 +18,15 @@ def test_create_settings(settings: Settings) -> None:
 
 
 def test_create_settings2() -> None:
-    parameter_values = OrderedDict([
+    setting_values = OrderedDict([
         ('submodel._muscle_grain', [0.01, 0.01]),
         ('submodel._muscle_extent', [10.0, 3.0]),
         ('submodel._muscle_timestep', 0.001),
         ('submodel._muscle_total_time', 0.1),
         ('bf.velocity', 0.48),
         ('init.max_depth', 0.11)
-        ])  # type: OrderedDict[str, ParameterValue]
-    settings = Settings(parameter_values)
+        ])  # type: OrderedDict[str, SettingValue]
+    settings = Settings(setting_values)
     assert list(settings.ordered_items()[0][0]) == [
         'submodel', '_muscle_grain'
     ]
@@ -116,7 +116,7 @@ def test_del_item(settings: Settings) -> None:
 
 def test_iter(settings: Settings) -> None:
     assert len(settings) == 0
-    for parameter, value in settings.items():
+    for setting, value in settings.items():
         assert False    # pragma: no cover
 
     settings._store = OrderedDict([
@@ -125,14 +125,14 @@ def test_iter(settings: Settings) -> None:
             (Reference('test3'), [3.4, 5.6])])
     assert len(settings) == 3
 
-    for parameter in settings:
-        assert parameter in settings
+    for setting in settings:
+        assert setting in settings
 
-    for parameter, value in settings.items():
+    for setting, value in settings.items():
         assert (
-            parameter == 'test1' and value == 13 or
-            parameter == 'test2' and value == 'testing' or
-            parameter == 'test3' and value == [3.4, 5.6])
+            setting == 'test1' and value == 13 or
+            setting == 'test2' and value == 'testing' or
+            setting == 'test3' and value == [3.4, 5.6])
 
 
 def test_update(settings: Settings) -> None:
