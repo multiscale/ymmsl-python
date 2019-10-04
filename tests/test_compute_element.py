@@ -23,5 +23,5 @@ def test_operator() -> None:
 def test_port() -> None:
     ep1 = Port(Identifier('test_in'), Operator.F_INIT)
 
-    assert str(ep1.name == 'test_in')
+    assert str(ep1.name) == 'test_in'
     assert ep1.operator == Operator.F_INIT

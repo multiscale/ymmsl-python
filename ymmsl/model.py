@@ -110,7 +110,7 @@ class Conduit:
                                      ' in conduits.'.format(ref))
 
         # check that the length is at least 2
-        if len(self.__stem(ref)) < 2:
+        if len(Conduit.__stem(ref)) < 2:
             raise ValueError('Senders and receivers in conduits must have'
                              ' a compute element name, a period, and then'
                              ' a port name and optionally a slot. Reference {}'
