@@ -11,6 +11,10 @@ from ymmsl.model import ModelReference
 class Configuration(Document):
     """Top-level class for all information in a yMMSL file.
 
+    Args:
+        model: A description of the model to run.
+        settings: Settings to run the model with.
+
     Attributes:
         model: A model to run.
         settings: Settings to run the model with.

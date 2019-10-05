@@ -10,26 +10,36 @@ from ymmsl.identity import Identifier, Reference
 class ComputeElement:
     """An object declaring a compute element.
 
-    Compute elements are things like submodels, scale bridges, proxies, \
-    and any other program that makes up a model. This class \
-    represents a declaration of an array of instances of a compute \
-    element, and it's used to describe which instances are needed to \
+    Compute elements are things like submodels, scale bridges, proxies,
+    and any other program that makes up a model. This class
+    represents a declaration of a set of instances of a compute
+    element, and it's used to describe which instances are needed to
     perform a certain simulation.
 
+    Args:
+        name: The name of the compute element; must be a valid
+                Reference.
+        implementation: The name of the implementation; must be a
+                valid Reference.
+        multiplicity: An list of ints describing the shape of the
+                set of instances.
+
     Attributes:
-        name: The name of this compute element.
-        implementation: A reference to the implementation to use.
-        multiplicity: The shape of the array of instances that execute
-                simultaneously.
+        name (ymmsl.Reference): The name of this compute element.
+        implementation (ymmsl.Reference): A reference to the
+                implementation to use.
+        multiplicity (List[int]): The shape of the array of instances
+                that execute simultaneously.
     """
 
     def __init__(self, name: str, implementation: str,
                  multiplicity: Union[int, List[int]] = []) -> None:
-
         if isinstance(multiplicity, int):
             multiplicity = [multiplicity]
         self.name = Reference(name)
         self.implementation = Reference(implementation)
+        if (isinstance(multiplicity, int)):
+            multiplicity = [multiplicity]
         self.multiplicity = multiplicity
 
         for part in self.implementation:
@@ -78,6 +88,11 @@ class Conduit:
 
     - submodel.port
     - namespace.submodel.port (or several namespace prefixes)
+
+    Args:
+        sender: The sending compute element and port, as a Reference.
+        receiver: The receiving compute element and port, as a
+                Reference.
 
     Attributes:
         sender: The sending port that this conduit is connected to.
