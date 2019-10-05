@@ -10,67 +10,70 @@ A yMMSL file is a YAML file that looks approximately like this:
 This file describes a macro-micro coupled simulation model with time-scale
 separation and domain overlap. It describes both the model itself and an
 experiment to be run with this model, and contains the minimal information
-needed for MUSCLE 3 to be able to coordinate model execution.
+needed for MUSCLE 3 to be able to coordinate model execution. We'll go into
+more detail on this file in a moment.
+
+The yMMSL YAML format is supported by the ymmsl-python library, whose
+documentation you are currently reading. This library lets you read and write
+yMMSL files, and manipulate their contents using an object-based Python API.
+
+Installation
+------------
+
+ymmsl-python is on PyPI, so you can install it using Pip:
+
+.. code-block:: bash
+
+   pip install ymmsl
+
+or you can add it to your dependencies as usual, e.g. in your setup.py or
+your requirements.txt, depending on how you've set up your project.
+
+Reading yMMSL files
+-------------------
+
+Here is an example of loading a yMMSL file:
+
+.. code-block:: python
+
+   import ymmsl
+
+   with open('example.ymmsl', 'r') as f:
+       config = ymmsl.load(f)
+
+This makes ``config`` an object of type :class:`ymmsl.Configuration`, which is
+the top-level class describing a yMMSL document.
+
+If the file is valid YAML, but not recognized as a yMMSL file, the library will
+raise a :class:`ymmsl.RecognitionError` with a message describing in detail what
+is wrong, so that you can easily fix the file.
+
+Note that the ``load()`` function uses the safe loading functionality of the
+underlying YAML library, so you can safely load files from untrusted sources.
+
+Writing yMMSL files
+-------------------
+
+To write a yMMSL file with the contents of a :class:`ymmsl.Configuration`, we
+use ``ymmsl.save``:
+
+.. code-block:: python
+
+   from ymmsl import ComputeElement, Configuration, Model, Settings
+
+   model = Model('test_model', [ComputeElement('macro')], [])
+   settings = Settings(OrderedDict([('test_parameter', 42)]))
+   config = Configuration(model, settings)
+
+   with open('out.ymmsl', 'w') as f:
+       ymmsl.save(config, f)
+
+This produces a text file with a YAML description of the given object. If you
+want to have the YAML as a string, use ``ymmsl.dump(doc)`` instead.
 
 As the format may develop over time, files are required to carry a version, in
 this case v0.1, which is currently the only version of yMMSL.
 
-Models
-------
+When you read in a yMMSL file, you get a collection of Python objects
+describing its contents. The next section explains how those work.
 
-The ``model`` section describes the simulation model. It has a name, which
-is an :class:`Identifier` (see below), a list of compute elements, and conduits
-between them. Compute elements are submodels, scale bridges, proxies, and any
-other program that makes up the coupled simulation. In this case there are two,
-one named ``macro``, and one named ``micro`` (also :class:`Identifier` s). For
-each compute element, a :class:`Reference` to an implementation is given. This
-information is useful for launchers or pilot jobs, who can then look up how to
-run the corresponding binary in their internal configuration.
-
-Conduits connect compute elements together. They lead from a port on a compute
-element to a port on another compute element. In this model, port ``state_out``
-on compute element ``macro`` is connected to port ``init_in`` on compute element
-``micro``. Both sides of the description here are :class:`Reference` s.
-
-Settings
---------
-
-The settings section contains a set of parameter settings for the model.
-Parameter values may be strings, integers, floating point numbers, lists of
-floating point numbers (vectors), or lists of lists of floating point numbers
-(arrays).
-
-In this example, the two submodels share a one-dimensional domain, which is
-named domain, has a length of 1.0, and a grid spacing of 0.01. The macro model
-has a time step of 10 and a total run time of 1000 (so it will run for 100
-steps), while the micro model has a time step of 0.01 and a total run time of
-1.0. Furthermore, there are some model parameters, shared parameters ``k`` and
-``interpolation_method``, and a parameter ``d`` that is specific to the
-micromodel.
-
-Identifiers and References
---------------------------
-
-The classes :class:`Identifier` and :class:`Reference` play an important role in
-yMMSL. An identifier uniquely identifies an object, like a simulation model or a
-compute element. It is a string containing letters, digits, and/or underscores
-which must start with a letter or underscore, and may not be empty. Identifiers
-starting with an underscore are reserved for use by the software (e.g. MUSCLE
-3), and may not be used when describing models.
-
-A :class:`Reference` refers to some object by name. It consists of an
-:class:`Identifier`, optionally followed by a period and another identifier, or
-by an integer in square brackets, or a sequence of these. Some examples of
-syntactically valid references are:
-
-.. code-block:: none
-
-  macro_micro_model
-  macro_micro_model.macro
-  macro.final_out[2]
-  macro_micro_model.macro.final_out[1]
-  x[2].y.z[2][4].a
-
-Resolving references is left to the application, so to know how to reference a
-particular object, you should consult the documentation for the software you are
-using.
