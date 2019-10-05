@@ -29,7 +29,7 @@ API Reference
 .. toctree::
   :maxdepth: 2
 
-  API reference <apidocs/ymmsl.rst>
+  API reference <api.rst>
 
 
 Indices and tables

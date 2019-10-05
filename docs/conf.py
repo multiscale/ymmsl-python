@@ -17,6 +17,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+import re
 import sys
 
 here = os.path.dirname(__file__)
@@ -78,6 +79,8 @@ pygments_style = 'sphinx'
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
+add_module_names = False
+
 # Autodoc options
 autodoc_default_options = {
         'exclude-members': 'yatiml_recognize, yatiml_sweeten, yatiml_savorize'}
@@ -120,9 +123,23 @@ def run_apidoc(_):
                 break
             f.write(line)
 
+import sys
+
+def strip_signatures(app, what, name, obj, options, signature, return_annotation):
+    sig = None
+    if signature is not None:
+        sig = re.sub('ymmsl\.[^.]*\.', '', signature)
+
+    ret = None
+    if return_annotation is not None:
+        ret = re.sub('ymmsl\.[^.]*\.', '', signature)
+
+    return sig, ret
+
 
 def setup(app):
-    app.connect('builder-inited', run_apidoc)
+    # app.connect('builder-inited', run_apidoc)
+    app.connect('autodoc-process-signature', strip_signatures)
 
 
 # -- Options for HTML output ----------------------------------------------
