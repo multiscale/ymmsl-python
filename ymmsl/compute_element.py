@@ -9,12 +9,12 @@ class Operator(Enum):
     This is a combination of the Submodel Execution Loop operators,
     and operators for other components such as mappers.
     """
-    NONE = 0
-    F_INIT = 1
-    O_I = 2
-    S = 3
-    B = 4
-    O_F = 5
+    NONE = 0    #: No operator
+    F_INIT = 1  #: Initialisation phase, before start of the SEL
+    O_I = 2     #: State observation within the model's main loop
+    S = 3       #: State update in the model's main loop
+    B = 4       #: Boundary conditions update in the model's main loop
+    O_F = 5     #: Observation of final state, after the SEL
 
     def allows_sending(self) -> bool:
         return self in {
