@@ -138,7 +138,7 @@ def strip_signatures(app, what, name, obj, options, signature, return_annotation
 
 
 def setup(app):
-    # app.connect('builder-inited', run_apidoc)
+    app.connect('builder-inited', run_apidoc)
     app.connect('autodoc-process-signature', strip_signatures)
 
 
