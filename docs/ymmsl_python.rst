@@ -1,7 +1,7 @@
 Usage
 =====
 
-As shown on the previous page, the `ymmsl-python` library converts yMMSL from
+As shown on the previous page, the ``ymmsl-python`` library converts yMMSL from
 YAML to Python objects and back. Here, we dive into this a bit deeper and see
 how those Python objects can be used.
 
@@ -37,9 +37,9 @@ proxies, and any other program that makes up the coupled simulation. Conduits
 are the wires between them that are used to exchange messages.
 
 The ``model`` section is represented in Python by the :class:`ymmsl.Model`
-class. It has attributes `name`, `compute_elements` and `conduits` corresponding
-to those sections in the file. Attribute `name` is an :class:`ymmsl.Identifier`
-object.
+class. It has attributes ``name``, ``compute_elements`` and ``conduits``
+corresponding to those sections in the file. Attribute `name` is an
+:class:`ymmsl.Identifier` object.
 
 .. code-block:: python
     :caption: Accessing the model
@@ -60,15 +60,17 @@ the software (e.g. MUSCLE 3), and may only be used as specified by the software
 you are using.
 
 The :class:`ymmsl.Identifier` Python class represents an identifier. It works
-almost the same as a normal Python `str`, but checks that the string it contains
-is actually a valid identifier.
+almost the same as a normal Python ``str``, but checks that the string it
+contains is actually a valid identifier.
 
 Compute Elements
 ````````````````
 
 The ``model`` section contains a subsection ``compute_elements``, in which the
-compute elements making up the simulation are described. yMMSL lets you describe
-compute elements in two ways, a short one and a longer one:
+compute elements making up the simulation are described. These are the
+submodels, and special elements like scale bridges, data converters, load
+balancers, etc. yMMSL lets you describe compute elements in two ways, a short
+one and a longer one:
 
 .. code-block:: yaml
     :caption: ``Macro-meso-micro model compute elements``
@@ -101,10 +103,11 @@ example), but may be written as a single integer if it's a one-dimensional set
 All this is a concise and easy to read and write YAML file, but on the Python
 side, all this flexibility would make for complex code. To avoid that, the
 ymmsl-python library applies syntactic sugar when converting between YAML and
-Python. On the Python side, the `compute_elements` attribute of
+Python. On the Python side, the ``compute_elements`` attribute of
 :class:`ymmsl.Model` always contains a list of :class:`ymmsl.ComputeElement`
 objects, regardless of how the YAML file was written. When this list is written
-to a YAML file, the most concise representation is automatically chosen.
+to a YAML file, the most concise representation is automatically chosen to make
+the file easier to read by a human user.
 
 .. code-block:: python
     :caption: Accessing the compute elements
@@ -126,41 +129,49 @@ to a YAML file, the most concise representation is automatically chosen.
 ahead and make it yourself using the above listing!)
 
 The :class:`ymmsl.ComputeElement` class has three attributes, unsurprisingly
-named `name`, `implementation` and `multiplicity`. Attributes `name` and
-`implementation` are of type :class:`ymmsl.Reference`. A reference consists of
-one or more identifiers (as described above), separated by periods. Depending on
-the context, this may represent a name in a namespace (as it is here), or an
-attribute of an object (as we will see below with Conduits). The `multiplicity`
-attribute is always a list of ints, but may be given as a single int when
-creating a :class:`ymmsl.ComputeElement` object or in the YAML file.
+named ``name``, ``implementation`` and ``multiplicity``. Attributes ``name``
+and ``implementation`` are of type :class:`ymmsl.Reference`. A reference
+is a string consisting of one or more identifiers (as described above),
+separated by periods.
 
-The `implementation` attribute of :class:`ymmsl.ComputeElement` is intended to
-be a reference to some implementation definition in the launcher configuration,
-so consult the documentation for that to see what to write here.
+Depending on the context, this may represent a name in a namespace (as it is
+here), or an attribute of an object (as we will see below with Conduits). The
+``multiplicity`` attribute is always a list of ints, but may be omitted or
+given as a single int when creating a :class:`ymmsl.ComputeElement` object, just
+like in the YAML file.
+
+The ``implementation`` attribute of :class:`ymmsl.ComputeElement` is intended
+to be a reference to some implementation definition in the launcher
+configuration, so consult the documentation for that to see what to write here.
 
 Conduits
 ````````
 
-The final subsection of the ``model`` section is labeled ``conduits``. As you
-can see, the conduits are written as a dictionary on the YAML side, which maps
-senders to receivers. A sender consists of the name of a compute element,
-followed by a period and the name of a port on that compute element; likewise
-for a receiver. In the YAML file, the sender is always on the left of the colon,
-the receiver on the right.
+The final subsection of the ``model`` section is labeled ``conduits``. These
+tie the compute elements together by connecting `ports` on those compute
+elements. Which ports an element has depends on the element, so you have to look
+at its documentation (or the source code, if there isn't any documentation) to
+see which ports are available and how they should be used.
+
+As you can see, the conduits are written as a dictionary on the YAML
+side, which maps senders to receivers. A sender consists of the name of a
+compute element, followed by a period and the name of a port on that compute
+element; likewise for a receiver. In the YAML file, the sender is always on the
+left of the colon, the receiver on the right.
 
 Just like the compute elements, the conduits get converted to a list in Python,
 in this case containing :class:`ymmsl.Conduit` objects. The
-:class:`ymmsl.Conduit` class has `sender` and `receiver` attributes, of type
-:class:`ymmsl.Reference` (see above), and a number of helper functions to
-interpret these fields, e.g. to extract the compute element and port name parts.
-Note that the format allows specifying a slot here, but this is currently not
-supported and illegal in MUSCLE 3.
+:class:`ymmsl.Conduit` class has ``sender`` and ``receiver`` attributes, of
+type :class:`ymmsl.Reference` (see above), and a number of helper functions to
+interpret these fields, e.g. to extract the compute element and port name
+parts.  Note that the format allows specifying a slot here, but this is
+currently not supported and illegal in MUSCLE 3.
 
 Settings
 --------
 
 The settings section contains settings for the simulation to run with. In YAML,
-this is a dictionary (mapping) that maps a setting name (a
+this is a dictionary that maps a setting name (a
 :class:`ymmsl.Reference`) to its value. Parameter values may be strings,
 integers, floating point numbers, lists of floating point numbers (vectors), or
 lists of lists of floating point numbers (arrays).
@@ -195,7 +206,7 @@ the interpolation method, and a 2D array specifying a kernel of some kind.
 On the Python side, this will be turned into a :class:`ymmsl.Settings` object,
 which acts much like a Python dictionary. So for instance, if you have a
 :class:`ymmsl.Configuration` object named ``config`` which was loaded from a
-file containing the above `settings` section, then you could write:
+file containing the above ``settings`` section, then you could write:
 
 .. code-block:: python
 

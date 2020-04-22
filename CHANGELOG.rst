@@ -5,6 +5,15 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.10.1
+******
+
+Fixed
+-----
+
+* Python 3.5.1 compatibility
+* Improved documentation
+
 0.10.0
 ******
 

@@ -26,8 +26,8 @@ ymmsl-python is on PyPI, so you can install it using Pip:
 
    pip install ymmsl
 
-or you can add it to your dependencies as usual, e.g. in your setup.py or
-your requirements.txt, depending on how you've set up your project.
+or you can add it to your dependencies as usual, e.g. in your ``setup.py`` or
+your ``requirements.txt``, depending on how you've set up your project.
 
 Reading yMMSL files
 -------------------
@@ -42,7 +42,8 @@ Here is an example of loading a yMMSL file:
        config = ymmsl.load(f)
 
 This makes ``config`` an object of type :class:`ymmsl.Configuration`, which is
-the top-level class describing a yMMSL document.
+the top-level class describing a yMMSL document. More on these objects in the
+next section.
 
 If the file is valid YAML, but not recognized as a yMMSL file, the library will
 raise a :class:`ymmsl.RecognitionError` with a message describing in detail what
@@ -68,12 +69,21 @@ use ``ymmsl.save``:
    with open('out.ymmsl', 'w') as f:
        ymmsl.save(config, f)
 
-This produces a text file with a YAML description of the given object. If you
-want to have the YAML as a string, use ``ymmsl.dump(doc)`` instead.
+Here, we create a model named ``test_model``, containing a single compute
+element named ``macro``, and no conduits. For the settings, we create a Settings
+object, which is a container for an ordered dictionary of settings. Note that
+normal Python dictionaries are unordered, which is why YAML documents saved from
+Python are often in a random order and hard to read. We avoid that problem in
+yMMSL by using an ``OrderedDict`` here. You have to pass it a list of tuples,
+because using dictionary syntax with curly brackets will lose the ordering.
+
+Finally, we combine the model and the settings into a
+:class:`yammsl.Configuration` object, which we then save to a file. If you
+want to have the YAML as a string, use :func:`ymmsl.dump(doc)` instead.
 
 As the format may develop over time, files are required to carry a version, in
 this case v0.1, which is currently the only version of yMMSL.
 
-When you read in a yMMSL file, you get a collection of Python objects
-describing its contents. The next section explains how those work.
+When you read in a yMMSL file as described above, you get a collection of Python
+objects describing its contents. The next section explains how those work.
 

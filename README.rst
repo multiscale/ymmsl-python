@@ -2,8 +2,8 @@
     :target: https://ymmsl-python.readthedocs.io/en/latest/?badge=master
     :alt: Documentation Build Status
 
-.. image:: https://api.travis-ci.org/multiscale/ymmsl-python.svg?branch=master
-    :target: https://travis-ci.org/multiscale/ymmsl-python
+.. image:: https://github.com/multiscale/ymmsl-python/workflows/continuous_integration/badge.svg
+    :target: https://github.com/multiscale/ymmsl-python/actions
     :alt: Build Status
 
 .. image:: https://api.codacy.com/project/badge/Grade/77d0caaf9c44473caf02670df04f02b2
@@ -38,7 +38,7 @@ Documentation
 *************
 
 This is an ordinary Python library that can be installed via pip. It requires
-Python 3.4 or higher. More information is available in the `online
+Python 3.5 or higher. More information is available in the `online
 documentation for ymmsl-python <https://ymmsl-python.readthedocs.io>`_.
 
 Development
@@ -51,6 +51,6 @@ something is unclear, please file an issue.
 Legal
 *****
 
-ymmsl_python is Copyright 2018-2019 Netherlands eScience Center and University
+ymmsl_python is Copyright 2018-2020 Netherlands eScience Center and University
 of Amsterdam. Licensed under the Apache 2.0 license.
 

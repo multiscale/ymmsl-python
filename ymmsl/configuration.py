@@ -28,7 +28,7 @@ class Configuration(Document):
         self.settings = settings
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         if node.get_attribute('settings').is_scalar(type(None)):
             node.remove_attribute('settings')
         if node.get_attribute('model').is_scalar(type(None)):

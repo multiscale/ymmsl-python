@@ -54,12 +54,12 @@ class ComputeElement:
         return result
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_attribute('name', str)
         node.require_attribute('implementation', str)
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         if node.has_attribute('multiplicity'):
             if node.has_attribute_type('multiplicity', int):
                 attr = node.get_attribute('multiplicity')
@@ -70,7 +70,7 @@ class ComputeElement:
                 node.set_attribute('multiplicity', new_seq)
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         multiplicity = node.get_attribute('multiplicity')
         items = multiplicity.seq_items()
         if len(items) == 0:
@@ -197,7 +197,7 @@ class Conduit:
         i = len(reference)
         while isinstance(reference[i-1], int):
             i -= 1
-        return reference[:i]
+        return reference[:i]    # type: ignore
 
 
 class ModelReference:
@@ -245,17 +245,17 @@ class Model(ModelReference):
         self.conduits = conduits
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_mapping()
         node.require_attribute('name')
         node.require_attribute('compute_elements')
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         node.map_attribute_to_seq('compute_elements', 'name', 'implementation')
         node.map_attribute_to_seq('conduits', 'sender', 'receiver')
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         node.seq_attribute_to_map('compute_elements', 'name', 'implementation')
         node.seq_attribute_to_map('conduits', 'sender', 'receiver')

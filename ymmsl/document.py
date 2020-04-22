@@ -9,13 +9,13 @@ class Document:
     YAML file.
     """
     @classmethod
-    def yatiml_recognize(self, node: yatiml.UnknownNode) -> None:
+    def _yatiml_recognize(self, node: yatiml.UnknownNode) -> None:
         node.require_mapping()
         node.require_attribute('ymmsl_version')
         node.require_attribute_value('ymmsl_version', 'v0.1')
 
     @classmethod
-    def yatiml_sweeten(self, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(self, node: yatiml.Node) -> None:
         node.set_attribute('ymmsl_version', 'v0.1')
         # The above adds the attribute to the end, but we want it at
         # the top; this moves it there.
@@ -23,5 +23,5 @@ class Document:
         del node.yaml_node.value[-1]
 
     @classmethod
-    def yatiml_savorize(self, node: yatiml.Node) -> None:
+    def _yatiml_savorize(self, node: yatiml.Node) -> None:
         node.remove_attribute('ymmsl_version')

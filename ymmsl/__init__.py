@@ -1,5 +1,5 @@
 import yatiml
-from typing import Type
+from typing_extensions import Type
 
 from ymmsl.compute_element import Operator, Port
 from ymmsl.configuration import Configuration
