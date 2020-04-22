@@ -2,8 +2,8 @@
     :target: https://ymmsl-python.readthedocs.io/en/latest/?badge=develop
     :alt: Documentation Build Status
 
-.. image:: https://api.travis-ci.org/multiscale/ymmsl-python.svg?branch=develop
-    :target: https://travis-ci.org/multiscale/ymmsl-python
+.. image:: https://github.com/multiscale/ymmsl-python/workflows/continuous_integration/badge.svg
+    :target: https://github.com/multiscale/ymmsl-python/actions
     :alt: Build Status
 
 .. image:: https://api.codacy.com/project/badge/Grade/77d0caaf9c44473caf02670df04f02b2
