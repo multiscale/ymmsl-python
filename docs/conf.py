@@ -81,10 +81,6 @@ todo_include_todos = False
 
 add_module_names = False
 
-# Autodoc options
-autodoc_default_options = {
-        'exclude-members': 'yatiml_recognize, yatiml_sweeten, yatiml_savorize'}
-
 def strip_signatures(app, what, name, obj, options, signature, return_annotation):
     sig = None
     if signature is not None:
