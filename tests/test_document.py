@@ -1,4 +1,4 @@
-from typing import Type
+from typing_extensions import Type
 
 import pytest
 from ruamel import yaml

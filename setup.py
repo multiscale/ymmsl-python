@@ -36,7 +36,7 @@ setup(
     test_suite='tests',
     install_requires=[
         'ruamel.yaml',
-        'yatiml==0.5.0'
+        'yatiml==0.5.1'
     ],
     setup_requires=[
         # dependency for `python setup.py test`
@@ -47,8 +47,6 @@ setup(
         'sphinx_rtd_theme'
     ],
     tests_require=[
-        'ruamel.yaml',
-        'yatiml==0.5.0',
         'pytest>=3.3',
         'pytest-cov',
         'pytest-mypy',

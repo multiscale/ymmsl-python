@@ -1,5 +1,6 @@
 from pathlib import Path
-from typing import Any, IO, Type, Union
+from typing import Any, IO, Union
+from typing_extensions import Type
 
 from ruamel import yaml
 import yatiml

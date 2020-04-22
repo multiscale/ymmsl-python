@@ -197,7 +197,7 @@ class Conduit:
         i = len(reference)
         while isinstance(reference[i-1], int):
             i -= 1
-        return reference[:i]
+        return reference[:i]    # type: ignore
 
 
 class ModelReference:

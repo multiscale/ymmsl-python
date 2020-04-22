@@ -2,7 +2,7 @@
 from copy import copy
 import re
 from collections import OrderedDict, UserString
-from typing import Any, Generator, Iterable, List, Union, overload
+from typing import Any, Generator, Iterable, List, Union
 
 import yatiml
 from ruamel import yaml
@@ -26,7 +26,7 @@ class Identifier(UserString):
         """
         super().__init__(seq)
         if not re.fullmatch(
-                r'[a-zA-Z_]\w*', self.data, flags=re.ASCII):
+                r'[a-zA-Z_]\w*', self.data, flags=re.ASCII):    # type: ignore
             raise ValueError('Identifiers must consist only of'
                              ' lower- and uppercase letters, digits and'
                              ' underscores, must start with a letter or'
@@ -143,13 +143,16 @@ class Reference:
         for part in self.__parts:
             yield part
 
-    @overload
-    def __getitem__(self, key: int) -> ReferencePart:
-        ...
+    # These don't work on Python 3.5.1, which we still support. We'll
+    # live with a bit less type safety until we can drop 3.5.
 
-    @overload
-    def __getitem__(self, key: slice) -> 'Reference':
-        ...
+    # @overload
+    # def __getitem__(self, key: int) -> ReferencePart:
+    #     ...
+
+    # @overload
+    # def __getitem__(self, key: slice) -> 'Reference':
+    #     ...
 
     def __getitem__(self, key: Union[int, slice]) -> Union['Reference', ReferencePart]:
         """Get a part or a slice.
