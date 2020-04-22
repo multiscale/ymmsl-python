@@ -11,7 +11,7 @@ __pycache__
 
 htmlcov
 .coverage
-coverage.xml
+cobertura.xml
 .pytest_cache
 
 docs/_build
