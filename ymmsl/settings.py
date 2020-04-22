@@ -106,23 +106,23 @@ class Settings(MutableMapping):
         return odict
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         # In the YAML file, a Settings is just a mapping...
         node.require_mapping()
 
-    def yatiml_attributes(self) -> OrderedDict:
+    def _yatiml_attributes(self) -> OrderedDict:
         # ...so we just give YAtiML our internal mapping to serialise
         return self._store
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         # wrap the existing mapping into a new mapping with attribute settings
         setting_values = node.yaml_node
         node.make_mapping()
         node.set_attribute('settings', setting_values)
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         # format lists and arrays nicely
         for _, value_node in node.yaml_node.value:
             if value_node.tag == 'tag:yaml.org,2002:seq':

@@ -23,7 +23,6 @@ def document_dumper() -> Type:
         pass
 
     yatiml.add_to_dumper(Dumper, [Document])
-    yatiml.set_document_type(Dumper, Document)
     return Dumper
 
 

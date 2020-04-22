@@ -211,11 +211,11 @@ class Reference:
         return ret
 
     @classmethod
-    def yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_scalar(str)
 
     @classmethod
-    def yatiml_savorize(cls, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         text = str(node.get_value())
         parts = cls.__string_to_parts(text)
 
@@ -238,11 +238,11 @@ class Reference:
         node.make_mapping()
         node.set_attribute('parts', ynode)
 
-    def yatiml_attributes(self) -> OrderedDict:
+    def _yatiml_attributes(self) -> OrderedDict:
         return OrderedDict([('parts', self.__parts)])
 
     @classmethod
-    def yatiml_sweeten(cls, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         parts = node.get_attribute('parts').seq_items()
         text = str(parts[0].get_value())
         for part in parts[1:]:
