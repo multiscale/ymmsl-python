@@ -1,5 +1,5 @@
 """This module contains all the definitions for yMMSL."""
-from typing import Any, List, Union, cast
+from typing import Any, List, Optional, Union, cast
 
 from ruamel import yaml
 import yatiml
@@ -218,19 +218,24 @@ class ModelReference:
 class Model(ModelReference):
     """Describes a simulation model.
 
-    A model consists of a number of compute elements connected by \
+    A model consists of a number of compute elements connected by
     conduits.
 
+    Note that there may be no conduits, if there is only a single
+    compute element. In that case, the conduits argument may be
+    omitted when constructing the object, and also from the YAML file;
+    the `conduits` attribute will then be set to an empty list.
+
     Attributes:
-        name: The name by which this simulation model is known to \
+        name: The name by which this simulation model is known to
                 the system.
-        compute_elements: A list of compute elements making up the \
+        compute_elements: A list of compute elements making up the
                 model.
         conduits: A list of conduits connecting the compute elements.
     """
     def __init__(self, name: str,
                  compute_elements: List[ComputeElement],
-                 conduits: List[Conduit]) -> None:
+                 conduits: Optional[List[Conduit]] = None) -> None:
         """Create a Model.
 
         Arguments:
@@ -242,7 +247,11 @@ class Model(ModelReference):
         """
         super().__init__(name)
         self.compute_elements = compute_elements
-        self.conduits = conduits
+
+        if conduits is None:
+            self.conduits = list()      # type: List[Conduit]
+        else:
+            self.conduits = conduits
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
@@ -258,4 +267,6 @@ class Model(ModelReference):
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         node.seq_attribute_to_map('compute_elements', 'name', 'implementation')
+        if len(node.get_attribute('conduits').seq_items()) == 0:
+            node.remove_attribute('conduits')
         node.seq_attribute_to_map('conduits', 'sender', 'receiver')

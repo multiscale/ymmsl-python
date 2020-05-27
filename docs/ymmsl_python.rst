@@ -46,6 +46,13 @@ class. It has attributes ``name``, ``compute_elements`` and ``conduits``
 corresponding to those sections in the file. Attribute `name` is an
 :class:`ymmsl.Identifier` object.
 
+Note that conduits are optional, you may have a model that consists of only one
+component and no conduits at all. In YAML, you can write this by omitting the
+conduits attribute. In Python, you can also omit the conduits argument when
+constructing a Model. In both cases, the ``conduits`` attribute will be an empty
+list.
+
+
 .. code-block:: python
     :caption: Accessing the model
 

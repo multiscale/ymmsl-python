@@ -1,4 +1,5 @@
 from typing import Union
+from typing_extensions import Type
 
 from ymmsl import (ComputeElement, Conduit, Identifier, Model, ModelReference,
                    Reference)
@@ -6,6 +7,27 @@ from ymmsl import (ComputeElement, Conduit, Identifier, Model, ModelReference,
 import pytest
 import yatiml
 from ruamel import yaml
+
+
+@pytest.fixture
+def model_loader() -> Type:
+    class Loader(yatiml.Loader):
+        pass
+
+    yatiml.add_to_loader(Loader, [ComputeElement, Conduit, Identifier,
+                                  Model, Reference])
+    yatiml.set_document_type(Loader, Model)
+    return Loader
+
+
+@pytest.fixture
+def model_dumper() -> Type:
+    class Dumper(yatiml.Dumper):
+        pass
+
+    yatiml.add_to_dumper(Dumper, [ComputeElement, Conduit, Identifier,
+                                  Model, Reference])
+    return Dumper
 
 
 def test_compute_element_declaration() -> None:
@@ -120,14 +142,7 @@ def test_model() -> None:
     assert model.conduits == conduits
 
 
-def test_load_model() -> None:
-    class Loader(yatiml.Loader):
-        pass
-
-    yatiml.add_to_loader(Loader, [ComputeElement, Conduit, Identifier,
-                                  Model, Reference])
-    yatiml.set_document_type(Loader, Model)
-
+def test_load_model(model_loader: Type) -> None:
     text = ('name: test_model\n'
             'compute_elements:\n'
             '  ic: isr2d.initial_conditions\n'
@@ -142,7 +157,7 @@ def test_load_model() -> None:
             '  bf.wss_out: bf2smc.in\n'
             '  bf2smc.out: smc.wss_in\n'
             )
-    model = yaml.load(text, Loader=Loader)
+    model = yaml.load(text, Loader=model_loader)
     assert str(model.name) == 'test_model'
     assert len(model.compute_elements) == 5
     assert str(model.compute_elements[2].implementation) == 'isr2d.blood_flow'
@@ -155,13 +170,22 @@ def test_load_model() -> None:
     assert str(model.conduits[3].receiving_port()) == 'in'
 
 
-def test_dump_model() -> None:
-    class Dumper(yatiml.Dumper):
-        pass
+def test_load_no_conduits(model_loader: Type) -> None:
+    text = ('name: test_model\n'
+            'compute_elements:\n'
+            '  smc: isr2d.smc\n'
+            )
 
-    yatiml.add_to_dumper(Dumper, [ComputeElement, Conduit, Identifier,
-                                  Model, Reference])
+    model = yaml.load(text, Loader=model_loader)
+    assert str(model.name) == 'test_model'
+    assert len(model.compute_elements) == 1
+    assert str(model.compute_elements[0].name) == 'smc'
+    assert str(model.compute_elements[0].implementation) == 'isr2d.smc'
+    assert isinstance(model.conduits, list)
+    assert len(model.conduits) == 0
 
+
+def test_dump_model(model_dumper: Type) -> None:
     ce1 = ComputeElement('ce1', 'test.impl1')
     ce2 = ComputeElement('ce2', 'test.impl2')
     ce1_out = Reference('ce1.state_out')
@@ -172,7 +196,7 @@ def test_dump_model() -> None:
     cd2 = Conduit('ce2.fini_out', 'ce1.boundary_in')
     model = Model('test_model', [ce1, ce2], [cd1, cd2])
 
-    text = yaml.dump(model, Dumper=Dumper)
+    text = yaml.dump(model, Dumper=model_dumper)
     assert text == ('name: test_model\n'
                     'compute_elements:\n'
                     '  ce1: test.impl1\n'
@@ -180,4 +204,15 @@ def test_dump_model() -> None:
                     'conduits:\n'
                     '  ce1.state_out: ce2.init_in\n'
                     '  ce2.fini_out: ce1.boundary_in\n'
+                    )
+
+
+def test_dump_no_conduits(model_dumper: Type) -> None:
+    ce1 = ComputeElement('ce1', 'test.impl1')
+    model = Model('test_model', [ce1])
+
+    text = yaml.dump(model, Dumper=model_dumper)
+    assert text == ('name: test_model\n'
+                    'compute_elements:\n'
+                    '  ce1: test.impl1\n'
                     )
