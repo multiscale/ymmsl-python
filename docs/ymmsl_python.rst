@@ -22,6 +22,11 @@ handled internally by the library, so it does not show up in the
 :class:`ymmsl.Configuration` object. The others, `model` and `settings` are
 loaded into attributes of ``config``.
 
+Note that `settings` is optional: if it is not given in the YAML file, the
+corresponding attribute will be an empty :class:`ymmsl.Settings` object.
+Likewise, when saving an empty :class:`ymmsl.Configuration`, the `settings`
+section will be omitted.
+
 As a result, ``config.model`` will give you an object representing the model
 part of the file, while ``config.settings`` contains an object with the
 settings in it. :class:`ymmsl.Configuration` is just a simple record that holds
