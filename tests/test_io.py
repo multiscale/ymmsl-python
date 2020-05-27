@@ -3,9 +3,7 @@ from typing import Any
 
 import pytest
 
-from ymmsl import (
-        ComputeElement, Conduit, Configuration, dump, load, save, Model,
-        ModelReference)
+from ymmsl import Configuration, dump, load, save, Model, ModelReference
 
 
 @pytest.fixture

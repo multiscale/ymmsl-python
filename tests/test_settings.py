@@ -1,4 +1,4 @@
-from ymmsl import Identifier, SettingValue, Reference, Settings
+from ymmsl import Identifier, Reference, Settings
 from ymmsl import SettingValue  # noqa: F401 # pytest: disable=unused-import
 
 from collections import OrderedDict
