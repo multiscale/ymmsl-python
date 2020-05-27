@@ -127,6 +127,7 @@ class Reference:
 
         Args:
             other: Another Reference or a string.
+
         """
         if isinstance(other, Reference):
             return self.__parts != other.__parts
