@@ -5,10 +5,8 @@ from typing_extensions import Type
 import pytest
 from ruamel import yaml
 import yatiml
-from ymmsl import Configuration, Settings, SettingValue
+from ymmsl import Configuration, Settings, SettingValue     # noqa: F401
 from ymmsl.document import Document
-
-# noqa: F401
 
 
 @pytest.fixture

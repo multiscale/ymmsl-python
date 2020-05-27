@@ -1,7 +1,6 @@
 """This module contains all the definitions for yMMSL."""
 from typing import Optional
 
-from ruamel import yaml
 import yatiml
 
 from ymmsl.document import Document
