@@ -1,4 +1,5 @@
 from ymmsl import Identifier, SettingValue, Reference, Settings
+from ymmsl import SettingValue  # noqa: F401 # pytest: disable=unused-import
 
 from collections import OrderedDict
 from typing import cast, List
@@ -110,7 +111,7 @@ def test_del_item(settings: Settings) -> None:
     assert len(settings._store) == 1
     assert Reference('param1') not in settings._store
     with pytest.raises(KeyError):
-        settings['param1']
+        settings['param1']  # pylint: disable=pointless-statement
     assert settings._store[Reference('param2')] == 0
 
 

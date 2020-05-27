@@ -33,9 +33,13 @@ class ComputeElement:
     """
 
     def __init__(self, name: str, implementation: str,
-                 multiplicity: Union[int, List[int]] = []) -> None:
-        if isinstance(multiplicity, int):
+                 multiplicity: Union[None, int, List[int]] = None) -> None:
+
+        if multiplicity is None:
+            multiplicity = list()
+        elif isinstance(multiplicity, int):
             multiplicity = [multiplicity]
+
         self.name = Reference(name)
         self.implementation = Reference(implementation)
         if (isinstance(multiplicity, int)):
@@ -113,7 +117,8 @@ class Conduit:
             return NotImplemented
         return self.sender == other.sender and self.receiver == other.receiver
 
-    def __check_reference(self, ref: Reference) -> None:
+    @staticmethod
+    def __check_reference(ref: Reference) -> None:
         """Checks an endpoint for validity.
         """
         # check that subscripts are at the end

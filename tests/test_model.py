@@ -1,4 +1,3 @@
-from typing import Union
 from typing_extensions import Type
 
 from ymmsl import (ComputeElement, Conduit, Identifier, Model, ModelReference,
@@ -188,10 +187,6 @@ def test_load_no_conduits(model_loader: Type) -> None:
 def test_dump_model(model_dumper: Type) -> None:
     ce1 = ComputeElement('ce1', 'test.impl1')
     ce2 = ComputeElement('ce2', 'test.impl2')
-    ce1_out = Reference('ce1.state_out')
-    ce2_in = Reference('ce2.init_in')
-    ce2_out = Reference('ce2.fini_out')
-    ce1_in = Reference('ce1.boundary_in')
     cd1 = Conduit('ce1.state_out', 'ce2.init_in')
     cd2 = Conduit('ce2.fini_out', 'ce1.boundary_in')
     model = Model('test_model', [ce1, ce2], [cd1, cd2])

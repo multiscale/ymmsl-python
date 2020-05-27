@@ -1,11 +1,11 @@
 from collections import OrderedDict
-from typing import Any, List  # noqa: F401
 from typing_extensions import Type
 
 import pytest
 from ruamel import yaml
 import yatiml
-from ymmsl import Configuration, Settings, SettingValue     # noqa: F401
+from ymmsl import Configuration, Settings
+from ymmsl import SettingValue     # noqa: F401 # pylint: disable=unused-import
 from ymmsl.document import Document
 
 

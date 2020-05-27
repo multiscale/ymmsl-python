@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 import pytest
 
-from ymmsl import (ComputeElement, Conduit, Configuration, Identifier, Model,
+from ymmsl import (ComputeElement, Conduit, Configuration, Model,
                    ModelReference, Settings)
 
 

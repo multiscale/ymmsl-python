@@ -1,11 +1,11 @@
-from collections import OrderedDict
 from pathlib import Path
-from typing import Any, IO
+from typing import Any
 
 import pytest
 
-from ymmsl import (ComputeElement, Conduit, Configuration, dump, Identifier,
-                   load, save, Model, ModelReference)
+from ymmsl import (
+        ComputeElement, Conduit, Configuration, dump, load, save, Model,
+        ModelReference)
 
 
 @pytest.fixture
