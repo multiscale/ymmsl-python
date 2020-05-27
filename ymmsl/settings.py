@@ -82,8 +82,7 @@ class Settings(MutableMapping):
         return result
 
     def copy(self) -> 'Settings':
-        """Makes a shallow copy of these settings and returns it.
-        """
+        """Makes a shallow copy of these settings and returns it."""
         new_settings = Settings()
         new_settings._store = self._store.copy()
         return new_settings

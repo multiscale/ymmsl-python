@@ -38,7 +38,6 @@ class Component:
                     set of instances.
 
         """
-
         self.name = Reference(name)
         self.implementation = Reference(implementation)
 
@@ -101,6 +100,7 @@ class Conduit:
     Attributes:
         sender: The sending port that this conduit is connected to.
         receiver: The receiving port that this conduit is connected to.
+
     """
 
     def __init__(self, sender: str, receiver: str) -> None:
@@ -119,6 +119,7 @@ class Conduit:
         self.__check_reference(self.receiver)
 
     def __str__(self) -> str:
+        """Return a string representation of the object."""
         return 'Conduit({} -> {})'.format(self.sender, self.receiver)
 
     def __eq__(self, other: Any) -> bool:
@@ -181,6 +182,7 @@ class Conduit:
 
         Returns:
             A list of slot indexes.
+
         """
         return self.__slot(self.receiver)
 
@@ -216,6 +218,7 @@ class ModelReference:
 
     Attributes:
         name: The name of the simulation model this refers to.
+
     """
     def __init__(self, name: str) -> None:
         """Create a ModelReference.
@@ -244,6 +247,7 @@ class Model(ModelReference):
         components: A list of components making up the
                 model.
         conduits: A list of conduits connecting the components.
+
     """
     def __init__(self, name: str,
                  components: List[Component],

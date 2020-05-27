@@ -43,6 +43,7 @@ class Port:
     Attributes:
         name: The name of the port.
         operator: The MMSL operator in which this port is used.
+
     """
 
     def __init__(self, name: Identifier, operator: Operator) -> None:
@@ -51,6 +52,7 @@ class Port:
         Args:
             name: The name of the port.
             operator: The MMSL Operator in which this port is used.
+
         """
         self.name = name  # type: Identifier
         self.operator = operator  # type: Operator

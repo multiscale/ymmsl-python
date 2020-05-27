@@ -140,7 +140,7 @@ def test_reference_slicing() -> None:
         test_ref[0] = 'test2'
 
     with pytest.raises(ValueError):
-        test_ref[1:]    # pytest: disable=pointless-statement
+        test_ref[1:]    # pylint: disable=pointless-statement
 
 
 def test_reference_dict_key() -> None:

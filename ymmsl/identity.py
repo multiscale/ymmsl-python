@@ -271,6 +271,7 @@ class Reference:
         Raises:
             ValueError: If the string does not represent a valid
                     Reference.
+
         """
         def find_next_op(text: str, start: int) -> int:
             next_bracket = text.find('[', start)
