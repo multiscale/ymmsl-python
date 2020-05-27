@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 import pytest
 
-from ymmsl import (ComputeElement, Conduit, Configuration, Model,
+from ymmsl import (Component, Conduit, Configuration, Model,
                    ModelReference, Settings)
 
 
@@ -31,7 +31,7 @@ def test_yaml2() -> str:
     text = ('ymmsl_version: v0.1\n'
             'model:\n'
             '  name: test_model\n'
-            '  compute_elements:\n'
+            '  components:\n'
             '    ic: isr2d.initial_conditions\n'
             '    smc: isr2d.smc\n'
             '    bf: isr2d.blood_flow\n'
@@ -51,11 +51,11 @@ def test_config2() -> Configuration:
     model = Model(
             'test_model',
             [
-                ComputeElement('ic', 'isr2d.initial_conditions'),
-                ComputeElement('smc', 'isr2d.smc'),
-                ComputeElement('bf', 'isr2d.blood_flow'),
-                ComputeElement('smc2bf', 'isr2d.smc2bf'),
-                ComputeElement('bf2smc', 'isr2d.bf2smc')],
+                Component('ic', 'isr2d.initial_conditions'),
+                Component('smc', 'isr2d.smc'),
+                Component('bf', 'isr2d.blood_flow'),
+                Component('smc2bf', 'isr2d.smc2bf'),
+                Component('bf2smc', 'isr2d.bf2smc')],
             [
                 Conduit('ic.out', 'smc.initial_state'),
                 Conduit('smc.cell_positions', 'smc2bf.in'),

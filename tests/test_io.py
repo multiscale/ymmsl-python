@@ -31,13 +31,13 @@ def test_load_string2(test_yaml2: str) -> None:
     model = configuration.model
     assert isinstance(model, Model)
     assert str(model.name) == 'test_model'
-    assert len(model.compute_elements) == 5
-    assert str(model.compute_elements[4].name) == 'bf2smc'
-    assert str(model.compute_elements[2].implementation) == 'isr2d.blood_flow'
+    assert len(model.components) == 5
+    assert str(model.components[4].name) == 'bf2smc'
+    assert str(model.components[2].implementation) == 'isr2d.blood_flow'
     assert len(model.conduits) == 5
     assert str(model.conduits[0].sender) == 'ic.out'
     assert str(model.conduits[1].sending_port()) == 'cell_positions'
-    assert str(model.conduits[3].receiving_compute_element()) == 'bf2smc'
+    assert str(model.conduits[3].receiving_component()) == 'bf2smc'
 
 
 def test_load_string3(test_yaml3: str) -> None:

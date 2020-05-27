@@ -7,17 +7,17 @@ import yatiml
 from ymmsl.identity import Identifier, Reference
 
 
-class ComputeElement:
-    """An object declaring a compute element.
+class Component:
+    """An object declaring a simulation component.
 
-    Compute elements are things like submodels, scale bridges, proxies,
-    and any other program that makes up a model. This class
-    represents a declaration of a set of instances of a compute
-    element, and it's used to describe which instances are needed to
+    Simulation components are things like submodels, scale bridges,
+    proxies, and any other program that makes up a model. This class
+    represents a declaration of a set of instances of a simulation
+    component, and it's used to describe which instances are needed to
     perform a certain simulation.
 
     Args:
-        name: The name of the compute element; must be a valid
+        name: The name of the component; must be a valid
                 Reference.
         implementation: The name of the implementation; must be a
                 valid Reference.
@@ -25,7 +25,7 @@ class ComputeElement:
                 set of instances.
 
     Attributes:
-        name (ymmsl.Reference): The name of this compute element.
+        name (ymmsl.Reference): The name of this component.
         implementation (ymmsl.Reference): A reference to the
                 implementation to use.
         multiplicity (List[int]): The shape of the array of instances
@@ -48,8 +48,9 @@ class ComputeElement:
 
         for part in self.implementation:
             if isinstance(part, int):
-                raise ValueError('Compute element implementation {} contains a'
-                                 ' subscript which is not allowed.'.format(self.name))
+                raise ValueError('Component implementation {} contains a'
+                                 ' subscript, which is not allowed.'.format(
+                                     self.name))
 
     def __str__(self) -> str:
         result = str(self.name)
@@ -84,18 +85,18 @@ class ComputeElement:
 
 
 class Conduit:
-    """A conduit transports data between compute elements.
+    """A conduit transports data between simulation components.
 
-    A conduit has two endpoints, which are references to a Port on a
-    Compute Element. These references must be of one of the following
-    forms:
+    A conduit has two endpoints, which are references to a port on a
+    simulation component. These references must be of one of the
+    following forms:
 
-    - submodel.port
-    - namespace.submodel.port (or several namespace prefixes)
+    - component.port
+    - namespace.component.port (or several namespace prefixes)
 
     Args:
-        sender: The sending compute element and port, as a Reference.
-        receiver: The receiving compute element and port, as a
+        sender: The sending component and port, as a Reference.
+        receiver: The receiving component and port, as a
                 Reference.
 
     Attributes:
@@ -132,13 +133,13 @@ class Conduit:
         # check that the length is at least 2
         if len(Conduit.__stem(ref)) < 2:
             raise ValueError('Senders and receivers in conduits must have'
-                             ' a compute element name, a period, and then'
+                             ' a component name, a period, and then'
                              ' a port name and optionally a slot. Reference {}'
-                             ' is missing either the compute element or the'
+                             ' is missing either the component or the'
                              ' port'.format(ref))
 
-    def sending_compute_element(self) -> Reference:
-        """Returns a reference to the sending compute element.
+    def sending_component(self) -> Reference:
+        """Returns a reference to the sending component.
         """
         return cast(Reference, self.__stem(self.sender)[:-1])
 
@@ -158,8 +159,8 @@ class Conduit:
         """
         return self.__slot(self.sender)
 
-    def receiving_compute_element(self) -> Reference:
-        """Returns a reference to the receiving compute element.
+    def receiving_component(self) -> Reference:
+        """Returns a reference to the receiving component.
         """
         return cast(Reference, self.__stem(self.receiver)[:-1])
 
@@ -223,35 +224,33 @@ class ModelReference:
 class Model(ModelReference):
     """Describes a simulation model.
 
-    A model consists of a number of compute elements connected by
+    A model consists of a number of components connected by
     conduits.
 
     Note that there may be no conduits, if there is only a single
-    compute element. In that case, the conduits argument may be
+    component. In that case, the conduits argument may be
     omitted when constructing the object, and also from the YAML file;
     the `conduits` attribute will then be set to an empty list.
 
     Attributes:
         name: The name by which this simulation model is known to
                 the system.
-        compute_elements: A list of compute elements making up the
+        components: A list of components making up the
                 model.
-        conduits: A list of conduits connecting the compute elements.
+        conduits: A list of conduits connecting the components.
     """
     def __init__(self, name: str,
-                 compute_elements: List[ComputeElement],
+                 components: List[Component],
                  conduits: Optional[List[Conduit]] = None) -> None:
         """Create a Model.
 
         Arguments:
             name: Name of this model.
-            compute_elements: A list of compute elements making up the
-                    model.
-            conduits: A list of conduits connecting the compute
-                    elements.
+            components: A list of components making up the model.
+            conduits: A list of conduits connecting the components.
         """
         super().__init__(name)
-        self.compute_elements = compute_elements
+        self.components = components
 
         if conduits is None:
             self.conduits = list()      # type: List[Conduit]
@@ -262,16 +261,16 @@ class Model(ModelReference):
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_mapping()
         node.require_attribute('name')
-        node.require_attribute('compute_elements')
+        node.require_attribute('components')
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        node.map_attribute_to_seq('compute_elements', 'name', 'implementation')
+        node.map_attribute_to_seq('components', 'name', 'implementation')
         node.map_attribute_to_seq('conduits', 'sender', 'receiver')
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        node.seq_attribute_to_map('compute_elements', 'name', 'implementation')
+        node.seq_attribute_to_map('components', 'name', 'implementation')
         if len(node.get_attribute('conduits').seq_items()) == 0:
             node.remove_attribute('conduits')
         node.seq_attribute_to_map('conduits', 'sender', 'receiver')

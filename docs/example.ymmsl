@@ -2,7 +2,7 @@ ymmsl_version: v0.1
 
 model:
   name: macro_micro_model
-  compute_elements:
+  components:
     macro: my.macro_model
     micro: my.micro_model
   conduits:

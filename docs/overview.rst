@@ -60,22 +60,23 @@ use ``ymmsl.save``:
 
 .. code-block:: python
 
-   from ymmsl import ComputeElement, Configuration, Model, Settings
+   from ymmsl import Component, Configuration, Model, Settings
 
-   model = Model('test_model', [ComputeElement('macro')], [])
+   model = Model('test_model', [Component('macro')])
    settings = Settings(OrderedDict([('test_parameter', 42)]))
    config = Configuration(model, settings)
 
    with open('out.ymmsl', 'w') as f:
        ymmsl.save(config, f)
 
-Here, we create a model named ``test_model``, containing a single compute
-element named ``macro``, and no conduits. For the settings, we create a Settings
+Here, we create a model named ``test_model``, containing a single component
+named ``macro``, and no conduits. For the settings, we create a Settings
 object, which is a container for an ordered dictionary of settings. Note that
-normal Python dictionaries are unordered, which is why YAML documents saved from
-Python are often in a random order and hard to read. We avoid that problem in
-yMMSL by using an ``OrderedDict`` here. You have to pass it a list of tuples,
-because using dictionary syntax with curly brackets will lose the ordering.
+normal Python dictionaries are unordered, which is why YAML documents saved
+from Python are often in a random order and hard to read. We avoid that problem
+in yMMSL by using an ``OrderedDict`` here. You have to pass it a list of
+tuples, because using dictionary syntax with curly brackets will lose the
+ordering.
 
 Finally, we combine the model and the settings into a
 :class:`yammsl.Configuration` object, which we then save to a file. If you
