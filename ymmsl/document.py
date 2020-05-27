@@ -8,6 +8,7 @@ class Document:
     care of a special ymmsl_version attribute in the root of the
     YAML file.
     """
+
     @classmethod
     def _yatiml_recognize(self, node: yatiml.UnknownNode) -> None:
         node.require_mapping()

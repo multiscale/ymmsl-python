@@ -1,11 +1,8 @@
-"""Python bindings for yMMSL
+"""Python bindings for yMMSL.
 
 This package contains all the classes needed to represent a yMMSL file,
 as well as to read and write yMMSL files.
 """
-
-import yatiml
-from typing_extensions import Type
 
 from ymmsl.component import Operator, Port
 from ymmsl.configuration import Configuration

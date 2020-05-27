@@ -16,35 +16,38 @@ class Component:
     component, and it's used to describe which instances are needed to
     perform a certain simulation.
 
-    Args:
-        name: The name of the component; must be a valid
-                Reference.
-        implementation: The name of the implementation; must be a
-                valid Reference.
-        multiplicity: An list of ints describing the shape of the
-                set of instances.
-
     Attributes:
         name (ymmsl.Reference): The name of this component.
         implementation (ymmsl.Reference): A reference to the
                 implementation to use.
         multiplicity (List[int]): The shape of the array of instances
                 that execute simultaneously.
+
     """
 
     def __init__(self, name: str, implementation: str,
                  multiplicity: Union[None, int, List[int]] = None) -> None:
+        """Create a Component.
 
-        if multiplicity is None:
-            multiplicity = list()
-        elif isinstance(multiplicity, int):
-            multiplicity = [multiplicity]
+        Args:
+            name: The name of the component; must be a valid
+                    Reference.
+            implementation: The name of the implementation; must be a
+                    valid Reference.
+            multiplicity: An list of ints describing the shape of the
+                    set of instances.
+
+        """
 
         self.name = Reference(name)
         self.implementation = Reference(implementation)
-        if (isinstance(multiplicity, int)):
-            multiplicity = [multiplicity]
-        self.multiplicity = multiplicity
+
+        if multiplicity is None:
+            self.multiplicity = list()
+        elif isinstance(multiplicity, int):
+            self.multiplicity = [multiplicity]
+        else:
+            self.multiplicity = multiplicity
 
         for part in self.implementation:
             if isinstance(part, int):
@@ -53,6 +56,7 @@ class Component:
                                      self.name))
 
     def __str__(self) -> str:
+        """Returns a string representation of the object."""
         result = str(self.name)
         for dim in self.multiplicity:
             result += '[{}]'.format(dim)
@@ -94,16 +98,20 @@ class Conduit:
     - component.port
     - namespace.component.port (or several namespace prefixes)
 
-    Args:
-        sender: The sending component and port, as a Reference.
-        receiver: The receiving component and port, as a
-                Reference.
-
     Attributes:
         sender: The sending port that this conduit is connected to.
         receiver: The receiving port that this conduit is connected to.
     """
+
     def __init__(self, sender: str, receiver: str) -> None:
+        """Create a Conduit.
+
+        Args:
+            sender: The sending component and port, as a Reference.
+            receiver: The receiving component and port, as a
+                    Reference.
+
+        """
         self.sender = Reference(sender)
         self.receiver = Reference(receiver)
 
@@ -114,14 +122,14 @@ class Conduit:
         return 'Conduit({} -> {})'.format(self.sender, self.receiver)
 
     def __eq__(self, other: Any) -> bool:
+        """Returns whether the conduits connect the same ports."""
         if not isinstance(other, Conduit):
             return NotImplemented
         return self.sender == other.sender and self.receiver == other.receiver
 
     @staticmethod
     def __check_reference(ref: Reference) -> None:
-        """Checks an endpoint for validity.
-        """
+        """Checks an endpoint for validity."""
         # check that subscripts are at the end
         for i, part in enumerate(ref):
             if isinstance(part, int):
@@ -139,13 +147,11 @@ class Conduit:
                              ' port'.format(ref))
 
     def sending_component(self) -> Reference:
-        """Returns a reference to the sending component.
-        """
+        """Returns a reference to the sending component."""
         return cast(Reference, self.__stem(self.sender)[:-1])
 
     def sending_port(self) -> Identifier:
-        """Returns the identity of the sending port.
-        """
+        """Returns the identity of the sending port."""
         # We've checked that it's an Identifier during construction
         return cast(Identifier, self.__stem(self.sender)[-1])
 
@@ -156,17 +162,16 @@ class Conduit:
 
         Returns:
             A list of slot indexes.
+
         """
         return self.__slot(self.sender)
 
     def receiving_component(self) -> Reference:
-        """Returns a reference to the receiving component.
-        """
+        """Returns a reference to the receiving component."""
         return cast(Reference, self.__stem(self.receiver)[:-1])
 
     def receiving_port(self) -> Identifier:
-        """Returns the identity of the receiving port.
-        """
+        """Returns the identity of the receiving port."""
         return cast(Identifier, self.__stem(self.receiver)[-1])
 
     def receiving_slot(self) -> List[int]:
@@ -217,6 +222,7 @@ class ModelReference:
 
         Arguments:
             name: Name of the model to refer to.
+
         """
         self.name = Identifier(name)
 
@@ -248,6 +254,7 @@ class Model(ModelReference):
             name: Name of this model.
             components: A list of components making up the model.
             conduits: A list of conduits connecting the components.
+
         """
         super().__init__(name)
         self.components = components

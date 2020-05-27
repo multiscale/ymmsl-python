@@ -11,19 +11,23 @@ from ymmsl.model import ModelReference
 class Configuration(Document):
     """Top-level class for all information in a yMMSL file.
 
-    Args:
-        model: A description of the model to run.
-        settings: Settings to run the model with.
-
     Attributes:
         model: A model to run.
         settings: Settings to run the model with.
+
     """
 
     def __init__(self,
                  model: Optional[ModelReference] = None,
                  settings: Optional[Settings] = None
                  ) -> None:
+        """Create a Configuration.
+
+        Args:
+            model: A description of the model to run.
+            settings: Settings to run the model with.
+
+        """
         self.model = model
 
         if settings is None:

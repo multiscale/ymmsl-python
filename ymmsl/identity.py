@@ -14,6 +14,7 @@ class Identifier(UserString):
     An identifier may consist of upper- and lowercase characters, digits, and \
     underscores.
     """
+
     def __init__(self, seq: Any) -> None:
         """Create an Identifier.
 
@@ -23,6 +24,7 @@ class Identifier(UserString):
         Raises:
             ValueError: If the argument's string representation does
                     not form a valid Identifier.
+
         """
         super().__init__(seq)
         if not re.fullmatch(
@@ -76,6 +78,7 @@ class Reference:
         Raises:
             ValueError: If the argument does not define a valid
                     Reference.
+
         """
         if isinstance(parts, str):
             self.__parts = self.__string_to_parts(parts)
@@ -85,23 +88,19 @@ class Reference:
             self.__parts = parts
 
     def __str__(self) -> str:
-        """Convert the Reference to string form.
-        """
+        """Convert the Reference to string form."""
         return self.__parts_to_string(self.__parts)
 
     def __repr__(self) -> str:
-        """Produce a representation in string form.
-        """
+        """Produce a representation in string form."""
         return 'Reference("{}")'.format(str(self))
 
     def __len__(self) -> int:
-        """Return the number of parts in the Reference.
-        """
+        """Return the number of parts in the Reference."""
         return len(self.__parts)
 
     def __hash__(self) -> int:
-        """Calculate a hash value for use by dicts.
-        """
+        """Calculate a hash value for use by dicts."""
         return hash(str(self))
 
     def __eq__(self, other: Any) -> bool:
@@ -112,6 +111,7 @@ class Reference:
 
         Args:
             other: Another Reference or a string.
+
         """
         if isinstance(other, Reference):
             return self.__parts == other.__parts
@@ -139,6 +139,7 @@ class Reference:
 
         Yields:
             Each part in turn from left to right.
+
         """
         for part in self.__parts:
             yield part
@@ -170,6 +171,7 @@ class Reference:
 
         Raises:
             ValueError: If the argument is not an int or a slice.
+
         """
         if isinstance(key, int):
             return self.__parts[key]
@@ -185,6 +187,7 @@ class Reference:
 
         Raises:
             RuntimeError: Always.
+
         """
         raise RuntimeError('Reference objects are immutable, please don\'t try'
                            ' to change them.')
@@ -203,6 +206,7 @@ class Reference:
 
         Returns:
             A new concatenated Reference.
+
         """
         ret = Reference(copy(self.__parts))
         if isinstance(other, Reference):
@@ -312,6 +316,7 @@ class Reference:
 
         Returns:
             Their string form.
+
         """
         text = str(parts[0])
         for part in parts[1:]:

@@ -56,6 +56,7 @@ def load(source: Union[str, Path, IO[Any]]) -> Configuration:
 
     Returns:
         A Configuration object corresponding to the input data.
+
     """
     if isinstance(source, Path):
         with source.open('r') as f:
@@ -71,6 +72,7 @@ def dump(config: Configuration) -> str:
 
     Returns:
         A yMMSL YAML description of the given document.
+
     """
     return yaml.dump(config, Dumper=dumper)
 
@@ -83,6 +85,7 @@ def save(config: Configuration, target: Union[str, Path, IO[Any]]) -> None:
         target: The file to save to, either as a string containing a
             path, as a pathlib Path object, or as an open file-like
             object.
+
     """
     if isinstance(target, str):
         with open(target, 'w') as f:    # type: IO[Any]

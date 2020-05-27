@@ -9,6 +9,7 @@ class Operator(Enum):
     This is a combination of the Submodel Execution Loop operators,
     and operators for other components such as mappers.
     """
+
     NONE = 0    #: No operator
     F_INIT = 1  #: Initialisation phase, before start of the SEL
     O_I = 2     #: State observation within the model's main loop
@@ -43,6 +44,13 @@ class Port:
         name: The name of the port.
         operator: The MMSL operator in which this port is used.
     """
+
     def __init__(self, name: Identifier, operator: Operator) -> None:
+        """Create a Port.
+
+        Args:
+            name: The name of the port.
+            operator: The MMSL Operator in which this port is used.
+        """
         self.name = name  # type: Identifier
         self.operator = operator  # type: Operator
