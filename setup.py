@@ -52,6 +52,7 @@ setup(
         'pytest-cov',
         'pytest-mypy',
         'pycodestyle',
+        'importlib-metadata==2.1.0'
     ],
     extras_require={
         'dev':  ['prospector[with_pyroma]', 'yapf', 'isort'],
