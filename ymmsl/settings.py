@@ -1,4 +1,5 @@
-from collections import OrderedDict, MutableMapping
+from collections import OrderedDict
+from collections.abc import MutableMapping
 from copy import deepcopy
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
