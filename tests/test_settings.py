@@ -155,6 +155,14 @@ def test_update(settings: Settings) -> None:
     assert settings['param2'] == [[1, 2], [2, 3]]
     assert settings['param3'] == 3.1415
 
+    settings3 = Settings()
+    settings3[Reference('param1')] = True
+    settings.update(settings3)
+    assert len(settings) == 3
+    assert settings['param1'] is True
+    assert settings['param2'] == [[1, 2], [2, 3]]
+    assert settings['param3'] == 3.1415
+
 
 def test_copy() -> None:
     settings1 = Settings()
