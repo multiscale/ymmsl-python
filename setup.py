@@ -48,7 +48,7 @@ setup(
         'sphinx_rtd_theme'
     ],
     tests_require=[
-        'pytest>=3.3',
+        'pytest>=3.3,<6.2',
         'pytest-cov',
         'pytest-mypy',
         'pycodestyle',
