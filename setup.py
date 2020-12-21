@@ -36,7 +36,7 @@ setup(
     ],
     test_suite='tests',
     install_requires=[
-        'ruamel.yaml',
+        'ruamel.yaml<=0.16.10',
         'yatiml==0.5.1'
     ],
     setup_requires=[
