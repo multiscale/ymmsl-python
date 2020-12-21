@@ -141,6 +141,75 @@ def test_model() -> None:
     assert model.conduits == conduits
 
 
+def test_model_update_add_component() -> None:
+    macro = Component('macro', 'my.macro')
+    base = Model('test_update', [macro])
+
+    micro = Component('micro', 'my.micro')
+    conduit1 = Conduit('macro.intermediate_state', 'micro.initial_state')
+    conduit2 = Conduit('micro.final_state', 'macro.state_update')
+    conduits = [conduit1, conduit2]
+    overlay = Model('test_update_add', [micro], conduits)
+
+    base.update(overlay)
+
+    assert len(base.components) == 2
+    assert macro in base.components
+    assert micro in base.components
+    assert conduit1 in base.conduits
+    assert conduit2 in base.conduits
+
+
+def test_model_update_insert_component_on_conduit() -> None:
+    macro = Component('macro', 'my.macro')
+    micro = Component('micro', 'my.micro')
+    components = [macro, micro]
+    conduit1 = Conduit('macro.intermediate_state', 'micro.initial_state')
+    conduit2 = Conduit('micro.final_state', 'macro.state_update')
+    conduits = [conduit1, conduit2]
+    base = Model('test_update', components, conduits)
+
+    tee = Component('tee', 'muscle3.tee')
+    conduit3 = Conduit('macro.intermediate_state', 'tee.input')
+    conduit4 = Conduit('tee.output', 'micro.initial_state')
+    overlay = Model('test_update_tee', [tee], [conduit3, conduit4])
+
+    base.update(overlay)
+
+    assert len(base.components) == 3
+    assert macro in base.components
+    assert micro in base.components
+    assert tee in base.components
+
+    assert len(base.conduits) == 3
+    assert conduit2 in base.conduits
+    assert conduit3 in base.conduits
+    assert conduit4 in base.conduits
+
+
+def test_model_update_replace_component() -> None:
+    macro = Component('macro', 'my.macro')
+    micro = Component('micro', 'my.micro')
+    components = [macro, micro]
+    conduit1 = Conduit('macro.intermediate_state', 'micro.initial_state')
+    conduit2 = Conduit('micro.final_state', 'macro.state_update')
+    conduits = [conduit1, conduit2]
+    base = Model('test_update', components, conduits)
+
+    surrogate = Component('micro', 'my.surrogate')
+    overlay = Model('test_update_surrogate', [surrogate])
+
+    base.update(overlay)
+
+    assert len(base.components) == 2
+    assert macro in base.components
+    assert surrogate in base.components
+
+    assert len(base.conduits) == 2
+    assert conduit1 in base.conduits
+    assert conduit2 in base.conduits
+
+
 def test_load_model(model_loader: Type) -> None:
     text = ('name: test_model\n'
             'components:\n'

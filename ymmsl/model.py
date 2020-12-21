@@ -254,7 +254,7 @@ class Model(ModelReference):
                  conduits: Optional[List[Conduit]] = None) -> None:
         """Create a Model.
 
-        Arguments:
+        Args:
             name: Name of this model.
             components: A list of components making up the model.
             conduits: A list of conduits connecting the components.
@@ -267,6 +267,42 @@ class Model(ModelReference):
             self.conduits = list()      # type: List[Conduit]
         else:
             self.conduits = conduits
+
+    def update(self, overlay: 'Model') -> None:
+        """Overlay another model definition on top of this one.
+
+        This updates the object with the name, components and conduits
+        given in the argument. The name is overwritten, and components
+        are overwritten if they have the same name as an existing
+        argument or else added.
+
+        Conduits are added. If a conduit was already connected to one
+        of the endpoints of a conduit in the overlay, the old conduit
+        is removed.
+
+        Args:
+            overlay: A Model definition to overlay on top of this one.
+        """
+        self.name = overlay.name
+        # update components
+        for newc in overlay.components:
+            for i, oldc in enumerate(self.components):
+                if oldc.name == newc.name:
+                    self.components[i] = newc
+                    break
+            else:
+                self.components.append(newc)
+
+        # remove overwritten conduits
+        for newt in overlay.conduits:
+            for oldt in self.conduits.copy():
+                if oldt.sender == newt.sender:
+                    self.conduits.remove(oldt)
+                if oldt.receiver == newt.receiver:
+                    self.conduits.remove(oldt)
+
+        # add new conduits
+        self.conduits.extend(overlay.conduits)
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
