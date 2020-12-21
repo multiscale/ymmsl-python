@@ -4,7 +4,7 @@ from typing_extensions import Type
 import pytest
 from ruamel import yaml
 import yatiml
-from ymmsl import Configuration, Settings
+from ymmsl import Configuration, Identifier, Implementation, Settings
 from ymmsl import SettingValue     # noqa: F401 # pylint: disable=unused-import
 from ymmsl.document import Document
 
@@ -14,7 +14,8 @@ def configuration_loader() -> Type:
     class Loader(yatiml.Loader):
         pass
 
-    yatiml.add_to_loader(Loader, [Configuration, Document, Settings])
+    yatiml.add_to_loader(Loader, [
+        Configuration, Document, Identifier, Implementation, Settings])
     yatiml.set_document_type(Loader, Document)
     return Loader
 
@@ -24,7 +25,8 @@ def configuration_dumper() -> Type:
     class Dumper(yatiml.Dumper):
         pass
 
-    yatiml.add_to_dumper(Dumper, [Configuration, Document, Settings])
+    yatiml.add_to_dumper(Dumper, [
+        Configuration, Document, Identifier, Implementation, Settings])
     return Dumper
 
 
@@ -46,6 +48,7 @@ def test_load_nil_settings(configuration_loader: Type) -> None:
 
     assert isinstance(configuration.settings, Settings)
     assert len(configuration.settings) == 0
+    assert len(configuration.implementations) == 0
 
 
 def test_load_no_settings(configuration_loader: Type) -> None:
@@ -57,6 +60,7 @@ def test_load_no_settings(configuration_loader: Type) -> None:
 
     assert isinstance(configuration.settings, Settings)
     assert len(configuration.settings) == 0
+    assert len(configuration.implementations) == 0
 
 
 def test_dump_empty_settings(configuration_dumper: Type) -> None:
@@ -64,3 +68,93 @@ def test_dump_empty_settings(configuration_dumper: Type) -> None:
     text = yaml.dump(configuration, Dumper=configuration_dumper)
 
     assert text == 'ymmsl_version: v0.1\n'
+
+
+def test_load_implementations(configuration_loader: Type) -> None:
+    text = (
+            'ymmsl_version: v0.1\n'
+            'implementations:\n'
+            '  macro:\n'
+            '    script: |\n'
+            '      #!/bin/bash\n'
+            '\n'
+            '      /usr/bin/python3 /home/test/macro.py\n'
+            '\n'
+            '  meso: |\n'
+            '    #!/bin/bash\n'
+            '\n'
+            '    /home/test/meso.py\n'
+            '\n'
+            '  micro: /home/test/micro\n'
+            )
+
+    configuration = yaml.load(text, Loader=configuration_loader)
+
+    assert configuration.implementations[0].name == 'macro'
+    assert configuration.implementations[0].script == (
+            '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n')
+    assert configuration.implementations[1].name == 'meso'
+    assert configuration.implementations[1].script == (
+            '#!/bin/bash\n\n/home/test/meso.py\n')
+    assert configuration.implementations[2].name == 'micro'
+    assert configuration.implementations[2].script == (
+            '/home/test/micro')
+
+
+def test_load_implementations_script_list(configuration_loader: Type) -> None:
+    text = (
+            'ymmsl_version: v0.1\n'
+            'implementations:\n'
+            '  macro:\n'
+            '    script:\n'
+            '    - "#!/bin/bash"\n'
+            '    - ""\n'
+            '    - /usr/bin/python3 /home/test/macro.py\n'
+            '    - ""\n'
+            '  meso:\n'
+            '    - "#!/bin/bash"\n'
+            '    - ""\n'
+            '    - /home/test/meso.py\n'
+            '  micro: /home/test/micro\n'
+            )
+
+    configuration = yaml.load(text, Loader=configuration_loader)
+
+    assert configuration.implementations[0].name == 'macro'
+    assert configuration.implementations[0].script == (
+            '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n')
+    assert configuration.implementations[1].name == 'meso'
+    assert configuration.implementations[1].script == (
+            '#!/bin/bash\n\n/home/test/meso.py')
+    assert configuration.implementations[2].name == 'micro'
+    assert configuration.implementations[2].script == (
+            '/home/test/micro')
+
+
+def test_dump_implementations(configuration_dumper: Type) -> None:
+    implementations = [
+            Implementation(
+                Identifier('macro'),
+                '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n'),
+            Implementation(
+                Identifier('meso'),
+                '#!/bin/bash\n\n/home/test/meso.py'),
+            Implementation(Identifier('micro'), '/home/test/micro')]
+
+    configuration = Configuration(None, None, implementations)
+
+    text = yaml.dump(configuration, Dumper=configuration_dumper)
+    assert text == (
+            'ymmsl_version: v0.1\n'
+            'implementations:\n'
+            '  macro:\n'
+            '  - \'#!/bin/bash\'\n'
+            '  - \'\'\n'
+            '  - /usr/bin/python3 /home/test/macro.py\n'
+            '  - \'\'\n'
+            '  meso:\n'
+            '  - \'#!/bin/bash\'\n'
+            '  - \'\'\n'
+            '  - /home/test/meso.py\n'
+            '  micro: /home/test/micro\n'
+            )
