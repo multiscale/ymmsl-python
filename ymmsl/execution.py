@@ -51,3 +51,21 @@ class Implementation:
                         'tag:yaml.org,2002:seq', lines_nodes, start_mark,
                         end_mark)
                 node.set_attribute('script', seq_node)
+
+
+class Resources:
+    """Describes resources to allocate for components.
+
+    Attributes:
+        name: Name of the component to configure.
+        num_cores: Number of CPU cores to reserve.
+    """
+    def __init__(self, name: Identifier, num_cores: int) -> None:
+        """Create a Resources description.
+
+        Args:
+            name: Name of the component to configure
+            num_cores: Number of CPU cores to reserve.
+        """
+        self.name = name
+        self.num_cores = num_cores
