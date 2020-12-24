@@ -114,7 +114,7 @@ class Reference:
 
         """
         if isinstance(other, Reference):
-            return self.__parts == other.__parts    # pylint: disable=W0212
+            return self.__parts == other.__parts
         if isinstance(other, str):
             return str(self) == other
         return NotImplemented
@@ -130,7 +130,7 @@ class Reference:
 
         """
         if isinstance(other, Reference):
-            return self.__parts != other.__parts    # pylint: disable=W0212
+            return self.__parts != other.__parts
         if isinstance(other, str):
             return str(self) != other
         return NotImplemented
@@ -211,11 +211,11 @@ class Reference:
         """
         ret = Reference(copy(self.__parts))
         if isinstance(other, Reference):
-            ret.__parts.extend(other.__parts)   # pylint: disable=W0212
+            ret.__parts.extend(other.__parts)
         elif isinstance(other, (Identifier, int)):
-            ret.__parts.append(other)           # pylint: disable=W0212
+            ret.__parts.append(other)
         elif hasattr(other, '__iter__'):
-            ret.__parts.extend(other)           # pylint: disable=W0212
+            ret.__parts.extend(other)
         return ret
 
     @classmethod

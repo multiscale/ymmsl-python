@@ -86,7 +86,7 @@ class Settings(MutableMapping):
     def copy(self) -> 'Settings':
         """Makes a shallow copy of these settings and returns it."""
         new_settings = Settings()
-        new_settings._store = self._store.copy()    # pylint: disable=W0212
+        new_settings._store = self._store.copy()
         return new_settings
 
     def as_ordered_dict(self) -> OrderedDict:
