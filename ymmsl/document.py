@@ -10,7 +10,7 @@ class Document:
     """
 
     @classmethod
-    def _yatiml_recognize(self, node: yatiml.UnknownNode) -> None:
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_mapping()
         node.require_attribute('ymmsl_version')
         node.require_attribute_value('ymmsl_version', 'v0.1')
@@ -24,5 +24,5 @@ class Document:
         del node.yaml_node.value[-1]
 
     @classmethod
-    def _yatiml_savorize(self, node: yatiml.Node) -> None:
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         node.remove_attribute('ymmsl_version')

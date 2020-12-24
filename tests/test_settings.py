@@ -1,10 +1,9 @@
 from ymmsl import Identifier, Reference, Settings
-from ymmsl import SettingValue  # noqa: F401 # pytest: disable=unused-import
+from ymmsl import SettingValue  # noqa: F401 # pytest: disable=W0611
 
 from collections import OrderedDict
 from typing import cast, List
 import yatiml
-from ruamel import yaml
 
 import pytest
 
@@ -15,7 +14,7 @@ def settings() -> Settings:
 
 
 def test_create_settings(settings: Settings) -> None:
-    assert settings._store == {}
+    assert settings._store == {}        # pylint: disable=W0212
 
 
 def test_create_settings2() -> None:
@@ -26,7 +25,7 @@ def test_create_settings2() -> None:
         ('submodel._muscle_total_time', 0.1),
         ('bf.velocity', 0.48),
         ('init.max_depth', 0.11)
-        ])  # type: OrderedDict[str, SettingValue]
+    ])  # type: OrderedDict[str, SettingValue]
     settings = Settings(setting_values)
     assert list(settings.ordered_items()[0][0]) == [
         'submodel', '_muscle_grain'
@@ -51,28 +50,28 @@ def test_equality(settings: Settings) -> None:
     assert not (settings2 != settings)
 
     settings1 = Settings()
-    settings1._store[Reference('x')] = 12
-    settings1._store[Reference('y')] = 'test'
-    settings1._store[Reference('z')] = [1.4, 5.3]
+    settings1._store[Reference('x')] = 12           # pylint: disable=W0212
+    settings1._store[Reference('y')] = 'test'       # pylint: disable=W0212
+    settings1._store[Reference('z')] = [1.4, 5.3]   # pylint: disable=W0212
 
-    settings2._store[Reference('x')] = 12
-    settings2._store[Reference('y')] = 'test'
-    settings2._store[Reference('z')] = [1.4, 5.3]
+    settings2._store[Reference('x')] = 12           # pylint: disable=W0212
+    settings2._store[Reference('y')] = 'test'       # pylint: disable=W0212
+    settings2._store[Reference('z')] = [1.4, 5.3]   # pylint: disable=W0212
 
     assert settings1 == settings2
     assert settings2 == settings1
 
     settings3 = Settings()
-    settings3._store[Reference('x')] = 12
-    settings3._store[Reference('z')] = [1.4, 5.3]
+    settings3._store[Reference('x')] = 12           # pylint: disable=W0212
+    settings3._store[Reference('z')] = [1.4, 5.3]   # pylint: disable=W0212
 
     assert settings3 != settings1
     assert settings1 != settings3
 
     settings4 = Settings()
-    settings4._store[Reference('x')] = 12
-    settings4._store[Reference('y')] = 'test'
-    settings4._store[Reference('z')] = [1.41, 5.3]
+    settings4._store[Reference('x')] = 12           # pylint: disable=W0212
+    settings4._store[Reference('y')] = 'test'       # pylint: disable=W0212
+    settings4._store[Reference('z')] = [1.41, 5.3]  # pylint: disable=W0212
 
     assert settings1 != settings4
     assert settings4 != settings1
@@ -80,7 +79,7 @@ def test_equality(settings: Settings) -> None:
     assert settings4 != settings3
 
     assert settings1 != 'test'
-    assert not (settings4 == 13)
+    assert not (settings4 == 13)                    # pylint: disable=C0113
 
 
 def test_to_string(settings: Settings) -> None:
@@ -91,7 +90,7 @@ def test_to_string(settings: Settings) -> None:
 
 
 def test_get_item(settings: Settings) -> None:
-    settings._store[Reference('test')] = 13
+    settings._store[Reference('test')] = 13         # pylint: disable=W0212
     assert settings[Reference('test')] == 13
     assert settings['test'] == 13
 
@@ -101,15 +100,16 @@ def test_set_item(settings: Settings) -> None:
     assert settings._store[Reference('param1')] == 3
 
     settings[Reference('param2')] = 4
-    assert settings._store[Reference('param2')] == 4
+    assert settings._store[Reference('param2')] == 4    # pylint: disable=W0212
 
 
 def test_del_item(settings: Settings) -> None:
     settings._store = OrderedDict([(Reference('param1'), 'test'),
-                                   (Reference('param2'), 0)])
+                                   (Reference('param2'), 0)]
+    )   # pylint: disable=W0212
     del(settings['param1'])
-    assert len(settings._store) == 1
-    assert Reference('param1') not in settings._store
+    assert len(settings._store) == 1                # pylint: disable=W0212
+    assert Reference('param1') not in settings._store   # pylint: disable=W0212
     with pytest.raises(KeyError):
         settings['param1']  # pylint: disable=pointless-statement
     assert settings._store[Reference('param2')] == 0
@@ -123,7 +123,7 @@ def test_iter(settings: Settings) -> None:
     settings._store = OrderedDict([
             (Reference('test1'), 13),
             (Reference('test2'), 'testing'),
-            (Reference('test3'), [3.4, 5.6])])
+            (Reference('test3'), [3.4, 5.6])])      # pylint: disable=W0212
     assert len(settings) == 3
 
     for setting in settings:

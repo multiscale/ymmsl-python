@@ -22,7 +22,7 @@ class Operator(Enum):
                 Operator.NONE,
                 Operator.O_I,
                 Operator.O_F
-                }
+        }
 
     def allows_receiving(self) -> bool:
         return self in {

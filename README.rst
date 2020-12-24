@@ -6,13 +6,13 @@
     :target: https://github.com/multiscale/ymmsl-python/actions
     :alt: Build Status
 
-.. image:: https://api.codacy.com/project/badge/Grade/77d0caaf9c44473caf02670df04f02b2
-    :target: https://www.codacy.com/app/LourensVeen/ymmsl-python
+.. image:: https://app.codacy.com/project/badge/Grade/e8be82b26b1e44e19374a65a35c193bf
+    :target: https://www.codacy.com/gh/multiscale/ymmsl-python/dashboard
     :alt: Codacy Grade
 
-.. image:: https://api.codacy.com/project/badge/Coverage/77d0caaf9c44473caf02670df04f02b2
-    :target: https://www.codacy.com/app/LourensVeen/ymmsl-python
-    :alt: Code Coverage
+.. image:: https://app.codacy.com/project/badge/Coverage/e8be82b26b1e44e19374a65a35c193bf
+    :target: https://www.codacy.com/gh/multiscale/ymmsl-python/dashboard
+    :alt: Test Coverage
 
 .. image:: https://requires.io/github/multiscale/ymmsl-python/requirements.svg?branch=develop
     :target: https://requires.io/github/multiscale/ymmsl-python/requirements/?branch=develop

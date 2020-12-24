@@ -8,8 +8,9 @@ import yatiml
 from ymmsl.identity import Reference
 
 
-SettingValue = Union[str, int, float, bool,
-                       List[float], List[List[float]], yatiml.bool_union_fix]
+SettingValue = Union[
+        str, int, float, bool, List[float], List[List[float]],
+        yatiml.bool_union_fix]
 
 
 class Settings(MutableMapping):
@@ -85,7 +86,7 @@ class Settings(MutableMapping):
     def copy(self) -> 'Settings':
         """Makes a shallow copy of these settings and returns it."""
         new_settings = Settings()
-        new_settings._store = self._store.copy()
+        new_settings._store = self._store.copy()    # pylint: disable=W0212
         return new_settings
 
     def as_ordered_dict(self) -> OrderedDict:

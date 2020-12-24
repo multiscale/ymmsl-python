@@ -156,7 +156,7 @@ def test_load_nil_settings(load_configuration: Callable) -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'settings:\n'
-            )
+    )
 
     configuration = load_configuration(text)
 

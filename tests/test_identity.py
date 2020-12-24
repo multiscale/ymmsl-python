@@ -41,9 +41,9 @@ def test_compare_identifier() -> None:
     assert Identifier('test1') != Identifier('test2')
 
     assert Identifier('test') == 'test'
-    assert 'test' == Identifier('test')
+    assert 'test' == Identifier('test')     # pylint: disable=C0122
     assert Identifier('test') != 'test2'
-    assert 'test2' != Identifier('test')
+    assert 'test2' != Identifier('test')    # pylint: disable=C0122
 
 
 def test_identifier_dict_key() -> None:
@@ -153,8 +153,9 @@ def test_reference_equivalence() -> None:
 
     assert Reference('test.test[3]') == 'test.test[3]'
     assert Reference('test.test[3]') != 'test1.test[3]'
-    assert 'test.test[3]' == Reference('test.test[3]')
-    assert 'test1.test[3]' != Reference('test.test[3]')
+    assert 'test.test[3]' == Reference('test.test[3]')  # pylint: disable=C0122
+    assert 'test1.test[3]' != Reference(
+            'test.test[3]')     # pylint: disable=C0122
 
 
 def test_reference_concatenation() -> None:

@@ -63,7 +63,6 @@ class Configuration(Document):
         Args:
             overlay: A Configuration to overlay onto this one.
         """
-        import sys
         if self.model is None or not isinstance(self.model, Model):
             self.model = overlay.model
         elif not isinstance(overlay.model, Model):
