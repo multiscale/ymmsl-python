@@ -1,8 +1,7 @@
 from collections import OrderedDict
-from typing_extensions import Type
+from typing import Callable
 
 import pytest
-from ruamel import yaml
 import yatiml
 from ymmsl import (
         Component, Configuration, Identifier, Implementation, Model,
@@ -12,26 +11,17 @@ from ymmsl.document import Document
 
 
 @pytest.fixture
-def configuration_loader() -> Type:
-    class Loader(yatiml.Loader):
-        pass
-
-    yatiml.add_to_loader(Loader, [
-        Configuration, Document, Identifier, Implementation, Reference,
-        Resources, Settings])
-    yatiml.set_document_type(Loader, Document)
-    return Loader
+def load_configuration() -> Callable:
+    return yatiml.load_function(
+            Document, Configuration, Identifier, Implementation, Reference,
+            Resources, Settings)
 
 
 @pytest.fixture
-def configuration_dumper() -> Type:
-    class Dumper(yatiml.Dumper):
-        pass
-
-    yatiml.add_to_dumper(Dumper, [
-        Configuration, Document, Identifier, Implementation, Reference,
-        Resources, Settings])
-    return Dumper
+def dump_configuration() -> Callable:
+    return yatiml.dumps_function(
+            Configuration, Document, Identifier, Implementation, Reference,
+            Resources, Settings)
 
 
 def test_configuration() -> None:
@@ -162,13 +152,13 @@ def test_configuration_update_resources_override() -> None:
     assert resources3 in base.resources
 
 
-def test_load_nil_settings(configuration_loader: Type) -> None:
+def test_load_nil_settings(load_configuration: Callable) -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'settings:\n'
             )
 
-    configuration = yaml.load(text, Loader=configuration_loader)
+    configuration = load_configuration(text)
 
     assert isinstance(configuration.settings, Settings)
     assert len(configuration.settings) == 0
@@ -176,12 +166,12 @@ def test_load_nil_settings(configuration_loader: Type) -> None:
     assert len(configuration.resources) == 0
 
 
-def test_load_no_settings(configuration_loader: Type) -> None:
+def test_load_no_settings(load_configuration: Callable) -> None:
     text = (
             'ymmsl_version: v0.1\n'
             )
 
-    configuration = yaml.load(text, Loader=configuration_loader)
+    configuration = load_configuration(text)
 
     assert isinstance(configuration.settings, Settings)
     assert len(configuration.settings) == 0
@@ -189,14 +179,14 @@ def test_load_no_settings(configuration_loader: Type) -> None:
     assert len(configuration.resources) == 0
 
 
-def test_dump_empty_settings(configuration_dumper: Type) -> None:
+def test_dump_empty_settings(dump_configuration: Callable) -> None:
     configuration = Configuration(None, Settings())
-    text = yaml.dump(configuration, Dumper=configuration_dumper)
+    text = dump_configuration(configuration)
 
     assert text == 'ymmsl_version: v0.1\n'
 
 
-def test_load_implementations(configuration_loader: Type) -> None:
+def test_load_implementations(load_configuration: Callable) -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'implementations:\n'
@@ -214,7 +204,7 @@ def test_load_implementations(configuration_loader: Type) -> None:
             '  micro: /home/test/micro\n'
             )
 
-    configuration = yaml.load(text, Loader=configuration_loader)
+    configuration = load_configuration(text)
 
     assert configuration.implementations[0].name == 'macro'
     assert configuration.implementations[0].script == (
@@ -227,7 +217,7 @@ def test_load_implementations(configuration_loader: Type) -> None:
             '/home/test/micro')
 
 
-def test_load_implementations_script_list(configuration_loader: Type) -> None:
+def test_load_implementations_script_list(load_configuration: Callable) -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'implementations:\n'
@@ -244,7 +234,7 @@ def test_load_implementations_script_list(configuration_loader: Type) -> None:
             '  micro: /home/test/micro\n'
             )
 
-    configuration = yaml.load(text, Loader=configuration_loader)
+    configuration = load_configuration(text)
 
     assert configuration.implementations[0].name == 'macro'
     assert configuration.implementations[0].script == (
@@ -257,7 +247,7 @@ def test_load_implementations_script_list(configuration_loader: Type) -> None:
             '/home/test/micro')
 
 
-def test_dump_implementations(configuration_dumper: Type) -> None:
+def test_dump_implementations(dump_configuration: Callable) -> None:
     implementations = [
             Implementation(
                 Reference('macro'),
@@ -269,7 +259,7 @@ def test_dump_implementations(configuration_dumper: Type) -> None:
 
     configuration = Configuration(None, None, implementations)
 
-    text = yaml.dump(configuration, Dumper=configuration_dumper)
+    text = dump_configuration(configuration)
     assert text == (
             'ymmsl_version: v0.1\n'
             'implementations:\n'
@@ -286,7 +276,7 @@ def test_dump_implementations(configuration_dumper: Type) -> None:
             )
 
 
-def test_load_resources(configuration_loader: Type) -> None:
+def test_load_resources(load_configuration: Callable) -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'resources:\n'
@@ -295,7 +285,7 @@ def test_load_resources(configuration_loader: Type) -> None:
             '    num_cores: 1\n'
             )
 
-    configuration = yaml.load(text, Loader=configuration_loader)
+    configuration = load_configuration(text)
 
     assert configuration.resources[0].name == 'macro'
     assert configuration.resources[0].num_cores == 10
@@ -303,14 +293,14 @@ def test_load_resources(configuration_loader: Type) -> None:
     assert configuration.resources[1].num_cores == 1
 
 
-def test_dump_resources(configuration_dumper: Type) -> None:
+def test_dump_resources(dump_configuration: Callable) -> None:
     resources = [
             Resources(Reference('macro'), 10),
             Resources(Reference('micro'), 1)]
 
     configuration = Configuration(None, None, None, resources)
 
-    text = yaml.dump(configuration, Dumper=configuration_dumper)
+    text = dump_configuration(configuration)
     assert text == (
             'ymmsl_version: v0.1\n'
             'resources:\n'

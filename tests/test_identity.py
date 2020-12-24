@@ -2,7 +2,6 @@ from ymmsl import Identifier, Reference
 
 import pytest
 import yatiml
-from ruamel import yaml
 
 
 def test_create_identifier() -> None:
@@ -172,22 +171,15 @@ def test_reference_concatenation() -> None:
 
 
 def test_reference_io() -> None:
-    class Loader(yatiml.Loader):
-        pass
-
-    yatiml.add_to_loader(Loader, [Identifier, Reference])
-    yatiml.set_document_type(Loader, Reference)
+    load_reference = yatiml.load_function(Reference, Identifier)
 
     text = 'test[12]'
-    doc = yaml.load(text, Loader=Loader)
+    doc = load_reference(text)
     assert str(doc[0]) == 'test'
     assert doc[1] == 12
 
-    class Dumper(yatiml.Dumper):
-        pass
-
-    yatiml.add_to_dumper(Dumper, [Identifier, Reference])
+    dump_reference = yatiml.dumps_function(Identifier, Reference)
 
     doc = Reference('test[12].testing.ok.index[3][5]')
-    text = yaml.dump(doc, Dumper=Dumper)
+    text = dump_reference(doc)
     assert text == 'test[12].testing.ok.index[3][5]\n...\n'

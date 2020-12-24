@@ -12,39 +12,10 @@ from ymmsl.identity import Identifier, Reference
 from ymmsl.model import Component, Conduit, Model, ModelReference
 
 
-def _loader() -> Type:
-    class YmmslLoader(yatiml.Loader):
-        pass
-    yatiml.add_to_loader(YmmslLoader,
-                         [Component, Conduit, Configuration, Document,
-                          Identifier, Model, ModelReference, Reference,
-                          Settings])
-    yatiml.set_document_type(YmmslLoader, Configuration)
-    return YmmslLoader
+_load = yatiml.load_function(
+        Configuration, Component, Conduit, Document, Identifier, Model,
+        ModelReference, Reference, Settings)
 
-
-def _dumper() -> Type:
-    class YmmslDumper(yatiml.Dumper):
-        pass
-    yatiml.add_to_dumper(YmmslDumper,
-                         [Component, Conduit, Configuration, Document,
-                          Identifier, Model, ModelReference, Reference,
-                          Settings])
-    return YmmslDumper
-
-
-loader = _loader()
-"""A loader class for yMMSL, for use with yaml.load.
-
-Usage:
-    config = yaml.load(text, Loader=ymmsl.loader)
-"""
-dumper = _dumper()
-"""A dumper class for yMMSL, for use with yaml.dump.
-
-Usage:
-    text = yaml.dump(config, Dumper=ymmsl.dumper)
-"""
 
 def load(source: Union[str, Path, IO[Any]]) -> Configuration:
     """Loads a yMMSL document from a string or a file.
@@ -58,10 +29,13 @@ def load(source: Union[str, Path, IO[Any]]) -> Configuration:
         A Configuration object corresponding to the input data.
 
     """
-    if isinstance(source, Path):
-        with source.open('r') as f:
-            return yaml.load(f, Loader=loader)
-    return yaml.load(source, Loader=loader)
+    # This wrapper is just here to render the documentation.
+    return _load(source)
+
+
+_dump = yatiml.dumps_function(
+        Conduit, Configuration, Component, Document, Identifier, Model,
+        ModelReference, Reference, Settings)
 
 
 def dump(config: Configuration) -> str:
@@ -74,7 +48,13 @@ def dump(config: Configuration) -> str:
         A yMMSL YAML description of the given document.
 
     """
-    return yaml.dump(config, Dumper=dumper)
+    # This wrapper is just here to render the documentation.
+    return _dump(config)
+
+
+_save = yatiml.dump_function(
+        Conduit, Configuration, Component, Document, Identifier, Model,
+        ModelReference, Reference, Settings)
 
 
 def save(config: Configuration, target: Union[str, Path, IO[Any]]) -> None:
@@ -87,11 +67,5 @@ def save(config: Configuration, target: Union[str, Path, IO[Any]]) -> None:
             object.
 
     """
-    if isinstance(target, str):
-        with open(target, 'w') as f:    # type: IO[Any]
-            f.write(dump(config))
-    elif isinstance(target, Path):
-        with target.open('w') as f:
-            f.write(dump(config))
-    else:
-        target.write(dump(config))
+    # This wrapper is just here to render the documentation.
+    _save(config, target)

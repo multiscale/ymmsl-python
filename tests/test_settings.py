@@ -199,14 +199,7 @@ def test_as_ordered_dict(settings: Settings) -> None:
 
 
 def test_load_settings() -> None:
-    class Loader(yatiml.Loader):
-        pass
-
-    # The below fails mypy on Travis with
-    # List item 1 has incompatible type "Type[Reference]"; expected "ABCMeta"
-    # Overrode, no idea where to start looking...
-    yatiml.add_to_loader(Loader, [Identifier, Reference, Settings])     # type: ignore
-    yatiml.set_document_type(Loader, Settings)
+    load_settings = yatiml.load_function(Settings, Identifier, Reference)
 
     text = ('domain1._muscle_grain: [0.01]\n'
             'domain1._muscle_extent: [1.5]\n'
@@ -217,7 +210,7 @@ def test_load_settings() -> None:
             'test_bool: true\n'
             'test_list: [12.3, 1.3]\n')
 
-    settings = yaml.load(text, Loader=Loader)
+    settings = load_settings(text)
     assert len(settings) == 8
     assert str(settings.ordered_items()[0][0]) == 'domain1._muscle_grain'
     assert settings['domain1._muscle_grain'][0] == 0.01
@@ -233,13 +226,7 @@ def test_load_settings() -> None:
 
 
 def test_dump_settings() -> None:
-    class Dumper(yatiml.Dumper):
-        pass
-
-    # The below fails mypy on Travis with
-    # List item 1 has incompatible type "Type[Reference]"; expected "ABCMeta"
-    # Overrode, no idea where to start looking...
-    yatiml.add_to_dumper(Dumper, [Identifier, Reference, Settings])     # type: ignore
+    dump_settings = yatiml.dumps_function(Identifier, Reference, Settings)
 
     settings = Settings(OrderedDict([
             ('domain1._muscle_grain', [0.01]),
@@ -251,7 +238,7 @@ def test_dump_settings() -> None:
             ('test_bool', True),
             ('test_list', [12.3, 1.3])]))
 
-    text = yaml.dump(settings, Dumper=Dumper)
+    text = dump_settings(settings)
     assert text == ('domain1._muscle_grain: [0.01]\n'
                     'domain1._muscle_extent: [1.5]\n'
                     'submodel1._muscle_timestep: 0.001\n'

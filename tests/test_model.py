@@ -1,32 +1,22 @@
-from typing_extensions import Type
+from typing import Callable
+
+import pytest
+import yatiml
 
 from ymmsl import (Component, Conduit, Identifier, Model, ModelReference,
                    Reference)
 
-import pytest
-import yatiml
-from ruamel import yaml
+
+@pytest.fixture
+def load_model() -> Callable:
+    return yatiml.load_function(
+            Model, Component, Conduit, Identifier, Reference)
 
 
 @pytest.fixture
-def model_loader() -> Type:
-    class Loader(yatiml.Loader):
-        pass
-
-    yatiml.add_to_loader(Loader, [Component, Conduit, Identifier,
-                                  Model, Reference])
-    yatiml.set_document_type(Loader, Model)
-    return Loader
-
-
-@pytest.fixture
-def model_dumper() -> Type:
-    class Dumper(yatiml.Dumper):
-        pass
-
-    yatiml.add_to_dumper(Dumper, [Component, Conduit, Identifier,
-                                  Model, Reference])
-    return Dumper
+def dump_model() -> Callable:
+    return yatiml.dumps_function(
+            Component, Conduit, Identifier, Model, Reference)
 
 
 def test_component_declaration() -> None:
@@ -96,15 +86,12 @@ def test_conduit() -> None:
 
 
 def test_load_model_reference() -> None:
-    class Loader(yatiml.Loader):
-        pass
-
-    yatiml.add_to_loader(Loader, [Component, Conduit, Identifier,
-                                  Model, ModelReference, Reference])
-    yatiml.set_document_type(Loader, ModelReference)
+    load = yatiml.load_function(
+            ModelReference, Component, Conduit, Identifier, Model,
+            ModelReference, Reference)
 
     text = 'name: test_model\n'
-    model = yaml.load(text, Loader=Loader)
+    model = load(text)
     assert isinstance(model, ModelReference)
     assert str(model.name) == 'test_model'
 
@@ -122,7 +109,7 @@ def test_load_model_reference() -> None:
             '  bf.wss_out: bf2smc.in\n'
             '  bf2smc.out: smc.wss_in\n'
             )
-    model = yaml.load(text, Loader=Loader)
+    model = load(text)
     assert isinstance(model, Model)
     assert str(model.name) == 'test_model'
 
@@ -210,7 +197,7 @@ def test_model_update_replace_component() -> None:
     assert conduit2 in base.conduits
 
 
-def test_load_model(model_loader: Type) -> None:
+def test_load_model(load_model: Callable) -> None:
     text = ('name: test_model\n'
             'components:\n'
             '  ic: isr2d.initial_conditions\n'
@@ -225,7 +212,7 @@ def test_load_model(model_loader: Type) -> None:
             '  bf.wss_out: bf2smc.in\n'
             '  bf2smc.out: smc.wss_in\n'
             )
-    model = yaml.load(text, Loader=model_loader)
+    model = load_model(text)
     assert str(model.name) == 'test_model'
     assert len(model.components) == 5
     assert str(model.components[2].implementation) == 'isr2d.blood_flow'
@@ -238,13 +225,13 @@ def test_load_model(model_loader: Type) -> None:
     assert str(model.conduits[3].receiving_port()) == 'in'
 
 
-def test_load_no_conduits(model_loader: Type) -> None:
+def test_load_no_conduits(load_model: Callable) -> None:
     text = ('name: test_model\n'
             'components:\n'
             '  smc: isr2d.smc\n'
             )
 
-    model = yaml.load(text, Loader=model_loader)
+    model = load_model(text)
     assert str(model.name) == 'test_model'
     assert len(model.components) == 1
     assert str(model.components[0].name) == 'smc'
@@ -253,14 +240,14 @@ def test_load_no_conduits(model_loader: Type) -> None:
     assert len(model.conduits) == 0
 
 
-def test_dump_model(model_dumper: Type) -> None:
+def test_dump_model(dump_model: Callable) -> None:
     ce1 = Component('ce1', 'test.impl1')
     ce2 = Component('ce2', 'test.impl2')
     cd1 = Conduit('ce1.state_out', 'ce2.init_in')
     cd2 = Conduit('ce2.fini_out', 'ce1.boundary_in')
     model = Model('test_model', [ce1, ce2], [cd1, cd2])
 
-    text = yaml.dump(model, Dumper=model_dumper)
+    text = dump_model(model)
     assert text == ('name: test_model\n'
                     'components:\n'
                     '  ce1: test.impl1\n'
@@ -271,11 +258,11 @@ def test_dump_model(model_dumper: Type) -> None:
                     )
 
 
-def test_dump_no_conduits(model_dumper: Type) -> None:
+def test_dump_no_conduits(dump_model: Callable) -> None:
     ce1 = Component('ce1', 'test.impl1')
     model = Model('test_model', [ce1])
 
-    text = yaml.dump(model, Dumper=model_dumper)
+    text = dump_model(model)
     assert text == ('name: test_model\n'
                     'components:\n'
                     '  ce1: test.impl1\n'
