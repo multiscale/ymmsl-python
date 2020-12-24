@@ -6,7 +6,7 @@ import yatiml
 from ymmsl.document import Document
 from ymmsl.execution import Implementation, Resources
 from ymmsl.settings import Settings
-from ymmsl.model import ModelReference
+from ymmsl.model import Model, ModelReference
 
 
 class Configuration(Document):
@@ -51,6 +51,45 @@ class Configuration(Document):
             self.resources = list()     # type: List[Resources]
         else:
             self.resources = resources
+
+    def update(self, overlay: 'Configuration') -> None:
+        """Update this configuration with the given overlay.
+
+        This will update the model according to :meth:`Model.update`,
+        copy settings from overlay on top of the current settings,
+        overwrite implementations with the same name and add
+        implementations with a new name, and likewise for resources.
+
+        Args:
+            overlay: A Configuration to overlay onto this one.
+        """
+        import sys
+        if self.model is None or not isinstance(self.model, Model):
+            self.model = overlay.model
+        elif not isinstance(overlay.model, Model):
+            # Hmm. Let's do it like this for now.
+            # None is taken care of above, but mypy doesn't get that.
+            self.model.name = overlay.model.name    # type: ignore
+        else:
+            self.model.update(overlay.model)
+
+        self.settings.update(overlay.settings)
+
+        for newi in overlay.implementations:
+            for i, oldi in enumerate(self.implementations):
+                if newi.name == oldi.name:
+                    self.implementations[i] = newi
+                    break
+            else:
+                self.implementations.append(newi)
+
+        for newr in overlay.resources:
+            for i, oldr in enumerate(self.resources):
+                if newr.name == oldr.name:
+                    self.resources[i] = newr
+                    break
+            else:
+                self.resources.append(newr)
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
