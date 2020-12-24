@@ -1,3 +1,4 @@
+"""Definitions for specifying model settings."""
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from copy import deepcopy
@@ -66,7 +67,7 @@ class Settings(MutableMapping):
         """Deletes a value, implements del(settings[name])."""
         if isinstance(key, str):
             key = Reference(key)
-        del(self._store[key])
+        del self._store[key]
 
     def __iter__(self) -> Iterator[Tuple[Reference, SettingValue]]:
         """Iterate through the settings' key, value pairs."""

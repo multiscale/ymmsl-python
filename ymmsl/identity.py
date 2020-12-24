@@ -298,10 +298,11 @@ class Reference:
                                      ''.format(text))
                 try:
                     index = int(text[cur_op + 1:close_bracket])
-                except ValueError:
+                except ValueError as exc:
                     raise ValueError('Invalid index \'{}\' in {}, expected an'
                                      ' int'.format(
-                                         text[cur_op + 1:close_bracket], text))
+                                         text[cur_op + 1:close_bracket], text)
+                                     ) from exc
                 parts.append(index)
                 cur_op = close_bracket + 1
             else:

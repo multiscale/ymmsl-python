@@ -1,3 +1,4 @@
+"""Definitions for describing simulation components."""
 from enum import Enum
 
 from ymmsl.identity import Identifier
@@ -18,6 +19,7 @@ class Operator(Enum):
     O_F = 5     #: Observation of final state, after the SEL
 
     def allows_sending(self) -> bool:
+        """Whether ports on this operator can send."""
         return self in {
                 Operator.NONE,
                 Operator.O_I,
@@ -25,6 +27,7 @@ class Operator(Enum):
         }
 
     def allows_receiving(self) -> bool:
+        """Whether ports on this operator can receive."""
         return self in {
                 Operator.NONE,
                 Operator.F_INIT,

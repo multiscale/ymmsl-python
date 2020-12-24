@@ -1,3 +1,4 @@
+"""Defines the YAML document and version tag."""
 import yatiml
 
 
@@ -16,7 +17,7 @@ class Document:
         node.require_attribute_value('ymmsl_version', 'v0.1')
 
     @classmethod
-    def _yatiml_sweeten(self, node: yatiml.Node) -> None:
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         node.set_attribute('ymmsl_version', 'v0.1')
         # The above adds the attribute to the end, but we want it at
         # the top; this moves it there.
