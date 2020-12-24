@@ -6,14 +6,15 @@ import yatiml
 
 from ymmsl.configuration import Configuration
 from ymmsl.document import Document
+from ymmsl.execution import Implementation, Resources
 from ymmsl.settings import Settings
 from ymmsl.identity import Identifier, Reference
 from ymmsl.model import Component, Conduit, Model, ModelReference
 
 
 _load = yatiml.load_function(
-        Configuration, Component, Conduit, Document, Identifier, Model,
-        ModelReference, Reference, Settings)
+        Configuration, Component, Conduit, Document, Identifier,
+        Implementation, Model, ModelReference, Reference, Resources, Settings)
 
 
 def load(source: Union[str, Path, IO[Any]]) -> Configuration:
@@ -33,8 +34,8 @@ def load(source: Union[str, Path, IO[Any]]) -> Configuration:
 
 
 _dump = yatiml.dumps_function(
-        Conduit, Configuration, Component, Document, Identifier, Model,
-        ModelReference, Reference, Settings)
+        Conduit, Configuration, Component, Document, Identifier,
+        Implementation, Model, ModelReference, Reference, Resources, Settings)
 
 
 def dump(config: Configuration) -> str:
@@ -52,8 +53,8 @@ def dump(config: Configuration) -> str:
 
 
 _save = yatiml.dump_function(
-        Conduit, Configuration, Component, Document, Identifier, Model,
-        ModelReference, Reference, Settings)
+        Conduit, Configuration, Component, Document, Identifier,
+        Implementation, Model, ModelReference, Reference, Resources, Settings)
 
 
 def save(config: Configuration, target: Union[str, Path, IO[Any]]) -> None:

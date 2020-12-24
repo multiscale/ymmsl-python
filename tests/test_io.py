@@ -46,6 +46,17 @@ def test_load_string3(test_yaml3: str) -> None:
     assert str(configuration.model.name) == 'test_model'
 
 
+def test_load_string4(test_yaml4: str) -> None:
+    configuration = load(test_yaml4)
+    assert len(configuration.implementations) == 5
+    assert configuration.implementations[0].name == 'isr2d.initial_conditions'
+    assert configuration.implementations[4].script == 'isr2d/bin/bf2smc.py'
+
+    assert len(configuration.resources) == 5
+    assert configuration.resources[0].num_cores == 4
+    assert configuration.resources[4].num_cores == 1
+
+
 def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
     test_file = tmpdir_path / 'test_yaml1.ymmsl'
     with test_file.open('w') as f:
@@ -79,6 +90,11 @@ def test_dump2(test_yaml2: str, test_config2: Configuration) -> None:
 def test_dump3(test_yaml3: str, test_config3: Configuration) -> None:
     text = dump(test_config3)
     assert text == test_yaml3
+
+
+def test_dump4(test_yaml4: str, test_config4: Configuration) -> None:
+    text = dump(test_config4)
+    assert text == test_yaml4
 
 
 def test_save_str(test_config1: Configuration, test_yaml1: str,

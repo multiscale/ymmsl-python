@@ -2,8 +2,8 @@ from collections import OrderedDict
 
 import pytest
 
-from ymmsl import (Component, Conduit, Configuration, Model,
-                   ModelReference, Settings)
+from ymmsl import (Component, Conduit, Configuration, Implementation, Model,
+                   ModelReference, Reference, Resources, Settings)
 
 
 @pytest.fixture
@@ -77,3 +77,44 @@ def test_yaml3() -> str:
 def test_config3() -> Configuration:
     model = ModelReference('test_model')
     return Configuration(model)
+
+
+@pytest.fixture
+def test_yaml4() -> str:
+    text = ('ymmsl_version: v0.1\n'
+            'implementations:\n'
+            '  isr2d.initial_conditions: isr2d/bin/ic\n'
+            '  isr2d.smc: isr2d/bin/smc\n'
+            '  isr2d.blood_flow: isr2d/bin/bf\n'
+            '  isr2d.smc2bf: isr2d/bin/smc2bf.py\n'
+            '  isr2d.bf2smc: isr2d/bin/bf2smc.py\n'
+            'resources:\n'
+            '  isr2d.initial_conditions: 4\n'
+            '  isr2d.smc: 4\n'
+            '  isr2d.blood_flow: 4\n'
+            '  isr2d.smc2bf: 1\n'
+            '  isr2d.bf2smc: 1\n')
+    return text
+
+
+@pytest.fixture
+def test_config4() -> Configuration:
+    implementations = [
+            Implementation(
+                Reference('isr2d.initial_conditions'), 'isr2d/bin/ic'),
+            Implementation(
+                Reference('isr2d.smc'), 'isr2d/bin/smc'),
+            Implementation(
+                Reference('isr2d.blood_flow'), 'isr2d/bin/bf'),
+            Implementation(
+                Reference('isr2d.smc2bf'), 'isr2d/bin/smc2bf.py'),
+            Implementation(
+                Reference('isr2d.bf2smc'), 'isr2d/bin/bf2smc.py')]
+    resources = [
+            Resources(Reference('isr2d.initial_conditions'), 4),
+            Resources(Reference('isr2d.smc'), 4),
+            Resources(Reference('isr2d.blood_flow'), 4),
+            Resources(Reference('isr2d.smc2bf'), 1),
+            Resources(Reference('isr2d.bf2smc'), 1)]
+
+    return Configuration(implementations=implementations, resources=resources)
