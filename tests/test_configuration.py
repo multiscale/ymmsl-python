@@ -5,7 +5,8 @@ import pytest
 from ruamel import yaml
 import yatiml
 from ymmsl import (
-        Configuration, Identifier, Implementation, Resources, Settings)
+        Component, Configuration, Identifier, Implementation, Model,
+        ModelReference, Reference, Resources, Settings)
 from ymmsl import SettingValue     # noqa: F401 # pylint: disable=unused-import
 from ymmsl.document import Document
 
@@ -16,8 +17,8 @@ def configuration_loader() -> Type:
         pass
 
     yatiml.add_to_loader(Loader, [
-        Configuration, Document, Identifier, Implementation, Resources,
-        Settings])
+        Configuration, Document, Identifier, Implementation, Reference,
+        Resources, Settings])
     yatiml.set_document_type(Loader, Document)
     return Loader
 
@@ -28,8 +29,8 @@ def configuration_dumper() -> Type:
         pass
 
     yatiml.add_to_dumper(Dumper, [
-        Configuration, Document, Identifier, Implementation, Resources,
-        Settings])
+        Configuration, Document, Identifier, Implementation, Reference,
+        Resources, Settings])
     return Dumper
 
 
@@ -139,12 +140,12 @@ def test_load_implementations_script_list(configuration_loader: Type) -> None:
 def test_dump_implementations(configuration_dumper: Type) -> None:
     implementations = [
             Implementation(
-                Identifier('macro'),
+                Reference('macro'),
                 '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n'),
             Implementation(
-                Identifier('meso'),
+                Reference('meso'),
                 '#!/bin/bash\n\n/home/test/meso.py'),
-            Implementation(Identifier('micro'), '/home/test/micro')]
+            Implementation(Reference('micro'), '/home/test/micro')]
 
     configuration = Configuration(None, None, implementations)
 
@@ -184,8 +185,8 @@ def test_load_resources(configuration_loader: Type) -> None:
 
 def test_dump_resources(configuration_dumper: Type) -> None:
     resources = [
-            Resources(Identifier('macro'), 10),
-            Resources(Identifier('micro'), 1)]
+            Resources(Reference('macro'), 10),
+            Resources(Reference('micro'), 1)]
 
     configuration = Configuration(None, None, None, resources)
 

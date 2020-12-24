@@ -3,7 +3,7 @@ from typing import List, Union
 from ruamel import yaml
 import yatiml
 
-from ymmsl.identity import Identifier
+from ymmsl.identity import Reference
 
 
 class Implementation:
@@ -14,7 +14,7 @@ class Implementation:
         script (str): A script that starts the implementation.
     """
     def __init__(
-            self, name: Identifier, script: Union[str, List[str]]) -> None:
+            self, name: Reference, script: Union[str, List[str]]) -> None:
         """Create an Implementation description.
 
         If script is a list, each string in it is a line, and the
@@ -60,7 +60,7 @@ class Resources:
         name: Name of the component to configure.
         num_cores: Number of CPU cores to reserve.
     """
-    def __init__(self, name: Identifier, num_cores: int) -> None:
+    def __init__(self, name: Reference, num_cores: int) -> None:
         """Create a Resources description.
 
         Args:
