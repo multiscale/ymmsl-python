@@ -1,4 +1,5 @@
 """This module contains all the definitions for yMMSL."""
+from collections import OrderedDict
 from typing import Dict, List, Optional, Union
 
 import yatiml
@@ -55,8 +56,8 @@ class Configuration(Document):
         if implementations is None:
             self.implementations = dict()
         elif isinstance(implementations, list):
-            self.implementations = {
-                impl.name: impl for impl in implementations}
+            self.implementations = OrderedDict([
+                (impl.name, impl) for impl in implementations])
         else:
             self.implementations = {
                     Reference(k): v for k, v in implementations.items()}
@@ -64,7 +65,8 @@ class Configuration(Document):
         if resources is None:
             self.resources = dict()     # type: Dict[Reference, Resources]
         elif isinstance(resources, list):
-            self.resources = {res.name: res for res in resources}
+            self.resources = OrderedDict([
+                (res.name, res) for res in resources])
         else:
             self.resources = {
                     Reference(k): v for k, v in resources.items()}

@@ -11,7 +11,8 @@ jobs:
     - name: Run the test suite
       run: |
         cd $GITHUB_WORKSPACE
-        pip3 install pip setuptools wheel git+https://github.com/yatiml/yatiml.git@develop
+        pip3 install pip setuptools wheel
+        pip install git+https://github.com/yatiml/yatiml.git@develop
         python3 setup.py test
 
     - name: Upload coverage report to Codacy
