@@ -3,7 +3,8 @@ from typing import Any
 
 import pytest
 
-from ymmsl import Configuration, dump, load, save, Model, ModelReference
+from ymmsl import (
+        Configuration, dump, load, save, Model, ModelReference, Reference)
 
 
 @pytest.fixture
@@ -49,12 +50,15 @@ def test_load_string3(test_yaml3: str) -> None:
 def test_load_string4(test_yaml4: str) -> None:
     configuration = load(test_yaml4)
     assert len(configuration.implementations) == 5
-    assert configuration.implementations[0].name == 'isr2d.initial_conditions'
-    assert configuration.implementations[4].script == 'isr2d/bin/bf2smc.py'
+    impls = configuration.implementations
+    ic = Reference('isr2d.initial_conditions')
+    bf2smc = Reference('isr2d.bf2smc')
+    assert impls[ic].name == 'isr2d.initial_conditions'
+    assert impls[bf2smc].script == 'isr2d/bin/bf2smc.py'
 
     assert len(configuration.resources) == 5
-    assert configuration.resources[0].num_cores == 4
-    assert configuration.resources[4].num_cores == 1
+    assert configuration.resources[ic].num_cores == 4
+    assert configuration.resources[bf2smc].num_cores == 1
 
 
 def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:

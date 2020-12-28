@@ -101,8 +101,8 @@ def test_configuration_update_implementations_add() -> None:
     base.update(overlay)
 
     assert len(base.implementations) == 2
-    assert implementation1 in base.implementations
-    assert implementation2 in base.implementations
+    assert base.implementations[Reference('my.macro')] == implementation1
+    assert base.implementations[Reference('my.micro')] == implementation2
 
 
 def test_configuration_update_implementations_override() -> None:
@@ -119,8 +119,8 @@ def test_configuration_update_implementations_override() -> None:
     base.update(overlay)
 
     assert len(base.implementations) == 2
-    assert implementation1 in base.implementations
-    assert implementation3 in base.implementations
+    assert base.implementations[Reference('my.macro')] == implementation1
+    assert base.implementations[Reference('my.micro')] == implementation3
 
 
 def test_configuration_update_resources_add() -> None:
@@ -133,8 +133,8 @@ def test_configuration_update_resources_add() -> None:
     base.update(overlay)
 
     assert len(base.resources) == 2
-    assert resources1 in base.resources
-    assert resources2 in base.resources
+    assert base.resources[Reference('my.macro')] == resources1
+    assert base.resources[Reference('my.micro')] == resources2
 
 
 def test_configuration_update_resources_override() -> None:
@@ -148,8 +148,8 @@ def test_configuration_update_resources_override() -> None:
     base.update(overlay)
 
     assert len(base.resources) == 2
-    assert resources1 in base.resources
-    assert resources3 in base.resources
+    assert base.resources[Reference('my.macro')] == resources1
+    assert base.resources[Reference('my.micro')] == resources3
 
 
 def test_load_nil_settings(load_configuration: Callable) -> None:
@@ -206,14 +206,14 @@ def test_load_implementations(load_configuration: Callable) -> None:
 
     configuration = load_configuration(text)
 
-    assert configuration.implementations[0].name == 'macro'
-    assert configuration.implementations[0].script == (
+    assert configuration.implementations['macro'].name == 'macro'
+    assert configuration.implementations['macro'].script == (
             '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n')
-    assert configuration.implementations[1].name == 'meso'
-    assert configuration.implementations[1].script == (
+    assert configuration.implementations['meso'].name == 'meso'
+    assert configuration.implementations['meso'].script == (
             '#!/bin/bash\n\n/home/test/meso.py\n')
-    assert configuration.implementations[2].name == 'micro'
-    assert configuration.implementations[2].script == (
+    assert configuration.implementations['micro'].name == 'micro'
+    assert configuration.implementations['micro'].script == (
             '/home/test/micro')
 
 
@@ -236,14 +236,14 @@ def test_load_implementations_script_list(load_configuration: Callable) -> None:
 
     configuration = load_configuration(text)
 
-    assert configuration.implementations[0].name == 'macro'
-    assert configuration.implementations[0].script == (
+    assert configuration.implementations['macro'].name == 'macro'
+    assert configuration.implementations['macro'].script == (
             '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n')
-    assert configuration.implementations[1].name == 'meso'
-    assert configuration.implementations[1].script == (
+    assert configuration.implementations['meso'].name == 'meso'
+    assert configuration.implementations['meso'].script == (
             '#!/bin/bash\n\n/home/test/meso.py')
-    assert configuration.implementations[2].name == 'micro'
-    assert configuration.implementations[2].script == (
+    assert configuration.implementations['micro'].name == 'micro'
+    assert configuration.implementations['micro'].script == (
             '/home/test/micro')
 
 
@@ -287,10 +287,10 @@ def test_load_resources(load_configuration: Callable) -> None:
 
     configuration = load_configuration(text)
 
-    assert configuration.resources[0].name == 'macro'
-    assert configuration.resources[0].num_cores == 10
-    assert configuration.resources[1].name == 'micro'
-    assert configuration.resources[1].num_cores == 1
+    assert configuration.resources['macro'].name == 'macro'
+    assert configuration.resources['macro'].num_cores == 10
+    assert configuration.resources['micro'].name == 'micro'
+    assert configuration.resources['micro'].num_cores == 1
 
 
 def test_dump_resources(dump_configuration: Callable) -> None:

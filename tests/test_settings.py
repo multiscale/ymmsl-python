@@ -213,7 +213,7 @@ def test_load_settings() -> None:
     settings = load_settings(text)
     assert len(settings) == 8
     assert str(settings.ordered_items()[0][0]) == 'domain1._muscle_grain'
-    assert settings['domain1._muscle_grain'][0] == 0.01
+    assert cast(List[float], settings['domain1._muscle_grain'])[0] == 0.01
     assert settings['submodel1._muscle_total_time'] == 100.0
 
     assert str(settings.ordered_items()[4][0]) == 'test_str'

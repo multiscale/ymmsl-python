@@ -1,5 +1,5 @@
 """Definitions for specifying how to start a component."""
-from typing import List, Union
+from typing import cast, List, Union
 
 from ruamel import yaml
 import yatiml
@@ -38,7 +38,7 @@ class Implementation:
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         script_node = node.get_attribute('script')
         if script_node.is_scalar(str):
-            text = script_node.get_value()
+            text = cast(str, script_node.get_value())
             if '\n' in text:
                 # make a sequence of lines
                 lines = text.split('\n')

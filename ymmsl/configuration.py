@@ -1,9 +1,10 @@
 """This module contains all the definitions for yMMSL."""
-from typing import List, Optional
+from typing import Dict, List, Optional, Union
 
 import yatiml
 
 from ymmsl.document import Document
+from ymmsl.identity import Reference
 from ymmsl.execution import Implementation, Resources
 from ymmsl.settings import Settings
 from ymmsl.model import Model, ModelReference
@@ -16,17 +17,26 @@ class Configuration(Document):
         model: A model to run.
         settings: Settings to run the model with.
         implementations: Implementations to use to run the model.
+            Dictionary mapping implementation names (as References) to
+            Implementation objects.
         resources: Resources to allocate for the model components.
-
+            Dictionary mapping component names to Resources objects.
     """
-
     def __init__(self,
                  model: Optional[ModelReference] = None,
                  settings: Optional[Settings] = None,
-                 implementations: Optional[List[Implementation]] = None,
-                 resources: Optional[List[Resources]] = None
+                 implementations: Optional[Union[
+                     List[Implementation],
+                     Dict[str, Implementation]]] = None,
+                 resources: Optional[Union[
+                     List[Resources],
+                     Dict[str, Resources]]] = None
                  ) -> None:
         """Create a Configuration.
+
+        Implementations and resources may be either a list of such
+        objects, or a dictionary matching the attribute format (see
+        above).
 
         Args:
             model: A description of the model to run.
@@ -43,14 +53,22 @@ class Configuration(Document):
             self.settings = settings
 
         if implementations is None:
-            self.implementations = list()   # type: List[Implementation]
+            # type: Dict[Reference, Implementation]
+            self.implementations = dict()
+        elif isinstance(implementations, list):
+            self.implementations = {
+                impl.name: impl for impl in implementations}
         else:
-            self.implementations = implementations
+            self.implementations = {
+                    Reference(k): v for k, v in implementations.items()}
 
         if resources is None:
-            self.resources = list()     # type: List[Resources]
+            self.resources = dict()     # type: Dict[Reference, Resources]
+        elif isinstance(resources, list):
+            self.resources = {res.name: res for res in resources}
         else:
-            self.resources = resources
+            self.resources = {
+                    Reference(k): v for k, v in resources.items()}
 
     def update(self, overlay: 'Configuration') -> None:
         """Update this configuration with the given overlay.
@@ -74,28 +92,18 @@ class Configuration(Document):
 
         self.settings.update(overlay.settings)
 
-        for newi in overlay.implementations:
-            for i, oldi in enumerate(self.implementations):
-                if newi.name == oldi.name:
-                    self.implementations[i] = newi
-                    break
-            else:
-                self.implementations.append(newi)
+        for newi_name, newi in overlay.implementations.items():
+            self.implementations[newi_name] = newi
 
-        for newr in overlay.resources:
-            for i, oldr in enumerate(self.resources):
-                if newr.name == oldr.name:
-                    self.resources[i] = newr
-                    break
-            else:
-                self.resources.append(newr)
+        for newr_name, newr in overlay.resources.items():
+            self.resources[newr_name] = newr
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         if not node.has_attribute('settings'):
             node.set_attribute('settings', None)
-        node.map_attribute_to_seq('implementations', 'name', 'script')
-        node.map_attribute_to_seq('resources', 'name', 'num_cores')
+        node.map_attribute_to_index('implementations', 'name', 'script')
+        node.map_attribute_to_index('resources', 'name', 'num_cores')
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
@@ -110,13 +118,13 @@ class Configuration(Document):
         impl = node.get_attribute('implementations')
         if (
                 impl.is_scalar(type(None)) or
-                impl.is_sequence() and len(impl.seq_items()) == 0):
+                impl.is_mapping() and impl.is_empty()):
             node.remove_attribute('implementations')
-        node.seq_attribute_to_map('implementations', 'name', 'script')
+        node.index_attribute_to_map('implementations', 'name', 'script')
 
         res = node.get_attribute('resources')
         if (
                 res.is_scalar(type(None)) or
-                res.is_sequence() and len(res.seq_items()) == 0):
+                res.is_mapping() and res.is_empty()):
             node.remove_attribute('resources')
-        node.seq_attribute_to_map('resources', 'name', 'num_cores')
+        node.index_attribute_to_map('resources', 'name', 'num_cores')
