@@ -53,7 +53,6 @@ class Configuration(Document):
             self.settings = settings
 
         if implementations is None:
-            # type: Dict[Reference, Implementation]
             self.implementations = dict()
         elif isinstance(implementations, list):
             self.implementations = {

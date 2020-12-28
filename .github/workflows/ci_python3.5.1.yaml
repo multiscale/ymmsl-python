@@ -16,4 +16,4 @@ jobs:
         key: python-compatibility-3.5.1-eggs
 
     - name: Run tests on 3.5.1 latest
-      run: docker run -v "${GITHUB_WORKSPACE}:/home/ymmsl-python" python:3.5.1 /bin/bash -c 'cd /home/ymmsl-python && pip install -U pip setuptools wheel git+https://github.com/yatiml/yatiml.git@develop && python setup.py test'
+      run: docker run -v "${GITHUB_WORKSPACE}:/home/ymmsl-python" python:3.5.1 /bin/bash -c 'cd /home/ymmsl-python && pip install -U pip setuptools wheel && pip install -U git+https://github.com/yatiml/yatiml.git@develop && python setup.py test'
