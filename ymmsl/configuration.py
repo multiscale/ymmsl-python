@@ -53,8 +53,9 @@ class Configuration(Document):
         else:
             self.settings = settings
 
+        ImplType = Dict[Reference, Implementation]
         if implementations is None:
-            self.implementations = dict()
+            self.implementations = dict()   # type: ImplType
         elif isinstance(implementations, list):
             self.implementations = OrderedDict([
                 (impl.name, impl) for impl in implementations])
