@@ -34,7 +34,7 @@ class Settings(MutableMapping):
             settings: Setting values to initialise a model with.
 
         """
-        self._store = OrderedDict()  # type: OrderedDict[Reference, SettingValue]
+        self._store = OrderedDict()  # type: Dict[Reference, SettingValue]
 
         if settings is not None:
             for key, value in settings.items():
@@ -106,7 +106,7 @@ class Settings(MutableMapping):
         # In the YAML file, a Settings is just a mapping...
         node.require_mapping()
 
-    def _yatiml_attributes(self) -> OrderedDict:
+    def _yatiml_attributes(self) -> Dict:
         # ...so we just give YAtiML our internal mapping to serialise
         return self._store
 

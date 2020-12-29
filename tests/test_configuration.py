@@ -217,7 +217,8 @@ def test_load_implementations(load_configuration: Callable) -> None:
             '/home/test/micro')
 
 
-def test_load_implementations_script_list(load_configuration: Callable) -> None:
+def test_load_implementations_script_list(
+        load_configuration: Callable) -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'implementations:\n'

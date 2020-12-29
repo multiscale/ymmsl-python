@@ -83,7 +83,8 @@ class Reference:
         if isinstance(parts, str):
             self.__parts = self.__string_to_parts(parts)
         elif len(parts) > 0 and not isinstance(parts[0], Identifier):
-            raise ValueError('The first part of a Reference must be an Identifier')
+            raise ValueError(
+                    'The first part of a Reference must be an Identifier')
         else:
             self.__parts = parts
 
@@ -156,7 +157,9 @@ class Reference:
     # def __getitem__(self, key: slice) -> 'Reference':
     #     ...
 
-    def __getitem__(self, key: Union[int, slice]) -> Union['Reference', ReferencePart]:
+    def __getitem__(
+            self, key: Union[int, slice]
+            ) -> Union['Reference', ReferencePart]:
         """Get a part or a slice.
 
         If passed an int, e.g. ref[2], will return that part as an int

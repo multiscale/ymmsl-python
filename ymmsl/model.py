@@ -73,8 +73,9 @@ class Component:
                 attr = node.get_attribute('multiplicity')
                 start_mark = attr.yaml_node.start_mark
                 end_mark = attr.yaml_node.end_mark
-                new_seq = yaml.nodes.SequenceNode('tag:yaml.org,2002:seq',
-                                                  [attr.yaml_node], start_mark, end_mark)
+                new_seq = yaml.nodes.SequenceNode(
+                        'tag:yaml.org,2002:seq', [attr.yaml_node], start_mark,
+                        end_mark)
                 node.set_attribute('multiplicity', new_seq)
 
     @classmethod

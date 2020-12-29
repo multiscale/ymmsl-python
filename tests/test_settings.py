@@ -105,8 +105,7 @@ def test_set_item(settings: Settings) -> None:
 
 def test_del_item(settings: Settings) -> None:
     settings._store = OrderedDict([(Reference('param1'), 'test'),
-                                   (Reference('param2'), 0)]
-    )
+                                   (Reference('param2'), 0)])
     del settings['param1']
     assert len(settings._store) == 1
     assert Reference('param1') not in settings._store
