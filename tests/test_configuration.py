@@ -5,7 +5,7 @@ import pytest
 import yatiml
 from ymmsl import (
         Component, Configuration, Identifier, Implementation, Model,
-        ModelReference, Reference, Resources, Settings)
+        ModelReference, PartialConfiguration, Reference, Resources, Settings)
 from ymmsl import SettingValue     # noqa: F401 # pylint: disable=unused-import
 from ymmsl.document import Document
 
@@ -13,30 +13,30 @@ from ymmsl.document import Document
 @pytest.fixture
 def load_configuration() -> Callable:
     return yatiml.load_function(
-            Document, Configuration, Identifier, Implementation, Reference,
-            Resources, Settings)
+            Document, Configuration, Identifier, Implementation,
+            PartialConfiguration, Reference, Resources, Settings)
 
 
 @pytest.fixture
 def dump_configuration() -> Callable:
     return yatiml.dumps_function(
-            Configuration, Document, Identifier, Implementation, Reference,
-            Resources, Settings)
+            Configuration, Document, Identifier, Implementation,
+            PartialConfiguration, Reference, Resources, Settings)
 
 
 def test_configuration() -> None:
     setting_values = OrderedDict()    # type: OrderedDict[str, SettingValue]
     settings = Settings(setting_values)
-    config = Configuration(None, settings)
+    config = PartialConfiguration(None, settings)
     assert isinstance(config.settings, Settings)
     assert len(config.settings) == 0
 
 
 def test_configuration_update_model1() -> None:
     model_ref1 = ModelReference('model1')
-    base = Configuration(model_ref1)
+    base = PartialConfiguration(model_ref1)
     model_ref2 = ModelReference('model2')
-    overlay = Configuration(model_ref2)
+    overlay = PartialConfiguration(model_ref2)
 
     base.update(overlay)
 
@@ -45,11 +45,11 @@ def test_configuration_update_model1() -> None:
 
 def test_configuration_update_model2() -> None:
     model_ref1 = ModelReference('model1')
-    base = Configuration(model_ref1)
+    base = PartialConfiguration(model_ref1)
 
     component1 = Component('macro', 'my.macro')
     model2 = Model('model2', [component1])
-    overlay = Configuration(model2)
+    overlay = PartialConfiguration(model2)
 
     base.update(overlay)
 
@@ -62,7 +62,7 @@ def test_configuration_update_model3() -> None:
     base = Configuration(model1)
 
     model_ref2 = ModelReference('model2')
-    overlay = Configuration(model_ref2)
+    overlay = PartialConfiguration(model_ref2)
 
     base.update(overlay)
 
@@ -92,11 +92,11 @@ def test_configuration_update_model4() -> None:
 def test_configuration_update_implementations_add() -> None:
     implementation1 = Implementation(
             Reference('my.macro'), '/home/test/macro.py')
-    base = Configuration(implementations=[implementation1])
+    base = PartialConfiguration(implementations=[implementation1])
 
     implementation2 = Implementation(
             Reference('my.micro'), '/home/test/micro.py')
-    overlay = Configuration(implementations=[implementation2])
+    overlay = PartialConfiguration(implementations=[implementation2])
 
     base.update(overlay)
 
@@ -110,11 +110,12 @@ def test_configuration_update_implementations_override() -> None:
             Reference('my.macro'), '/home/test/macro.py')
     implementation2 = Implementation(
             Reference('my.micro'), '/home/test/micro.py')
-    base = Configuration(implementations=[implementation1, implementation2])
+    base = PartialConfiguration(
+            implementations=[implementation1, implementation2])
 
     implementation3 = Implementation(
             Reference('my.micro'), '/home/test/surrogate.py')
-    overlay = Configuration(implementations=[implementation3])
+    overlay = PartialConfiguration(implementations=[implementation3])
 
     base.update(overlay)
 
@@ -125,10 +126,10 @@ def test_configuration_update_implementations_override() -> None:
 
 def test_configuration_update_resources_add() -> None:
     resources1 = Resources(Reference('my.macro'), 10)
-    base = Configuration(resources=[resources1])
+    base = PartialConfiguration(resources=[resources1])
 
     resources2 = Resources(Reference('my.micro'), 2)
-    overlay = Configuration(resources=[resources2])
+    overlay = PartialConfiguration(resources=[resources2])
 
     base.update(overlay)
 
@@ -140,10 +141,10 @@ def test_configuration_update_resources_add() -> None:
 def test_configuration_update_resources_override() -> None:
     resources1 = Resources(Reference('my.macro'), 10)
     resources2 = Resources(Reference('my.micro'), 100)
-    base = Configuration(resources=[resources1, resources2])
+    base = PartialConfiguration(resources=[resources1, resources2])
 
     resources3 = Resources(Reference('my.micro'), 2)
-    overlay = Configuration(resources=[resources3])
+    overlay = PartialConfiguration(resources=[resources3])
 
     base.update(overlay)
 
@@ -180,7 +181,7 @@ def test_load_no_settings(load_configuration: Callable) -> None:
 
 
 def test_dump_empty_settings(dump_configuration: Callable) -> None:
-    configuration = Configuration(None, Settings())
+    configuration = PartialConfiguration(None, Settings())
     text = dump_configuration(configuration)
 
     assert text == 'ymmsl_version: v0.1\n'
@@ -258,7 +259,7 @@ def test_dump_implementations(dump_configuration: Callable) -> None:
                 '#!/bin/bash\n\n/home/test/meso.py'),
             Implementation(Reference('micro'), '/home/test/micro')]
 
-    configuration = Configuration(None, None, implementations)
+    configuration = PartialConfiguration(None, None, implementations)
 
     text = dump_configuration(configuration)
     assert text == (
@@ -299,7 +300,7 @@ def test_dump_resources(dump_configuration: Callable) -> None:
             Resources(Reference('macro'), 10),
             Resources(Reference('micro'), 1)]
 
-    configuration = Configuration(None, None, None, resources)
+    configuration = PartialConfiguration(None, None, None, resources)
 
     text = dump_configuration(configuration)
     assert text == (

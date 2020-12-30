@@ -4,7 +4,7 @@ from typing import Any, IO, Union
 
 import yatiml
 
-from ymmsl.configuration import Configuration
+from ymmsl.configuration import Configuration, PartialConfiguration
 from ymmsl.document import Document
 from ymmsl.execution import Implementation, Resources
 from ymmsl.settings import Settings
@@ -13,11 +13,12 @@ from ymmsl.model import Component, Conduit, Model, ModelReference
 
 
 _load = yatiml.load_function(
-        Configuration, Component, Conduit, Document, Identifier,
-        Implementation, Model, ModelReference, Reference, Resources, Settings)
+        PartialConfiguration, Component, Conduit, Configuration, Document,
+        Identifier, Implementation, Model, ModelReference, Reference,
+        Resources, Settings)
 
 
-def load(source: Union[str, Path, IO[Any]]) -> Configuration:
+def load(source: Union[str, Path, IO[Any]]) -> PartialConfiguration:
     """Loads a yMMSL document from a string or a file.
 
     Args:
@@ -26,7 +27,7 @@ def load(source: Union[str, Path, IO[Any]]) -> Configuration:
                 object containing from which yMMSL data can be read.
 
     Returns:
-        A Configuration object corresponding to the input data.
+        A PartialConfiguration object corresponding to the input data.
 
     """
     # This wrapper is just here to render the documentation.
@@ -34,11 +35,12 @@ def load(source: Union[str, Path, IO[Any]]) -> Configuration:
 
 
 _dump = yatiml.dumps_function(
-        Conduit, Configuration, Component, Document, Identifier,
-        Implementation, Model, ModelReference, Reference, Resources, Settings)
+        Component, Conduit, Configuration, Document, Identifier,
+        Implementation, Model, ModelReference, PartialConfiguration, Reference,
+        Resources, Settings)
 
 
-def dump(config: Configuration) -> str:
+def dump(config: PartialConfiguration) -> str:
     """Converts a Ymmsl to a string containing YAML.
 
     Args:
@@ -53,11 +55,14 @@ def dump(config: Configuration) -> str:
 
 
 _save = yatiml.dump_function(
-        Conduit, Configuration, Component, Document, Identifier,
-        Implementation, Model, ModelReference, Reference, Resources, Settings)
+        Component, Conduit, Configuration, Document, Identifier,
+        Implementation, Model, ModelReference, PartialConfiguration, Reference,
+        Resources, Settings)
 
 
-def save(config: Configuration, target: Union[str, Path, IO[Any]]) -> None:
+def save(
+        config: PartialConfiguration, target: Union[str, Path, IO[Any]]
+        ) -> None:
     """Saves a yMMSL document to a file.
 
     Args:

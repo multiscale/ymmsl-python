@@ -16,7 +16,7 @@ from ymmsl.model import Model, ModelReference
 _ImplType = Dict[Reference, Implementation]
 
 
-class Configuration(Document):
+class PartialConfiguration(Document):
     """Top-level class for all information in a yMMSL file.
 
     Attributes:
@@ -76,7 +76,7 @@ class Configuration(Document):
             self.resources = {
                     Reference(k): v for k, v in resources.items()}
 
-    def update(self, overlay: 'Configuration') -> None:
+    def update(self, overlay: 'PartialConfiguration') -> None:
         """Update this configuration with the given overlay.
 
         This will update the model according to :meth:`Model.update`,
@@ -85,7 +85,7 @@ class Configuration(Document):
         implementations with a new name, and likewise for resources.
 
         Args:
-            overlay: A Configuration to overlay onto this one.
+            overlay: A configuration to overlay onto this one.
         """
         if self.model is None or not isinstance(self.model, Model):
             self.model = overlay.model
@@ -103,6 +103,14 @@ class Configuration(Document):
 
         for newr_name, newr in overlay.resources.items():
             self.resources[newr_name] = newr
+
+    @classmethod
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        # Because of the syntactic sugar below, the YAML doesn't match
+        # the types declared above. So we override recognition, and
+        # since the attributes are all optional, we have nothing to
+        # check except that it's a valid Document (with a version tag).
+        Document._yatiml_recognize(node)
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
@@ -134,3 +142,81 @@ class Configuration(Document):
                 res.is_mapping() and res.is_empty()):
             node.remove_attribute('resources')
         node.index_attribute_to_map('resources', 'name', 'num_cores')
+
+
+class Configuration(PartialConfiguration):
+    """Configuration that includes all information for a simulation.
+
+    Configuration has some optional attributes, because we want to
+    allow configuration files which only contain some of the
+    information needed to run a simulation. At some point however,
+    you need all the bits, and this class requires them.
+
+    When loading a yMMSL file, you will automatically get an object
+    of this class if all the required components are there; if the
+    file is incomplete, you'll get a Configuration instead.
+
+    Attributes:
+        model: A model to run.
+        settings: Settings to run the model with.
+        implementations: Implementations to use to run the model.
+            Dictionary mapping implementation names (as References) to
+            Implementation objects.
+        resources: Resources to allocate for the model components.
+            Dictionary mapping component names to Resources objects.
+    """
+    def __init__(self,
+                 model: Model,
+                 settings: Optional[Settings] = None,
+                 implementations: Union[
+                     List[Implementation],
+                     Dict[str, Implementation]] = [],
+                 resources: Union[
+                     List[Resources],
+                     Dict[str, Resources]] = []
+                 ) -> None:
+        """Create a Configuration.
+
+        Implementations and resources may be either a list of such
+        objects, or a dictionary matching the attribute format (see
+        above).
+
+        Args:
+            model: A description of the model to run.
+            settings: Settings to run the model with.
+            implementations: Implementations to choose from.
+            resources: Resources to allocate for the model components.
+
+        """
+        # mypy doesn't get it when we call super().__init__ here, so
+        # it's duplicated.
+        self.model = model  # type: Model
+
+        if settings is None:
+            self.settings = Settings()
+        else:
+            self.settings = settings
+
+        if implementations is None:
+            self.implementations = dict()   # type: _ImplType
+        elif isinstance(implementations, list):
+            self.implementations = OrderedDict([
+                (impl.name, impl) for impl in implementations])
+        else:
+            self.implementations = {
+                    Reference(k): v for k, v in implementations.items()}
+
+        if resources is None:
+            self.resources = dict()     # type: Dict[Reference, Resources]
+        elif isinstance(resources, list):
+            self.resources = OrderedDict([
+                (res.name, res) for res in resources])
+        else:
+            self.resources = {
+                    Reference(k): v for k, v in resources.items()}
+
+    @classmethod
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        node.require_attribute('model', Model)
+        node.require_attribute('implementations')
+        node.require_attribute('resources')
