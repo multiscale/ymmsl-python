@@ -11,6 +11,11 @@ from ymmsl.settings import Settings
 from ymmsl.model import Model, ModelReference
 
 
+# This should be a local definition, but that triggers a mypy issue:
+# https://github.com/python/mypy/issues/7281
+_ImplType = Dict[Reference, Implementation]
+
+
 class Configuration(Document):
     """Top-level class for all information in a yMMSL file.
 
@@ -53,9 +58,8 @@ class Configuration(Document):
         else:
             self.settings = settings
 
-        ImplType = Dict[Reference, Implementation]
         if implementations is None:
-            self.implementations = dict()   # type: ImplType
+            self.implementations = dict()   # type: _ImplType
         elif isinstance(implementations, list):
             self.implementations = OrderedDict([
                 (impl.name, impl) for impl in implementations])
