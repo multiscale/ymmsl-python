@@ -1,11 +1,10 @@
 """This module contains definitions for identity."""
 from copy import copy
 import re
-from collections import OrderedDict, UserString
+from collections import UserString
 from typing import Any, Generator, Iterable, List, Union
 
 import yatiml
-from ruamel import yaml
 
 
 class Identifier(UserString):
@@ -38,7 +37,7 @@ class Identifier(UserString):
 ReferencePart = Union[Identifier, int]
 
 
-class Reference:
+class Reference(yatiml.String):
     """A reference to an object in the MMSL execution model.
 
     References in string form are written as either:
@@ -81,16 +80,16 @@ class Reference:
 
         """
         if isinstance(parts, str):
-            self.__parts = self.__string_to_parts(parts)
+            self._parts = self._string_to_parts(parts)
         elif len(parts) > 0 and not isinstance(parts[0], Identifier):
             raise ValueError(
                     'The first part of a Reference must be an Identifier')
         else:
-            self.__parts = parts
+            self._parts = parts
 
     def __str__(self) -> str:
         """Convert the Reference to string form."""
-        return self.__parts_to_string(self.__parts)
+        return self._parts_to_string(self._parts)
 
     def __repr__(self) -> str:
         """Produce a representation in string form."""
@@ -98,7 +97,7 @@ class Reference:
 
     def __len__(self) -> int:
         """Return the number of parts in the Reference."""
-        return len(self.__parts)
+        return len(self._parts)
 
     def __hash__(self) -> int:
         """Calculate a hash value for use by dicts."""
@@ -115,7 +114,7 @@ class Reference:
 
         """
         if isinstance(other, Reference):
-            return self.__parts == other.__parts
+            return self._parts == other._parts
         if isinstance(other, str):
             return str(self) == other
         return NotImplemented
@@ -131,7 +130,7 @@ class Reference:
 
         """
         if isinstance(other, Reference):
-            return self.__parts != other.__parts
+            return self._parts != other._parts
         if isinstance(other, str):
             return str(self) != other
         return NotImplemented
@@ -143,7 +142,7 @@ class Reference:
             Each part in turn from left to right.
 
         """
-        for part in self.__parts:
+        for part in self._parts:
             yield part
 
     # These don't work on Python 3.5.1, which we still support. We'll
@@ -178,9 +177,9 @@ class Reference:
 
         """
         if isinstance(key, int):
-            return self.__parts[key]
+            return self._parts[key]
         if isinstance(key, slice):
-            return Reference(self.__parts[key])
+            return Reference(self._parts[key])
         raise ValueError('Subscript must be either an int or a slice')
 
     def __setitem__(self, key: Union[int, slice], value: Any) -> None:
@@ -212,61 +211,17 @@ class Reference:
             A new concatenated Reference.
 
         """
-        ret = Reference(copy(self.__parts))
+        ret = Reference(copy(self._parts))
         if isinstance(other, Reference):
-            ret.__parts.extend(other.__parts)
+            ret._parts.extend(other._parts)
         elif isinstance(other, (Identifier, int)):
-            ret.__parts.append(other)
+            ret._parts.append(other)
         elif hasattr(other, '__iter__'):
-            ret.__parts.extend(other)
+            ret._parts.extend(other)
         return ret
 
     @classmethod
-    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
-        node.require_scalar(str)
-
-    @classmethod
-    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        text = str(node.get_value())
-        parts = cls.__string_to_parts(text)
-
-        # We need to make a yaml.SequenceNode by hand here, since
-        # set_attribute doesn't take lists as an argument.
-        start_mark = node.yaml_node.start_mark
-        end_mark = node.yaml_node.end_mark
-        item_nodes = list()
-        for part in parts:
-            if isinstance(part, Identifier):
-                new_node = yaml.ScalarNode('!Identifier', str(part),
-                                           start_mark, end_mark)
-            elif isinstance(part, int):
-                new_node = yaml.ScalarNode('tag:yaml.org,2002:int', str(part),
-                                           start_mark, end_mark)
-            item_nodes.append(new_node)
-
-        ynode = yaml.SequenceNode('tag:yaml.org,2002:seq', item_nodes,
-                                  start_mark, end_mark)
-        node.make_mapping()
-        node.set_attribute('parts', ynode)
-
-    def _yatiml_attributes(self) -> OrderedDict:
-        return OrderedDict([('parts', self.__parts)])
-
-    @classmethod
-    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        parts = node.get_attribute('parts').seq_items()
-        text = str(parts[0].get_value())
-        for part in parts[1:]:
-            if part.is_scalar(str):
-                text += '.{}'.format(part.get_value())
-            elif part.is_scalar(int):
-                text += '[{}]'.format(part.get_value())
-            else:
-                raise RuntimeError('Cannot serialise invalid reference')
-        node.set_value(text)
-
-    @classmethod
-    def __string_to_parts(cls, text: str) -> List[ReferencePart]:
+    def _string_to_parts(cls, text: str) -> List[ReferencePart]:
         """Parse a string into a list of parts.
 
         Args:
@@ -314,7 +269,7 @@ class Reference:
         return parts
 
     @classmethod
-    def __parts_to_string(cls, parts: List[ReferencePart]) -> str:
+    def _parts_to_string(cls, parts: List[ReferencePart]) -> str:
         """Convert a list of parts to its string representation.
 
         Args:

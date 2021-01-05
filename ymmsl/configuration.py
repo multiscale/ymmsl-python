@@ -33,10 +33,10 @@ class PartialConfiguration(Document):
                  settings: Optional[Settings] = None,
                  implementations: Optional[Union[
                      List[Implementation],
-                     Dict[str, Implementation]]] = None,
+                     Dict[Reference, Implementation]]] = None,
                  resources: Optional[Union[
                      List[Resources],
-                     Dict[str, Resources]]] = None
+                     Dict[Reference, Resources]]] = None
                  ) -> None:
         """Create a Configuration.
 
@@ -64,8 +64,7 @@ class PartialConfiguration(Document):
             self.implementations = OrderedDict([
                 (impl.name, impl) for impl in implementations])
         else:
-            self.implementations = {
-                    Reference(k): v for k, v in implementations.items()}
+            self.implementations = implementations
 
         if resources is None:
             self.resources = dict()     # type: Dict[Reference, Resources]
@@ -73,8 +72,7 @@ class PartialConfiguration(Document):
             self.resources = OrderedDict([
                 (res.name, res) for res in resources])
         else:
-            self.resources = {
-                    Reference(k): v for k, v in resources.items()}
+            self.resources = resources
 
     def update(self, overlay: 'PartialConfiguration') -> None:
         """Update this configuration with the given overlay.
@@ -170,10 +168,10 @@ class Configuration(PartialConfiguration):
                  settings: Optional[Settings] = None,
                  implementations: Union[
                      List[Implementation],
-                     Dict[str, Implementation]] = [],
+                     Dict[Reference, Implementation]] = [],
                  resources: Union[
                      List[Resources],
-                     Dict[str, Resources]] = []
+                     Dict[Reference, Resources]] = []
                  ) -> None:
         """Create a Configuration.
 
@@ -203,8 +201,7 @@ class Configuration(PartialConfiguration):
             self.implementations = OrderedDict([
                 (impl.name, impl) for impl in implementations])
         else:
-            self.implementations = {
-                    Reference(k): v for k, v in implementations.items()}
+            self.implementations = implementations
 
         if resources is None:
             self.resources = dict()     # type: Dict[Reference, Resources]
@@ -212,8 +209,7 @@ class Configuration(PartialConfiguration):
             self.resources = OrderedDict([
                 (res.name, res) for res in resources])
         else:
-            self.resources = {
-                    Reference(k): v for k, v in resources.items()}
+            self.resources = resources
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
