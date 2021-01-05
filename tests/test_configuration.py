@@ -153,6 +153,25 @@ def test_configuration_update_resources_override() -> None:
     assert base.resources[Reference('my.micro')] == resources3
 
 
+def test_as_configuration(
+        test_config2: PartialConfiguration, test_config4: PartialConfiguration
+        ) -> None:
+
+    with pytest.raises(ValueError):
+        test_config2.as_configuration()
+
+    with pytest.raises(ValueError):
+        test_config4.as_configuration()
+
+    test_config4.model = test_config2.model
+
+    config = test_config4.as_configuration()
+
+    assert config.model == test_config4.model
+    assert config.implementations == test_config4.implementations
+    assert config.resources == test_config4.resources
+
+
 def test_load_nil_settings(load_configuration: Callable) -> None:
     text = (
             'ymmsl_version: v0.1\n'

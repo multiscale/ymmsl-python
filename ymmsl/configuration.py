@@ -102,6 +102,33 @@ class PartialConfiguration(Document):
         for newr_name, newr in overlay.resources.items():
             self.resources[newr_name] = newr
 
+    def as_configuration(self) -> 'Configuration':
+        """Converts to a full Configuration object.
+
+        This checks that this PartialConfiguration has all the pieces
+        needed to run a simulation, and if so converts it to a
+        Configuration object.
+
+        Note that this doesn't check references, just that there is
+        a model, implementations and resources. For the more extensive
+        check, see :meth:`Configuration.is_consistent`.
+
+        Returns:
+            A corresponding Configuration.
+
+        Raises:
+            ValueError: If this configuration isn't complete.
+        """
+        if (
+                self.model is not None and isinstance(self.model, Model) and
+                self.implementations and self.resources):
+            return Configuration(
+                    self.model, self.settings, self.implementations,
+                    self.resources)
+        raise ValueError(
+                'No model, implementatios or resources were given in the'
+                ' configuration.')
+
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         # Because of the syntactic sugar below, the YAML doesn't match
