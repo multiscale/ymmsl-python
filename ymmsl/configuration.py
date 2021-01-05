@@ -211,6 +211,29 @@ class Configuration(PartialConfiguration):
         else:
             self.resources = resources
 
+    def check_consistent(self) -> None:
+        """Checks that the configuration is internally consistent.
+
+        This checks whether all conduits are connected to existing
+        components, that there's an implementation for every component,
+        and that resources have been requested for each component.
+
+        If any of these requirements is false, this function will
+        raise a RuntimeError with an explanation of the problem.
+
+        """
+        self.model.check_consistent()
+
+        for comp in self.model.components:
+            if comp.implementation not in self.implementations:
+                raise RuntimeError((
+                        'Model component {} is missing an'
+                        ' implementation').format(comp))
+            if comp.name not in self.resources:
+                raise RuntimeError((
+                        'Model component {} is missing a resource'
+                        ' allocation.').format(comp))
+
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_attribute('model', Model)

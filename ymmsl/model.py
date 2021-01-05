@@ -305,6 +305,30 @@ class Model(ModelReference):
         # add new conduits
         self.conduits.extend(overlay.conduits)
 
+    def check_consistent(self) -> None:
+        """Checks that the model is internally consistent.
+
+        This checks whether all conduits are connected to existing
+        components, and will raise a RuntimeError with an explanation
+        if one is not.
+        """
+        def component_exists(name: Reference) -> bool:
+            for comp in self.components:
+                if comp.name == name:
+                    return True
+            return False
+
+        for conduit in self.conduits:
+            if not component_exists(conduit.sending_component()):
+                raise RuntimeError(
+                    'Unknown sending component "{}" of {}'.format(
+                        conduit.sending_component(), conduit))
+
+            if not component_exists(conduit.receiving_component()):
+                raise RuntimeError(
+                    'Unknown receiving component "{}" of {}'.format(
+                        conduit.receiving_component(), conduit))
+
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_mapping()

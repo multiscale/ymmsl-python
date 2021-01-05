@@ -19,6 +19,17 @@ def dump_model() -> Callable:
             Component, Conduit, Identifier, Model, Reference)
 
 
+@pytest.fixture
+def macro_micro() -> Model:
+    macro = Component('macro', 'my.macro')
+    micro = Component('micro', 'my.micro')
+    components = [macro, micro]
+    conduit1 = Conduit('macro.intermediate_state', 'micro.initial_state')
+    conduit2 = Conduit('micro.final_state', 'macro.state_update')
+    conduits = [conduit1, conduit2]
+    return Model('macro_micro', components, conduits)
+
+
 def test_component_declaration() -> None:
     test_decl = Component('test', 'ns.model')
     assert str(test_decl.name) == 'test'
@@ -114,18 +125,10 @@ def test_load_model_reference() -> None:
     assert str(model.name) == 'test_model'
 
 
-def test_model() -> None:
-    macro = Component('macro', 'my.macro')
-    micro = Component('micro', 'my.micro')
-    components = [macro, micro]
-    conduit1 = Conduit('macro.intermediate_state', 'micro.initial_state')
-    conduit2 = Conduit('micro.final_state', 'macro.state_update')
-    conduits = [conduit1, conduit2]
-    model = Model('test_sim', components, conduits)
-
-    assert str(model.name) == 'test_sim'
-    assert model.components == components
-    assert model.conduits == conduits
+def test_model(macro_micro: Model) -> None:
+    assert str(macro_micro.name) == 'macro_micro'
+    assert len(macro_micro.components) == 2
+    assert len(macro_micro.conduits) == 2
 
 
 def test_model_update_add_component() -> None:
@@ -195,6 +198,22 @@ def test_model_update_replace_component() -> None:
     assert len(base.conduits) == 2
     assert conduit1 in base.conduits
     assert conduit2 in base.conduits
+
+
+def test_model_check_consistent1(macro_micro: Model) -> None:
+    macro_micro.check_consistent()
+
+
+def test_model_check_consistent2(macro_micro: Model) -> None:
+    macro_micro.conduits[0].sender = Reference('marco.intermediate_state')
+    with pytest.raises(RuntimeError):
+        macro_micro.check_consistent()
+
+
+def test_model_check_consistent3(macro_micro: Model) -> None:
+    macro_micro.conduits[1].receiver = Reference('Macro.state_update')
+    with pytest.raises(RuntimeError):
+        macro_micro.check_consistent()
 
 
 def test_load_model(load_model: Callable) -> None:
