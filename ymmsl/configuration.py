@@ -126,7 +126,7 @@ class PartialConfiguration(Document):
                     self.model, self.settings, self.implementations,
                     self.resources)
         raise ValueError(
-                'No model, implementatios or resources were given in the'
+                'Model, implementations or resources are missing from the'
                 ' configuration.')
 
     @classmethod
