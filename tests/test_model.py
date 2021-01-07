@@ -131,6 +131,25 @@ def test_model(macro_micro: Model) -> None:
     assert len(macro_micro.conduits) == 2
 
 
+def test_model_no_impl(load_model: Callable) -> None:
+    # Test making a component with no implementation
+    Component('macro')
+
+    # Test loading from YAML
+    text = (
+            'name: macro_micro\n'
+            'components:\n'
+            '  macro:\n'
+            '  micro:\n')
+    model = load_model(text)
+    assert model.name == 'macro_micro'
+    assert len(model.components) == 2
+    assert model.components[0].name in ('macro', 'micro')
+    assert model.components[0].implementation is None
+    assert model.components[1].name in ('macro', 'micro')
+    assert model.components[0].implementation is None
+
+
 def test_model_update_add_component() -> None:
     macro = Component('macro', 'my.macro')
     base = Model('test_update', [macro])
@@ -198,6 +217,22 @@ def test_model_update_replace_component() -> None:
     assert len(base.conduits) == 2
     assert conduit1 in base.conduits
     assert conduit2 in base.conduits
+
+
+def test_model_update_set_implementation() -> None:
+    abstract_reaction = Component('reaction')
+    base = Model('test_set_impl', [abstract_reaction])
+    assert base.components[0].name == 'reaction'
+    assert base.components[0].implementation is None
+
+    reaction_python = Component('reaction', 'reaction_python')
+    overlay = Model('test_set_impl', [reaction_python])
+
+    base.update(overlay)
+
+    assert len(base.components) == 1
+    assert base.components[0].name == 'reaction'
+    assert base.components[0].implementation == 'reaction_python'
 
 
 def test_model_check_consistent1(macro_micro: Model) -> None:

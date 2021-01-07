@@ -25,7 +25,7 @@ class Component:
 
     """
 
-    def __init__(self, name: str, implementation: str,
+    def __init__(self, name: str, implementation: Optional[str] = None,
                  multiplicity: Union[None, int, List[int]] = None) -> None:
         """Create a Component.
 
@@ -39,7 +39,15 @@ class Component:
 
         """
         self.name = Reference(name)
-        self.implementation = Reference(implementation)
+        if implementation is None:
+            self.implementation = None      # type: Optional[Reference]
+        else:
+            self.implementation = Reference(implementation)
+            for part in self.implementation:
+                if isinstance(part, int):
+                    raise ValueError('Component implementation {} contains a'
+                                     ' subscript, which is not'
+                                     ' allowed.'.format(self.name))
 
         if multiplicity is None:
             self.multiplicity = list()
@@ -47,12 +55,6 @@ class Component:
             self.multiplicity = [multiplicity]
         else:
             self.multiplicity = multiplicity
-
-        for part in self.implementation:
-            if isinstance(part, int):
-                raise ValueError('Component implementation {} contains a'
-                                 ' subscript, which is not allowed.'.format(
-                                     self.name))
 
     def __str__(self) -> str:
         """Returns a string representation of the object."""
@@ -64,7 +66,6 @@ class Component:
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_attribute('name', str)
-        node.require_attribute('implementation', str)
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
