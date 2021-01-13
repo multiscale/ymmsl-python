@@ -85,14 +85,17 @@ class PartialConfiguration(Document):
         Args:
             overlay: A configuration to overlay onto this one.
         """
-        if self.model is None or not isinstance(self.model, Model):
+        # beware of isinstance matching parent classes...
+        if self.model is None:
             self.model = overlay.model
-        elif not isinstance(overlay.model, Model):
-            # Hmm. Let's do it like this for now.
-            # None is taken care of above, but mypy doesn't get that.
-            self.model.name = overlay.model.name    # type: ignore
-        else:
-            self.model.update(overlay.model)
+        elif isinstance(overlay.model, Model):
+            if isinstance(self.model, Model):
+                self.model.update(overlay.model)
+            else:
+                # self.model is a ModelReference
+                self.model = overlay.model
+        elif isinstance(overlay.model, ModelReference):
+            self.model.name = overlay.model.name
 
         self.settings.update(overlay.settings)
 

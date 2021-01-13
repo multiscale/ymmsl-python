@@ -40,7 +40,9 @@ def test_configuration_update_model1() -> None:
 
     base.update(overlay)
 
-    assert base.model == model_ref2
+    assert base.model is not None
+    assert overlay.model is not None
+    assert base.model.name == overlay.model.name
 
 
 def test_configuration_update_model2() -> None:
