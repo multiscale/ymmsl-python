@@ -37,7 +37,7 @@ setup(
     test_suite='tests',
     install_requires=[
         'ruamel.yaml<=0.16.12',
-        'yatiml'
+        'yatiml>=0.7.0'
     ],
     setup_requires=[
         # dependency for `python setup.py test`
