@@ -1,5 +1,5 @@
-.. image:: https://readthedocs.org/projects/ymmsl-python/badge/?version=develop
-    :target: https://ymmsl-python.readthedocs.io/en/latest/?badge=develop
+.. image:: https://readthedocs.org/projects/ymmsl-python/badge/?version=master
+    :target: https://ymmsl-python.readthedocs.io/en/latest/?badge=master
     :alt: Documentation Build Status
 
 .. image:: https://github.com/multiscale/ymmsl-python/workflows/continuous_integration/badge.svg
@@ -14,8 +14,8 @@
     :target: https://www.codacy.com/gh/multiscale/ymmsl-python/dashboard
     :alt: Test Coverage
 
-.. image:: https://requires.io/github/multiscale/ymmsl-python/requirements.svg?branch=develop
-    :target: https://requires.io/github/multiscale/ymmsl-python/requirements/?branch=develop
+.. image:: https://requires.io/github/multiscale/ymmsl-python/requirements.svg?branch=master
+    :target: https://requires.io/github/multiscale/ymmsl-python/requirements/?branch=master
     :alt: Requirements Status
 
 .. image:: https://zenodo.org/badge/153272345.svg
