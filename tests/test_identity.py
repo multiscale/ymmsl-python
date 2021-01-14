@@ -2,7 +2,6 @@ from ymmsl import Identifier, Reference
 
 import pytest
 import yatiml
-from ruamel import yaml
 
 
 def test_create_identifier() -> None:
@@ -42,9 +41,9 @@ def test_compare_identifier() -> None:
     assert Identifier('test1') != Identifier('test2')
 
     assert Identifier('test') == 'test'
-    assert 'test' == Identifier('test')
+    assert 'test' == Identifier('test')     # pylint: disable=C0122
     assert Identifier('test') != 'test2'
-    assert 'test2' != Identifier('test')
+    assert 'test2' != Identifier('test')    # pylint: disable=C0122
 
 
 def test_identifier_dict_key() -> None:
@@ -140,7 +139,7 @@ def test_reference_slicing() -> None:
         test_ref[0] = 'test2'
 
     with pytest.raises(ValueError):
-        test_ref[1:]
+        test_ref[1:]    # pylint: disable=pointless-statement
 
 
 def test_reference_dict_key() -> None:
@@ -154,8 +153,9 @@ def test_reference_equivalence() -> None:
 
     assert Reference('test.test[3]') == 'test.test[3]'
     assert Reference('test.test[3]') != 'test1.test[3]'
-    assert 'test.test[3]' == Reference('test.test[3]')
-    assert 'test1.test[3]' != Reference('test.test[3]')
+    assert 'test.test[3]' == Reference('test.test[3]')  # pylint: disable=C0122
+    assert 'test1.test[3]' != Reference(
+            'test.test[3]')     # pylint: disable=C0122
 
 
 def test_reference_concatenation() -> None:
@@ -172,22 +172,15 @@ def test_reference_concatenation() -> None:
 
 
 def test_reference_io() -> None:
-    class Loader(yatiml.Loader):
-        pass
-
-    yatiml.add_to_loader(Loader, [Identifier, Reference])
-    yatiml.set_document_type(Loader, Reference)
+    load_reference = yatiml.load_function(Reference, Identifier)
 
     text = 'test[12]'
-    doc = yaml.load(text, Loader=Loader)
+    doc = load_reference(text)
     assert str(doc[0]) == 'test'
     assert doc[1] == 12
 
-    class Dumper(yatiml.Dumper):
-        pass
-
-    yatiml.add_to_dumper(Dumper, [Identifier, Reference])
+    dump_reference = yatiml.dumps_function(Identifier, Reference)
 
     doc = Reference('test[12].testing.ok.index[3][5]')
-    text = yaml.dump(doc, Dumper=Dumper)
+    text = dump_reference(doc)
     assert text == 'test[12].testing.ok.index[3][5]\n...\n'

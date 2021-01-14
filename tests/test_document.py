@@ -1,42 +1,32 @@
-from typing_extensions import Type
+from typing import Callable
 
 import pytest
-from ruamel import yaml
 import yatiml
 
 from ymmsl.document import Document
 
 
 @pytest.fixture
-def document_loader() -> Type:
-    class Loader(yatiml.Loader):
-        pass
-
-    yatiml.add_to_loader(Loader, [Document])
-    yatiml.set_document_type(Loader, Document)
-    return Loader
+def load_document() -> Callable:
+    return yatiml.load_function(Document)
 
 
 @pytest.fixture
-def document_dumper() -> Type:
-    class Dumper(yatiml.Dumper):
-        pass
-
-    yatiml.add_to_dumper(Dumper, [Document])
-    return Dumper
+def dump_document() -> Callable:
+    return yatiml.dumps_function(Document)
 
 
-def test_valid_document(document_loader: Type) -> None:
+def test_valid_document(load_document: Callable) -> None:
     text = 'ymmsl_version: v0.1'
-    yaml.load(text, Loader=document_loader)
+    load_document(text)
 
 
-def test_load_unknown_version(document_loader: Type) -> None:
+def test_load_unknown_version(load_document: Callable) -> None:
     text = 'ymmsl_version: v0.2'
     with pytest.raises(yatiml.RecognitionError):
-        yaml.load(text, Loader=document_loader)
+        load_document(text)
 
 
-def test_dump_document(document_dumper: Type) -> None:
-    text = yaml.dump(Document(), Dumper=document_dumper)
+def test_dump_document(dump_document: Callable) -> None:
+    text = dump_document(Document())
     assert text == 'ymmsl_version: v0.1\n'

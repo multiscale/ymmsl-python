@@ -8,7 +8,7 @@ with open('README.rst') as readme_file:
 
 setup(
     name='ymmsl',
-    version='0.10.1',
+    version='0.11.0',
     description="Python bindings for the YAML version of the Multiscale Modeling and Simulation Language",
     long_description=readme + '\n\n',
     author="Lourens Veen",
@@ -36,8 +36,8 @@ setup(
     ],
     test_suite='tests',
     install_requires=[
-        'ruamel.yaml',
-        'yatiml==0.5.1'
+        'ruamel.yaml<=0.16.12',
+        'yatiml>=0.7.0'
     ],
     setup_requires=[
         # dependency for `python setup.py test`
@@ -48,12 +48,10 @@ setup(
         'sphinx_rtd_theme'
     ],
     tests_require=[
-        'pytest>=3.3',
+        'pytest>=3.3,<6.2',
         'pytest-cov',
         'pytest-mypy',
-        'pycodestyle',
+        'pytest-flake8',
+        'importlib-metadata==2.1.0'
     ],
-    extras_require={
-        'dev':  ['prospector[with_pyroma]', 'yapf', 'isort'],
-    }
 )

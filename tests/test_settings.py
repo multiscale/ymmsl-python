@@ -1,9 +1,9 @@
-from ymmsl import Identifier, SettingValue, Reference, Settings
+from ymmsl import Identifier, Reference, Settings
+from ymmsl import SettingValue  # noqa: F401 # pytest: disable=W0611
 
 from collections import OrderedDict
 from typing import cast, List
 import yatiml
-from ruamel import yaml
 
 import pytest
 
@@ -25,7 +25,7 @@ def test_create_settings2() -> None:
         ('submodel._muscle_total_time', 0.1),
         ('bf.velocity', 0.48),
         ('init.max_depth', 0.11)
-        ])  # type: OrderedDict[str, SettingValue]
+    ])  # type: OrderedDict[str, SettingValue]
     settings = Settings(setting_values)
     assert list(settings.ordered_items()[0][0]) == [
         'submodel', '_muscle_grain'
@@ -106,11 +106,11 @@ def test_set_item(settings: Settings) -> None:
 def test_del_item(settings: Settings) -> None:
     settings._store = OrderedDict([(Reference('param1'), 'test'),
                                    (Reference('param2'), 0)])
-    del(settings['param1'])
+    del settings['param1']
     assert len(settings._store) == 1
     assert Reference('param1') not in settings._store
     with pytest.raises(KeyError):
-        settings['param1']
+        settings['param1']  # pylint: disable=pointless-statement
     assert settings._store[Reference('param2')] == 0
 
 
@@ -154,6 +154,14 @@ def test_update(settings: Settings) -> None:
     assert settings['param2'] == [[1, 2], [2, 3]]
     assert settings['param3'] == 3.1415
 
+    settings3 = Settings()
+    settings3[Reference('param1')] = True
+    settings.update(settings3)
+    assert len(settings) == 3
+    assert settings['param1'] is True
+    assert settings['param2'] == [[1, 2], [2, 3]]
+    assert settings['param3'] == 3.1415
+
 
 def test_copy() -> None:
     settings1 = Settings()
@@ -190,14 +198,7 @@ def test_as_ordered_dict(settings: Settings) -> None:
 
 
 def test_load_settings() -> None:
-    class Loader(yatiml.Loader):
-        pass
-
-    # The below fails mypy on Travis with
-    # List item 1 has incompatible type "Type[Reference]"; expected "ABCMeta"
-    # Overrode, no idea where to start looking...
-    yatiml.add_to_loader(Loader, [Identifier, Reference, Settings])     # type: ignore
-    yatiml.set_document_type(Loader, Settings)
+    load_settings = yatiml.load_function(Settings, Identifier, Reference)
 
     text = ('domain1._muscle_grain: [0.01]\n'
             'domain1._muscle_extent: [1.5]\n'
@@ -208,10 +209,10 @@ def test_load_settings() -> None:
             'test_bool: true\n'
             'test_list: [12.3, 1.3]\n')
 
-    settings = yaml.load(text, Loader=Loader)
+    settings = load_settings(text)
     assert len(settings) == 8
     assert str(settings.ordered_items()[0][0]) == 'domain1._muscle_grain'
-    assert settings['domain1._muscle_grain'][0] == 0.01
+    assert cast(List[float], settings['domain1._muscle_grain'])[0] == 0.01
     assert settings['submodel1._muscle_total_time'] == 100.0
 
     assert str(settings.ordered_items()[4][0]) == 'test_str'
@@ -224,13 +225,7 @@ def test_load_settings() -> None:
 
 
 def test_dump_settings() -> None:
-    class Dumper(yatiml.Dumper):
-        pass
-
-    # The below fails mypy on Travis with
-    # List item 1 has incompatible type "Type[Reference]"; expected "ABCMeta"
-    # Overrode, no idea where to start looking...
-    yatiml.add_to_dumper(Dumper, [Identifier, Reference, Settings])     # type: ignore
+    dump_settings = yatiml.dumps_function(Identifier, Reference, Settings)
 
     settings = Settings(OrderedDict([
             ('domain1._muscle_grain', [0.01]),
@@ -242,7 +237,7 @@ def test_dump_settings() -> None:
             ('test_bool', True),
             ('test_list', [12.3, 1.3])]))
 
-    text = yaml.dump(settings, Dumper=Dumper)
+    text = dump_settings(settings)
     assert text == ('domain1._muscle_grain: [0.01]\n'
                     'domain1._muscle_extent: [1.5]\n'
                     'submodel1._muscle_timestep: 0.001\n'

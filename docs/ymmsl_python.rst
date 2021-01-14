@@ -22,6 +22,11 @@ handled internally by the library, so it does not show up in the
 :class:`ymmsl.Configuration` object. The others, `model` and `settings` are
 loaded into attributes of ``config``.
 
+Note that `settings` is optional: if it is not given in the YAML file, the
+corresponding attribute will be an empty :class:`ymmsl.Settings` object.
+Likewise, when saving an empty :class:`ymmsl.Configuration`, the `settings`
+section will be omitted.
+
 As a result, ``config.model`` will give you an object representing the model
 part of the file, while ``config.settings`` contains an object with the
 settings in it. :class:`ymmsl.Configuration` is just a simple record that holds
@@ -31,15 +36,23 @@ Models
 ------
 
 The ``model`` section of the yMMSL document describes the simulation model. It
-has the model's name, a list of compute elements, and it describes the conduits
-between those compute elements. Compute elements are submodels, scale bridges,
-proxies, and any other program that makes up the coupled simulation. Conduits
-are the wires between them that are used to exchange messages.
+has the model's name, a list of simulation components, and it describes the
+conduits between those components. (Simulation) components are submodels, scale
+bridges, mappers, proxies, and any other program that makes up the coupled
+simulation. Conduits are the wires between them that are used to exchange
+messages.
 
 The ``model`` section is represented in Python by the :class:`ymmsl.Model`
-class. It has attributes ``name``, ``compute_elements`` and ``conduits``
+class. It has attributes ``name``, ``components`` and ``conduits``
 corresponding to those sections in the file. Attribute `name` is an
 :class:`ymmsl.Identifier` object.
+
+Note that conduits are optional, you may have a model that consists of only one
+component and no conduits at all. In YAML, you can write this by omitting the
+conduits attribute. In Python, you can also omit the conduits argument when
+constructing a Model. In both cases, the ``conduits`` attribute will be an empty
+list.
+
 
 .. code-block:: python
     :caption: Accessing the model
@@ -50,10 +63,10 @@ corresponding to those sections in the file. Attribute `name` is an
         config = ymmsl.load(f)
 
     print(config.model.name)        # output: macro_micro_model
-    print(len(config.model.compute_elements))   # output: 2
+    print(len(config.model.components))   # output: 2
 
 An identifier contains the name of an object, like a simulation model,
-a compute element or a port (see below). It is a string containing letters,
+a component or a port (see below). It is a string containing letters,
 digits, and/or underscores which must start with a letter or underscore, and may
 not be empty. Identifiers starting with an underscore are reserved for use by
 the software (e.g. MUSCLE 3), and may only be used as specified by the software
@@ -63,19 +76,19 @@ The :class:`ymmsl.Identifier` Python class represents an identifier. It works
 almost the same as a normal Python ``str``, but checks that the string it
 contains is actually a valid identifier.
 
-Compute Elements
-````````````````
+Simulation Components
+`````````````````````
 
-The ``model`` section contains a subsection ``compute_elements``, in which the
-compute elements making up the simulation are described. These are the
-submodels, and special elements like scale bridges, data converters, load
-balancers, etc. yMMSL lets you describe compute elements in two ways, a short
+The ``model`` section contains a subsection ``components``, in which the
+components making up the simulation are described. These are the
+submodels, and special components like scale bridges, data converters, load
+balancers, etc. yMMSL lets you describe components in two ways, a short
 one and a longer one:
 
 .. code-block:: yaml
-    :caption: ``Macro-meso-micro model compute elements``
+    :caption: ``Macro-meso-micro model components``
 
-    compute_elements:
+    components:
       macro: my.macro_model
       meso:
         implementation: my.meso_model
@@ -88,47 +101,47 @@ one and a longer one:
 This fragment describes a macro-meso-micro model set-up with a single macro
 model instance, five instances of the meso model, and five sets of ten micro
 model instances each. If the simulation requires only a single instance of a
-compute element, the short form can be used, as above for the ``macro`` compute
-element. It simply maps the name of the compute element to an implementation
-(more on those in a moment).
+component, the short form can be used, as above for the ``macro`` component. It
+simply maps the name of the component to an implementation (more on those
+in a moment).
 
-The longer form maps the name of the compute element to a dictionary containing
+The longer form maps the name of the component to a dictionary containing
 two attributes, the ``implementation`` and the ``multiplicity``. The
 implementation is the name of the implementation as in the short form, while the
-multiplicity specifies how many instances of this compute element exist in the
+multiplicity specifies how many instances of this component exist in the
 simulation. Multiplicity is a list of integers (as for ``micro`` in this
 example), but may be written as a single integer if it's a one-dimensional set
 (as for ``meso``).
 
-All this is a concise and easy to read and write YAML file, but on the Python
+All this is a concise and easy to read and write a YAML file, but on the Python
 side, all this flexibility would make for complex code. To avoid that, the
 ymmsl-python library applies syntactic sugar when converting between YAML and
-Python. On the Python side, the ``compute_elements`` attribute of
-:class:`ymmsl.Model` always contains a list of :class:`ymmsl.ComputeElement`
+Python. On the Python side, the ``components`` attribute of
+:class:`ymmsl.Model` always contains a list of :class:`ymmsl.Component`
 objects, regardless of how the YAML file was written. When this list is written
 to a YAML file, the most concise representation is automatically chosen to make
 the file easier to read by a human user.
 
 .. code-block:: python
-    :caption: Accessing the compute elements
+    :caption: Accessing the simulation components
 
     import ymmsl
 
     with open('macro_meso_micro.ymmsl', 'r') as f:
         config = ymmsl.load(f)
 
-    ces = config.model.compute_elements
-    print(ces[0].name)              # output: macro
-    print(ces[0].implementation)    # output: my.macro_model
-    print(ces[0].multplicity)       # output: []
-    print(ces[2].name)              # output: micro
-    print(ces[2].implementation)    # output: my.micro_model
-    print(ces[2].multplicity)       # output: [5, 10]
+    cps = config.model.components
+    print(cps[0].name)              # output: macro
+    print(cps[0].implementation)    # output: my.macro_model
+    print(cps[0].multplicity)       # output: []
+    print(cps[2].name)              # output: micro
+    print(cps[2].implementation)    # output: my.micro_model
+    print(cps[2].multplicity)       # output: [5, 10]
 
 (Note that ``macro_meso_micro.ymmsl`` does not come with this documentation, go
 ahead and make it yourself using the above listing!)
 
-The :class:`ymmsl.ComputeElement` class has three attributes, unsurprisingly
+The :class:`ymmsl.Component` class has three attributes, unsurprisingly
 named ``name``, ``implementation`` and ``multiplicity``. Attributes ``name``
 and ``implementation`` are of type :class:`ymmsl.Reference`. A reference
 is a string consisting of one or more identifiers (as described above),
@@ -137,10 +150,10 @@ separated by periods.
 Depending on the context, this may represent a name in a namespace (as it is
 here), or an attribute of an object (as we will see below with Conduits). The
 ``multiplicity`` attribute is always a list of ints, but may be omitted or
-given as a single int when creating a :class:`ymmsl.ComputeElement` object, just
+given as a single int when creating a :class:`ymmsl.Component` object, just
 like in the YAML file.
 
-The ``implementation`` attribute of :class:`ymmsl.ComputeElement` is intended
+The ``implementation`` attribute of :class:`ymmsl.Component` is intended
 to be a reference to some implementation definition in the launcher
 configuration, so consult the documentation for that to see what to write here.
 
@@ -148,24 +161,24 @@ Conduits
 ````````
 
 The final subsection of the ``model`` section is labeled ``conduits``. These
-tie the compute elements together by connecting `ports` on those compute
-elements. Which ports an element has depends on the element, so you have to look
-at its documentation (or the source code, if there isn't any documentation) to
-see which ports are available and how they should be used.
+tie the components together by connecting `ports` on those components. Which
+ports a component has depends on the component, so you have to look at its
+documentation (or the source code, if there isn't any documentation) to see
+which ports are available and how they should be used.
 
 As you can see, the conduits are written as a dictionary on the YAML
 side, which maps senders to receivers. A sender consists of the name of a
-compute element, followed by a period and the name of a port on that compute
-element; likewise for a receiver. In the YAML file, the sender is always on the
-left of the colon, the receiver on the right.
+component, followed by a period and the name of a port on that component;
+likewise for a receiver. In the YAML file, the sender is always on the left of
+the colon, the receiver on the right.
 
-Just like the compute elements, the conduits get converted to a list in Python,
-in this case containing :class:`ymmsl.Conduit` objects. The
+Just like the simulation components, the conduits get converted to a list in
+Python, in this case containing :class:`ymmsl.Conduit` objects. The
 :class:`ymmsl.Conduit` class has ``sender`` and ``receiver`` attributes, of
 type :class:`ymmsl.Reference` (see above), and a number of helper functions to
-interpret these fields, e.g. to extract the compute element and port name
-parts.  Note that the format allows specifying a slot here, but this is
-currently not supported and illegal in MUSCLE 3.
+interpret these fields, e.g. to extract the component and port name parts.
+Note that the format allows specifying a slot here, but this is currently not
+supported and illegal in MUSCLE 3.
 
 Settings
 --------
@@ -231,15 +244,15 @@ Here are a few examples:
 
     import ymmsl
 
-    elements = [
-        ymmsl.ComputeElement('macro', 'my.macro_model'),
-        ymmsl.ComputElement('micro', 'my.micro_model')]
+    components = [
+        ymmsl.Component('macro', 'my.macro_model'),
+        ymmsl.Component('micro', 'my.micro_model')]
 
     conduits = [
         ymmsl.Conduit('macro.out', 'micro.in'),
         ymmsl.Conduit('micro.out', 'macro.in')]
 
-    model = ymmsl.Model('my_model', elements, conduits)
+    model = ymmsl.Model('my_model', components, conduits)
 
     config = ymmsl.Configuration(model)
 
@@ -250,7 +263,7 @@ Here are a few examples:
     # ymmsl_version: v0.1
     # model:
     #   name: my_model
-    #   compute_elements:
+    #   components:
     #     macro: my.macro_model
     #     micro: my.micro_model
     #   conduits:
@@ -265,10 +278,10 @@ Here are a few examples:
 
     config = ymmsl.Configuration(ymmsl.Model('my_model', [], []))
 
-    config.model.compute_elements.append(
-        ymmsl.ComputeElement('macro', 'my.macro_model'))
-    config.model.compute_elements.append(
-        ymmsl.ComputeElement('micro', 'my.micro_model'))
+    config.model.components.append(
+        ymmsl.Component('macro', 'my.macro_model'))
+    config.model.components.append(
+        ymmsl.Component('micro', 'my.micro_model'))
 
     config.model.conduits.append(ymmsl.Conduit('macro.out', 'micro.in'))
     config.model.conduits.append(ymmsl.Conduit('micro.out', 'macro.in'))
@@ -280,7 +293,7 @@ Here are a few examples:
     # ymmsl_version: v0.1
     # model:
     #   name: my_model
-    #   compute_elements:
+    #   components:
     #     macro: my.macro_model
     #     micro: my.micro_model
     #   conduits:

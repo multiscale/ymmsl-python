@@ -1,4 +1,6 @@
-from collections import OrderedDict, MutableMapping
+"""Definitions for specifying model settings."""
+from collections import OrderedDict
+from collections.abc import MutableMapping
 from copy import deepcopy
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
@@ -7,8 +9,9 @@ import yatiml
 from ymmsl.identity import Reference
 
 
-SettingValue = Union[str, int, float, bool,
-                       List[float], List[List[float]], yatiml.bool_union_fix]
+SettingValue = Union[
+        str, int, float, bool, List[float], List[List[float]],
+        yatiml.bool_union_fix]
 
 
 class Settings(MutableMapping):
@@ -17,6 +20,7 @@ class Settings(MutableMapping):
     An experiment is done by running a model with particular settings, \
     for the submodel scales, model parameters and any other configuration.
     """
+
     def __init__(
             self,
             settings: Optional[Dict[str, SettingValue]] = None
@@ -28,68 +32,60 @@ class Settings(MutableMapping):
 
         Args:
             settings: Setting values to initialise a model with.
+
         """
-        self._store = OrderedDict()  # type: OrderedDict[Reference, SettingValue]
+        self._store = OrderedDict()  # type: Dict[Reference, SettingValue]
 
         if settings is not None:
             for key, value in settings.items():
                 self[key] = deepcopy(value)
 
     def __eq__(self, other: Any) -> bool:
-        """Returns whether keys and values are identical.
-        """
+        """Returns whether keys and values are identical."""
         if not isinstance(other, Settings):
             return NotImplemented
         return self._store == other._store
 
     def __str__(self) -> str:
-        """Represent as a string.
-        """
+        """Represent as a string."""
         return str(self.as_ordered_dict())
 
     def __getitem__(self, key: Union[str, Reference]) -> SettingValue:
-        """Returns an item, implements settings[name]
-        """
+        """Returns an item, implements settings[name]."""
         if isinstance(key, str):
             key = Reference(key)
         return self._store[key]
 
     def __setitem__(self, key: Union[str, Reference], value: SettingValue
                     ) -> None:
-        """Sets a value, implements settings[name] = value.
-        """
+        """Sets a value, implements settings[name] = value."""
         if isinstance(key, str):
             key = Reference(key)
         self._store[key] = value
 
     def __delitem__(self, key: Union[str, Reference]) -> None:
-        """Deletes a value, implements del(settings[name]).
-        """
+        """Deletes a value, implements del(settings[name])."""
         if isinstance(key, str):
             key = Reference(key)
-        del(self._store[key])
+        del self._store[key]
 
     def __iter__(self) -> Iterator[Tuple[Reference, SettingValue]]:
-        """Iterate through the settings' key, value pairs.
-        """
+        """Iterate through the settings' key, value pairs."""
         return iter(self._store)  # type: ignore
 
     def __len__(self) -> int:
-        """Returns the number of settings.
-        """
+        """Returns the number of settings."""
         return len(self._store)
 
     def ordered_items(self) -> List[Tuple[Reference, SettingValue]]:
-        """Return settings as a list of tuples.
-        """
+        """Return settings as a list of tuples."""
         result = list()
         for key, value in self._store.items():
             result.append((key, value))
         return result
 
     def copy(self) -> 'Settings':
-        """Makes a shallow copy of these settings and returns it.
-        """
+        """Makes a shallow copy of these settings and returns it."""
         new_settings = Settings()
         new_settings._store = self._store.copy()
         return new_settings
@@ -110,7 +106,7 @@ class Settings(MutableMapping):
         # In the YAML file, a Settings is just a mapping...
         node.require_mapping()
 
-    def _yatiml_attributes(self) -> OrderedDict:
+    def _yatiml_attributes(self) -> Dict:
         # ...so we just give YAtiML our internal mapping to serialise
         return self._store
 

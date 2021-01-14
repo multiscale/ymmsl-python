@@ -5,6 +5,30 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.11.0
+******
+
+Changed
+-------
+
+* ComputeElement renamed to Component
+* Correspondingly, `compute_elements` is now `components`
+
+New
+---
+
+* PartialConfiguration class
+* Support for merging (Partial)Configurations
+* Conduits are now optional in Model
+* Configuration.implementations
+* Configuration.resources
+
+Fixed
+-----
+
+* Small compatibility improvements
+
+
 0.10.1
 ******
 
