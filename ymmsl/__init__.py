@@ -13,7 +13,7 @@ from ymmsl.io import load, dump, save
 from ymmsl.model import Component, Conduit, Model, ModelReference
 
 
-__version__ = '0.10.0.dev0'
+__version__ = '0.11.1.dev'
 __author__ = 'Lourens Veen'
 __email__ = 'l.veen@esciencecenter.nl'
 
