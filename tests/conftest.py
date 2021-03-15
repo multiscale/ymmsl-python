@@ -102,15 +102,15 @@ def test_yaml4() -> str:
 def test_config4() -> PartialConfiguration:
     implementations = [
             Implementation(
-                Reference('isr2d.initial_conditions'), 'isr2d/bin/ic'),
+                Reference('isr2d.initial_conditions'), script='isr2d/bin/ic'),
             Implementation(
-                Reference('isr2d.smc'), 'isr2d/bin/smc'),
+                Reference('isr2d.smc'), script='isr2d/bin/smc'),
             Implementation(
-                Reference('isr2d.blood_flow'), 'isr2d/bin/bf'),
+                Reference('isr2d.blood_flow'), script='isr2d/bin/bf'),
             Implementation(
-                Reference('isr2d.smc2bf'), 'isr2d/bin/smc2bf.py'),
+                Reference('isr2d.smc2bf'), script='isr2d/bin/smc2bf.py'),
             Implementation(
-                Reference('isr2d.bf2smc'), 'isr2d/bin/bf2smc.py')]
+                Reference('isr2d.bf2smc'), script='isr2d/bin/bf2smc.py')]
     resources = [
             Resources(Reference('isr2d.initial_conditions'), 4),
             Resources(Reference('isr2d.smc'), 4),
@@ -171,15 +171,15 @@ def test_config5() -> Configuration:
                 Conduit('bf2smc.out', 'smc.wss_in')])
     implementations = [
             Implementation(
-                Reference('isr2d.initial_conditions'), 'isr2d/bin/ic'),
+                Reference('isr2d.initial_conditions'), script='isr2d/bin/ic'),
             Implementation(
-                Reference('isr2d.smc'), 'isr2d/bin/smc'),
+                Reference('isr2d.smc'), script='isr2d/bin/smc'),
             Implementation(
-                Reference('isr2d.blood_flow'), 'isr2d/bin/bf'),
+                Reference('isr2d.blood_flow'), script='isr2d/bin/bf'),
             Implementation(
-                Reference('isr2d.smc2bf'), 'isr2d/bin/smc2bf.py'),
+                Reference('isr2d.smc2bf'), script='isr2d/bin/smc2bf.py'),
             Implementation(
-                Reference('isr2d.bf2smc'), 'isr2d/bin/bf2smc.py')]
+                Reference('isr2d.bf2smc'), script='isr2d/bin/bf2smc.py')]
     resources = [
             Resources(Reference('isr2d.initial_conditions'), 4),
             Resources(Reference('isr2d.smc'), 4),

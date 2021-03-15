@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from pathlib import Path
 from typing import Callable
 
 import pytest
@@ -224,6 +225,19 @@ def test_load_implementations(load_configuration: Callable) -> None:
             '    /home/test/meso.py\n'
             '\n'
             '  micro: /home/test/micro\n'
+            '  micro2:\n'
+            '    modules: python/3.6.0\n'
+            '    virtual_env: /home/test/venv\n'
+            '    env:\n'
+            '      VAR1: 13\n'
+            '      VAR2: Testing\n'
+            '      VAR3: 12.34\n'
+            '      VAR4: true\n'
+            '    mpi: false\n'
+            '    executable: /home/test/micro2\n'
+            '    args:\n'
+            '      - -s\n'
+            '      - -t\n'
             )
 
     configuration = load_configuration(text)
@@ -237,6 +251,20 @@ def test_load_implementations(load_configuration: Callable) -> None:
     assert configuration.implementations['micro'].name == 'micro'
     assert configuration.implementations['micro'].script == (
             '/home/test/micro')
+
+    m2 = configuration.implementations['micro2']
+    assert m2.name == 'micro2'
+    assert m2.script is None
+    assert m2.modules == ['python/3.6.0']
+    assert m2.virtual_env == Path('/home/test/venv')
+    assert m2.env is not None
+    assert m2.env['VAR1'] == '13'
+    assert m2.env['VAR2'] == 'Testing'
+    assert m2.env['VAR3'] == '12.34'
+    assert m2.env['VAR4'] == 'true'
+    assert m2.executable == Path('/home/test/micro2')
+    assert m2.args == ['-s', '-t']
+    assert m2.mpi is False
 
 
 def test_load_implementations_script_list(
@@ -261,10 +289,10 @@ def test_load_implementations_script_list(
 
     assert configuration.implementations['macro'].name == 'macro'
     assert configuration.implementations['macro'].script == (
-            '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n')
+            '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n\n')
     assert configuration.implementations['meso'].name == 'meso'
     assert configuration.implementations['meso'].script == (
-            '#!/bin/bash\n\n/home/test/meso.py')
+            '#!/bin/bash\n\n/home/test/meso.py\n')
     assert configuration.implementations['micro'].name == 'micro'
     assert configuration.implementations['micro'].script == (
             '/home/test/micro')
@@ -273,12 +301,21 @@ def test_load_implementations_script_list(
 def test_dump_implementations(dump_configuration: Callable) -> None:
     implementations = [
             Implementation(
-                Reference('macro'),
-                '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n'),
+                name=Reference('macro'),
+                script='#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n'
+                ),
             Implementation(
-                Reference('meso'),
-                '#!/bin/bash\n\n/home/test/meso.py'),
-            Implementation(Reference('micro'), '/home/test/micro')]
+                name=Reference('meso'),
+                script='#!/bin/bash\n\n/home/test/meso.py'),
+            Implementation(name=Reference('micro'), script='/home/test/micro'),
+            Implementation(
+                name=Reference('micro2'),
+                modules=['python/3.6.0', 'gcc/9.3.0'],
+                virtual_env=Path('/home/test/env'),
+                env={'VAR1': '10', 'VAR2': 'Test'},
+                mpi=True,
+                executable=Path('/home/test/micro2'),
+                args=['-v', '-s'])]
 
     configuration = PartialConfiguration(None, None, implementations)
 
@@ -296,6 +333,19 @@ def test_dump_implementations(dump_configuration: Callable) -> None:
             '  - \'\'\n'
             '  - /home/test/meso.py\n'
             '  micro: /home/test/micro\n'
+            '  micro2:\n'
+            '    modules:\n'
+            '    - python/3.6.0\n'
+            '    - gcc/9.3.0\n'
+            '    virtual_env: /home/test/env\n'
+            '    env:\n'
+            '      VAR1: \'10\'\n'
+            '      VAR2: Test\n'
+            '    mpi: true\n'
+            '    executable: /home/test/micro2\n'
+            '    args:\n'
+            '    - -v\n'
+            '    - -s\n'
             )
 
 

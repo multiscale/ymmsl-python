@@ -175,14 +175,14 @@ class PartialConfiguration(Document):
 class Configuration(PartialConfiguration):
     """Configuration that includes all information for a simulation.
 
-    Configuration has some optional attributes, because we want to
-    allow configuration files which only contain some of the
+    PartialConfiguration has some optional attributes, because we want
+    to allow configuration files which only contain some of the
     information needed to run a simulation. At some point however,
     you need all the bits, and this class requires them.
 
     When loading a yMMSL file, you will automatically get an object
     of this class if all the required components are there; if the
-    file is incomplete, you'll get a Configuration instead.
+    file is incomplete, you'll get a PartialConfiguration instead.
 
     Attributes:
         model: A model to run.
