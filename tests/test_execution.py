@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from ymmsl import Implementation, Reference
+from ymmsl import ExecutionModel, Implementation, Reference
 
 
 def test_implementation() -> None:
@@ -32,7 +32,7 @@ def test_implementations_executable() -> None:
                 'VAR2': 'Testing'},
             executable=Path('/home/user/software/my_submodel/bin/model'),
             args='-v -a',
-            mpi=True)
+            execution_model=ExecutionModel.OPENMPI)
 
     assert impl.name == 'test_impl'
     assert impl.modules == ['python/3.6.0', 'gcc/9.3.0']
@@ -42,7 +42,7 @@ def test_implementations_executable() -> None:
     assert impl.env['VAR2'] == 'Testing'
     assert impl.executable == Path('/home/user/software/my_submodel/bin/model')
     assert impl.args == ['-v -a']
-    assert impl.mpi is True
+    assert impl.execution_model == ExecutionModel.OPENMPI
 
 
 def test_implementations_exclusive() -> None:

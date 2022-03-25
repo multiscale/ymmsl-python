@@ -1,6 +1,6 @@
 """Definitions for specifying how to start a component."""
 from abc import ABC
-import logging
+from enum import Enum
 from pathlib import Path
 from typing import cast, Dict, List, Optional, Union
 
@@ -8,6 +8,22 @@ from ruamel import yaml
 import yatiml
 
 from ymmsl.identity import Reference
+
+
+class ExecutionModel(Enum):
+    DIRECT = 1
+    OPENMPI = 2
+    INTELMPI = 3
+    SRUNMPI = 4
+
+    @classmethod
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
+        if node.is_scalar(str):
+            node.set_value(node.get_value().upper())
+
+    @classmethod
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        node.set_value(node.get_value().lower())
 
 
 class Implementation:
@@ -19,12 +35,25 @@ class Implementation:
     from the authors of this library. If a script is specified, all
     other attributes except for the name must be ``None``.
 
+    For ``execution_model``, the following values are supported:
+
+    direct
+      The program will be executed directly. Use this for non-MPI
+      programs.
+
+    openmpi
+      For MPI programs that should be started using OpenMPI's mpirun.
+
+    intelmpi
+      For MPI programs that should be started using Intel MPI's
+      mpirun.
+
     Attributes:
         name: Name of the implementation
         modules: HPC software modules to load
         virtual_env: Path to a virtual env to activate
         env: Environment variables to set
-        mpi: Whether the implementation uses MPI
+        execution_model: How to start the executable.
         executable: Full path to executable to run
         args: Arguments to pass to the executable
         script: A script that starts the implementation
@@ -36,7 +65,7 @@ class Implementation:
             modules: Union[str, List[str], None] = None,
             virtual_env: Optional[Path] = None,
             env: Optional[Dict[str, str]] = None,
-            mpi: Optional[bool] = None,
+            execution_model: ExecutionModel = ExecutionModel.DIRECT,
             executable: Optional[Path] = None,
             args: Union[str, List[str], None] = None,
             script: Union[str, List[str], None] = None
@@ -59,7 +88,7 @@ class Implementation:
             modules: HPC software modules to load
             virtual_env: Path to a virtual env to activate
             env: Environment variables to set
-            mpi: Whether the implementation uses MPI
+            execution_model: How to start the executable, see above.
             executable: Full path to executable to run
             args: Arguments to pass to the executable
             script: Script that starts the implementation
@@ -67,12 +96,13 @@ class Implementation:
         if script is not None:
             if (
                     modules is not None or virtual_env is not None or
-                    env is not None or mpi is not None or
+                    env is not None or
+                    execution_model is not ExecutionModel.DIRECT or
                     executable is not None or args is not None):
                 raise RuntimeError(
                         'When creating an Implementation, script was specified'
                         ' together with another argument, which is not'
-                        ' allowed. Please specify either a script or an'
+                        ' supported. Please specify either a script or an'
                         ' executable.')
 
         if executable is not None and script is not None:
@@ -93,7 +123,7 @@ class Implementation:
             self.modules = modules
         self.virtual_env = virtual_env
         self.env = env
-        self.mpi = mpi
+        self.execution_model = execution_model
         self.executable = executable
 
         if isinstance(args, str):
@@ -110,13 +140,10 @@ class Implementation:
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         if node.has_attribute('env'):
-            logging.warning('env')
             env_node = node.get_attribute('env')
             if env_node.is_mapping():
-                logging.warning('map')
                 for _, value_node in env_node.yaml_node.value:
                     if isinstance(value_node, yaml.ScalarNode):
-                        logging.warning('vn: %s', value_node)
                         if value_node.tag == 'tag:yaml.org,2002:int':
                             value_node.tag = 'tag:yaml.org,2002:str'
                         if value_node.tag == 'tag:yaml.org,2002:float':
@@ -145,6 +172,8 @@ class Implementation:
                 node.set_attribute('script', seq_node)
 
         node.remove_attributes_with_default_values(cls)
+        if node.get_attribute('execution_model').get_value() == 'direct':
+            node.remove_attribute('execution_model')
 
 
 class ResourceRequirements(ABC):

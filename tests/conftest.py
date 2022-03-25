@@ -1,11 +1,12 @@
 from collections import OrderedDict
+from pathlib import Path
 
 import pytest
 
 from ymmsl import (
-        Component, Conduit, Configuration, Implementation, Model,
-        ModelReference, MPICoresResReq, MPINodesResReq, PartialConfiguration,
-        Reference, Settings, ThreadedResReq)
+        Component, Conduit, Configuration, ExecutionModel, Implementation,
+        Model, ModelReference, MPICoresResReq, MPINodesResReq,
+        PartialConfiguration, Reference, Settings, ThreadedResReq)
 
 
 @pytest.fixture
@@ -215,6 +216,20 @@ def test_yaml6() -> str:
             '    mpi_cores2: d\n'
             '    mpi_nodes1: e\n'
             '    mpi_nodes2: f\n'
+            'implementations:\n'
+            '  a: /home/user/models/bin/modela\n'
+            '  c:\n'
+            '    modules:\n'
+            '    - gcc-6.3.0\n'
+            '    - openmpi-1.10\n'
+            '    execution_model: openmpi\n'
+            '    executable: /home/user/models/bin/modelc\n'
+            '  d:\n'
+            '    modules:\n'
+            '    - icc-18.0\n'
+            '    - IntelMPI-2021-3\n'
+            '    execution_model: intelmpi\n'
+            '    executable: /home/user/models/bin/modeld\n'
             'resources:\n'
             '  singlethreaded:\n'
             '    threads: 1\n'
@@ -248,6 +263,16 @@ def test_config6() -> Configuration:
                 Component('mpi_nodes2', 'f')],
             [])
 
+    implementations = [
+            Implementation(
+                Reference('a'), script='/home/user/models/bin/modela'),
+            Implementation(
+                Reference('c'), ['gcc-6.3.0', 'openmpi-1.10'], None, None,
+                ExecutionModel.OPENMPI, Path('/home/user/models/bin/modelc')),
+            Implementation(
+                Reference('d'), ['icc-18.0', 'IntelMPI-2021-3'], None, None,
+                ExecutionModel.INTELMPI, Path('/home/user/models/bin/modeld'))]
+
     resources = [
             ThreadedResReq(Reference('singlethreaded'), 1),
             ThreadedResReq(Reference('multithreaded'), 8),
@@ -256,4 +281,4 @@ def test_config6() -> Configuration:
             MPINodesResReq(Reference('mpi_nodes1'), 10, 16),
             MPINodesResReq(Reference('mpi_nodes2'), 10, 4, 4)]
 
-    return Configuration(model, None, [], resources)
+    return Configuration(model, None, implementations, resources)

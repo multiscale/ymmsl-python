@@ -5,9 +5,9 @@ from typing import Callable
 import pytest
 import yatiml
 from ymmsl import (
-        Component, Configuration, Identifier, Implementation, Model,
-        ModelReference, MPICoresResReq, MPINodesResReq, PartialConfiguration,
-        Reference, Settings, ThreadedResReq)
+        Component, Configuration, ExecutionModel, Identifier, Implementation,
+        Model, ModelReference, MPICoresResReq, MPINodesResReq,
+        PartialConfiguration, Reference, Settings, ThreadedResReq)
 from ymmsl import SettingValue     # noqa: F401 # pylint: disable=unused-import
 from ymmsl.document import Document
 from ymmsl.execution import ResourceRequirements
@@ -16,17 +16,19 @@ from ymmsl.execution import ResourceRequirements
 @pytest.fixture
 def load_configuration() -> Callable:
     return yatiml.load_function(
-            Document, Configuration, Identifier, Implementation,
-            MPICoresResReq, MPINodesResReq, PartialConfiguration, Reference,
-            ResourceRequirements, Settings, ThreadedResReq)
+            Document, ExecutionModel, Configuration, Identifier,
+            Implementation, MPICoresResReq, MPINodesResReq,
+            PartialConfiguration, Reference, ResourceRequirements, Settings,
+            ThreadedResReq)
 
 
 @pytest.fixture
 def dump_configuration() -> Callable:
     return yatiml.dumps_function(
-            Configuration, Document, Identifier, Implementation,
-            MPICoresResReq, MPINodesResReq, PartialConfiguration, Reference,
-            ResourceRequirements, Settings, ThreadedResReq)
+            Configuration, Document, ExecutionModel, Identifier,
+            Implementation, MPICoresResReq, MPINodesResReq,
+            PartialConfiguration, Reference, ResourceRequirements, Settings,
+            ThreadedResReq)
 
 
 def test_configuration() -> None:
@@ -237,7 +239,7 @@ def test_load_implementations(load_configuration: Callable) -> None:
             '      VAR2: Testing\n'
             '      VAR3: 12.34\n'
             '      VAR4: true\n'
-            '    mpi: false\n'
+            '    execution_model: direct\n'
             '    executable: /home/test/micro2\n'
             '    args:\n'
             '      - -s\n'
@@ -268,7 +270,7 @@ def test_load_implementations(load_configuration: Callable) -> None:
     assert m2.env['VAR4'] == 'true'
     assert m2.executable == Path('/home/test/micro2')
     assert m2.args == ['-s', '-t']
-    assert m2.mpi is False
+    assert m2.execution_model == ExecutionModel.DIRECT
 
 
 def test_load_implementations_script_list(
@@ -317,7 +319,7 @@ def test_dump_implementations(dump_configuration: Callable) -> None:
                 modules=['python/3.6.0', 'gcc/9.3.0'],
                 virtual_env=Path('/home/test/env'),
                 env={'VAR1': '10', 'VAR2': 'Test'},
-                mpi=True,
+                execution_model=ExecutionModel.OPENMPI,
                 executable=Path('/home/test/micro2'),
                 args=['-v', '-s'])]
 
@@ -345,7 +347,7 @@ def test_dump_implementations(dump_configuration: Callable) -> None:
             '    env:\n'
             '      VAR1: \'10\'\n'
             '      VAR2: Test\n'
-            '    mpi: true\n'
+            '    execution_model: openmpi\n'
             '    executable: /home/test/micro2\n'
             '    args:\n'
             '    - -v\n'
