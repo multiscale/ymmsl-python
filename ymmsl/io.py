@@ -14,11 +14,14 @@ from ymmsl.identity import Identifier, Reference
 from ymmsl.model import Component, Conduit, Model, ModelReference
 
 
-_load = yatiml.load_function(
+_classes = (
         PartialConfiguration, Component, Conduit, Configuration, Document,
         ExecutionModel, Identifier, Implementation, Model, ModelReference,
         MPICoresResReq, MPINodesResReq, Reference, ResourceRequirements,
         Settings, ThreadedResReq)
+
+
+_load = yatiml.load_function(*_classes)
 
 
 def load(source: Union[str, Path, IO[Any]]) -> PartialConfiguration:
@@ -37,11 +40,7 @@ def load(source: Union[str, Path, IO[Any]]) -> PartialConfiguration:
     return _load(source)
 
 
-_dump = yatiml.dumps_function(
-        Component, Conduit, Configuration, Document, ExecutionModel,
-        Identifier, Implementation, Model, ModelReference, MPICoresResReq,
-        MPINodesResReq, PartialConfiguration, Reference,
-        ResourceRequirements, Settings, ThreadedResReq)
+_dump = yatiml.dumps_function(*_classes)
 
 
 def dump(config: PartialConfiguration) -> str:
@@ -58,11 +57,7 @@ def dump(config: PartialConfiguration) -> str:
     return _dump(config)
 
 
-_save = yatiml.dump_function(
-        Component, Conduit, Configuration, Document, ExecutionModel,
-        Identifier, Implementation, Model, ModelReference, MPICoresResReq,
-        MPINodesResReq, PartialConfiguration, Reference,
-        ResourceRequirements, Settings, ThreadedResReq)
+_save = yatiml.dump_function(*_classes)
 
 
 def save(
