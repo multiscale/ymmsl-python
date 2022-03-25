@@ -1,12 +1,14 @@
 """This module contains all the definitions for yMMSL."""
 from collections import OrderedDict
-from typing import Dict, List, Optional, Union
+import collections.abc as abc
+from typing import (
+        Dict, List, MutableMapping, Optional, Sequence, Union)
 
 import yatiml
 
 from ymmsl.document import Document
 from ymmsl.identity import Reference
-from ymmsl.execution import Implementation, Resources
+from ymmsl.execution import Implementation, ResourceRequirements
 from ymmsl.settings import Settings
 from ymmsl.model import Model, ModelReference
 
@@ -14,6 +16,9 @@ from ymmsl.model import Model, ModelReference
 # This should be a local definition, but that triggers a mypy issue:
 # https://github.com/python/mypy/issues/7281
 _ImplType = Dict[Reference, Implementation]
+
+
+_ResType = MutableMapping[Reference, ResourceRequirements]
 
 
 class PartialConfiguration(Document):
@@ -26,7 +31,8 @@ class PartialConfiguration(Document):
             Dictionary mapping implementation names (as References) to
             Implementation objects.
         resources: Resources to allocate for the model components.
-            Dictionary mapping component names to Resources objects.
+            Dictionary mapping component names to ResourceRequirements
+            objects.
     """
     def __init__(self,
                  model: Optional[ModelReference] = None,
@@ -35,8 +41,8 @@ class PartialConfiguration(Document):
                      List[Implementation],
                      Dict[Reference, Implementation]]] = None,
                  resources: Optional[Union[
-                     List[Resources],
-                     Dict[Reference, Resources]]] = None
+                     Sequence[ResourceRequirements],
+                     MutableMapping[Reference, ResourceRequirements]]] = None
                  ) -> None:
         """Create a Configuration.
 
@@ -67,8 +73,8 @@ class PartialConfiguration(Document):
             self.implementations = implementations
 
         if resources is None:
-            self.resources = dict()     # type: Dict[Reference, Resources]
-        elif isinstance(resources, list):
+            self.resources = dict()     # type: _ResType
+        elif isinstance(resources, abc.Sequence):
             self.resources = OrderedDict([
                 (res.name, res) for res in resources])
         else:
@@ -145,7 +151,7 @@ class PartialConfiguration(Document):
         if not node.has_attribute('settings'):
             node.set_attribute('settings', None)
         node.map_attribute_to_index('implementations', 'name', 'script')
-        node.map_attribute_to_index('resources', 'name', 'num_cores')
+        node.map_attribute_to_index('resources', 'name')
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
@@ -169,7 +175,7 @@ class PartialConfiguration(Document):
                 res.is_scalar(type(None)) or
                 res.is_mapping() and res.is_empty()):
             node.remove_attribute('resources')
-        node.index_attribute_to_map('resources', 'name', 'num_cores')
+        node.index_attribute_to_map('resources', 'name')
 
 
 class Configuration(PartialConfiguration):
@@ -200,8 +206,8 @@ class Configuration(PartialConfiguration):
                      List[Implementation],
                      Dict[Reference, Implementation]] = [],
                  resources: Union[
-                     List[Resources],
-                     Dict[Reference, Resources]] = []
+                     Sequence[ResourceRequirements],
+                     MutableMapping[Reference, ResourceRequirements]] = []
                  ) -> None:
         """Create a Configuration.
 
@@ -234,8 +240,8 @@ class Configuration(PartialConfiguration):
             self.implementations = implementations
 
         if resources is None:
-            self.resources = dict()     # type: Dict[Reference, Resources]
-        elif isinstance(resources, list):
+            self.resources = dict()     # type: _ResType
+        elif isinstance(resources, abc.Sequence):
             self.resources = OrderedDict([
                 (res.name, res) for res in resources])
         else:

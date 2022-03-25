@@ -6,7 +6,9 @@ import yatiml
 
 from ymmsl.configuration import Configuration, PartialConfiguration
 from ymmsl.document import Document
-from ymmsl.execution import Implementation, Resources
+from ymmsl.execution import (
+        Implementation, ResourceRequirements, MPICoresResReq, MPINodesResReq,
+        ThreadedResReq)
 from ymmsl.settings import Settings
 from ymmsl.identity import Identifier, Reference
 from ymmsl.model import Component, Conduit, Model, ModelReference
@@ -14,8 +16,9 @@ from ymmsl.model import Component, Conduit, Model, ModelReference
 
 _load = yatiml.load_function(
         PartialConfiguration, Component, Conduit, Configuration, Document,
-        Identifier, Implementation, Model, ModelReference, Reference,
-        Resources, Settings)
+        Identifier, Implementation, Model, ModelReference, MPICoresResReq,
+        MPINodesResReq, Reference, ResourceRequirements, Settings,
+        ThreadedResReq)
 
 
 def load(source: Union[str, Path, IO[Any]]) -> PartialConfiguration:
@@ -36,8 +39,9 @@ def load(source: Union[str, Path, IO[Any]]) -> PartialConfiguration:
 
 _dump = yatiml.dumps_function(
         Component, Conduit, Configuration, Document, Identifier,
-        Implementation, Model, ModelReference, PartialConfiguration, Reference,
-        Resources, Settings)
+        Implementation, Model, ModelReference, MPICoresResReq,
+        MPINodesResReq, PartialConfiguration, Reference,
+        ResourceRequirements, Settings, ThreadedResReq)
 
 
 def dump(config: PartialConfiguration) -> str:
@@ -56,8 +60,9 @@ def dump(config: PartialConfiguration) -> str:
 
 _save = yatiml.dump_function(
         Component, Conduit, Configuration, Document, Identifier,
-        Implementation, Model, ModelReference, PartialConfiguration, Reference,
-        Resources, Settings)
+        Implementation, Model, ModelReference, MPICoresResReq,
+        MPINodesResReq, PartialConfiguration, Reference,
+        ResourceRequirements, Settings, ThreadedResReq)
 
 
 def save(

@@ -6,7 +6,8 @@ as well as to read and write yMMSL files.
 
 from ymmsl.component import Operator, Port
 from ymmsl.configuration import Configuration, PartialConfiguration
-from ymmsl.execution import Implementation, Resources
+from ymmsl.execution import (
+        Implementation, MPICoresResReq, MPINodesResReq, ThreadedResReq)
 from ymmsl.settings import Settings, SettingValue
 from ymmsl.identity import Identifier, Reference
 from ymmsl.io import load, dump, save
@@ -21,5 +22,6 @@ __email__ = 'l.veen@esciencecenter.nl'
 __all__ = [
         'Component', 'Conduit', 'Configuration', 'dump', 'Identifier',
         'Implementation', 'load', 'Model', 'ModelReference', 'Operator',
-        'PartialConfiguration', 'Resources', 'SettingValue', 'Port',
-        'Reference', 'Settings', 'save']
+        'PartialConfiguration', 'SettingValue', 'MPICoresResReq',
+        'MPINodesResReq', 'ThreadedResReq', 'Port', 'Reference', 'Settings',
+        'save']

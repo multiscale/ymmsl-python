@@ -6,23 +6,27 @@ import pytest
 import yatiml
 from ymmsl import (
         Component, Configuration, Identifier, Implementation, Model,
-        ModelReference, PartialConfiguration, Reference, Resources, Settings)
+        ModelReference, MPICoresResReq, MPINodesResReq, PartialConfiguration,
+        Reference, Settings, ThreadedResReq)
 from ymmsl import SettingValue     # noqa: F401 # pylint: disable=unused-import
 from ymmsl.document import Document
+from ymmsl.execution import ResourceRequirements
 
 
 @pytest.fixture
 def load_configuration() -> Callable:
     return yatiml.load_function(
             Document, Configuration, Identifier, Implementation,
-            PartialConfiguration, Reference, Resources, Settings)
+            MPICoresResReq, MPINodesResReq, PartialConfiguration, Reference,
+            ResourceRequirements, Settings, ThreadedResReq)
 
 
 @pytest.fixture
 def dump_configuration() -> Callable:
     return yatiml.dumps_function(
             Configuration, Document, Identifier, Implementation,
-            PartialConfiguration, Reference, Resources, Settings)
+            MPICoresResReq, MPINodesResReq, PartialConfiguration, Reference,
+            ResourceRequirements, Settings, ThreadedResReq)
 
 
 def test_configuration() -> None:
@@ -128,10 +132,10 @@ def test_configuration_update_implementations_override() -> None:
 
 
 def test_configuration_update_resources_add() -> None:
-    resources1 = Resources(Reference('my.macro'), 10)
+    resources1 = ThreadedResReq(Reference('my.macro'), 10)
     base = PartialConfiguration(resources=[resources1])
 
-    resources2 = Resources(Reference('my.micro'), 2)
+    resources2 = ThreadedResReq(Reference('my.micro'), 2)
     overlay = PartialConfiguration(resources=[resources2])
 
     base.update(overlay)
@@ -142,11 +146,11 @@ def test_configuration_update_resources_add() -> None:
 
 
 def test_configuration_update_resources_override() -> None:
-    resources1 = Resources(Reference('my.macro'), 10)
-    resources2 = Resources(Reference('my.micro'), 100)
+    resources1 = ThreadedResReq(Reference('my.macro'), 10)
+    resources2 = ThreadedResReq(Reference('my.micro'), 100)
     base = PartialConfiguration(resources=[resources1, resources2])
 
-    resources3 = Resources(Reference('my.micro'), 2)
+    resources3 = ThreadedResReq(Reference('my.micro'), 2)
     overlay = PartialConfiguration(resources=[resources3])
 
     base.update(overlay)
@@ -353,23 +357,24 @@ def test_load_resources(load_configuration: Callable) -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'resources:\n'
-            '  macro: 10\n'
+            '  macro:\n'
+            '    threads: 10\n'
             '  micro:\n'
-            '    num_cores: 1\n'
+            '    threads: 1\n'
             )
 
     configuration = load_configuration(text)
 
     assert configuration.resources['macro'].name == 'macro'
-    assert configuration.resources['macro'].num_cores == 10
+    assert configuration.resources['macro'].threads == 10
     assert configuration.resources['micro'].name == 'micro'
-    assert configuration.resources['micro'].num_cores == 1
+    assert configuration.resources['micro'].threads == 1
 
 
 def test_dump_resources(dump_configuration: Callable) -> None:
     resources = [
-            Resources(Reference('macro'), 10),
-            Resources(Reference('micro'), 1)]
+            ThreadedResReq(Reference('macro'), 10),
+            ThreadedResReq(Reference('micro'), 1)]
 
     configuration = PartialConfiguration(None, None, None, resources)
 
@@ -377,6 +382,8 @@ def test_dump_resources(dump_configuration: Callable) -> None:
     assert text == (
             'ymmsl_version: v0.1\n'
             'resources:\n'
-            '  macro: 10\n'
-            '  micro: 1\n'
+            '  macro:\n'
+            '    threads: 10\n'
+            '  micro:\n'
+            '    threads: 1\n'
             )

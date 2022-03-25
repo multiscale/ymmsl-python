@@ -1,4 +1,5 @@
 """Definitions for specifying how to start a component."""
+from abc import ABC
 import logging
 from pathlib import Path
 from typing import cast, Dict, List, Optional, Union
@@ -146,20 +147,114 @@ class Implementation:
         node.remove_attributes_with_default_values(cls)
 
 
-class Resources:
+class ResourceRequirements(ABC):
     """Describes resources to allocate for components.
 
     Attributes:
         name: Name of the component to configure.
-        num_cores: Number of CPU cores to reserve.
     """
-
-    def __init__(self, name: Reference, num_cores: int) -> None:
-        """Create a Resources description.
+    def __init__(self, name: Reference) -> None:
+        """Create a ResourceRequirements description.
 
         Args:
-            name: Name of the component to configure
-            num_cores: Number of CPU cores to reserve.
+            name: Name of the component to configure.
         """
         self.name = name
-        self.num_cores = num_cores
+
+    @classmethod
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        raise yatiml.RecognitionError(
+                'Please specify either threads or mpi_processes.')
+
+
+class ThreadedResReq(ResourceRequirements):
+    """Describes resources for threaded implementations.
+
+    This includes singlethreaded and multithreaded implementations
+    that do not support MPI. As many cores as specified will be
+    allocated on a single node, for each instance.
+
+    Attributes:
+        name: Name of the component to configure.
+        threads: Number of threads/cores per instance.
+    """
+
+    def __init__(self, name: Reference, threads: int) -> None:
+        """Create a ThreadedResourceRequirements description.
+
+        Args:
+            name: Name of the component to configure.
+            threads: Number of threads (cores) per instance.
+        """
+        super().__init__(name)
+        self.threads = threads
+
+
+class MPICoresResReq(ResourceRequirements):
+    """Describes resources for simple MPI implementations.
+
+    This allocates individual cores or sets of cores on the same node
+    for a given number of MPI processes per instance.
+
+    Attributes:
+        name: Name of the component to configure.
+        mpi_processes: Number of MPI processes to start.
+        threads_per_mpi_process: Number of threads/cores per process.
+    """
+
+    def __init__(
+            self, name: Reference, mpi_processes: int,
+            threads_per_mpi_process: int = 1) -> None:
+        """Create a ThreadedMPIResourceRequirements description.
+
+        Args:
+            name: Name of the component to configure.
+            mpi_processes: Number of MPI processes to start.
+            threads_per_mpi_process: Number of threads/cores per
+                    process. Defaults to 1.
+        """
+        super().__init__(name)
+        self.mpi_processes = mpi_processes
+        self.threads_per_mpi_process = threads_per_mpi_process
+
+    @classmethod
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        node.remove_attributes_with_default_values(cls)
+
+
+class MPINodesResReq(ResourceRequirements):
+    """Describes resources for node based MPI implementations.
+
+    This allocates resources for an MPI process in terms of nodes and
+    cores, processes and threads on them.
+
+    Attributes:
+        name: Name of the component to configure.
+        nodes: Number of nodes to reserve.
+        mpi_processes_per_node: Number of MPI processes to start on
+                each node.
+        threads_per_mpi_process: Number of threads/cores per process.
+    """
+
+    def __init__(
+            self, name: Reference, nodes: int,
+            mpi_processes_per_node: int, threads_per_mpi_process: int = 1
+            ) -> None:
+        """Create a NodeBasedMPIResourceRequirements description.
+
+        Args:
+            name: Name of the component to configure.
+            nodes: Number of nodes to reserve.
+            mpi_processes_per_node: Number of MPI processes to start
+                    on each node.
+            threads_per_mpi_process: Number of threads/cores per
+                    process. Defaults to 1.
+        """
+        super().__init__(name)
+        self.nodes = nodes
+        self.mpi_processes_per_node = mpi_processes_per_node
+        self.threads_per_mpi_process = threads_per_mpi_process
+
+    @classmethod
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        node.remove_attributes_with_default_values(cls)
