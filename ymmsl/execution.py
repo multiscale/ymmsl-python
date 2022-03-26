@@ -19,11 +19,14 @@ class ExecutionModel(Enum):
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         if node.is_scalar(str):
-            node.set_value(node.get_value().upper())
+            val = cast(str, node.get_value())
+            node.set_value(val.upper())
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        node.set_value(node.get_value().lower())
+        val = node.get_value()
+        if isinstance(val, str):
+            node.set_value(val.lower())
 
 
 class Implementation:
