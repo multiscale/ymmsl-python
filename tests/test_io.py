@@ -122,6 +122,25 @@ def test_load_string6(test_yaml6: str) -> None:
     assert mpi_nodes2.threads_per_mpi_process == 4
 
 
+def test_load_string7(test_yaml7: str) -> None:
+    configuration = load(test_yaml7)
+    assert isinstance(configuration, PartialConfiguration)
+
+    assert isinstance(configuration.model, Model)
+    components = configuration.model.components
+    assert components is not None
+    assert components[0].name == 'macro'
+    assert components[0].implementation == 'macro_python'
+    assert components[0].ports.f_init == []
+    assert components[0].ports.o_i == ['state_out']
+    assert components[0].ports.s == ['x_in']
+    assert components[0].ports.o_f == []
+    assert components[1].ports.f_init == ['init_in']
+    assert components[1].ports.o_i == []
+    assert components[1].ports.s == []
+    assert components[1].ports.o_f == ['final_output', 'extra_output']
+
+
 def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
     test_file = tmpdir_path / 'test_yaml1.ymmsl'
     with test_file.open('w') as f:
@@ -170,6 +189,11 @@ def test_dump5(test_yaml5: str, test_config5: Configuration) -> None:
 def test_dump6(test_yaml6: str, test_config6: Configuration) -> None:
     text = dump(test_config6)
     assert text == test_yaml6
+
+
+def test_dump7(test_yaml7: str, test_config7: Configuration) -> None:
+    text = dump(test_config7)
+    assert text == test_yaml7
 
 
 def test_save_str(test_config1: PartialConfiguration, test_yaml1: str,

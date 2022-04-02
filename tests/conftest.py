@@ -6,7 +6,7 @@ import pytest
 from ymmsl import (
         Component, Conduit, Configuration, ExecutionModel, Implementation,
         Model, ModelReference, MPICoresResReq, MPINodesResReq,
-        PartialConfiguration, Reference, Settings, ThreadedResReq)
+        PartialConfiguration, Ports, Reference, Settings, ThreadedResReq)
 
 
 @pytest.fixture
@@ -282,3 +282,47 @@ def test_config6() -> Configuration:
             MPINodesResReq(Reference('mpi_nodes2'), 10, 4, 4)]
 
     return Configuration(model, None, implementations, resources)
+
+
+@pytest.fixture
+def test_yaml7() -> str:
+    text = (
+            'ymmsl_version: v0.1\n'
+            'model:\n'
+            '  name: ports_test\n'
+            '  components:\n'
+            '    macro:\n'
+            '      implementation: macro_python\n'
+            '      ports:\n'
+            '        o_i:\n'
+            '        - state_out\n'
+            '        s:\n'
+            '        - x_in\n'
+            '    micro:\n'
+            '      implementation: micro_fortran\n'
+            '      ports:\n'
+            '        f_init:\n'
+            '        - init_in\n'
+            '        o_f:\n'
+            '        - final_output\n'
+            '        - extra_output\n'
+            '  conduits:\n'
+            '    macro.state_out: micro.init_in\n'
+            '    micro.final_output: macro.x_in\n')
+    return text
+
+
+@pytest.fixture
+def test_config7() -> Configuration:
+    model = Model(
+            'ports_test',
+            [
+                Component('macro', 'macro_python', ports=Ports(
+                    o_i=['state_out'], s=['x_in'])),
+                Component('micro', 'micro_fortran', ports=Ports(
+                    f_init=['init_in'],
+                    o_f=['final_output', 'extra_output']))],
+            [
+                Conduit('macro.state_out', 'micro.init_in'),
+                Conduit('micro.final_output', 'macro.x_in')])
+    return Configuration(model)

@@ -4,7 +4,7 @@ This package contains all the classes needed to represent a yMMSL file,
 as well as to read and write yMMSL files.
 """
 
-from ymmsl.component import Operator, Port
+from ymmsl.component import Operator, Port, Ports
 from ymmsl.configuration import Configuration, PartialConfiguration
 from ymmsl.execution import (
         ExecutionModel, Implementation, MPICoresResReq, MPINodesResReq,
@@ -23,6 +23,6 @@ __email__ = 'l.veen@esciencecenter.nl'
 __all__ = [
         'Component', 'Conduit', 'Configuration', 'dump', 'ExecutionModel',
         'Identifier', 'Implementation', 'load', 'Model', 'ModelReference',
-        'Operator', 'PartialConfiguration', 'SettingValue', 'MPICoresResReq',
-        'MPINodesResReq', 'ThreadedResReq', 'Port', 'Reference', 'Settings',
-        'save']
+        'MPICoresResReq', 'MPINodesResReq', 'Operator', 'PartialConfiguration',
+        'Port', 'Ports', 'Reference', 'save', 'Settings', 'SettingValue',
+        'ThreadedResReq']

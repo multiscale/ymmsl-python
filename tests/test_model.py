@@ -4,19 +4,19 @@ import pytest
 import yatiml
 
 from ymmsl import (Component, Conduit, Identifier, Model, ModelReference,
-                   Reference)
+                   Ports, Reference)
 
 
 @pytest.fixture
 def load_model() -> Callable:
     return yatiml.load_function(
-            Model, Component, Conduit, Identifier, Reference)
+            Model, Component, Conduit, Identifier, Ports, Reference)
 
 
 @pytest.fixture
 def dump_model() -> Callable:
     return yatiml.dumps_function(
-            Component, Conduit, Identifier, Model, Reference)
+            Component, Conduit, Identifier, Model, Ports, Reference)
 
 
 @pytest.fixture

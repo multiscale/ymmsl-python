@@ -1,9 +1,12 @@
 """This module contains all the definitions for yMMSL."""
 from typing import Any, List, Optional, Union, cast
+from typing import Dict     # noqa
 
 from ruamel import yaml
 import yatiml
 
+from ymmsl.component import Operator    # noqa
+from ymmsl.component import Ports
 from ymmsl.identity import Identifier, Reference
 
 
@@ -22,11 +25,14 @@ class Component:
                 implementation to use.
         multiplicity (List[int]): The shape of the array of instances
                 that execute simultaneously.
+        ports (Dict[Operator, List[str]]): The ports of this component,
+                organised by operator.
 
     """
 
     def __init__(self, name: str, implementation: Optional[str] = None,
-                 multiplicity: Union[None, int, List[int]] = None) -> None:
+                 multiplicity: Union[None, int, List[int]] = None,
+                 ports: Optional[Ports] = None) -> None:
         """Create a Component.
 
         Args:
@@ -34,8 +40,10 @@ class Component:
                     Reference.
             implementation: The name of the implementation; must be a
                     valid Reference.
-            multiplicity: An list of ints describing the shape of the
+            multiplicity: A list of ints describing the shape of the
                     set of instances.
+            ports: The ports used by this component to communicate,
+                    organised by operator.
 
         """
         self.name = Reference(name)
@@ -55,6 +63,11 @@ class Component:
             self.multiplicity = [multiplicity]
         else:
             self.multiplicity = multiplicity
+
+        if ports is None:
+            self.ports = Ports()
+        else:
+            self.ports = ports
 
     def __str__(self) -> str:
         """Returns a string representation of the object."""
@@ -87,6 +100,10 @@ class Component:
             node.remove_attribute('multiplicity')
         elif len(items) == 1:
             node.set_attribute('multiplicity', items[0].get_value())
+
+        ports_node = node.get_attribute('ports').yaml_node
+        if len(ports_node.value) == 0:
+            node.remove_attribute('ports')
 
 
 class Conduit:
