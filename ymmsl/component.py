@@ -81,10 +81,10 @@ class Ports:
             s: The ports associated with the S operator.
             o_f: The ports associated with the O_F operator
         """
-        self.f_init = f_init if f_init else list()
-        self.o_i = o_i if o_i else list()
-        self.s = s if s else list()
-        self.o_f = o_f if o_f else list()
+        self.f_init = list(map(Identifier, f_init)) if f_init else list()
+        self.o_i = list(map(Identifier, o_i)) if o_i else list()
+        self.s = list(map(Identifier, s)) if s else list()
+        self.o_f = list(map(Identifier, o_f)) if o_f else list()
 
         all_names = sorted(self.port_names())
         for i in range(len(all_names) - 1):
@@ -94,17 +94,17 @@ class Ports:
                         ' more than once. Port names must be unique within'
                         ' the component.')
 
-    def port_names(self) -> Iterable[str]:
+    def port_names(self) -> Iterable[Identifier]:
         """Returns an iterable containing the names of all ports."""
         return self.f_init + self.o_i + self.s + self.o_f
 
     def all_ports(self) -> Iterable[Port]:
         """Returns an iterable containing all ports."""
         return (
-                [Port(Identifier(n), Operator.F_INIT) for n in self.f_init] +
-                [Port(Identifier(name), Operator.O_I) for name in self.o_i] +
-                [Port(Identifier(name), Operator.S) for name in self.s] +
-                [Port(Identifier(name), Operator.O_F) for name in self.o_f])
+                [Port(n, Operator.F_INIT) for n in self.f_init] +
+                [Port(name, Operator.O_I) for name in self.o_i] +
+                [Port(name, Operator.S) for name in self.s] +
+                [Port(name, Operator.O_F) for name in self.o_f])
 
     def operator(self, port_name: str) -> Operator:
         """Looks up the operator for a given port.
