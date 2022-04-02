@@ -4,7 +4,7 @@ from typing import Any, IO, Union
 
 import yatiml
 
-from ymmsl.component import Ports
+from ymmsl.component import Component, Ports
 from ymmsl.configuration import Configuration, PartialConfiguration
 from ymmsl.document import Document
 from ymmsl.execution import (
@@ -12,7 +12,7 @@ from ymmsl.execution import (
         MPINodesResReq, ThreadedResReq)
 from ymmsl.settings import Settings
 from ymmsl.identity import Identifier, Reference
-from ymmsl.model import Component, Conduit, Model, ModelReference
+from ymmsl.model import Conduit, Model, ModelReference
 
 
 _classes = (

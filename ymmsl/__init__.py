@@ -4,7 +4,7 @@ This package contains all the classes needed to represent a yMMSL file,
 as well as to read and write yMMSL files.
 """
 
-from ymmsl.component import Operator, Port, Ports
+from ymmsl.component import Component, Operator, Port, Ports
 from ymmsl.configuration import Configuration, PartialConfiguration
 from ymmsl.execution import (
         ExecutionModel, Implementation, MPICoresResReq, MPINodesResReq,
@@ -12,7 +12,7 @@ from ymmsl.execution import (
 from ymmsl.settings import Settings, SettingValue
 from ymmsl.identity import Identifier, Reference
 from ymmsl.io import load, dump, save
-from ymmsl.model import Component, Conduit, Model, ModelReference
+from ymmsl.model import Conduit, Model, ModelReference
 
 
 __version__ = '0.11.1.dev'

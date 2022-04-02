@@ -1,109 +1,12 @@
 """This module contains all the definitions for yMMSL."""
-from typing import Any, List, Optional, Union, cast
+from typing import Any, List, Optional, cast
 from typing import Dict     # noqa
 
-from ruamel import yaml
 import yatiml
 
 from ymmsl.component import Operator    # noqa
-from ymmsl.component import Ports
+from ymmsl.component import Component
 from ymmsl.identity import Identifier, Reference
-
-
-class Component:
-    """An object declaring a simulation component.
-
-    Simulation components are things like submodels, scale bridges,
-    proxies, and any other program that makes up a model. This class
-    represents a declaration of a set of instances of a simulation
-    component, and it's used to describe which instances are needed to
-    perform a certain simulation.
-
-    Attributes:
-        name (ymmsl.Reference): The name of this component.
-        implementation (ymmsl.Reference): A reference to the
-                implementation to use.
-        multiplicity (List[int]): The shape of the array of instances
-                that execute simultaneously.
-        ports (Dict[Operator, List[str]]): The ports of this component,
-                organised by operator.
-
-    """
-
-    def __init__(self, name: str, implementation: Optional[str] = None,
-                 multiplicity: Union[None, int, List[int]] = None,
-                 ports: Optional[Ports] = None) -> None:
-        """Create a Component.
-
-        Args:
-            name: The name of the component; must be a valid
-                    Reference.
-            implementation: The name of the implementation; must be a
-                    valid Reference.
-            multiplicity: A list of ints describing the shape of the
-                    set of instances.
-            ports: The ports used by this component to communicate,
-                    organised by operator.
-
-        """
-        self.name = Reference(name)
-        if implementation is None:
-            self.implementation = None      # type: Optional[Reference]
-        else:
-            self.implementation = Reference(implementation)
-            for part in self.implementation:
-                if isinstance(part, int):
-                    raise ValueError('Component implementation {} contains a'
-                                     ' subscript, which is not'
-                                     ' allowed.'.format(self.name))
-
-        if multiplicity is None:
-            self.multiplicity = list()
-        elif isinstance(multiplicity, int):
-            self.multiplicity = [multiplicity]
-        else:
-            self.multiplicity = multiplicity
-
-        if ports is None:
-            self.ports = Ports()
-        else:
-            self.ports = ports
-
-    def __str__(self) -> str:
-        """Returns a string representation of the object."""
-        result = str(self.name)
-        for dim in self.multiplicity:
-            result += '[{}]'.format(dim)
-        return result
-
-    @classmethod
-    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
-        node.require_attribute('name', str)
-
-    @classmethod
-    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        if node.has_attribute('multiplicity'):
-            if node.has_attribute_type('multiplicity', int):
-                attr = node.get_attribute('multiplicity')
-                start_mark = attr.yaml_node.start_mark
-                end_mark = attr.yaml_node.end_mark
-                new_seq = yaml.nodes.SequenceNode(
-                        'tag:yaml.org,2002:seq', [attr.yaml_node], start_mark,
-                        end_mark)
-                node.set_attribute('multiplicity', new_seq)
-
-    @classmethod
-    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        multiplicity = node.get_attribute('multiplicity')
-        items = multiplicity.seq_items()
-        if len(items) == 0:
-            node.remove_attribute('multiplicity')
-        elif len(items) == 1:
-            node.set_attribute('multiplicity', items[0].get_value())
-
-        ports_node = node.get_attribute('ports').yaml_node
-        if len(ports_node.value) == 0:
-            node.remove_attribute('ports')
 
 
 class Conduit:
