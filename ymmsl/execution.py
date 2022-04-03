@@ -195,7 +195,7 @@ class ResourceRequirements:
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         raise yatiml.RecognitionError(
-                'Please specify either threads or mpi_processes.')
+                'Please specify either "threads" or "mpi_processes".')
 
 
 class ThreadedResReq(ResourceRequirements):
