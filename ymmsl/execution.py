@@ -1,5 +1,4 @@
 """Definitions for specifying how to start a component."""
-from abc import ABC
 from enum import Enum
 from pathlib import Path
 from typing import cast, Dict, List, Optional, Union
@@ -179,7 +178,7 @@ class Implementation:
             node.remove_attribute('execution_model')
 
 
-class ResourceRequirements(ABC):
+class ResourceRequirements:
     """Describes resources to allocate for components.
 
     Attributes:
