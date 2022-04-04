@@ -197,10 +197,7 @@ class Component:
         else:
             self.multiplicity = multiplicity
 
-        if ports is None:
-            self.ports = Ports()
-        else:
-            self.ports = ports
+        self.ports = ports
 
     def __str__(self) -> str:
         """Returns a string representation of the object."""

@@ -131,10 +131,12 @@ def test_load_string7(test_yaml7: str) -> None:
     assert components is not None
     assert components[0].name == 'macro'
     assert components[0].implementation == 'macro_python'
+    assert components[0].ports is not None
     assert components[0].ports.f_init == []
     assert components[0].ports.o_i == ['state_out']
     assert components[0].ports.s == ['x_in']
     assert components[0].ports.o_f == []
+    assert components[1].ports is not None
     assert components[1].ports.f_init == ['init_in']
     assert components[1].ports.o_i == []
     assert components[1].ports.s == []
