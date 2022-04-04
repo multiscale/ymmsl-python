@@ -56,10 +56,10 @@ def test_ports() -> None:
     assert in_ports(p3.all_ports(), 'obs2', Operator.O_I)
     assert in_ports(p3.all_ports(), 'obs3', Operator.O_I)
 
-    assert p1.operator('initial_state') == Operator.F_INIT
-    assert p1.operator('bc_i') == Operator.S
-    assert p2.operator('output') == Operator.O_F
-    assert p3.operator('init2') == Operator.F_INIT
-    assert p3.operator('obs3') == Operator.O_I
+    assert p1.operator(Identifier('initial_state')) == Operator.F_INIT
+    assert p1.operator(Identifier('bc_i')) == Operator.S
+    assert p2.operator(Identifier('output')) == Operator.O_F
+    assert p3.operator(Identifier('init2')) == Operator.F_INIT
+    assert p3.operator(Identifier('obs3')) == Operator.O_I
     with pytest.raises(KeyError):
-        p3.operator('x')
+        p3.operator(Identifier('x'))

@@ -106,7 +106,7 @@ class Ports:
                 [Port(name, Operator.S) for name in self.s] +
                 [Port(name, Operator.O_F) for name in self.o_f])
 
-    def operator(self, port_name: str) -> Operator:
+    def operator(self, port_name: Identifier) -> Operator:
         """Looks up the operator for a given port.
 
         Args:
@@ -158,8 +158,8 @@ class Component:
                 implementation to use.
         multiplicity (List[int]): The shape of the array of instances
                 that execute simultaneously.
-        ports (Dict[Operator, List[str]]): The ports of this component,
-                organised by operator.
+        ports (Optional[Ports]): The ports of this component,
+                organised by operator. None if not specified.
 
     """
 
