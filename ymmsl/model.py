@@ -239,16 +239,60 @@ class Model(ModelReference):
                     return True
             return False
 
+        def component_has_receiving_port(
+                component: Reference, port: Identifier) -> bool:
+            for comp in self.components:
+                if comp.name == component:
+                    if not comp.ports:
+                        return True
+
+                    try:
+                        if comp.ports.operator(port).allows_receiving():
+                            return True
+                    except KeyError:
+                        pass
+            return False
+
+        def component_has_sending_port(
+                component: Reference, port: Identifier) -> bool:
+            for comp in self.components:
+                if comp.name == component:
+                    if not comp.ports:
+                        return True
+
+                    try:
+                        if comp.ports.operator(port).allows_sending():
+                            return True
+                    except KeyError:
+                        pass
+            return False
+
         for conduit in self.conduits:
-            if not component_exists(conduit.sending_component()):
+            scomp = conduit.sending_component()
+            if not component_exists(scomp):
                 raise RuntimeError(
                     'Unknown sending component "{}" of {}'.format(
-                        conduit.sending_component(), conduit))
+                        scomp, conduit))
 
-            if not component_exists(conduit.receiving_component()):
+            rcomp = conduit.receiving_component()
+            if not component_exists(rcomp):
                 raise RuntimeError(
                     'Unknown receiving component "{}" of {}'.format(
-                        conduit.receiving_component(), conduit))
+                        rcomp, conduit))
+
+            sport = conduit.sending_port()
+            if not component_has_sending_port(scomp, sport):
+                raise RuntimeError(
+                        'Invalid conduit "{}": component "{}" does not'
+                        ' have a sending port "{}"'.format(
+                            conduit, scomp, sport))
+
+            rport = conduit.receiving_port()
+            if not component_has_receiving_port(rcomp, rport):
+                raise RuntimeError(
+                        'Invalid conduit "{}": component "{}" does not'
+                        ' have a receiving port "{}"'.format(
+                            conduit, rcomp, rport))
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:

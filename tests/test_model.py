@@ -21,8 +21,10 @@ def dump_model() -> Callable:
 
 @pytest.fixture
 def macro_micro() -> Model:
-    macro = Component('macro', 'my.macro')
-    micro = Component('micro', 'my.micro')
+    macro = Component('macro', 'my.macro', ports=Ports(
+        o_i=['intermediate_state'], s=['state_update']))
+    micro = Component('micro', 'my.micro', ports=Ports(
+        f_init=['initial_state'], o_f=['final_state']))
     components = [macro, micro]
     conduit1 = Conduit('macro.intermediate_state', 'micro.initial_state')
     conduit2 = Conduit('micro.final_state', 'macro.state_update')
@@ -247,6 +249,24 @@ def test_model_check_consistent2(macro_micro: Model) -> None:
 
 def test_model_check_consistent3(macro_micro: Model) -> None:
     macro_micro.conduits[1].receiver = Reference('Macro.state_update')
+    with pytest.raises(RuntimeError):
+        macro_micro.check_consistent()
+
+
+def test_model_check_consistent4(macro_micro: Model) -> None:
+    macro_micro.conduits[1].receiver = Reference('macro.does_not_exist')
+    with pytest.raises(RuntimeError):
+        macro_micro.check_consistent()
+
+
+def test_model_check_consistent5(macro_micro: Model) -> None:
+    macro_micro.conduits[0].sender = Reference('macro.state_update')
+    with pytest.raises(RuntimeError):
+        macro_micro.check_consistent()
+
+
+def test_model_check_consistent6(macro_micro: Model) -> None:
+    macro_micro.conduits[0].receiver = Reference('micro.final_state')
     with pytest.raises(RuntimeError):
         macro_micro.check_consistent()
 
