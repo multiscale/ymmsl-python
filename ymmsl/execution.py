@@ -50,15 +50,29 @@ class Implementation:
       For MPI programs that should be started using Intel MPI's
       mpirun.
 
+    The ``can_share_resources`` attribute describes whether this
+    implementation can share resources (cores) with other components
+    in a macro-micro coupling. Set this to ``False`` if the
+    implementation does significant computing inside of its time
+    update loop after having sent messages on its O_I port(s) but
+    before receiving messages on its S port(s). In the unlikely case
+    that it's doing significant computing before receiving for F_INIT
+    or after sending its O_F messages, likewise set this to ``False``.
+
+    Setting this to ``False`` unnecessarily will waste core hours,
+    setting it to ``True`` incorrectly will slow down your simulation.
+
     Attributes:
         name: Name of the implementation
         modules: HPC software modules to load
         virtual_env: Path to a virtual env to activate
         env: Environment variables to set
-        execution_model: How to start the executable.
+        execution_model: How to start the executable
         executable: Full path to executable to run
         args: Arguments to pass to the executable
         script: A script that starts the implementation
+        can_share_resources: Whether this implementation can share
+            resources (cores) with other components or not
     """
 
     def __init__(
@@ -70,7 +84,8 @@ class Implementation:
             execution_model: ExecutionModel = ExecutionModel.DIRECT,
             executable: Optional[Path] = None,
             args: Union[str, List[str], None] = None,
-            script: Union[str, List[str], None] = None
+            script: Union[str, List[str], None] = None,
+            can_share_resources: bool = True
             ) -> None:
         """Create an Implementation description.
 
@@ -94,6 +109,9 @@ class Implementation:
             executable: Full path to executable to run
             args: Arguments to pass to the executable
             script: Script that starts the implementation
+            can_share_resources: Whether this implementation can share
+                    resources (cores) with other components or not.
+                    See above.
         """
         if script is not None:
             if (
@@ -132,6 +150,8 @@ class Implementation:
             self.args = [args]  # type: Optional[List[str]]
         else:
             self.args = args
+
+        self.can_share_resources = can_share_resources
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:

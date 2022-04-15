@@ -32,7 +32,8 @@ def test_implementations_executable() -> None:
                 'VAR2': 'Testing'},
             executable=Path('/home/user/software/my_submodel/bin/model'),
             args='-v -a',
-            execution_model=ExecutionModel.OPENMPI)
+            execution_model=ExecutionModel.OPENMPI,
+            can_share_resources=False)
 
     assert impl.name == 'test_impl'
     assert impl.modules == ['python/3.6.0', 'gcc/9.3.0']
@@ -43,6 +44,7 @@ def test_implementations_executable() -> None:
     assert impl.executable == Path('/home/user/software/my_submodel/bin/model')
     assert impl.args == ['-v -a']
     assert impl.execution_model == ExecutionModel.OPENMPI
+    assert impl.can_share_resources is False
 
 
 def test_implementations_exclusive() -> None:
