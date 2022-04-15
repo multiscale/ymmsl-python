@@ -220,6 +220,20 @@ class Reference(yatiml.String):
             ret._parts.extend(other)
         return ret
 
+    def without_trailing_ints(self) -> 'Reference':
+        """Returns a copy of this Reference with trailing ints removed.
+
+        Examples:
+            a.b.c[1][2] -> a.b.c
+            a[1].b.c -> a[1].b.c
+            a.b.c -> a.b.c
+            a[1].b.c[2] -> a[1].b.c
+        """
+        i = len(self._parts) - 1
+        while i > 0 and isinstance(self._parts[i], int):
+            i -= 1
+        return Reference(self._parts[0:i+1])
+
     @classmethod
     def _string_to_parts(cls, text: str) -> List[ReferencePart]:
         """Parse a string into a list of parts.

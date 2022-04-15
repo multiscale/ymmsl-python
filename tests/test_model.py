@@ -32,30 +32,6 @@ def macro_micro() -> Model:
     return Model('macro_micro', components, conduits)
 
 
-def test_component_declaration() -> None:
-    test_decl = Component('test', 'ns.model')
-    assert str(test_decl.name) == 'test'
-    assert str(test_decl.implementation) == 'ns.model'
-    assert test_decl.multiplicity == []
-    assert str(test_decl) == 'test'
-
-    test_decl = Component('test', 'ns.model', 10)
-    assert isinstance(test_decl.name, Reference)
-    assert str(test_decl.name) == 'test'
-    assert test_decl.multiplicity == [10]
-    assert str(test_decl) == 'test[10]'
-
-    test_decl = Component('test', 'ns2.model2', [1, 2])
-    assert isinstance(test_decl.name, Reference)
-    assert str(test_decl.name) == 'test'
-    assert str(test_decl.implementation) == 'ns2.model2'
-    assert test_decl.multiplicity == [1, 2]
-    assert str(test_decl) == 'test[1][2]'
-
-    with pytest.raises(ValueError):
-        test_decl = Component('test', 'ns2.model2[1]')
-
-
 def test_conduit() -> None:
     test_conduit = Conduit('submodel1.port1', 'submodel2.port2')
     assert str(test_conduit.sender[0]) == 'submodel1'

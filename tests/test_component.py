@@ -2,7 +2,7 @@ from typing import Iterable
 
 import pytest
 
-from ymmsl import Operator, Port, Ports, Identifier
+from ymmsl import Component, Identifier, Operator, Port, Ports, Reference
 
 
 def test_operator() -> None:
@@ -63,3 +63,41 @@ def test_ports() -> None:
     assert p3.operator(Identifier('obs3')) == Operator.O_I
     with pytest.raises(KeyError):
         p3.operator(Identifier('x'))
+
+
+def test_component_declaration() -> None:
+    test_decl = Component('test', 'ns.model')
+    assert str(test_decl.name) == 'test'
+    assert str(test_decl.implementation) == 'ns.model'
+    assert test_decl.multiplicity == []
+    assert str(test_decl) == 'test'
+
+    test_decl = Component('test', 'ns.model', 10)
+    assert isinstance(test_decl.name, Reference)
+    assert str(test_decl.name) == 'test'
+    assert test_decl.multiplicity == [10]
+    assert str(test_decl) == 'test[0:10]'
+
+    test_decl = Component('test', 'ns2.model2', [1, 2])
+    assert isinstance(test_decl.name, Reference)
+    assert str(test_decl.name) == 'test'
+    assert str(test_decl.implementation) == 'ns2.model2'
+    assert test_decl.multiplicity == [1, 2]
+    assert str(test_decl) == 'test[0:1][0:2]'
+
+    with pytest.raises(ValueError):
+        test_decl = Component('test', 'ns2.model2[1]')
+
+
+def test_component_instances() -> None:
+    c1 = Component('test', 'model')
+    assert c1.instances() == [Reference('test')]
+
+    c2 = Component('test', 'model', 3)
+    assert c2.instances() == [
+            Reference('test[0]'), Reference('test[1]'), Reference('test[2]')]
+
+    c3 = Component('test', 'model', [2, 2])
+    assert c3.instances() == [
+            Reference('test[0][0]'), Reference('test[0][1]'),
+            Reference('test[1][0]'), Reference('test[1][1]')]

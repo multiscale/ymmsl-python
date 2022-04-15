@@ -171,6 +171,14 @@ def test_reference_concatenation() -> None:
             'test[5][3].test2')
 
 
+def test_reference_without_trailing_ints() -> None:
+    Ref = Reference
+    assert Ref('a.b.c[1][2]').without_trailing_ints() == Ref('a.b.c')
+    assert Ref('a[1].b.c').without_trailing_ints() == Ref('a[1].b.c')
+    assert Ref('a.b.c').without_trailing_ints() == Ref('a.b.c')
+    assert Ref('a[1].b.c[2]').without_trailing_ints() == Ref('a[1].b.c')
+
+
 def test_reference_io() -> None:
     load_reference = yatiml.load_function(Reference, Identifier)
 

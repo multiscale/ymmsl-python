@@ -203,7 +203,48 @@ class Component:
         """Returns a string representation of the object."""
         result = str(self.name)
         for dim in self.multiplicity:
-            result += '[{}]'.format(dim)
+            result += '[0:{}]'.format(dim)
+        return result
+
+    def instances(self) -> List[Reference]:
+        """Creates a list of instances needed.
+
+        Returns:
+            A list with one Reference for each instance of this
+            component.
+        """
+        def increment(index: List[int], dims: List[int]) -> None:
+            # assumes index and dims are the same length > 0
+            # modifies index argument
+            i = len(index) - 1
+            index[i] += 1
+            while index[i] == dims[i]:
+                index[i] = 0
+                i -= 1
+                if i == -1:
+                    break
+                index[i] += 1
+
+        def generate_indices(multiplicity: List[int]) -> List[List[int]]:
+            # n-dimensional counter
+            indices = list()    # type: List[List[int]]
+
+            index = [0] * len(multiplicity)
+            indices.append(index.copy())
+            increment(index, multiplicity)
+            while sum(index) > 0:
+                indices.append(index.copy())
+                increment(index, multiplicity)
+            return indices
+
+        result = list()     # type: List[Reference]
+
+        if len(self.multiplicity) == 0:
+            result.append(self.name)
+        else:
+            for index in generate_indices(self.multiplicity):
+                result.append(self.name + index)
+
         return result
 
     @classmethod
