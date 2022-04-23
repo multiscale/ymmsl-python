@@ -228,6 +228,10 @@ class Component:
             result += '[0:{}]'.format(dim)
         return result
 
+    def __repr__(self) -> str:
+        """Returns a string representation of the object."""
+        return 'Component({})'.format(self.name)
+
     def instances(self) -> List[Reference]:
         """Creates a list of instances needed.
 
