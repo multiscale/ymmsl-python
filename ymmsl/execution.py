@@ -182,6 +182,8 @@ class Implementation:
                         if value_node.tag == 'tag:yaml.org,2002:bool':
                             value_node.tag = 'tag:yaml.org,2002:str'
 
+    _yatiml_defaults = {'execution_model': 'direct'}
+
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         script_node = node.get_attribute('script')
@@ -203,8 +205,6 @@ class Implementation:
                 node.set_attribute('script', seq_node)
 
         node.remove_attributes_with_default_values(cls)
-        if node.get_attribute('execution_model').get_value() == 'direct':
-            node.remove_attribute('execution_model')
 
         if node.has_attribute('env'):
             env_attr = node.get_attribute('env')
