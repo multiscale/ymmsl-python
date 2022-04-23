@@ -61,7 +61,20 @@ class Port:
 class Ports:
     """Ports declaration for a component.
 
-    Ports objects compare for equality by value.
+    Ports objects compare for equality by value. The names may be
+    specified as a list of strings, or separated by spaces in a single
+    string. If a particular operator has no associated ports, it may
+    be omitted. For example:
+
+    .. code: yaml
+
+        ports:
+          f_init:   # list of names
+          - a
+          - b
+          o_i: c d  # on one line, space-separated
+          s: e      # single port
+                    # o_f omitted as it has no ports
 
     Attributes:
         f_init: The ports associated with the F_INIT operator.
@@ -70,9 +83,10 @@ class Ports:
         o_f: The ports associated with the O_F operator
     """
     def __init__(
-            self, f_init: Optional[List[str]] = None,
-            o_i: Optional[List[str]] = None, s: Optional[List[str]] = None,
-            o_f: Optional[List[str]] = None) -> None:
+            self, f_init: Union[None, str, List[str]] = None,
+            o_i: Union[None, str, List[str]] = None,
+            s: Union[None, str, List[str]] = None,
+            o_f: Union[None, str, List[str]] = None) -> None:
         """Create a Ports declaration.
 
         Args:
@@ -81,10 +95,18 @@ class Ports:
             s: The ports associated with the S operator.
             o_f: The ports associated with the O_F operator
         """
-        self.f_init = list(map(Identifier, f_init)) if f_init else list()
-        self.o_i = list(map(Identifier, o_i)) if o_i else list()
-        self.s = list(map(Identifier, s)) if s else list()
-        self.o_f = list(map(Identifier, o_f)) if o_f else list()
+        def to_list(ports: Union[None, str, List[str]]) -> List[Identifier]:
+            if ports is None:
+                return list()
+
+            if isinstance(ports, str):
+                ports = ports.split(' ')
+            return list(map(Identifier, ports))
+
+        self.f_init = to_list(f_init)
+        self.o_i = to_list(o_i)
+        self.s = to_list(s)
+        self.o_f = to_list(o_f)
 
         all_names = sorted(self.port_names())
         for i in range(len(all_names) - 1):
