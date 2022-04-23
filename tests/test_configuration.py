@@ -100,11 +100,11 @@ def test_configuration_update_model4() -> None:
 
 def test_configuration_update_implementations_add() -> None:
     implementation1 = Implementation(
-            Reference('my.macro'), '/home/test/macro.py')
+            Reference('my.macro'), executable=Path('/home/test/macro.py'))
     base = PartialConfiguration(implementations=[implementation1])
 
     implementation2 = Implementation(
-            Reference('my.micro'), '/home/test/micro.py')
+            Reference('my.micro'), executable=Path('/home/test/micro.py'))
     overlay = PartialConfiguration(implementations=[implementation2])
 
     base.update(overlay)
@@ -116,14 +116,14 @@ def test_configuration_update_implementations_add() -> None:
 
 def test_configuration_update_implementations_override() -> None:
     implementation1 = Implementation(
-            Reference('my.macro'), '/home/test/macro.py')
+            Reference('my.macro'), executable=Path('/home/test/macro.py'))
     implementation2 = Implementation(
-            Reference('my.micro'), '/home/test/micro.py')
+            Reference('my.micro'), executable=Path('/home/test/micro.py'))
     base = PartialConfiguration(
             implementations=[implementation1, implementation2])
 
     implementation3 = Implementation(
-            Reference('my.micro'), '/home/test/surrogate.py')
+            Reference('my.micro'), executable=Path('/home/test/surrogate.py'))
     overlay = PartialConfiguration(implementations=[implementation3])
 
     base.update(overlay)

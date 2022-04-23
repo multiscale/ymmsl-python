@@ -127,8 +127,15 @@ class Implementation:
 
         if executable is not None and script is not None:
             raise RuntimeError(
-                    'When creating an Implementation, neither a script nor'
-                    ' an executable was given. Please specify either one.')
+                    f'In {name}, both a script and an executable were given.'
+                    ' Please specify either a script, or the other parameters.'
+                    )
+
+        if executable is None and script is None:
+            raise RuntimeError(
+                    f'In {name}, neither a script nor an executable was given.'
+                    ' Please specify either a script, or the other parameters.'
+                    )
 
         self.name = name
 
