@@ -8,7 +8,8 @@ import yatiml
 
 from ymmsl.document import Document
 from ymmsl.identity import Reference
-from ymmsl.execution import Implementation, ResourceRequirements
+from ymmsl.execution import (
+        ExecutionModel, Implementation, ResourceRequirements, ThreadedResReq)
 from ymmsl.settings import Settings
 from ymmsl.model import Model, ModelReference
 
@@ -120,7 +121,7 @@ class PartialConfiguration(Document):
 
         Note that this doesn't check references, just that there is
         a model, implementations and resources. For the more extensive
-        check, see :meth:`Configuration.is_consistent`.
+        check, see :meth:`Configuration.check_consistent`.
 
         Returns:
             A corresponding Configuration.
@@ -269,6 +270,24 @@ class Configuration(PartialConfiguration):
                 raise RuntimeError((
                         'Model component {} is missing a resource'
                         ' allocation.').format(comp))
+
+            impl = self.implementations[comp.implementation]
+            res = self.resources[comp.name]
+            if impl.execution_model == ExecutionModel.DIRECT:
+                if not isinstance(res, ThreadedResReq):
+                    raise RuntimeError((
+                        'Model component {}\'s implementation does not'
+                        ' specify MPI, but mpi_processes are specified in its'
+                        ' resources. Please either set "execution_model" to'
+                        ' an MPI model, or specify a number of threads.'
+                        ).format(comp))
+            else:
+                if isinstance(res, ThreadedResReq):
+                    raise RuntimeError((
+                        'Model component {}\'s implementation specifies MPI,'
+                        ' but threads are specified in its resources. Please'
+                        ' either set "execution_model" to "direct", or'
+                        ' specify a number of mpi processes.'))
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:

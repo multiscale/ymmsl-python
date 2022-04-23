@@ -181,6 +181,20 @@ def test_as_configuration(
     assert config.resources == test_config4.resources
 
 
+def test_check_consistent(test_config6: Configuration) -> None:
+    test_config6.check_consistent()
+    test_config6.implementations[Reference('c')].execution_model = (
+            ExecutionModel.DIRECT)
+    with pytest.raises(RuntimeError):
+        test_config6.check_consistent()
+    test_config6.implementations[Reference('c')].execution_model = (
+            ExecutionModel.OPENMPI)
+    test_config6.resources[Reference('singlethreaded')] = MPICoresResReq(
+            Reference('singlethreaded'), 16, 8)
+    with pytest.raises(RuntimeError):
+        test_config6.check_consistent()
+
+
 def test_load_nil_settings(load_configuration: Callable) -> None:
     text = (
             'ymmsl_version: v0.1\n'

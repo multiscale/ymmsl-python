@@ -214,10 +214,11 @@ def test_yaml6() -> str:
             '    multithreaded: b\n'
             '    mpi_cores1: c\n'
             '    mpi_cores2: d\n'
-            '    mpi_nodes1: e\n'
-            '    mpi_nodes2: f\n'
+            '    mpi_nodes1: c\n'
+            '    mpi_nodes2: d\n'
             'implementations:\n'
             '  a: /home/user/models/bin/modela\n'
+            '  b: /home/user/models/bin/modelb\n'
             '  c:\n'
             '    modules:\n'
             '    - gcc-6.3.0\n'
@@ -259,13 +260,15 @@ def test_config6() -> Configuration:
                 Component('multithreaded', 'b'),
                 Component('mpi_cores1', 'c'),
                 Component('mpi_cores2', 'd'),
-                Component('mpi_nodes1', 'e'),
-                Component('mpi_nodes2', 'f')],
+                Component('mpi_nodes1', 'c'),
+                Component('mpi_nodes2', 'd')],
             [])
 
     implementations = [
             Implementation(
                 Reference('a'), script='/home/user/models/bin/modela'),
+            Implementation(
+                Reference('b'), script='/home/user/models/bin/modelb'),
             Implementation(
                 Reference('c'), ['gcc-6.3.0', 'openmpi-1.10'], None, None,
                 ExecutionModel.OPENMPI, Path('/home/user/models/bin/modelc')),
