@@ -186,26 +186,14 @@ class Implementation:
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        script_node = node.get_attribute('script')
-        if script_node.is_scalar(str):
-            text = cast(str, script_node.get_value())
-            if '\n' in text:
-                # make a sequence of lines
-                lines = text.split('\n')
-                start_mark = node.yaml_node.start_mark
-                end_mark = node.yaml_node.end_mark
-                lines_nodes = [
-                        yaml.ScalarNode(
-                            'tag:yaml.org,2002:str', line, start_mark,
-                            end_mark)
-                        for line in lines]
-                seq_node = yaml.SequenceNode(
-                        'tag:yaml.org,2002:seq', lines_nodes, start_mark,
-                        end_mark)
-                node.set_attribute('script', seq_node)
+        if node.has_attribute('script'):
+            script_node = node.get_attribute('script')
+            if script_node.is_scalar(str):
+                text = cast(str, script_node.get_value())
+                if '\n' in text:
+                    cast(yaml.ScalarNode, script_node.yaml_node).style = '|'
 
         node.remove_attributes_with_default_values(cls)
-
         if node.has_attribute('env'):
             env_attr = node.get_attribute('env')
             if env_attr.is_mapping():
