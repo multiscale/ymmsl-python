@@ -2,7 +2,7 @@
 from copy import copy
 import re
 from collections import UserString
-from typing import Any, Generator, Iterable, List, Union
+from typing import Any, Generator, Iterable, List, overload, Union
 
 import yatiml
 
@@ -145,16 +145,11 @@ class Reference(yatiml.String):
         for part in self._parts:
             yield part
 
-    # These don't work on Python 3.5.1, which we still support. We'll
-    # live with a bit less type safety until we can drop 3.5.
+    @overload
+    def __getitem__(self, key: int) -> ReferencePart: ...
 
-    # @overload
-    # def __getitem__(self, key: int) -> ReferencePart:
-    #     ...
-
-    # @overload
-    # def __getitem__(self, key: slice) -> 'Reference':
-    #     ...
+    @overload
+    def __getitem__(self, key: slice) -> 'Reference': ...
 
     def __getitem__(
             self, key: Union[int, slice]
