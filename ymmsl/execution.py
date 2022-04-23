@@ -149,6 +149,8 @@ class Implementation:
         else:
             self.modules = modules
         self.virtual_env = virtual_env
+        if env is None:
+            env = dict()
         self.env = env
         self.execution_model = execution_model
         self.executable = executable
@@ -203,6 +205,12 @@ class Implementation:
         node.remove_attributes_with_default_values(cls)
         if node.get_attribute('execution_model').get_value() == 'direct':
             node.remove_attribute('execution_model')
+
+        if node.has_attribute('env'):
+            env_attr = node.get_attribute('env')
+            if env_attr.is_mapping():
+                if env_attr.is_empty():
+                    node.remove_attribute('env')
 
 
 class ResourceRequirements:
