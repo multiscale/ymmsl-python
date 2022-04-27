@@ -1,4 +1,5 @@
 """Definitions for describing simulation components."""
+from collections import OrderedDict
 from enum import Enum
 import logging
 from typing import Dict, Iterable, List, Optional, Union
@@ -272,6 +273,14 @@ class Component:
                 result.append(self.name + index)
 
         return result
+
+    def _yatiml_attributes(self) -> OrderedDict:
+        """Reorder attributes for saving to YAML."""
+        return OrderedDict([
+            ('name', self.name),
+            ('ports', self.ports),
+            ('multiplicity', self.multiplicity),
+            ('implementation', self.implementation)])
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
