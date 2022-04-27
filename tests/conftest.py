@@ -16,6 +16,9 @@ def test_yaml1() -> str:
             '  test_str: value\n'
             '  test_int: 13\n'
             '  test_list: [12.3, 1.3]\n'
+            '  test_list_list:\n'
+            '  - [1.0, 2.0]\n'
+            '  - [3.0, 4.0]\n'
             )
     return text
 
@@ -25,7 +28,9 @@ def test_config1() -> PartialConfiguration:
     settings = Settings(OrderedDict([
         ('test_str', 'value'),
         ('test_int', 13),
-        ('test_list', [12.3, 1.3])]))
+        ('test_list', [12.3, 1.3]),
+        ('test_list_list', [[1.0, 2.0], [3.0, 4.0]])
+        ]))
     return PartialConfiguration(None, settings)
 
 

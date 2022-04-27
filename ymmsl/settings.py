@@ -127,6 +127,6 @@ class Settings(MutableMapping):
                     if value_node.value[0].tag != 'tag:yaml.org,2002:seq':
                         value_node.flow_style = True
                     else:
-                        value_node.value.flow_style = False
+                        value_node.flow_style = False
                         for row_node in value_node.value:
                             row_node.flow_style = True

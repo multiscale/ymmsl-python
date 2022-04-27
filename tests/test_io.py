@@ -21,7 +21,7 @@ def test_load_string1(test_yaml1: str) -> None:
     assert not isinstance(configuration, Configuration)
     settings = configuration.settings
     assert settings is not None
-    assert len(settings) == 3
+    assert len(settings) == 4
     assert isinstance(settings['test_list'], list)
     assert settings['test_list'][1] == 1.3
 
