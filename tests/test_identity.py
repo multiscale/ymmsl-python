@@ -158,6 +158,15 @@ def test_reference_equivalence() -> None:
             'test.test[3]')     # pylint: disable=C0122
 
 
+def test_reference_sort() -> None:
+    assert Reference('a') < Reference('b')
+    assert Reference('b') > Reference('a')
+    assert Reference('test[5]') < Reference('test[15]')
+    assert Reference('test[3]') < Reference('test.a')
+    assert sorted([Reference('c'), Reference('a')]) == [
+            Reference('a'), Reference('c')]
+
+
 def test_reference_concatenation() -> None:
     assert Reference('test') + Reference('test2') == 'test.test2'
     assert Reference('test') + Identifier('test2') == 'test.test2'

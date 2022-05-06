@@ -135,6 +135,40 @@ class Reference(yatiml.String):
             return str(self) != other
         return NotImplemented
 
+    def __lt__(self, other: Any) -> bool:
+        """Order alphabetically.
+
+        Args:
+            other: Another Reference or a string.
+        """
+        if isinstance(other, Reference):
+            i = 0
+            while i < min(len(self._parts), len(other._parts)):
+                s = self._parts[i]
+                o = other._parts[i]
+
+                if isinstance(s, int) and isinstance(o, int):
+                    if s < o:
+                        return True
+                    if o < s:
+                        return False
+                elif isinstance(s, Identifier) and isinstance(o, Identifier):
+                    if s < o:       # repeated because mypy is dumb
+                        return True
+                    if o < s:
+                        return False
+                elif isinstance(s, int) and isinstance(o, Identifier):
+                    return True
+                elif isinstance(s, Identifier) and isinstance(o, int):
+                    return False
+                i += 1
+            return len(self._parts) < len(other._parts)
+
+        if isinstance(other, str):
+            return self < Reference(other)
+
+        return NotImplemented
+
     def __iter__(self) -> Generator[ReferencePart, None, None]:
         """Iterate through the parts.
 
