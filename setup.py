@@ -38,22 +38,4 @@ setup(
         'ruamel.yaml<=0.16.12',
         'yatiml==0.9.0'
     ],
-    setup_requires=[
-        # dependency for `python setup.py test`
-        'pytest-runner',
-        # dependencies for `python setup.py build_sphinx`
-        'sphinx',
-        'recommonmark',
-        'sphinx_rtd_theme'
-    ],
-    tests_require=[
-        'filelock<3.1',
-        'flake8<4',
-        'importlib-metadata==2.1.0',
-        'pytest>=3.3,<6.2',
-        'pytest-cov<=2.7.0',
-        'pytest-mypy',
-        'pytest-flake8<=1.0.6',
-        'tomli<2'
-    ],
 )

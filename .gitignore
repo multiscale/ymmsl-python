@@ -8,6 +8,7 @@ dist
 .cache
 __pycache__
 .mypy_cache
+.tox
 
 htmlcov
 .coverage
