@@ -67,7 +67,7 @@ class Ports:
     string. If a particular operator has no associated ports, it may
     be omitted. For example:
 
-    .. code: yaml
+    .. code:: yaml
 
         ports:
           f_init:   # list of names
