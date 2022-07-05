@@ -57,10 +57,10 @@ list.
 .. code-block:: python
     :caption: Accessing the model
 
+    from pathlib import Path
     import ymmsl
 
-    with open('example.ymmsl', 'r') as f:
-        config = ymmsl.load(f)
+    config = ymmsl.load(Path('example.ymmsl'))
 
     print(config.model.name)        # output: macro_micro_model
     print(len(config.model.components))   # output: 2
@@ -86,11 +86,16 @@ balancers, etc. yMMSL lets you describe components in two ways, a short
 one and a longer one:
 
 .. code-block:: yaml
-    :caption: ``Macro-meso-micro model components``
+    :caption: Macro-meso-micro model components
 
     components:
       macro: my.macro_model
       meso:
+        ports:
+          f_init: boundary_in
+          o_i: state_out
+          s: state_in
+          o_f: boundary_out
         implementation: my.meso_model
         multiplicity: 5
       micro:
@@ -106,9 +111,14 @@ simply maps the name of the component to an implementation (more on those
 in a moment).
 
 The longer form maps the name of the component to a dictionary containing
-two attributes, the ``implementation`` and the ``multiplicity``. The
-implementation is the name of the implementation as in the short form, while the
-multiplicity specifies how many instances of this component exist in the
+three attributes: the ``ports``, the ``implementation`` and the
+``multiplicity``. Ports are the connectors on the component to which conduits
+attach to connect it to other components. These are organised by operator; we
+refer to the MUSCLE 3 documentation for more on how they are used. Specifying
+ports here is optional, but doing so can improve efficiency.
+
+The implementation is the name of the implementation as in the short form, while
+the multiplicity specifies how many instances of this component exist in the
 simulation. Multiplicity is a list of integers (as for ``micro`` in this
 example), but may be written as a single integer if it's a one-dimensional set
 (as for ``meso``).
@@ -125,15 +135,15 @@ the file easier to read by a human user.
 .. code-block:: python
     :caption: Accessing the simulation components
 
+    from pathlib import Path
     import ymmsl
 
-    with open('macro_meso_micro.ymmsl', 'r') as f:
-        config = ymmsl.load(f)
+    config = ymmsl.load(Path('macro_meso_micro.ymmsl'))
 
     cps = config.model.components
     print(cps[0].name)              # output: macro
     print(cps[0].implementation)    # output: my.macro_model
-    print(cps[0].multplicity)       # output: []
+    print(cps[0].multiplicity)      # output: []
     print(cps[2].name)              # output: micro
     print(cps[2].implementation)    # output: my.micro_model
     print(cps[2].multplicity)       # output: [5, 10]
@@ -141,11 +151,11 @@ the file easier to read by a human user.
 (Note that ``macro_meso_micro.ymmsl`` does not come with this documentation, go
 ahead and make it yourself using the above listing!)
 
-The :class:`ymmsl.Component` class has three attributes, unsurprisingly
-named ``name``, ``implementation`` and ``multiplicity``. Attributes ``name``
-and ``implementation`` are of type :class:`ymmsl.Reference`. A reference
-is a string consisting of one or more identifiers (as described above),
-separated by periods.
+The :class:`ymmsl.Component` class has four attributes, unsurprisingly
+named ``name``, ``implementation``, ``multiplicity`` and ``ports``. Attributes
+``name`` and ``implementation`` are of type :class:`ymmsl.Reference`. A
+reference is a string consisting of one or more identifiers (as described
+above), separated by periods.
 
 Depending on the context, this may represent a name in a namespace (as it is
 here), or an attribute of an object (as we will see below with Conduits). The
@@ -153,15 +163,14 @@ here), or an attribute of an object (as we will see below with Conduits). The
 given as a single int when creating a :class:`ymmsl.Component` object, just
 like in the YAML file.
 
-The ``implementation`` attribute of :class:`ymmsl.Component` is intended
-to be a reference to some implementation definition in the launcher
-configuration, so consult the documentation for that to see what to write here.
+The ``implementation`` attribute of :class:`ymmsl.Component` refers to an
+implementation definition. More on those below.
 
 Conduits
 ````````
 
-The final subsection of the ``model`` section is labeled ``conduits``. These
-tie the components together by connecting `ports` on those components. Which
+The final subsection of the ``model`` section is labeled ``conduits``. Conduits
+tie the components together by connecting ports on those components. Which
 ports a component has depends on the component, so you have to look at its
 documentation (or the source code, if there isn't any documentation) to see
 which ports are available and how they should be used.
@@ -190,7 +199,7 @@ integers, floating point numbers, lists of floating point numbers (vectors), or
 lists of lists of floating point numbers (arrays).
 
 .. code-block:: yaml
-    :caption: ``Settings example``
+    :caption: Settings example
 
     settings:
       domain.grain: 0.01
@@ -229,6 +238,171 @@ file containing the above ``settings`` section, then you could write:
 to obtain a floating point value of 0.1 in ``grid_dx`` and a list of lists
 ``[[0.8, 0.2], [0.2, 0.8]]`` in ``kernel``.
 
+Implementations
+---------------
+
+Components are abstract objects. For an actual simulation to run, we need
+computer programs that implement the components of the simulation. As we've seen
+above, components refer to implementations, and those implementations are
+defined in the ``implementations`` section of the yMMSL file:
+
+.. code-block:: yaml
+    :caption: Defining implementations
+
+    implementations:
+      simplest:
+        executable: /home/user/models/my_model
+
+      python_script:
+        virtual_env: /home/user/envs/my_env
+        executable: python3
+        args: /home/user/models/my_model.py
+
+      with_env_and_args:
+        env:
+          LD_LIBRARY_PATH: /home/user/muscle3/lib
+          ENABLE_AWESOME_SCIENCE: 1
+        executable: /home/user/models/my_model
+        args:
+          - --some-lengthy-option
+          - --some-other-lengthy-option=some-lengthy-value
+
+
+As you can see, there are quite a few different ways of describing an
+implementation, but all implementations have a name, which is the key in the
+dictionary, by which a component can refer to it.
+
+The ``simplest`` implementation only has an executable. This could be a
+(probably statically linked) executable, or a script that sets up an environment
+and starts the model.
+
+If your model or other component is a Python script, then you may want to load a
+virtual environment before starting it, to make the dependencies available. This
+is done using the ``virtual_env`` attribute. If the script does not have a
+``#!/usr/bin/env python`` line at the top (in which case you could set it as the
+executable) then you need to start the Python interpreter directly, and pass the
+location of the script as an argument.
+
+Environment variables can be set through the ``env`` attribute, which contains a
+dictionary mapping variable names to values, as shown for the
+``with_env_and_args`` example. This also shows that you can pass the arguments
+as a list, if that makes things easier to read.
+
+.. code-block:: yaml
+    :caption: MPI and HPC implementations
+
+    implementations:
+      mpi_implementation:
+        executable: /home/user/models/my_model
+        execution_model: openmpi
+
+      on_hpc_cluster:
+        modules: cpp openmpi
+        executable: /home/user/models/my_model
+        execution_model: intelmpi
+
+      with_script:
+        script: |
+          #!/bin/bash
+
+          . /home/user/muscle3/bin/muscle3.env
+          export ENABLE_AWESOME_SCIENCE=1
+
+          /home/user/models/my_model -v -x
+
+
+MPI programs are a bit special, as they need to be started via ``mpirun``.
+However, ``mpirun`` assumes that the program to start is going to use all of the
+available resources. For a coupled simulation with multiple components, that is
+usually not what you want. It is possible to tell ``mpirun`` to only use some of
+the resources, but of course we don't know which ones will be available while
+writing this file. Instead, you simply specify the path to the executable, and
+set the ``execution_model`` attribute to either ``openmpi`` or ``intelmpi`` as
+required. When executing with MUSCLE 3, the MUSCLE Manager will then start the
+component on its designated subset of the resources as required.
+
+The ``on_hpc_cluster`` implementation demonstrates loading environment modules,
+as commonly needed on HPC machines. They're all in one line here, but if the
+modules have long names, then like with the arguments you can make a list to
+keep things readable.
+
+Finally, if you need to do something complicated, you can write an inline script
+to start the implementation. This currently only works for non-MPI programs
+however.
+
+Resources
+---------
+
+Finally, yMMSL allows specifying the amount of resources needed to run an
+instance of an implementation. This information is used by MUSCLE 3 when it
+starts each component, to ensure it has the resources needed to do its
+calculations. Currently, only the number of threads or processes can be
+specified; memory and GPUs are future work.
+
+Resources are specified per component, and apply to each instance of that
+component. For single- or multithreaded components, or components that use
+multiple local processes (for example with Python's ``multiprocessing``), you
+specify the number of threads:
+
+.. code-block:: yaml
+    :caption: Resources for threaded processes
+
+    resources:
+      macro:
+        threads: 1
+
+      micro:
+        threads: 8
+
+
+On the Python side, this is represented by :class:`ymmsl.ThreadedResReq` (short
+for ThreadedResourceRequirements), which holds the name of the component it
+specifies the resources for in attribute ``name``, and the number of threads or
+processes (basically, cores) as ``threads``.
+
+For MPI-based implementations, there are two different ways of specifying the
+required resources: core-based and node-based. For core-based resource
+requirements (:class:`ymmsl.MPICoresResReq` on the Python side), you specify the
+number of MPI processes, and optionally the number of threads per MPI process:
+
+.. code-block:: yaml
+    :caption: Core-based resources for MPI components
+
+    resources:
+      macro:
+        mpi_processes: 32
+      micro:
+        mpi_processes: 16
+        threads_per_mpi_process: 8
+
+
+On HPC, this allocates each MPI process individually.
+
+Node-based MPI allocations are not yet supported by MUSCLE 3, but you can
+already specify them as follows:
+
+.. code-block:: yaml
+    :caption: Node-based resources for MPI components
+
+    resources:
+      macro:
+        nodes: 8
+        mpi_processes_per_node: 4
+        threads_per_mpi_process: 8
+      micro:
+        nodes: 1
+        mpi_processes_per_node: 16
+
+
+Here, whole nodes are assigned to the implementation, with a specific number of
+MPI processes started on each node, and optionally (the default is one) a
+certain number of cores per process made available.
+
+More information on how this is interpreted and how MUSCLE 3 allocates resources
+based on this can be found in the `High-Performance
+Computing section in the MUSCLE 3 documentation
+<https://muscle3.readthedocs.io/en/latest/distributed_execution.html#high-performance-computing>`_.
+
 
 Examples
 --------
@@ -242,6 +416,7 @@ Here are a few examples:
 .. code-block:: python
     :caption: Creating a Configuration and saving it
 
+    from pathlib import Path
     import ymmsl
 
     components = [
@@ -254,40 +429,20 @@ Here are a few examples:
 
     model = ymmsl.Model('my_model', components, conduits)
 
-    config = ymmsl.Configuration(model)
+    implementations = [
+        ymmsl.Implementation(
+            'my.macro_model', executable='/home/user/model'),
+        ymmsl.Implementation(
+            'my.micro_model', modules='gcc openmpi',
+            execution_model=ymmsl.ExecutionModel.OPENMPI)]
 
-    with open('out.ymmsl', 'w') as f:
-        ymmsl.save(config, f)
+    resources = [
+        ymmsl.ThreadedResReq(1),
+        ymmsl.MPICoresResReq(8)]
 
-    # Will produce:
-    # ymmsl_version: v0.1
-    # model:
-    #   name: my_model
-    #   components:
-    #     macro: my.macro_model
-    #     micro: my.micro_model
-    #   conduits:
-    #     macro.out: micro.in
-    #     micro.out: macro.in
+    config = ymmsl.Configuration(model, implementations, resources)
 
-
-.. code-block:: python
-    :caption: Creating a Configuration and saving it (downside-up version)
-
-    import ymmsl
-
-    config = ymmsl.Configuration(ymmsl.Model('my_model', [], []))
-
-    config.model.components.append(
-        ymmsl.Component('macro', 'my.macro_model'))
-    config.model.components.append(
-        ymmsl.Component('micro', 'my.micro_model'))
-
-    config.model.conduits.append(ymmsl.Conduit('macro.out', 'micro.in'))
-    config.model.conduits.append(ymmsl.Conduit('micro.out', 'macro.in'))
-
-    with open('out.ymmsl', 'w') as f:
-        ymmsl.save(config, f)
+    ymmsl.save(config, Path('out.ymmsl'))
 
     # Will produce:
     # ymmsl_version: v0.1
@@ -299,20 +454,30 @@ Here are a few examples:
     #   conduits:
     #     macro.out: micro.in
     #     micro.out: macro.in
+    # implementations:
+    #   my.macro_model:
+    #     executable: /home/user/model
+    #   my.micro_model:
+    #     modules: gcc openmpi
+    #     execution_model: openmpi
+    # resources:
+    #   macro:
+    #     threads: 1
+    #   micro:
+    #     mpi_processes: 8
 
 
 .. code-block:: python
     :caption: Adding or changing a setting
 
+    from pathlib import Path
     import ymmsl
 
-    with open('example.ymmsl', 'r') as f:
-        config = ymmsl.load(f)
+    config = ymmsl.load(Path('example.ymmsl'))
 
     config.settings['d'] = 0.12
 
-    with open('out.ymmsl', 'w') as f:
-        ymmsl.save(config, f)
+    ymmsl.save(config, Path('out.ymmsl'))
 
 
 For more details about these classes and what you can do with them, we refer to

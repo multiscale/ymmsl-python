@@ -24,3 +24,17 @@ settings:
 
   # Submodel-specific setting
   micro.d: 2.3
+
+implementations:
+  my.macro_model:
+    executable: /home/user/model
+  my.micro_model:
+    modules: gcc openmpi
+    execution_model: openmpi
+
+resources:
+  macro:
+    threads: 1
+  micro:
+    mpi_processes: 8
+
