@@ -14,7 +14,7 @@ _logger = logging.getLogger(__name__)
 
 
 class Operator(Enum):
-    """An operator of a compute element.
+    """An operator of a component.
 
     This is a combination of the Submodel Execution Loop operators,
     and operators for other components such as mappers.
@@ -36,11 +36,10 @@ class Operator(Enum):
 
 
 class Port:
-    """A port on a compute element.
+    """A port on a component.
 
-    Ports are used by compute elements to send or receive messages
-    on. They are connected by conduits to enable communication between
-    compute elements.
+    Ports are used by component to send or receive messages on. They are
+    connected by conduits to enable communication between components.
 
     Attributes:
         name: The name of the port.
