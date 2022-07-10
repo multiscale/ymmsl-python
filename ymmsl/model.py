@@ -241,6 +241,8 @@ class Model(ModelReference):
 
         def component_has_receiving_port(
                 component: Reference, port: Identifier) -> bool:
+            if port == 'muscle_settings_in':
+                return True
             for comp in self.components:
                 if comp.name == component:
                     if not comp.ports:
