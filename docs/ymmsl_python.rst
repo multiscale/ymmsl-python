@@ -69,7 +69,7 @@ An identifier contains the name of an object, like a simulation model,
 a component or a port (see below). It is a string containing letters,
 digits, and/or underscores which must start with a letter or underscore, and may
 not be empty. Identifiers starting with an underscore are reserved for use by
-the software (e.g. MUSCLE 3), and may only be used as specified by the software
+the software (e.g. MUSCLE3), and may only be used as specified by the software
 you are using.
 
 The :class:`ymmsl.Identifier` Python class represents an identifier. It works
@@ -114,7 +114,7 @@ The longer form maps the name of the component to a dictionary containing
 three attributes: the ``ports``, the ``implementation`` and the
 ``multiplicity``. Ports are the connectors on the component to which conduits
 attach to connect it to other components. These are organised by operator; we
-refer to the MUSCLE 3 documentation for more on how they are used. Specifying
+refer to the MUSCLE3 documentation for more on how they are used. Specifying
 ports here is optional, but doing so can improve efficiency.
 
 The implementation is the name of the implementation as in the short form, while
@@ -187,7 +187,7 @@ Python, in this case containing :class:`ymmsl.Conduit` objects. The
 type :class:`ymmsl.Reference` (see above), and a number of helper functions to
 interpret these fields, e.g. to extract the component and port name parts.
 Note that the format allows specifying a slot here, but this is currently not
-supported and illegal in MUSCLE 3.
+supported and illegal in MUSCLE3.
 
 Settings
 --------
@@ -318,7 +318,7 @@ usually not what you want. It is possible to tell ``mpirun`` to only use some of
 the resources, but of course we don't know which ones will be available while
 writing this file. Instead, you simply specify the path to the executable, and
 set the ``execution_model`` attribute to either ``openmpi`` or ``intelmpi`` as
-required. When executing with MUSCLE 3, the MUSCLE Manager will then start the
+required. When executing with MUSCLE3, the MUSCLE Manager will then start the
 component on its designated subset of the resources as required.
 
 The ``on_hpc_cluster`` implementation demonstrates loading environment modules,
@@ -334,7 +334,7 @@ Resources
 ---------
 
 Finally, yMMSL allows specifying the amount of resources needed to run an
-instance of an implementation. This information is used by MUSCLE 3 when it
+instance of an implementation. This information is used by MUSCLE3 when it
 starts each component, to ensure it has the resources needed to do its
 calculations. Currently, only the number of threads or processes can be
 specified; memory and GPUs are future work.
@@ -378,7 +378,7 @@ number of MPI processes, and optionally the number of threads per MPI process:
 
 On HPC, this allocates each MPI process individually.
 
-Node-based MPI allocations are not yet supported by MUSCLE 3, but you can
+Node-based MPI allocations are not yet supported by MUSCLE3, but you can
 already specify them as follows:
 
 .. code-block:: yaml
@@ -398,9 +398,9 @@ Here, whole nodes are assigned to the implementation, with a specific number of
 MPI processes started on each node, and optionally (the default is one) a
 certain number of cores per process made available.
 
-More information on how this is interpreted and how MUSCLE 3 allocates resources
+More information on how this is interpreted and how MUSCLE3 allocates resources
 based on this can be found in the `High-Performance
-Computing section in the MUSCLE 3 documentation
+Computing section in the MUSCLE3 documentation
 <https://muscle3.readthedocs.io/en/latest/distributed_execution.html#high-performance-computing>`_.
 
 
