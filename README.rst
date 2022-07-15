@@ -51,6 +51,6 @@ something is unclear, please file an issue.
 Legal
 *****
 
-ymmsl_python is Copyright 2018-2020 Netherlands eScience Center and University
+ymmsl_python is Copyright 2018-2022 Netherlands eScience Center and University
 of Amsterdam. Licensed under the Apache 2.0 license.
 
