@@ -10,10 +10,15 @@ from ymmsl.identity import Reference
 
 
 class ExecutionModel(Enum):
+    """Describes how to start a model component."""
     DIRECT = 1
+    """Start directly on the allocated core(s), without MPI."""
     OPENMPI = 2
+    """Start using OpenMPI's mpirun."""
     INTELMPI = 3
+    """Start using Intel MPI's mpirun."""
     SRUNMPI = 4
+    """Start MPI implementation using srun."""
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
