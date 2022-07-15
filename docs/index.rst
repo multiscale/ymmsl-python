@@ -8,7 +8,7 @@ yMMSL Python bindings
 
 Welcome to the documentation pages for yMMSL, the YAML version of the Multiscale
 Modeling and Simulation Language. At the moment, yMMSL is mainly the
-configuration language for the MUSCLE 3 multiscale coupling library.
+configuration language for the MUSCLE3 multiscale coupling library.
 
 This library provides Python bindings for yMMSL. With it, you can read and write
 yMMSL files, and manipulate them using a Python object representation of their

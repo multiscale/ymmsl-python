@@ -36,21 +36,23 @@ Here is an example of loading a yMMSL file:
 
 .. code-block:: python
 
+   from pathlib import Path
    import ymmsl
 
-   with open('example.ymmsl', 'r') as f:
-       config = ymmsl.load(f)
+   config = ymmsl.load(Path('example.ymmsl'))
 
 This makes ``config`` an object of type :class:`ymmsl.Configuration`, which is
 the top-level class describing a yMMSL document. More on these objects in the
-next section.
+next section. The :func:`ymmsl.load` function can also load from an open file
+or from a string containing YAML data.
 
 If the file is valid YAML, but not recognized as a yMMSL file, the library will
 raise a :class:`ymmsl.RecognitionError` with a message describing in detail what
 is wrong, so that you can easily fix the file.
 
-Note that the ``load()`` function uses the safe loading functionality of the
-underlying YAML library, so you can safely load files from untrusted sources.
+Note that the :func:`ymmsl.load` function uses the safe loading functionality
+of the underlying YAML library, so you can safely load files from untrusted
+sources.
 
 Writing yMMSL files
 -------------------
@@ -60,14 +62,14 @@ use ``ymmsl.save``:
 
 .. code-block:: python
 
+   from pathlib import Path
    from ymmsl import Component, Configuration, Model, Settings
 
    model = Model('test_model', [Component('macro')])
    settings = Settings(OrderedDict([('test_parameter', 42)]))
    config = Configuration(model, settings)
 
-   with open('out.ymmsl', 'w') as f:
-       ymmsl.save(config, f)
+   ymmsl.save(config, Path('out.ymmsl'))
 
 Here, we create a model named ``test_model``, containing a single component
 named ``macro``, and no conduits. For the settings, we create a Settings
@@ -80,7 +82,7 @@ ordering.
 
 Finally, we combine the model and the settings into a
 :class:`yammsl.Configuration` object, which we then save to a file. If you
-want to have the YAML as a string, use :func:`ymmsl.dump(doc)` instead.
+want to have the YAML as a string, use :func:`ymmsl.dump` instead.
 
 As the format may develop over time, files are required to carry a version, in
 this case v0.1, which is currently the only version of yMMSL.

@@ -1,92 +1,12 @@
 """This module contains all the definitions for yMMSL."""
-from typing import Any, List, Optional, Union, cast
+from typing import Any, List, Optional, cast
+from typing import Dict     # noqa
 
-from ruamel import yaml
 import yatiml
 
+from ymmsl.component import Operator    # noqa
+from ymmsl.component import Component
 from ymmsl.identity import Identifier, Reference
-
-
-class Component:
-    """An object declaring a simulation component.
-
-    Simulation components are things like submodels, scale bridges,
-    proxies, and any other program that makes up a model. This class
-    represents a declaration of a set of instances of a simulation
-    component, and it's used to describe which instances are needed to
-    perform a certain simulation.
-
-    Attributes:
-        name (ymmsl.Reference): The name of this component.
-        implementation (ymmsl.Reference): A reference to the
-                implementation to use.
-        multiplicity (List[int]): The shape of the array of instances
-                that execute simultaneously.
-
-    """
-
-    def __init__(self, name: str, implementation: Optional[str] = None,
-                 multiplicity: Union[None, int, List[int]] = None) -> None:
-        """Create a Component.
-
-        Args:
-            name: The name of the component; must be a valid
-                    Reference.
-            implementation: The name of the implementation; must be a
-                    valid Reference.
-            multiplicity: An list of ints describing the shape of the
-                    set of instances.
-
-        """
-        self.name = Reference(name)
-        if implementation is None:
-            self.implementation = None      # type: Optional[Reference]
-        else:
-            self.implementation = Reference(implementation)
-            for part in self.implementation:
-                if isinstance(part, int):
-                    raise ValueError('Component implementation {} contains a'
-                                     ' subscript, which is not'
-                                     ' allowed.'.format(self.name))
-
-        if multiplicity is None:
-            self.multiplicity = list()
-        elif isinstance(multiplicity, int):
-            self.multiplicity = [multiplicity]
-        else:
-            self.multiplicity = multiplicity
-
-    def __str__(self) -> str:
-        """Returns a string representation of the object."""
-        result = str(self.name)
-        for dim in self.multiplicity:
-            result += '[{}]'.format(dim)
-        return result
-
-    @classmethod
-    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
-        node.require_attribute('name', str)
-
-    @classmethod
-    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        if node.has_attribute('multiplicity'):
-            if node.has_attribute_type('multiplicity', int):
-                attr = node.get_attribute('multiplicity')
-                start_mark = attr.yaml_node.start_mark
-                end_mark = attr.yaml_node.end_mark
-                new_seq = yaml.nodes.SequenceNode(
-                        'tag:yaml.org,2002:seq', [attr.yaml_node], start_mark,
-                        end_mark)
-                node.set_attribute('multiplicity', new_seq)
-
-    @classmethod
-    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        multiplicity = node.get_attribute('multiplicity')
-        items = multiplicity.seq_items()
-        if len(items) == 0:
-            node.remove_attribute('multiplicity')
-        elif len(items) == 1:
-            node.set_attribute('multiplicity', items[0].get_value())
 
 
 class Conduit:
@@ -319,16 +239,62 @@ class Model(ModelReference):
                     return True
             return False
 
+        def component_has_receiving_port(
+                component: Reference, port: Identifier) -> bool:
+            if port == 'muscle_settings_in':
+                return True
+            for comp in self.components:
+                if comp.name == component:
+                    if not comp.ports:
+                        return True
+
+                    try:
+                        if comp.ports.operator(port).allows_receiving():
+                            return True
+                    except KeyError:
+                        pass
+            return False
+
+        def component_has_sending_port(
+                component: Reference, port: Identifier) -> bool:
+            for comp in self.components:
+                if comp.name == component:
+                    if not comp.ports:
+                        return True
+
+                    try:
+                        if comp.ports.operator(port).allows_sending():
+                            return True
+                    except KeyError:
+                        pass
+            return False
+
         for conduit in self.conduits:
-            if not component_exists(conduit.sending_component()):
+            scomp = conduit.sending_component()
+            if not component_exists(scomp):
                 raise RuntimeError(
                     'Unknown sending component "{}" of {}'.format(
-                        conduit.sending_component(), conduit))
+                        scomp, conduit))
 
-            if not component_exists(conduit.receiving_component()):
+            rcomp = conduit.receiving_component()
+            if not component_exists(rcomp):
                 raise RuntimeError(
                     'Unknown receiving component "{}" of {}'.format(
-                        conduit.receiving_component(), conduit))
+                        rcomp, conduit))
+
+            sport = conduit.sending_port()
+            if not component_has_sending_port(scomp, sport):
+                raise RuntimeError(
+                        'Invalid conduit "{}": component "{}" does not'
+                        ' have a sending port "{}"'.format(
+                            conduit, scomp, sport))
+
+            rport = conduit.receiving_port()
+            if not component_has_receiving_port(rcomp, rport):
+                raise RuntimeError(
+                        'Invalid conduit "{}": component "{}" does not'
+                        ' have a receiving port "{}"'.format(
+                            conduit, rcomp, rport))
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:

@@ -4,18 +4,25 @@ from typing import Any, IO, Union
 
 import yatiml
 
+from ymmsl.component import Component, Ports
 from ymmsl.configuration import Configuration, PartialConfiguration
 from ymmsl.document import Document
-from ymmsl.execution import Implementation, Resources
+from ymmsl.execution import (
+        ExecutionModel, Implementation, ResourceRequirements, MPICoresResReq,
+        MPINodesResReq, ThreadedResReq)
 from ymmsl.settings import Settings
 from ymmsl.identity import Identifier, Reference
-from ymmsl.model import Component, Conduit, Model, ModelReference
+from ymmsl.model import Conduit, Model, ModelReference
 
 
-_load = yatiml.load_function(
+_classes = (
         PartialConfiguration, Component, Conduit, Configuration, Document,
-        Identifier, Implementation, Model, ModelReference, Reference,
-        Resources, Settings)
+        ExecutionModel, Identifier, Implementation, Model, ModelReference,
+        MPICoresResReq, MPINodesResReq, Ports, Reference, ResourceRequirements,
+        Settings, ThreadedResReq)
+
+
+_load = yatiml.load_function(*_classes)
 
 
 def load(source: Union[str, Path, IO[Any]]) -> PartialConfiguration:
@@ -34,14 +41,11 @@ def load(source: Union[str, Path, IO[Any]]) -> PartialConfiguration:
     return _load(source)
 
 
-_dump = yatiml.dumps_function(
-        Component, Conduit, Configuration, Document, Identifier,
-        Implementation, Model, ModelReference, PartialConfiguration, Reference,
-        Resources, Settings)
+_dump = yatiml.dumps_function(*_classes)
 
 
 def dump(config: PartialConfiguration) -> str:
-    """Converts a Ymmsl to a string containing YAML.
+    """Converts a yMMSL configuration to a string containing YAML.
 
     Args:
         config: The configuration to be saved to yMMSL.
@@ -54,16 +58,13 @@ def dump(config: PartialConfiguration) -> str:
     return _dump(config)
 
 
-_save = yatiml.dump_function(
-        Component, Conduit, Configuration, Document, Identifier,
-        Implementation, Model, ModelReference, PartialConfiguration, Reference,
-        Resources, Settings)
+_save = yatiml.dump_function(*_classes)
 
 
 def save(
         config: PartialConfiguration, target: Union[str, Path, IO[Any]]
         ) -> None:
-    """Saves a yMMSL document to a file.
+    """Saves a yMMSL configuration to a file.
 
     Args:
         config: The configuration to save to yMMSL.

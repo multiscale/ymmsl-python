@@ -4,54 +4,32 @@ import pytest
 import yatiml
 
 from ymmsl import (Component, Conduit, Identifier, Model, ModelReference,
-                   Reference)
+                   Ports, Reference)
 
 
 @pytest.fixture
 def load_model() -> Callable:
     return yatiml.load_function(
-            Model, Component, Conduit, Identifier, Reference)
+            Model, Component, Conduit, Identifier, Ports, Reference)
 
 
 @pytest.fixture
 def dump_model() -> Callable:
     return yatiml.dumps_function(
-            Component, Conduit, Identifier, Model, Reference)
+            Component, Conduit, Identifier, Model, Ports, Reference)
 
 
 @pytest.fixture
 def macro_micro() -> Model:
-    macro = Component('macro', 'my.macro')
-    micro = Component('micro', 'my.micro')
+    macro = Component('macro', 'my.macro', ports=Ports(
+        o_i=['intermediate_state'], s=['state_update']))
+    micro = Component('micro', 'my.micro', ports=Ports(
+        f_init=['initial_state'], o_f=['final_state']))
     components = [macro, micro]
     conduit1 = Conduit('macro.intermediate_state', 'micro.initial_state')
     conduit2 = Conduit('micro.final_state', 'macro.state_update')
     conduits = [conduit1, conduit2]
     return Model('macro_micro', components, conduits)
-
-
-def test_component_declaration() -> None:
-    test_decl = Component('test', 'ns.model')
-    assert str(test_decl.name) == 'test'
-    assert str(test_decl.implementation) == 'ns.model'
-    assert test_decl.multiplicity == []
-    assert str(test_decl) == 'test'
-
-    test_decl = Component('test', 'ns.model', 10)
-    assert isinstance(test_decl.name, Reference)
-    assert str(test_decl.name) == 'test'
-    assert test_decl.multiplicity == [10]
-    assert str(test_decl) == 'test[10]'
-
-    test_decl = Component('test', 'ns2.model2', [1, 2])
-    assert isinstance(test_decl.name, Reference)
-    assert str(test_decl.name) == 'test'
-    assert str(test_decl.implementation) == 'ns2.model2'
-    assert test_decl.multiplicity == [1, 2]
-    assert str(test_decl) == 'test[1][2]'
-
-    with pytest.raises(ValueError):
-        test_decl = Component('test', 'ns2.model2[1]')
 
 
 def test_conduit() -> None:
@@ -247,6 +225,24 @@ def test_model_check_consistent2(macro_micro: Model) -> None:
 
 def test_model_check_consistent3(macro_micro: Model) -> None:
     macro_micro.conduits[1].receiver = Reference('Macro.state_update')
+    with pytest.raises(RuntimeError):
+        macro_micro.check_consistent()
+
+
+def test_model_check_consistent4(macro_micro: Model) -> None:
+    macro_micro.conduits[1].receiver = Reference('macro.does_not_exist')
+    with pytest.raises(RuntimeError):
+        macro_micro.check_consistent()
+
+
+def test_model_check_consistent5(macro_micro: Model) -> None:
+    macro_micro.conduits[0].sender = Reference('macro.state_update')
+    with pytest.raises(RuntimeError):
+        macro_micro.check_consistent()
+
+
+def test_model_check_consistent6(macro_micro: Model) -> None:
+    macro_micro.conduits[0].receiver = Reference('micro.final_state')
     with pytest.raises(RuntimeError):
         macro_micro.check_consistent()
 

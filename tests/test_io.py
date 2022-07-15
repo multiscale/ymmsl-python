@@ -3,9 +3,11 @@ from typing import Any
 
 import pytest
 
+from yatiml import RecognitionError
 from ymmsl import (
         Configuration, dump, load, save, Model, ModelReference,
-        PartialConfiguration, Reference)
+        MPICoresResReq, MPINodesResReq, PartialConfiguration, Reference,
+        ThreadedResReq)
 
 
 @pytest.fixture
@@ -19,7 +21,7 @@ def test_load_string1(test_yaml1: str) -> None:
     assert not isinstance(configuration, Configuration)
     settings = configuration.settings
     assert settings is not None
-    assert len(settings) == 3
+    assert len(settings) == 4
     assert isinstance(settings['test_list'], list)
     assert settings['test_list'][1] == 1.3
 
@@ -66,8 +68,13 @@ def test_load_string4(test_yaml4: str) -> None:
     assert impls[bf2smc].script == 'isr2d/bin/bf2smc.py'
 
     assert len(configuration.resources) == 5
-    assert configuration.resources[ic].num_cores == 4
-    assert configuration.resources[bf2smc].num_cores == 1
+    ic_res = configuration.resources[Reference('ic')]
+    assert isinstance(ic_res, ThreadedResReq)
+    assert ic_res.threads == 4
+
+    bf2smc_res = configuration.resources[Reference('bf2smc')]
+    assert isinstance(bf2smc_res, ThreadedResReq)
+    assert bf2smc_res.threads == 1
 
 
 def test_load_string5(test_yaml5: str) -> None:
@@ -77,6 +84,63 @@ def test_load_string5(test_yaml5: str) -> None:
     assert len(configuration.model.conduits) == 5
     assert len(configuration.implementations) == 5
     assert len(configuration.resources) == 5
+
+
+def test_load_string6(test_yaml6: str) -> None:
+    configuration = load(test_yaml6)
+    assert isinstance(configuration, PartialConfiguration)
+    res = configuration.resources
+    assert len(res) == 6
+
+    singlethreaded = res[Reference('singlethreaded')]
+    assert isinstance(singlethreaded, ThreadedResReq)
+    assert singlethreaded.threads == 1
+
+    multithreaded = res[Reference('multithreaded')]
+    assert isinstance(multithreaded, ThreadedResReq)
+    assert multithreaded.threads == 8
+
+    mpi_cores1 = res[Reference('mpi_cores1')]
+    assert isinstance(mpi_cores1, MPICoresResReq)
+    assert mpi_cores1.mpi_processes == 16
+
+    mpi_cores2 = res[Reference('mpi_cores2')]
+    assert isinstance(mpi_cores2, MPICoresResReq)
+    assert mpi_cores2.mpi_processes == 4
+    assert mpi_cores2.threads_per_mpi_process == 4
+
+    mpi_nodes1 = res[Reference('mpi_nodes1')]
+    assert isinstance(mpi_nodes1, MPINodesResReq)
+    assert mpi_nodes1.nodes == 10
+    assert mpi_nodes1.mpi_processes_per_node == 16
+    assert mpi_nodes1.threads_per_mpi_process == 1
+
+    mpi_nodes2 = res[Reference('mpi_nodes2')]
+    assert isinstance(mpi_nodes2, MPINodesResReq)
+    assert mpi_nodes2.nodes == 10
+    assert mpi_nodes2.mpi_processes_per_node == 4
+    assert mpi_nodes2.threads_per_mpi_process == 4
+
+
+def test_load_string7(test_yaml7: str) -> None:
+    configuration = load(test_yaml7)
+    assert isinstance(configuration, PartialConfiguration)
+
+    assert isinstance(configuration.model, Model)
+    components = configuration.model.components
+    assert components is not None
+    assert components[0].name == 'macro'
+    assert components[0].implementation == 'macro_python'
+    assert components[0].ports is not None
+    assert components[0].ports.f_init == []
+    assert components[0].ports.o_i == ['state_out']
+    assert components[0].ports.s == ['x_in']
+    assert components[0].ports.o_f == []
+    assert components[1].ports is not None
+    assert components[1].ports.f_init == ['init_in']
+    assert components[1].ports.o_i == []
+    assert components[1].ports.s == []
+    assert components[1].ports.o_f == ['final_output', 'extra_output']
 
 
 def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
@@ -124,6 +188,16 @@ def test_dump5(test_yaml5: str, test_config5: Configuration) -> None:
     assert text == test_yaml5
 
 
+def test_dump6(test_yaml6: str, test_config6: Configuration) -> None:
+    text = dump(test_config6)
+    assert text == test_yaml6
+
+
+def test_dump7(test_yaml7: str, test_config7: Configuration) -> None:
+    text = dump(test_config7)
+    assert text == test_yaml7
+
+
 def test_save_str(test_config1: PartialConfiguration, test_yaml1: str,
                   tmpdir_path: Path) -> None:
     test_file = tmpdir_path / 'test_yaml1.ymmsl'
@@ -159,3 +233,13 @@ def test_save_file(test_config2: PartialConfiguration, test_yaml2: str,
         yaml_out = f.read()
 
     assert yaml_out == test_yaml2
+
+
+def test_resource_requirements() -> None:
+    text = (
+            'ymmsl_version: v0.1\n'
+            'resources:\n'
+            '  - name: submodel\n')
+
+    with pytest.raises(RecognitionError):
+        load(text)

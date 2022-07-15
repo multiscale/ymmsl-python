@@ -158,6 +158,15 @@ def test_reference_equivalence() -> None:
             'test.test[3]')     # pylint: disable=C0122
 
 
+def test_reference_sort() -> None:
+    assert Reference('a') < Reference('b')
+    assert Reference('b') > Reference('a')
+    assert Reference('test[5]') < Reference('test[15]')
+    assert Reference('test[3]') < Reference('test.a')
+    assert sorted([Reference('c'), Reference('a')]) == [
+            Reference('a'), Reference('c')]
+
+
 def test_reference_concatenation() -> None:
     assert Reference('test') + Reference('test2') == 'test.test2'
     assert Reference('test') + Identifier('test2') == 'test.test2'
@@ -169,6 +178,14 @@ def test_reference_concatenation() -> None:
     assert Reference('test[5]') + 3 == 'test[5][3]'
     assert (Reference('test[5]') + [3, Identifier('test2')] ==
             'test[5][3].test2')
+
+
+def test_reference_without_trailing_ints() -> None:
+    Ref = Reference
+    assert Ref('a.b.c[1][2]').without_trailing_ints() == Ref('a.b.c')
+    assert Ref('a[1].b.c').without_trailing_ints() == Ref('a[1].b.c')
+    assert Ref('a.b.c').without_trailing_ints() == Ref('a.b.c')
+    assert Ref('a[1].b.c[2]').without_trailing_ints() == Ref('a[1].b.c')
 
 
 def test_reference_io() -> None:

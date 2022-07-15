@@ -2,7 +2,7 @@
 from copy import copy
 import re
 from collections import UserString
-from typing import Any, Generator, Iterable, List, Union
+from typing import Any, Generator, Iterable, List, overload, Union
 
 import yatiml
 
@@ -135,6 +135,40 @@ class Reference(yatiml.String):
             return str(self) != other
         return NotImplemented
 
+    def __lt__(self, other: Any) -> bool:
+        """Order alphabetically.
+
+        Args:
+            other: Another Reference or a string.
+        """
+        if isinstance(other, Reference):
+            i = 0
+            while i < min(len(self._parts), len(other._parts)):
+                s = self._parts[i]
+                o = other._parts[i]
+
+                if isinstance(s, int) and isinstance(o, int):
+                    if s < o:
+                        return True
+                    if o < s:
+                        return False
+                elif isinstance(s, Identifier) and isinstance(o, Identifier):
+                    if s < o:       # repeated because mypy is dumb
+                        return True
+                    if o < s:
+                        return False
+                elif isinstance(s, int) and isinstance(o, Identifier):
+                    return True
+                elif isinstance(s, Identifier) and isinstance(o, int):
+                    return False
+                i += 1
+            return len(self._parts) < len(other._parts)
+
+        if isinstance(other, str):
+            return self < Reference(other)
+
+        return NotImplemented
+
     def __iter__(self) -> Generator[ReferencePart, None, None]:
         """Iterate through the parts.
 
@@ -145,16 +179,11 @@ class Reference(yatiml.String):
         for part in self._parts:
             yield part
 
-    # These don't work on Python 3.5.1, which we still support. We'll
-    # live with a bit less type safety until we can drop 3.5.
+    @overload
+    def __getitem__(self, key: int) -> ReferencePart: ...
 
-    # @overload
-    # def __getitem__(self, key: int) -> ReferencePart:
-    #     ...
-
-    # @overload
-    # def __getitem__(self, key: slice) -> 'Reference':
-    #     ...
+    @overload
+    def __getitem__(self, key: slice) -> 'Reference': ...
 
     def __getitem__(
             self, key: Union[int, slice]
@@ -219,6 +248,20 @@ class Reference(yatiml.String):
         elif hasattr(other, '__iter__'):
             ret._parts.extend(other)
         return ret
+
+    def without_trailing_ints(self) -> 'Reference':
+        """Returns a copy of this Reference with trailing ints removed.
+
+        Examples:
+            a.b.c[1][2] -> a.b.c
+            a[1].b.c -> a[1].b.c
+            a.b.c -> a.b.c
+            a[1].b.c[2] -> a[1].b.c
+        """
+        i = len(self._parts) - 1
+        while i > 0 and isinstance(self._parts[i], int):
+            i -= 1
+        return Reference(self._parts[0:i+1])
 
     @classmethod
     def _string_to_parts(cls, text: str) -> List[ReferencePart]:

@@ -1,27 +1,34 @@
 from collections import OrderedDict
+from pathlib import Path
 from typing import Callable
 
 import pytest
 import yatiml
 from ymmsl import (
-        Component, Configuration, Identifier, Implementation, Model,
-        ModelReference, PartialConfiguration, Reference, Resources, Settings)
+        Component, Configuration, ExecutionModel, Identifier, Implementation,
+        Model, ModelReference, MPICoresResReq, MPINodesResReq,
+        PartialConfiguration, Reference, Settings, ThreadedResReq)
 from ymmsl import SettingValue     # noqa: F401 # pylint: disable=unused-import
 from ymmsl.document import Document
+from ymmsl.execution import ResourceRequirements
 
 
 @pytest.fixture
 def load_configuration() -> Callable:
     return yatiml.load_function(
-            Document, Configuration, Identifier, Implementation,
-            PartialConfiguration, Reference, Resources, Settings)
+            Document, ExecutionModel, Configuration, Identifier,
+            Implementation, MPICoresResReq, MPINodesResReq,
+            PartialConfiguration, Reference, ResourceRequirements, Settings,
+            ThreadedResReq)
 
 
 @pytest.fixture
 def dump_configuration() -> Callable:
     return yatiml.dumps_function(
-            Configuration, Document, Identifier, Implementation,
-            PartialConfiguration, Reference, Resources, Settings)
+            Configuration, Document, ExecutionModel, Identifier,
+            Implementation, MPICoresResReq, MPINodesResReq,
+            PartialConfiguration, Reference, ResourceRequirements, Settings,
+            ThreadedResReq)
 
 
 def test_configuration() -> None:
@@ -93,11 +100,11 @@ def test_configuration_update_model4() -> None:
 
 def test_configuration_update_implementations_add() -> None:
     implementation1 = Implementation(
-            Reference('my.macro'), '/home/test/macro.py')
+            Reference('my.macro'), executable=Path('/home/test/macro.py'))
     base = PartialConfiguration(implementations=[implementation1])
 
     implementation2 = Implementation(
-            Reference('my.micro'), '/home/test/micro.py')
+            Reference('my.micro'), executable=Path('/home/test/micro.py'))
     overlay = PartialConfiguration(implementations=[implementation2])
 
     base.update(overlay)
@@ -109,14 +116,14 @@ def test_configuration_update_implementations_add() -> None:
 
 def test_configuration_update_implementations_override() -> None:
     implementation1 = Implementation(
-            Reference('my.macro'), '/home/test/macro.py')
+            Reference('my.macro'), executable=Path('/home/test/macro.py'))
     implementation2 = Implementation(
-            Reference('my.micro'), '/home/test/micro.py')
+            Reference('my.micro'), executable=Path('/home/test/micro.py'))
     base = PartialConfiguration(
             implementations=[implementation1, implementation2])
 
     implementation3 = Implementation(
-            Reference('my.micro'), '/home/test/surrogate.py')
+            Reference('my.micro'), executable=Path('/home/test/surrogate.py'))
     overlay = PartialConfiguration(implementations=[implementation3])
 
     base.update(overlay)
@@ -127,10 +134,10 @@ def test_configuration_update_implementations_override() -> None:
 
 
 def test_configuration_update_resources_add() -> None:
-    resources1 = Resources(Reference('my.macro'), 10)
+    resources1 = ThreadedResReq(Reference('my.macro'), 10)
     base = PartialConfiguration(resources=[resources1])
 
-    resources2 = Resources(Reference('my.micro'), 2)
+    resources2 = ThreadedResReq(Reference('my.micro'), 2)
     overlay = PartialConfiguration(resources=[resources2])
 
     base.update(overlay)
@@ -141,11 +148,11 @@ def test_configuration_update_resources_add() -> None:
 
 
 def test_configuration_update_resources_override() -> None:
-    resources1 = Resources(Reference('my.macro'), 10)
-    resources2 = Resources(Reference('my.micro'), 100)
+    resources1 = ThreadedResReq(Reference('my.macro'), 10)
+    resources2 = ThreadedResReq(Reference('my.micro'), 100)
     base = PartialConfiguration(resources=[resources1, resources2])
 
-    resources3 = Resources(Reference('my.micro'), 2)
+    resources3 = ThreadedResReq(Reference('my.micro'), 2)
     overlay = PartialConfiguration(resources=[resources3])
 
     base.update(overlay)
@@ -172,6 +179,20 @@ def test_as_configuration(
     assert config.model == test_config4.model
     assert config.implementations == test_config4.implementations
     assert config.resources == test_config4.resources
+
+
+def test_check_consistent(test_config6: Configuration) -> None:
+    test_config6.check_consistent()
+    test_config6.implementations[Reference('c')].execution_model = (
+            ExecutionModel.DIRECT)
+    with pytest.raises(RuntimeError):
+        test_config6.check_consistent()
+    test_config6.implementations[Reference('c')].execution_model = (
+            ExecutionModel.OPENMPI)
+    test_config6.resources[Reference('singlethreaded')] = MPICoresResReq(
+            Reference('singlethreaded'), 16, 8)
+    with pytest.raises(RuntimeError):
+        test_config6.check_consistent()
 
 
 def test_load_nil_settings(load_configuration: Callable) -> None:
@@ -224,6 +245,19 @@ def test_load_implementations(load_configuration: Callable) -> None:
             '    /home/test/meso.py\n'
             '\n'
             '  micro: /home/test/micro\n'
+            '  micro2:\n'
+            '    modules: python/3.6.0\n'
+            '    virtual_env: /home/test/venv\n'
+            '    env:\n'
+            '      VAR1: 13\n'
+            '      VAR2: Testing\n'
+            '      VAR3: 12.34\n'
+            '      VAR4: true\n'
+            '    execution_model: direct\n'
+            '    executable: /home/test/micro2\n'
+            '    args:\n'
+            '      - -s\n'
+            '      - -t\n'
             )
 
     configuration = load_configuration(text)
@@ -237,6 +271,20 @@ def test_load_implementations(load_configuration: Callable) -> None:
     assert configuration.implementations['micro'].name == 'micro'
     assert configuration.implementations['micro'].script == (
             '/home/test/micro')
+
+    m2 = configuration.implementations['micro2']
+    assert m2.name == 'micro2'
+    assert m2.script is None
+    assert m2.modules == ['python/3.6.0']
+    assert m2.virtual_env == Path('/home/test/venv')
+    assert m2.env is not None
+    assert m2.env['VAR1'] == '13'
+    assert m2.env['VAR2'] == 'Testing'
+    assert m2.env['VAR3'] == '12.34'
+    assert m2.env['VAR4'] == 'true'
+    assert m2.executable == Path('/home/test/micro2')
+    assert m2.args == ['-s', '-t']
+    assert m2.execution_model == ExecutionModel.DIRECT
 
 
 def test_load_implementations_script_list(
@@ -261,10 +309,10 @@ def test_load_implementations_script_list(
 
     assert configuration.implementations['macro'].name == 'macro'
     assert configuration.implementations['macro'].script == (
-            '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n')
+            '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n\n')
     assert configuration.implementations['meso'].name == 'meso'
     assert configuration.implementations['meso'].script == (
-            '#!/bin/bash\n\n/home/test/meso.py')
+            '#!/bin/bash\n\n/home/test/meso.py\n')
     assert configuration.implementations['micro'].name == 'micro'
     assert configuration.implementations['micro'].script == (
             '/home/test/micro')
@@ -273,12 +321,21 @@ def test_load_implementations_script_list(
 def test_dump_implementations(dump_configuration: Callable) -> None:
     implementations = [
             Implementation(
-                Reference('macro'),
-                '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n'),
+                name=Reference('macro'),
+                script='#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n'
+                ),
             Implementation(
-                Reference('meso'),
-                '#!/bin/bash\n\n/home/test/meso.py'),
-            Implementation(Reference('micro'), '/home/test/micro')]
+                name=Reference('meso'),
+                script='#!/bin/bash\n\n/home/test/meso.py'),
+            Implementation(name=Reference('micro'), script='/home/test/micro'),
+            Implementation(
+                name=Reference('micro2'),
+                modules=['python/3.6.0', 'gcc/9.3.0'],
+                virtual_env=Path('/home/test/env'),
+                env={'VAR1': '10', 'VAR2': 'Test'},
+                execution_model=ExecutionModel.OPENMPI,
+                executable=Path('/home/test/micro2'),
+                args=['-v', '-s'])]
 
     configuration = PartialConfiguration(None, None, implementations)
 
@@ -286,16 +343,28 @@ def test_dump_implementations(dump_configuration: Callable) -> None:
     assert text == (
             'ymmsl_version: v0.1\n'
             'implementations:\n'
-            '  macro:\n'
-            '  - \'#!/bin/bash\'\n'
-            '  - \'\'\n'
-            '  - /usr/bin/python3 /home/test/macro.py\n'
-            '  - \'\'\n'
-            '  meso:\n'
-            '  - \'#!/bin/bash\'\n'
-            '  - \'\'\n'
-            '  - /home/test/meso.py\n'
+            '  macro: |\n'
+            '    #!/bin/bash\n'
+            '\n'
+            '    /usr/bin/python3 /home/test/macro.py\n'
+            '  meso: |-\n'
+            '    #!/bin/bash\n'
+            '\n'
+            '    /home/test/meso.py\n'
             '  micro: /home/test/micro\n'
+            '  micro2:\n'
+            '    modules:\n'
+            '    - python/3.6.0\n'
+            '    - gcc/9.3.0\n'
+            '    virtual_env: /home/test/env\n'
+            '    env:\n'
+            '      VAR1: \'10\'\n'
+            '      VAR2: Test\n'
+            '    execution_model: openmpi\n'
+            '    executable: /home/test/micro2\n'
+            '    args:\n'
+            '    - -v\n'
+            '    - -s\n'
             )
 
 
@@ -303,23 +372,24 @@ def test_load_resources(load_configuration: Callable) -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'resources:\n'
-            '  macro: 10\n'
+            '  macro:\n'
+            '    threads: 10\n'
             '  micro:\n'
-            '    num_cores: 1\n'
+            '    threads: 1\n'
             )
 
     configuration = load_configuration(text)
 
     assert configuration.resources['macro'].name == 'macro'
-    assert configuration.resources['macro'].num_cores == 10
+    assert configuration.resources['macro'].threads == 10
     assert configuration.resources['micro'].name == 'micro'
-    assert configuration.resources['micro'].num_cores == 1
+    assert configuration.resources['micro'].threads == 1
 
 
 def test_dump_resources(dump_configuration: Callable) -> None:
     resources = [
-            Resources(Reference('macro'), 10),
-            Resources(Reference('micro'), 1)]
+            ThreadedResReq(Reference('macro'), 10),
+            ThreadedResReq(Reference('micro'), 1)]
 
     configuration = PartialConfiguration(None, None, None, resources)
 
@@ -327,6 +397,8 @@ def test_dump_resources(dump_configuration: Callable) -> None:
     assert text == (
             'ymmsl_version: v0.1\n'
             'resources:\n'
-            '  macro: 10\n'
-            '  micro: 1\n'
+            '  macro:\n'
+            '    threads: 10\n'
+            '  micro:\n'
+            '    threads: 1\n'
             )

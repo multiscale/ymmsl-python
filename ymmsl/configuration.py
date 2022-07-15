@@ -1,12 +1,15 @@
 """This module contains all the definitions for yMMSL."""
 from collections import OrderedDict
-from typing import Dict, List, Optional, Union
+import collections.abc as abc
+from typing import (
+        Dict, List, MutableMapping, Optional, Sequence, Union)
 
 import yatiml
 
 from ymmsl.document import Document
 from ymmsl.identity import Reference
-from ymmsl.execution import Implementation, Resources
+from ymmsl.execution import (
+        ExecutionModel, Implementation, ResourceRequirements, ThreadedResReq)
 from ymmsl.settings import Settings
 from ymmsl.model import Model, ModelReference
 
@@ -14,6 +17,9 @@ from ymmsl.model import Model, ModelReference
 # This should be a local definition, but that triggers a mypy issue:
 # https://github.com/python/mypy/issues/7281
 _ImplType = Dict[Reference, Implementation]
+
+
+_ResType = MutableMapping[Reference, ResourceRequirements]
 
 
 class PartialConfiguration(Document):
@@ -26,7 +32,8 @@ class PartialConfiguration(Document):
             Dictionary mapping implementation names (as References) to
             Implementation objects.
         resources: Resources to allocate for the model components.
-            Dictionary mapping component names to Resources objects.
+            Dictionary mapping component names to ResourceRequirements
+            objects.
     """
     def __init__(self,
                  model: Optional[ModelReference] = None,
@@ -35,8 +42,8 @@ class PartialConfiguration(Document):
                      List[Implementation],
                      Dict[Reference, Implementation]]] = None,
                  resources: Optional[Union[
-                     List[Resources],
-                     Dict[Reference, Resources]]] = None
+                     Sequence[ResourceRequirements],
+                     MutableMapping[Reference, ResourceRequirements]]] = None
                  ) -> None:
         """Create a Configuration.
 
@@ -67,8 +74,8 @@ class PartialConfiguration(Document):
             self.implementations = implementations
 
         if resources is None:
-            self.resources = dict()     # type: Dict[Reference, Resources]
-        elif isinstance(resources, list):
+            self.resources = dict()     # type: _ResType
+        elif isinstance(resources, abc.Sequence):
             self.resources = OrderedDict([
                 (res.name, res) for res in resources])
         else:
@@ -114,7 +121,7 @@ class PartialConfiguration(Document):
 
         Note that this doesn't check references, just that there is
         a model, implementations and resources. For the more extensive
-        check, see :meth:`Configuration.is_consistent`.
+        check, see :meth:`Configuration.check_consistent`.
 
         Returns:
             A corresponding Configuration.
@@ -145,7 +152,7 @@ class PartialConfiguration(Document):
         if not node.has_attribute('settings'):
             node.set_attribute('settings', None)
         node.map_attribute_to_index('implementations', 'name', 'script')
-        node.map_attribute_to_index('resources', 'name', 'num_cores')
+        node.map_attribute_to_index('resources', 'name')
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
@@ -169,20 +176,20 @@ class PartialConfiguration(Document):
                 res.is_scalar(type(None)) or
                 res.is_mapping() and res.is_empty()):
             node.remove_attribute('resources')
-        node.index_attribute_to_map('resources', 'name', 'num_cores')
+        node.index_attribute_to_map('resources', 'name')
 
 
 class Configuration(PartialConfiguration):
     """Configuration that includes all information for a simulation.
 
-    Configuration has some optional attributes, because we want to
-    allow configuration files which only contain some of the
+    PartialConfiguration has some optional attributes, because we want
+    to allow configuration files which only contain some of the
     information needed to run a simulation. At some point however,
     you need all the bits, and this class requires them.
 
     When loading a yMMSL file, you will automatically get an object
     of this class if all the required components are there; if the
-    file is incomplete, you'll get a Configuration instead.
+    file is incomplete, you'll get a PartialConfiguration instead.
 
     Attributes:
         model: A model to run.
@@ -200,8 +207,8 @@ class Configuration(PartialConfiguration):
                      List[Implementation],
                      Dict[Reference, Implementation]] = [],
                  resources: Union[
-                     List[Resources],
-                     Dict[Reference, Resources]] = []
+                     Sequence[ResourceRequirements],
+                     MutableMapping[Reference, ResourceRequirements]] = []
                  ) -> None:
         """Create a Configuration.
 
@@ -234,8 +241,8 @@ class Configuration(PartialConfiguration):
             self.implementations = implementations
 
         if resources is None:
-            self.resources = dict()     # type: Dict[Reference, Resources]
-        elif isinstance(resources, list):
+            self.resources = dict()     # type: _ResType
+        elif isinstance(resources, abc.Sequence):
             self.resources = OrderedDict([
                 (res.name, res) for res in resources])
         else:
@@ -263,6 +270,24 @@ class Configuration(PartialConfiguration):
                 raise RuntimeError((
                         'Model component {} is missing a resource'
                         ' allocation.').format(comp))
+
+            impl = self.implementations[comp.implementation]
+            res = self.resources[comp.name]
+            if impl.execution_model == ExecutionModel.DIRECT:
+                if not isinstance(res, ThreadedResReq):
+                    raise RuntimeError((
+                        'Model component {}\'s implementation does not'
+                        ' specify MPI, but mpi_processes are specified in its'
+                        ' resources. Please either set "execution_model" to'
+                        ' an MPI model, or specify a number of threads.'
+                        ).format(comp))
+            else:
+                if isinstance(res, ThreadedResReq):
+                    raise RuntimeError((
+                        'Model component {}\'s implementation specifies MPI,'
+                        ' but threads are specified in its resources. Please'
+                        ' either set "execution_model" to "direct", or'
+                        ' specify a number of mpi processes.'))
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
