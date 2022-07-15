@@ -32,10 +32,12 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
     test_suite='tests',
     install_requires=[
         'ruamel.yaml<=0.16.12',
-        'yatiml==0.9.0'
+        'yatiml>=0.9.0,<0.10.0'
     ],
 )
