@@ -5,6 +5,31 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.12.0
+******
+
+Added
+-----
+
+- Implementation descriptions for starting simulation components
+- Resource requirements
+
+Changed
+-------
+
+- Improved consistency checks for more user-friendly error messages
+
+Fixed
+-----
+
+- Small fixes and improvements to code and documentation
+
+Removed
+-------
+
+- Support for Python 3.5
+
+
 0.11.0
 ******
 
