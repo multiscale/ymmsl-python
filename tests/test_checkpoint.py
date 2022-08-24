@@ -89,3 +89,28 @@ def test_checkpointrules():
 
     with pytest.raises(RuntimeError):
         CheckpointRules(every=1, ranges=[CheckpointRange(10)])
+
+
+def test_checkpointrules_update():
+    load = yatiml.load_function(CheckpointRules, CheckpointRange)
+    rules1 = load("every: 300")
+    rules2 = load("at: [10, 20]")
+    rules3 = load("at: [15, 5]")
+    rules4 = load("ranges: [{start: 0, stop: 50, step: 10}]")
+    rules5 = load("ranges: [{start: 50, stop: 100, step: 10}]")
+
+    rules2.update(rules3)
+    assert rules2.at == [5, 10, 15, 20]
+    assert rules2.every is None
+    assert rules2.ranges == []
+
+    rules1.update(rules2)
+    assert rules1.every == 300
+    assert rules1.at == [5, 10, 15, 20]
+    assert rules2.ranges == []
+
+    rules1.update(rules5)
+    rules1.update(rules4)
+    assert len(rules1.ranges) == 2
+    assert rules1.ranges[0].start == 0
+    assert rules1.ranges[1].start == 50
