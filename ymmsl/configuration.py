@@ -6,6 +6,7 @@ from typing import (
 
 import yatiml
 
+from ymmsl.checkpoint import Checkpoints
 from ymmsl.document import Document
 from ymmsl.identity import Reference
 from ymmsl.execution import (
@@ -43,7 +44,8 @@ class PartialConfiguration(Document):
                      Dict[Reference, Implementation]]] = None,
                  resources: Optional[Union[
                      Sequence[ResourceRequirements],
-                     MutableMapping[Reference, ResourceRequirements]]] = None
+                     MutableMapping[Reference, ResourceRequirements]]] = None,
+                 checkpoints: Optional[Checkpoints] = None
                  ) -> None:
         """Create a Configuration.
 
@@ -80,6 +82,11 @@ class PartialConfiguration(Document):
                 (res.name, res) for res in resources])
         else:
             self.resources = resources
+
+        if checkpoints is None:
+            self.checkpoints = Checkpoints()
+        else:
+            self.checkpoints = checkpoints
 
     def update(self, overlay: 'PartialConfiguration') -> None:
         """Update this configuration with the given overlay.
@@ -178,6 +185,12 @@ class PartialConfiguration(Document):
             node.remove_attribute('resources')
         node.index_attribute_to_map('resources', 'name')
 
+        cp = node.get_attribute('checkpoints')
+        if (
+                cp.is_scalar(type(None)) or
+                cp.is_mapping() and cp.is_empty()):
+            node.remove_attribute('checkpoints')
+
 
 class Configuration(PartialConfiguration):
     """Configuration that includes all information for a simulation.
@@ -208,7 +221,8 @@ class Configuration(PartialConfiguration):
                      Dict[Reference, Implementation]] = [],
                  resources: Union[
                      Sequence[ResourceRequirements],
-                     MutableMapping[Reference, ResourceRequirements]] = []
+                     MutableMapping[Reference, ResourceRequirements]] = [],
+                 checkpoints: Optional[Checkpoints] = None
                  ) -> None:
         """Create a Configuration.
 
@@ -247,6 +261,11 @@ class Configuration(PartialConfiguration):
                 (res.name, res) for res in resources])
         else:
             self.resources = resources
+
+        if checkpoints is None:
+            self.checkpoints = Checkpoints()
+        else:
+            self.checkpoints = checkpoints
 
     def check_consistent(self) -> None:
         """Checks that the configuration is internally consistent.

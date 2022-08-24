@@ -4,6 +4,7 @@ This package contains all the classes needed to represent a yMMSL file,
 as well as to read and write yMMSL files.
 """
 
+from ymmsl.checkpoint import CheckpointRange, CheckpointRules, Checkpoints
 from ymmsl.component import Component, Operator, Port, Ports
 from ymmsl.configuration import Configuration, PartialConfiguration
 from ymmsl.execution import (
@@ -21,6 +22,7 @@ __email__ = 'l.veen@esciencecenter.nl'
 
 
 __all__ = [
+        'CheckpointRange', 'CheckpointRules', 'Checkpoints',
         'Component', 'Conduit', 'Configuration', 'dump', 'ExecutionModel',
         'Identifier', 'Implementation', 'load', 'Model', 'ModelReference',
         'MPICoresResReq', 'MPINodesResReq', 'Operator', 'PartialConfiguration',

@@ -4,6 +4,7 @@ from typing import Any, IO, Union
 
 import yatiml
 
+from ymmsl.checkpoint import CheckpointRange, CheckpointRules, Checkpoints
 from ymmsl.component import Component, Ports
 from ymmsl.configuration import Configuration, PartialConfiguration
 from ymmsl.document import Document
@@ -16,10 +17,11 @@ from ymmsl.model import Conduit, MulticastConduit, Model, ModelReference
 
 
 _classes = (
-        PartialConfiguration, Component, Conduit, Configuration, Document,
-        ExecutionModel, Identifier, Implementation, Model, ModelReference,
-        MPICoresResReq, MPINodesResReq, Ports, Reference, ResourceRequirements,
-        Settings, ThreadedResReq, MulticastConduit)
+        PartialConfiguration, CheckpointRange, CheckpointRules, Checkpoints,
+        Component, Conduit, Configuration, Document, ExecutionModel,
+        Identifier, Implementation, Model, ModelReference, MPICoresResReq,
+        MPINodesResReq, Ports, Reference, ResourceRequirements, Settings,
+        ThreadedResReq, MulticastConduit)
 
 
 _load = yatiml.load_function(*_classes)

@@ -6,6 +6,7 @@ import pytest
 import yatiml
 from ymmsl import (
         Component, Configuration, ExecutionModel, Identifier, Implementation,
+        CheckpointRange, CheckpointRules, Checkpoints,
         Model, ModelReference, MPICoresResReq, MPINodesResReq,
         PartialConfiguration, Reference, Settings, ThreadedResReq)
 from ymmsl import SettingValue     # noqa: F401 # pylint: disable=unused-import
@@ -17,6 +18,7 @@ from ymmsl.execution import ResourceRequirements
 def load_configuration() -> Callable:
     return yatiml.load_function(
             Document, ExecutionModel, Configuration, Identifier,
+            CheckpointRange, CheckpointRules, Checkpoints,
             Implementation, MPICoresResReq, MPINodesResReq,
             PartialConfiguration, Reference, ResourceRequirements, Settings,
             ThreadedResReq)
@@ -26,6 +28,7 @@ def load_configuration() -> Callable:
 def dump_configuration() -> Callable:
     return yatiml.dumps_function(
             Configuration, Document, ExecutionModel, Identifier,
+            CheckpointRange, CheckpointRules, Checkpoints,
             Implementation, MPICoresResReq, MPINodesResReq,
             PartialConfiguration, Reference, ResourceRequirements, Settings,
             ThreadedResReq)
