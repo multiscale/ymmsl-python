@@ -137,12 +137,8 @@ class PartialConfiguration(Document):
             self.model.name = overlay.model.name
 
         self.settings.update(overlay.settings)
-
-        for newi_name, newi in overlay.implementations.items():
-            self.implementations[newi_name] = newi
-
-        for newr_name, newr in overlay.resources.items():
-            self.resources[newr_name] = newr
+        self.implementations.update(overlay.implementations)
+        self.resources.update(overlay.resources)
 
         if not self.description:
             self.description = overlay.description
