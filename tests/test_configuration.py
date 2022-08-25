@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 from ymmsl import (
-        Component, Configuration, ExecutionModel, Implementation,
-        Model, ModelReference, MPICoresResReq,
+        Component, Configuration, ExecutionModel, Implementation, Model,
+        ModelReference, MPICoresResReq, Checkpoints, ImplementationState,
         PartialConfiguration, Reference, Settings, ThreadedResReq, load, dump)
 from ymmsl import SettingValue     # noqa: F401 # pylint: disable=unused-import
 
@@ -140,6 +140,66 @@ def test_configuration_update_resources_override() -> None:
     assert base.resources[Reference('my.micro')] == resources3
 
 
+def test_configuration_update_description() -> None:
+    description1 = ''
+    description2 = 'single line description'
+    description3 = 'multiline\ndescription'
+
+    overlay1 = PartialConfiguration(description=description1)
+    overlay2 = PartialConfiguration(description=description2)
+    overlay3 = PartialConfiguration(description=description3)
+
+    base = PartialConfiguration(description=description1)
+
+    base.update(overlay1)
+    assert base.description == ''
+
+    base.update(overlay2)
+    assert base.description == description2
+
+    base.update(overlay3)
+    assert base.description == description2 + '\n\n' + description3
+
+    base.update(overlay1)
+    assert base.description == description2 + '\n\n' + description3
+
+
+def test_configuration_update_checkpoint(
+        test_config4: PartialConfiguration) -> None:
+    # Note: test_checkpoint.py tests merging of checkpoint definitions
+    base = PartialConfiguration(checkpoints=Checkpoints(
+            wallclocktime=test_config4.checkpoints.wallclocktime))
+    overlay = PartialConfiguration(checkpoints=Checkpoints(
+            simulationtime=test_config4.checkpoints.simulationtime))
+
+    assert base.checkpoints.simulationtime is None
+    assert overlay.checkpoints.wallclocktime is None
+
+    base.update(overlay)
+    assert (base.checkpoints.simulationtime
+            == overlay.checkpoints.simulationtime)
+
+
+def test_configuration_update_resume() -> None:
+    base = PartialConfiguration(resume={'a': 'a'})
+    overlay = PartialConfiguration(resume={'b': 'b'})
+
+    base.update(overlay)
+    assert len(base.resume) == 2
+    assert base.resume['a'] == 'a'
+    assert base.resume['b'] == 'b'
+
+
+def test_configuration_update_resume_override() -> None:
+    base = PartialConfiguration(resume={'a': 'a', 'b': 'b'})
+    overlay = PartialConfiguration(resume={'b': 'b_update'})
+
+    base.update(overlay)
+    assert len(base.resume) == 2
+    assert base.resume['a'] == 'a'
+    assert base.resume['b'] == 'b_update'
+
+
 def test_as_configuration(
         test_config2: PartialConfiguration, test_config4: PartialConfiguration
         ) -> None:
@@ -157,6 +217,9 @@ def test_as_configuration(
     assert config.model == test_config4.model
     assert config.implementations == test_config4.implementations
     assert config.resources == test_config4.resources
+    assert config.description == test_config4.description
+    assert config.checkpoints == test_config4.checkpoints
+    assert config.resume == test_config4.resume
 
 
 def test_check_consistent(test_config6: Configuration) -> None:
@@ -171,6 +234,35 @@ def test_check_consistent(test_config6: Configuration) -> None:
             Reference('singlethreaded'), 16, 8)
     with pytest.raises(RuntimeError):
         test_config6.check_consistent()
+
+
+def test_check_consistent_checkpoints(test_config8: Configuration) -> None:
+    test_config8.check_consistent()
+
+    del test_config8.resume['macro']
+    with pytest.raises(RuntimeError):
+        test_config8.check_consistent()
+
+    test_config8.resume = {}  # disable resuming
+    test_config8.check_consistent()
+
+    impl_macro = test_config8.implementations['macro_python']
+    impl_micro1 = test_config8.implementations['micro1_python']
+
+    impl_macro.supports_checkpoint = False
+    with pytest.raises(RuntimeError):
+        test_config8.check_consistent()
+
+    impl_macro.supports_checkpoint = True
+    impl_micro1.supports_checkpoint = False
+    test_config8.check_consistent()
+
+    impl_micro1.state = ImplementationState.STATEFUL
+    with pytest.raises(RuntimeError):
+        test_config8.check_consistent()
+
+    test_config8.checkpoints = Checkpoints()  # disable checkpointing
+    test_config8.check_consistent()
 
 
 def test_load_nil_settings() -> None:
