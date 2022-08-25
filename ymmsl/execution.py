@@ -9,6 +9,30 @@ import yatiml
 from ymmsl.identity import Reference
 
 
+class ImplementationState(Enum):
+    """Describes whether an implementation has internal state"""
+    STATELESS = 1
+    """The implementation has no internal state."""
+    STATEFUL = 2
+    """The implementation has an internal state that is required for continuing
+    the implementation."""
+    WEAKLY_STATEFUL = 3
+    """The implementation has an internal state, which can be regenerated.
+    However, doing so may be expensive."""
+
+    @classmethod
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
+        if node.is_scalar(str):
+            val = cast(str, node.get_value())
+            node.set_value(val.upper())
+
+    @classmethod
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        val = node.get_value()
+        if isinstance(val, str):
+            node.set_value(val.lower())
+
+
 class ExecutionModel(Enum):
     """Describes how to start a model component."""
     DIRECT = 1
@@ -78,6 +102,9 @@ class Implementation:
         script: A script that starts the implementation
         can_share_resources: Whether this implementation can share
             resources (cores) with other components or not
+        state: Is this implementation stateful
+        supports_checkpoint: Does this implementation support the checkpointing
+            API
     """
 
     def __init__(
@@ -90,7 +117,9 @@ class Implementation:
             executable: Optional[Path] = None,
             args: Union[str, List[str], None] = None,
             script: Union[str, List[str], None] = None,
-            can_share_resources: bool = True
+            can_share_resources: bool = True,
+            state: ImplementationState = ImplementationState.STATEFUL,
+            supports_checkpoint: bool = False
             ) -> None:
         """Create an Implementation description.
 
@@ -117,6 +146,9 @@ class Implementation:
             can_share_resources: Whether this implementation can share
                     resources (cores) with other components or not.
                     See above.
+            state: Is this implementation stateful
+            supports_checkpoint: Does this implementation support the
+                checkpointing API
         """
         if script is not None:
             if (
@@ -166,6 +198,8 @@ class Implementation:
             self.args = args
 
         self.can_share_resources = can_share_resources
+        self.state = state
+        self.supports_checkpoint = supports_checkpoint
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
@@ -187,7 +221,7 @@ class Implementation:
                         if value_node.tag == 'tag:yaml.org,2002:bool':
                             value_node.tag = 'tag:yaml.org,2002:str'
 
-    _yatiml_defaults = {'execution_model': 'direct'}
+    _yatiml_defaults = {'execution_model': 'direct', 'state': 'stateful'}
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
