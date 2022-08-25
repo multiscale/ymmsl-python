@@ -10,7 +10,7 @@ from ymmsl.configuration import Configuration, PartialConfiguration
 from ymmsl.document import Document
 from ymmsl.execution import (
         ExecutionModel, Implementation, ResourceRequirements, MPICoresResReq,
-        MPINodesResReq, ThreadedResReq)
+        MPINodesResReq, ThreadedResReq, ImplementationState)
 from ymmsl.settings import Settings
 from ymmsl.identity import Identifier, Reference
 from ymmsl.model import Conduit, MulticastConduit, Model, ModelReference
@@ -19,9 +19,9 @@ from ymmsl.model import Conduit, MulticastConduit, Model, ModelReference
 _classes = (
         PartialConfiguration, CheckpointRange, CheckpointRules, Checkpoints,
         Component, Conduit, Configuration, Document, ExecutionModel,
-        Identifier, Implementation, Model, ModelReference, MPICoresResReq,
-        MPINodesResReq, Ports, Reference, ResourceRequirements, Settings,
-        ThreadedResReq, MulticastConduit)
+        Identifier, Implementation, ImplementationState, Model, ModelReference,
+        MPICoresResReq, MPINodesResReq, Ports, Reference, ResourceRequirements,
+        Settings, ThreadedResReq, MulticastConduit)
 
 
 _load = yatiml.load_function(*_classes)
