@@ -5,6 +5,7 @@ import pytest
 
 from ymmsl import (
         Component, Conduit, Configuration, ExecutionModel, Implementation,
+        CheckpointRange, CheckpointRules, Checkpoints, ImplementationState,
         Model, ModelReference, MPICoresResReq, MPINodesResReq,
         PartialConfiguration, Ports, Reference, Settings, ThreadedResReq)
 
@@ -106,7 +107,30 @@ def test_yaml4() -> str:
             '  smc2bf:\n'
             '    threads: 1\n'
             '  bf2smc:\n'
-            '    threads: 1\n')
+            '    threads: 1\n'
+            'description: |-\n'
+            '  Multiline description for\n'
+            '  this workflow\n'
+            'checkpoints:\n'
+            '  wallclocktime:\n'
+            '    every: 100\n'
+            '    at:\n'
+            '    - 10\n'
+            '    - 20\n'
+            '    - 50\n'
+            '  simulationtime:\n'
+            '    ranges:\n'
+            '    - step: 2\n'
+            '      start: 0\n'
+            '      stop: 10\n'
+            '    - step: 5\n'
+            '      start: 10\n'
+            'resume:\n'
+            '  ic: /path/to/snapshots/ic.pack\n'
+            '  smc: /path/to/snapshots/smc.pack\n'
+            '  bf: /path/to/snapshots/bf.pack\n'
+            '  smc2bf: /path/to/snapshots/smc2bf.pack\n'
+            '  bf2smc: /path/to/snapshots/bf2smc.pack\n')
     return text
 
 
@@ -129,8 +153,20 @@ def test_config4() -> PartialConfiguration:
             MPICoresResReq(Reference('bf'), 4),
             ThreadedResReq(Reference('smc2bf'), 1),
             ThreadedResReq(Reference('bf2smc'), 1)]
+    description = "Multiline description for\nthis workflow"
+    checkpoints = Checkpoints(
+            CheckpointRules(every=100, at=[10,20,50]),
+            CheckpointRules(ranges=[
+                    CheckpointRange(start=0, stop=10, step=2),
+                    CheckpointRange(start=10, step=5)]))
+    resume = {'ic': '/path/to/snapshots/ic.pack',
+              'smc': '/path/to/snapshots/smc.pack',
+              'bf': '/path/to/snapshots/bf.pack',
+              'smc2bf': '/path/to/snapshots/smc2bf.pack',
+              'bf2smc': '/path/to/snapshots/bf2smc.pack'}
 
-    return PartialConfiguration(None, None, implementations, resources)
+    return PartialConfiguration(None, None, implementations, resources,
+                                description, checkpoints, resume)
 
 
 @pytest.fixture
@@ -334,3 +370,121 @@ def test_config7() -> Configuration:
                 Conduit('macro.state_out', 'micro.init_in'),
                 Conduit('micro.final_output', 'macro.x_in')])
     return Configuration(model)
+
+
+@pytest.fixture
+def test_yaml8() -> str:
+    text = (
+            'ymmsl_version: v0.1\n'
+            'model:\n'
+            '  name: checkpoints\n'
+            '  components:\n'
+            '    macro:\n'
+            '      ports:\n'
+            '        o_i:\n'
+            '        - state_out1\n'
+            '        - state_out2\n'
+            '        s:\n'
+            '        - x_in1\n'
+            '        - x_in2\n'
+            '      implementation: macro_python\n'
+            '    micro1:\n'
+            '      ports:\n'
+            '        f_init:\n'
+            '        - init_in\n'
+            '        o_f:\n'
+            '        - final_output\n'
+            '      implementation: micro1_python\n'
+            '    micro2:\n'
+            '      ports:\n'
+            '        f_init:\n'
+            '        - init_in\n'
+            '        o_f:\n'
+            '        - final_output\n'
+            '        - extra_output\n'
+            '      implementation: micro2_fortran\n'
+            '  conduits:\n'
+            '    macro.state_out1: micro1.init_in\n'
+            '    macro.state_out2: micro2.init_in\n'
+            '    micro1.final_output: macro.x_in1\n'
+            '    micro2.final_output: macro.x_in2\n'
+            'implementations:\n'
+            '  macro_python:\n'
+            '    executable: python\n'
+            '    args:\n'
+            '    - macro.py\n'
+            '    supports_checkpoint: true\n'
+            '  micro1_python:\n'
+            '    executable: python\n'
+            '    args:\n'
+            '    - micro1.py\n'
+            '    state: weakly_stateful\n'
+            '    supports_checkpoint: true\n'
+            '  micro2_fortran:\n'
+            '    executable: bin/micro2\n'
+            '    state: stateless\n'
+            'resources:\n'
+            '  macro:\n'
+            '    threads: 1\n'
+            '  micro1:\n'
+            '    threads: 1\n'
+            '  micro2:\n'
+            '    threads: 4\n'
+            'description: |-\n'
+            '  Snapshot for checkpoints taken on 2022-08-25 12:24:01\n'
+            '  Snapshot triggers:\n'
+            '  - wallclocktime >= 1800\n'
+            'checkpoints:\n'
+            '  wallclocktime:\n'
+            '    every: 600\n'
+            'resume:\n'
+            '  macro: macro.pack\n'
+            '  micro1: micro1.pack\n')
+    return text
+
+
+@pytest.fixture
+def test_config8() -> Configuration:
+    model = Model(
+            'checkpoints',
+            [
+                Component('macro', 'macro_python', ports=Ports(
+                    o_i=['state_out1', 'state_out2'], s=['x_in1', 'x_in2'])),
+                Component('micro1', 'micro1_python', ports=Ports(
+                    f_init=['init_in'], o_f=['final_output'])),
+                Component('micro2', 'micro2_fortran', ports=Ports(
+                    f_init=['init_in'],
+                    o_f=['final_output', 'extra_output']))],
+            [
+                Conduit('macro.state_out1', 'micro1.init_in'),
+                Conduit('macro.state_out2', 'micro2.init_in'),
+                Conduit('micro1.final_output', 'macro.x_in1'),
+                Conduit('micro2.final_output', 'macro.x_in2')] )
+
+    implementations = [
+            Implementation(Reference('macro_python'), executable='python',
+                    args='macro.py', supports_checkpoint=True),
+            Implementation(Reference('micro1_python'), executable='python',
+                    args='micro1.py', state=ImplementationState.WEAKLY_STATEFUL,
+                    supports_checkpoint=True),
+            Implementation(Reference('micro2_fortran'),
+                    executable='bin/micro2',
+                    state=ImplementationState.STATELESS)]
+
+    resources = [
+            ThreadedResReq(Reference('macro'), 1),
+            ThreadedResReq(Reference('micro1'), 1),
+            ThreadedResReq(Reference('micro2'), 4)]
+
+    description = ('Snapshot for checkpoints taken on 2022-08-25 12:24:01\n'
+                   'Snapshot triggers:\n'
+                   '- wallclocktime >= 1800')
+
+    checkpoints = Checkpoints(wallclocktime=CheckpointRules(every=600))
+
+    resume = {
+            'macro': 'macro.pack',
+            'micro1': 'micro1.pack'}
+
+    return Configuration(model, None, implementations, resources,
+            description, checkpoints, resume)

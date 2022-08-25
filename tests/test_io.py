@@ -143,6 +143,22 @@ def test_load_string7(test_yaml7: str) -> None:
     assert components[1].ports.o_f == ['final_output', 'extra_output']
 
 
+def test_load_string8(test_yaml8: str) -> None:
+    configuration = load(test_yaml8)
+    assert isinstance(configuration, PartialConfiguration)
+
+    checkpoints = configuration.checkpoints
+    assert checkpoints.wallclocktime is not None
+    assert checkpoints.simulationtime is None
+    assert checkpoints.wallclocktime.every == 600
+    assert checkpoints.wallclocktime.at == []
+    assert checkpoints.wallclocktime.ranges == []
+
+    assert len(configuration.resume) == 2
+
+    assert len(configuration.description.splitlines()) == 3
+
+
 def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
     test_file = tmpdir_path / 'test_yaml1.ymmsl'
     with test_file.open('w') as f:
@@ -196,6 +212,11 @@ def test_dump6(test_yaml6: str, test_config6: Configuration) -> None:
 def test_dump7(test_yaml7: str, test_config7: Configuration) -> None:
     text = dump(test_config7)
     assert text == test_yaml7
+
+
+def test_dump8(test_yaml8: str, test_config8: Configuration) -> None:
+    text = dump(test_config8)
+    assert text == test_yaml8
 
 
 def test_save_str(test_config1: PartialConfiguration, test_yaml1: str,
