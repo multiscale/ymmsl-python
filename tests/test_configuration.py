@@ -1,37 +1,12 @@
 from collections import OrderedDict
 from pathlib import Path
-from typing import Callable
 
 import pytest
-import yatiml
 from ymmsl import (
-        Component, Configuration, ExecutionModel, Identifier, Implementation,
-        CheckpointRange, CheckpointRules, Checkpoints,
-        Model, ModelReference, MPICoresResReq, MPINodesResReq,
-        PartialConfiguration, Reference, Settings, ThreadedResReq)
+        Component, Configuration, ExecutionModel, Implementation,
+        Model, ModelReference, MPICoresResReq,
+        PartialConfiguration, Reference, Settings, ThreadedResReq, load, dump)
 from ymmsl import SettingValue     # noqa: F401 # pylint: disable=unused-import
-from ymmsl.document import Document
-from ymmsl.execution import ResourceRequirements
-
-
-@pytest.fixture
-def load_configuration() -> Callable:
-    return yatiml.load_function(
-            Document, ExecutionModel, Configuration, Identifier,
-            CheckpointRange, CheckpointRules, Checkpoints,
-            Implementation, MPICoresResReq, MPINodesResReq,
-            PartialConfiguration, Reference, ResourceRequirements, Settings,
-            ThreadedResReq)
-
-
-@pytest.fixture
-def dump_configuration() -> Callable:
-    return yatiml.dumps_function(
-            Configuration, Document, ExecutionModel, Identifier,
-            CheckpointRange, CheckpointRules, Checkpoints,
-            Implementation, MPICoresResReq, MPINodesResReq,
-            PartialConfiguration, Reference, ResourceRequirements, Settings,
-            ThreadedResReq)
 
 
 def test_configuration() -> None:
@@ -198,13 +173,13 @@ def test_check_consistent(test_config6: Configuration) -> None:
         test_config6.check_consistent()
 
 
-def test_load_nil_settings(load_configuration: Callable) -> None:
+def test_load_nil_settings() -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'settings:\n'
     )
 
-    configuration = load_configuration(text)
+    configuration = load(text)
 
     assert isinstance(configuration.settings, Settings)
     assert len(configuration.settings) == 0
@@ -212,12 +187,12 @@ def test_load_nil_settings(load_configuration: Callable) -> None:
     assert len(configuration.resources) == 0
 
 
-def test_load_no_settings(load_configuration: Callable) -> None:
+def test_load_no_settings() -> None:
     text = (
             'ymmsl_version: v0.1\n'
             )
 
-    configuration = load_configuration(text)
+    configuration = load(text)
 
     assert isinstance(configuration.settings, Settings)
     assert len(configuration.settings) == 0
@@ -225,14 +200,14 @@ def test_load_no_settings(load_configuration: Callable) -> None:
     assert len(configuration.resources) == 0
 
 
-def test_dump_empty_settings(dump_configuration: Callable) -> None:
+def test_dump_empty_settings() -> None:
     configuration = PartialConfiguration(None, Settings())
-    text = dump_configuration(configuration)
+    text = dump(configuration)
 
     assert text == 'ymmsl_version: v0.1\n'
 
 
-def test_load_implementations(load_configuration: Callable) -> None:
+def test_load_implementations() -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'implementations:\n'
@@ -263,7 +238,7 @@ def test_load_implementations(load_configuration: Callable) -> None:
             '      - -t\n'
             )
 
-    configuration = load_configuration(text)
+    configuration = load(text)
 
     assert configuration.implementations['macro'].name == 'macro'
     assert configuration.implementations['macro'].script == (
@@ -290,8 +265,7 @@ def test_load_implementations(load_configuration: Callable) -> None:
     assert m2.execution_model == ExecutionModel.DIRECT
 
 
-def test_load_implementations_script_list(
-        load_configuration: Callable) -> None:
+def test_load_implementations_script_list() -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'implementations:\n'
@@ -308,7 +282,7 @@ def test_load_implementations_script_list(
             '  micro: /home/test/micro\n'
             )
 
-    configuration = load_configuration(text)
+    configuration = load(text)
 
     assert configuration.implementations['macro'].name == 'macro'
     assert configuration.implementations['macro'].script == (
@@ -321,7 +295,7 @@ def test_load_implementations_script_list(
             '/home/test/micro')
 
 
-def test_dump_implementations(dump_configuration: Callable) -> None:
+def test_dump_implementations() -> None:
     implementations = [
             Implementation(
                 name=Reference('macro'),
@@ -342,7 +316,7 @@ def test_dump_implementations(dump_configuration: Callable) -> None:
 
     configuration = PartialConfiguration(None, None, implementations)
 
-    text = dump_configuration(configuration)
+    text = dump(configuration)
     assert text == (
             'ymmsl_version: v0.1\n'
             'implementations:\n'
@@ -371,7 +345,7 @@ def test_dump_implementations(dump_configuration: Callable) -> None:
             )
 
 
-def test_load_resources(load_configuration: Callable) -> None:
+def test_load_resources() -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'resources:\n'
@@ -381,7 +355,7 @@ def test_load_resources(load_configuration: Callable) -> None:
             '    threads: 1\n'
             )
 
-    configuration = load_configuration(text)
+    configuration = load(text)
 
     assert configuration.resources['macro'].name == 'macro'
     assert configuration.resources['macro'].threads == 10
@@ -389,14 +363,14 @@ def test_load_resources(load_configuration: Callable) -> None:
     assert configuration.resources['micro'].threads == 1
 
 
-def test_dump_resources(dump_configuration: Callable) -> None:
+def test_dump_resources() -> None:
     resources = [
             ThreadedResReq(Reference('macro'), 10),
             ThreadedResReq(Reference('micro'), 1)]
 
     configuration = PartialConfiguration(None, None, None, resources)
 
-    text = dump_configuration(configuration)
+    text = dump(configuration)
     assert text == (
             'ymmsl_version: v0.1\n'
             'resources:\n'
