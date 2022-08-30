@@ -112,13 +112,13 @@ def test_yaml4() -> str:
             '  Multiline description for\n'
             '  this workflow\n'
             'checkpoints:\n'
-            '  wallclocktime:\n'
+            '  wallclock_time:\n'
             '    every: 100\n'
             '    at:\n'
             '    - 10\n'
             '    - 20\n'
             '    - 50\n'
-            '  simulationtime:\n'
+            '  simulation_time:\n'
             '    ranges:\n'
             '    - step: 2\n'
             '      start: 0\n'
@@ -433,9 +433,9 @@ def test_yaml8() -> str:
             'description: |-\n'
             '  Snapshot for checkpoints taken on 2022-08-25 12:24:01\n'
             '  Snapshot triggers:\n'
-            '  - wallclocktime >= 1800\n'
+            '  - wallclock_time >= 1800\n'
             'checkpoints:\n'
-            '  wallclocktime:\n'
+            '  wallclock_time:\n'
             '    every: 600\n'
             'resume:\n'
             '  macro: macro.pack\n'
@@ -478,9 +478,9 @@ def test_config8() -> Configuration:
 
     description = ('Snapshot for checkpoints taken on 2022-08-25 12:24:01\n'
                    'Snapshot triggers:\n'
-                   '- wallclocktime >= 1800')
+                   '- wallclock_time >= 1800')
 
-    checkpoints = Checkpoints(wallclocktime=CheckpointRules(every=600))
+    checkpoints = Checkpoints(wallclock_time=CheckpointRules(every=600))
 
     resume = {
             'macro': 'macro.pack',

@@ -168,16 +168,16 @@ def test_configuration_update_checkpoint(
         test_config4: PartialConfiguration) -> None:
     # Note: test_checkpoint.py tests merging of checkpoint definitions
     base = PartialConfiguration(checkpoints=Checkpoints(
-            wallclocktime=test_config4.checkpoints.wallclocktime))
+            wallclock_time=test_config4.checkpoints.wallclock_time))
     overlay = PartialConfiguration(checkpoints=Checkpoints(
-            simulationtime=test_config4.checkpoints.simulationtime))
+            simulation_time=test_config4.checkpoints.simulation_time))
 
-    assert base.checkpoints.simulationtime is None
-    assert overlay.checkpoints.wallclocktime is None
+    assert base.checkpoints.simulation_time is None
+    assert overlay.checkpoints.wallclock_time is None
 
     base.update(overlay)
-    assert (base.checkpoints.simulationtime
-            == overlay.checkpoints.simulationtime)
+    assert (base.checkpoints.simulation_time
+            == overlay.checkpoints.simulation_time)
 
 
 def test_configuration_update_resume() -> None:

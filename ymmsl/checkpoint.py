@@ -147,53 +147,54 @@ class CheckpointRules:
 class Checkpoints:
     """Defines checkpoints in a configuration.
 
-    There exist two checkpoint triggers: `wallclocktime` and `simulationtime`.
-    The `wallclocktime` trigger is based on the elapsed real time since
-    starting the muscle_manager in seconds. The `simulationtime` trigger is
-    based on the time in the simulation as reported by the instances.
+    There exist two checkpoint triggers: `wallclock_time` and
+    `simulation_time`. The `wallclock_time` trigger is based on the elapsed
+    real time since starting the muscle_manager in seconds. The
+    `simulation_time` trigger is based on the time in the simulation as
+    reported by the instances.
 
-    Note that the `simulationtime` trigger assumes a shared concept of time
+    Note that the `simulation_time` trigger assumes a shared concept of time
     among all components of the model.
 
     Attributes:
-        wallclocktime: checkpoint rules for the wallclocktime trigger
-        simulationtime: checkpoint rules for the simulationtime trigger
+        wallclock_time: checkpoint rules for the wallclock_time trigger
+        simulation_time: checkpoint rules for the simulation_time trigger
     """
     def __init__(self,
-                 wallclocktime: Optional[CheckpointRules] = None,
-                 simulationtime: Optional[CheckpointRules] = None) -> None:
+                 wallclock_time: Optional[CheckpointRules] = None,
+                 simulation_time: Optional[CheckpointRules] = None) -> None:
         """Create checkpoint definitions
 
         Args:
-            wallclocktime: checkpoint rules for the wallclocktime trigger.
-            simulationtime: checkpoint rules for the simulationtime trigger.
+            wallclock_time: checkpoint rules for the wallclock_time trigger.
+            simulation_time: checkpoint rules for the simulation_time trigger.
         """
-        self.wallclocktime = wallclocktime
-        self.simulationtime = simulationtime
+        self.wallclock_time = wallclock_time
+        self.simulation_time = simulation_time
 
     def __bool__(self) -> bool:
         """Evaluate to true iff any rules are defined"""
-        return bool(self.wallclocktime) or bool(self.simulationtime)
+        return bool(self.wallclock_time) or bool(self.simulation_time)
 
     def update(self, overlay: 'Checkpoints') -> None:
         """Update this checkpoints with the given overlay.
 
         See :meth:`CheckpointRules.update`.
         """
-        if self.wallclocktime is None:
-            self.wallclocktime = overlay.wallclocktime
-        elif overlay.wallclocktime is not None:
-            self.wallclocktime.update(overlay.wallclocktime)
+        if self.wallclock_time is None:
+            self.wallclock_time = overlay.wallclock_time
+        elif overlay.wallclock_time is not None:
+            self.wallclock_time.update(overlay.wallclock_time)
 
-        if self.simulationtime is None:
-            self.simulationtime = overlay.simulationtime
-        elif overlay.simulationtime is not None:
-            self.simulationtime.update(overlay.simulationtime)
+        if self.simulation_time is None:
+            self.simulation_time = overlay.simulation_time
+        elif overlay.simulation_time is not None:
+            self.simulation_time.update(overlay.simulation_time)
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        if node.get_attribute("wallclocktime").is_scalar(type(None)):
-            node.remove_attribute("wallclocktime")
+        if node.get_attribute("wallclock_time").is_scalar(type(None)):
+            node.remove_attribute("wallclock_time")
 
-        if node.get_attribute("simulationtime").is_scalar(type(None)):
-            node.remove_attribute("simulationtime")
+        if node.get_attribute("simulation_time").is_scalar(type(None)):
+            node.remove_attribute("simulation_time")

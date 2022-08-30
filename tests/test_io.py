@@ -148,11 +148,11 @@ def test_load_string8(test_yaml8: str) -> None:
     assert isinstance(configuration, PartialConfiguration)
 
     checkpoints = configuration.checkpoints
-    assert checkpoints.wallclocktime is not None
-    assert checkpoints.simulationtime is None
-    assert checkpoints.wallclocktime.every == 600
-    assert checkpoints.wallclocktime.at == []
-    assert checkpoints.wallclocktime.ranges == []
+    assert checkpoints.wallclock_time is not None
+    assert checkpoints.simulation_time is None
+    assert checkpoints.wallclock_time.every == 600
+    assert checkpoints.wallclock_time.at == []
+    assert checkpoints.wallclock_time.ranges == []
 
     assert len(configuration.resume) == 2
 
