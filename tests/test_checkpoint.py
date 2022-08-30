@@ -114,3 +114,13 @@ def test_checkpointrules_update():
     assert len(rules1.ranges) == 2
     assert rules1.ranges[0].start == 0
     assert rules1.ranges[1].start == 50
+
+
+def test_checkpointrules_scalar_at():
+    load = yatiml.load_function(CheckpointRules)
+
+    rules = load("at: 5")
+    assert rules.at == [5]
+
+    rules = load("at: 1e-12")
+    assert rules.at == [1e-12]
