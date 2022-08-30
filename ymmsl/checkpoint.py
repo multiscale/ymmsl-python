@@ -2,6 +2,7 @@
 
 from typing import List, Optional, Union
 
+from ruamel import yaml
 import yatiml
 
 
@@ -109,6 +110,25 @@ class CheckpointRules:
         self.at.sort()
         self.ranges.extend(overlay.ranges)
         self.ranges.sort(key=lambda cpr: (cpr.start, cpr.stop))
+
+    @classmethod
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        # There's no ambiguity, and we want to allow some leeway
+        # and savorize things, so disable recognition.
+        pass
+
+    @classmethod
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
+        if node.has_attribute('at'):
+            if (node.has_attribute_type('at', int) or
+                    node.has_attribute_type('at', float)):
+                attr = node.get_attribute('at')
+                start_mark = attr.yaml_node.start_mark
+                end_mark = attr.yaml_node.end_mark
+                new_seq = yaml.nodes.SequenceNode(
+                        'tag:yaml.org,2002:seq', [attr.yaml_node], start_mark,
+                        end_mark)
+                node.set_attribute('at', new_seq)
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
