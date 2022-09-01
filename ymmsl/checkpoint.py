@@ -6,37 +6,45 @@ from ruamel import yaml
 import yatiml
 
 
-class CheckpointRange:
+class CheckpointRule:
+    """Defines a checkpoint rule.
+
+    There are two flavors of rules: :class:`CheckpointRangeRule` and
+    :class:`CheckpointAtRule`.
+    """
+
+
+class CheckpointRangeRule(CheckpointRule):
     """Defines a range of checkpoint moments.
 
-    Equivalent an "at" rule ``[start, start + step, start + 2*step, ...]`` for
-    as long as ``start + i*step <= stop``.
+    Equivalent to an "at" rule ``[start, start + every, start + 2*every, ...]``
+    for as long as ``start + i*every <= stop``.
 
     Stop may be omitted, in which case the range is infinite.
 
     Start may be omitted, in which case the range is equivalent to an "at" rule
-    ``[..., -n*step, ..., -step, 0, step, 2*step, ...]`` for as long as
-    ``i*step <= stop``.
+    ``[..., -n*every, ..., -every, 0, every, 2*every, ...]`` for as long as
+    ``i*every <= stop``.
 
     Attributes:
         start: start of the range (or None if omitted)
         stop: stopping criterium of the range (or None if omitted)
-        step: step size
+        every: step size of the range
     """
 
     def __init__(self,
-                 step: Union[float, int],
                  start: Optional[Union[float, int]] = None,
-                 stop: Optional[Union[float, int]] = None) -> None:
+                 stop: Optional[Union[float, int]] = None,
+                 every: Union[float, int] = 0) -> None:
         """Create a checkpoint range.
 
         Args:
-            step: step size, must be larger than 0.
             start: start of the range. Defaults to None.
             stop: stop criterium of the range. Defaults to None.
+            every: step size, must be larger than 0.
         """
-        if step <= 0:
-            raise ValueError(f"Invalid step {step} in checkpoint range:"
+        if every <= 0:
+            raise ValueError(f"Invalid every {every} in checkpoint range:"
                              " must be larger than 0")
         if start is not None and stop is not None and start > stop:
             raise ValueError(f"Invalid start {start} and stop {stop} in"
@@ -44,7 +52,11 @@ class CheckpointRange:
                              " start")
         self.start = start
         self.stop = stop
-        self.step = step
+        self.every = every
+
+    @classmethod
+    def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        node.require_attribute('every')
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
@@ -55,67 +67,29 @@ class CheckpointRange:
             node.remove_attribute("stop")
 
 
-class CheckpointRules:
-    """Defines a combination of checkpoint rules.
+class CheckpointAtRule(CheckpointRule):
+    """Defines an "at" checkpoint rule.
 
-    Different types of checkpoint rules exist. Every creates a snapshot every
-    specified interval: ``[0, every, 2*every, 3*every, ...]``. At creates a
-    snapshot at the specified moments. Ranges specify checkpoint ranges, see
-    :class:`CheckpointRanges` for further details.
-
-    Note: every is equivalent to a range with start=None, stop=None and
-    step=every. It also supports negative simulation times.
+    An "at" checkpoint rule creates a snapshot at the specified moments.
 
     Attributes:
-        every: interval for every rule (or None if not defined)
         at: list of checkpoints
-        range: list of checkpoint ranges
     """
 
-    def __init__(self,
-                 every: Optional[Union[float, int]] = None,
-                 at: Optional[List[Union[float, int]]] = None,
-                 ranges: Optional[List[CheckpointRange]] = None) -> None:
+    def __init__(self, at: Optional[List[Union[float, int]]]) -> None:
         """Create checkpoint rules.
 
         Args:
-            every: interval for every rule. Defaults to None.
             at: list of checkpoints. Defaults to None.
-            ranges: list of checkpoint ranges. Defaults to None.
         """
-        if every is not None and ranges is not None:
-            raise RuntimeError("Cannot combine 'every' and 'ranges' rules")
         if at is None:
             at = []
-        if ranges is None:
-            ranges = []
-        self.every = every
         self.at = at
         self.at.sort()
-        self.ranges = ranges
-        self.ranges.sort(key=lambda cpr: (cpr.start, cpr.stop))
-
-    def __bool__(self) -> bool:
-        """Evaluate to true iff any rules are defined"""
-        return self.every is not None or bool(self.at) or bool(self.ranges)
-
-    def update(self, overlay: 'CheckpointRules') -> None:
-        """Update these checkpointrules with the given overlay.
-
-        The every rule is overwritten if defined. At and ranges are combined.
-        """
-        if overlay.every is not None:
-            self.every = overlay.every
-        self.at.extend(overlay.at)
-        self.at.sort()
-        self.ranges.extend(overlay.ranges)
-        self.ranges.sort(key=lambda cpr: (cpr.start, cpr.stop))
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
-        # There's no ambiguity, and we want to allow some leeway
-        # and savorize things, so disable recognition.
-        pass
+        node.require_attribute('at')
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
@@ -129,19 +103,6 @@ class CheckpointRules:
                         'tag:yaml.org,2002:seq', [attr.yaml_node], start_mark,
                         end_mark)
                 node.set_attribute('at', new_seq)
-
-    @classmethod
-    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        if node.get_attribute("every").is_scalar(type(None)):
-            node.remove_attribute("every")
-
-        at = node.get_attribute("at")
-        if at.is_scalar(type(None)) or (at.is_sequence() and at.is_empty()):
-            node.remove_attribute("at")
-
-        ran = node.get_attribute("ranges")
-        if ran.is_scalar(type(None)) or (ran.is_sequence() and ran.is_empty()):
-            node.remove_attribute("ranges")
 
 
 class Checkpoints:
@@ -161,14 +122,18 @@ class Checkpoints:
         simulation_time: checkpoint rules for the simulation_time trigger
     """
     def __init__(self,
-                 wallclock_time: Optional[CheckpointRules] = None,
-                 simulation_time: Optional[CheckpointRules] = None) -> None:
+                 wallclock_time: List[CheckpointRule] = None,
+                 simulation_time: List[CheckpointRule] = None) -> None:
         """Create checkpoint definitions
 
         Args:
             wallclock_time: checkpoint rules for the wallclock_time trigger.
             simulation_time: checkpoint rules for the simulation_time trigger.
         """
+        if wallclock_time is None:
+            wallclock_time = []
+        if simulation_time is None:
+            simulation_time = []
         self.wallclock_time = wallclock_time
         self.simulation_time = simulation_time
 
@@ -181,20 +146,17 @@ class Checkpoints:
 
         See :meth:`CheckpointRules.update`.
         """
-        if self.wallclock_time is None:
-            self.wallclock_time = overlay.wallclock_time
-        elif overlay.wallclock_time is not None:
-            self.wallclock_time.update(overlay.wallclock_time)
-
-        if self.simulation_time is None:
-            self.simulation_time = overlay.simulation_time
-        elif overlay.simulation_time is not None:
-            self.simulation_time.update(overlay.simulation_time)
+        self.wallclock_time.extend(overlay.wallclock_time)
+        self.simulation_time.extend(overlay.simulation_time)
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        if node.get_attribute("wallclock_time").is_scalar(type(None)):
+        wallclock_time = node.get_attribute("wallclock_time")
+        if wallclock_time.is_scalar(type(None)) or (
+                wallclock_time.is_sequence() and wallclock_time.is_empty()):
             node.remove_attribute("wallclock_time")
 
-        if node.get_attribute("simulation_time").is_scalar(type(None)):
+        simulation_time = node.get_attribute("simulation_time")
+        if simulation_time.is_scalar(type(None)) or (
+                simulation_time.is_sequence() and simulation_time.is_empty()):
             node.remove_attribute("simulation_time")

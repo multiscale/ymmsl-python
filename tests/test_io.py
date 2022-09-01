@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -7,7 +7,7 @@ from yatiml import RecognitionError
 from ymmsl import (
         Configuration, dump, load, save, Model, ModelReference,
         MPICoresResReq, MPINodesResReq, PartialConfiguration, Reference,
-        ThreadedResReq)
+        ThreadedResReq, CheckpointRangeRule)
 
 
 @pytest.fixture
@@ -148,11 +148,11 @@ def test_load_string8(test_yaml8: str) -> None:
     assert isinstance(configuration, PartialConfiguration)
 
     checkpoints = configuration.checkpoints
-    assert checkpoints.wallclock_time is not None
-    assert checkpoints.simulation_time is None
-    assert checkpoints.wallclock_time.every == 600
-    assert checkpoints.wallclock_time.at == []
-    assert checkpoints.wallclock_time.ranges == []
+    assert checkpoints.simulation_time == []
+    assert len(checkpoints.wallclock_time) == 1
+    rule = checkpoints.wallclock_time[0]
+    assert isinstance(rule, CheckpointRangeRule)
+    assert cast(CheckpointRangeRule, rule).every == 600
 
     assert len(configuration.resume) == 2
 

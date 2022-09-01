@@ -4,7 +4,8 @@ from typing import Any, IO, Union
 
 import yatiml
 
-from ymmsl.checkpoint import CheckpointRange, CheckpointRules, Checkpoints
+from ymmsl.checkpoint import (
+        CheckpointRule, CheckpointRangeRule, CheckpointAtRule, Checkpoints)
 from ymmsl.component import Component, Ports
 from ymmsl.configuration import Configuration, PartialConfiguration
 from ymmsl.document import Document
@@ -17,7 +18,8 @@ from ymmsl.model import Conduit, Model, ModelReference
 
 
 _classes = (
-        PartialConfiguration, CheckpointRange, CheckpointRules, Checkpoints,
+        PartialConfiguration, CheckpointRangeRule, CheckpointAtRule,
+        CheckpointRule, Checkpoints,
         Component, Conduit, Configuration, Document, ExecutionModel,
         Identifier, Implementation, ImplementationState, Model, ModelReference,
         MPICoresResReq, MPINodesResReq, Ports, Reference, ResourceRequirements,
