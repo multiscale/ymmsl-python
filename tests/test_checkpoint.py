@@ -1,126 +1,85 @@
+from typing import cast
+
 import pytest
 import yatiml
 
-from ymmsl.checkpoint import CheckpointRange, CheckpointRules
+from ymmsl.checkpoint import (
+        CheckpointRangeRule, CheckpointAtRule, CheckpointRule, Checkpoints)
 
 
 def test_checkpointrange():
-    dumps = yatiml.dumps_function(CheckpointRange)
-    load = yatiml.load_function(CheckpointRange)
+    dumps = yatiml.dumps_function(CheckpointRangeRule)
+    load = yatiml.load_function(CheckpointRangeRule)
 
-    cp_range = CheckpointRange(1)
+    with pytest.raises(ValueError):
+        CheckpointRangeRule()
+
+    cp_range = CheckpointRangeRule(every=1)
     assert cp_range.start is None
     assert cp_range.stop is None
-    assert cp_range.step == 1
+    assert cp_range.every == 1
     cp_range = load(dumps(cp_range))
     assert cp_range.start is None
     assert cp_range.stop is None
-    assert cp_range.step == 1
+    assert cp_range.every == 1
 
-    cp_range = CheckpointRange(start=1, step=2, stop=99)
+    cp_range = CheckpointRangeRule(start=1, stop=99, every=2)
     assert cp_range.start == 1
-    assert cp_range.step == 2
+    assert cp_range.every == 2
     assert cp_range.stop == 99
     cp_range = load(dumps(cp_range))
     assert cp_range.start == 1
-    assert cp_range.step == 2
+    assert cp_range.every == 2
     assert cp_range.stop == 99
 
     with pytest.raises(ValueError):
-        CheckpointRange(step=0)
+        CheckpointRangeRule(every=0)
     with pytest.raises(ValueError):
-        CheckpointRange(step=-1.5)
+        CheckpointRangeRule(every=-1.5)
 
     with pytest.raises(ValueError):
-        CheckpointRange(start=10, stop=9, step=1)
+        CheckpointRangeRule(start=10, stop=9, every=1)
     # start == stop is allowed:
-    CheckpointRange(start=10, stop=10, step=1)
+    CheckpointRangeRule(start=10, stop=10, every=1)
 
 
-def test_checkpointrules():
-    dumps = yatiml.dumps_function(CheckpointRules, CheckpointRange)
-    load = yatiml.load_function(CheckpointRules, CheckpointRange)
-
-    rules = CheckpointRules(every=100)
-    assert rules.every == 100
-    assert rules.at == []
-    assert rules.ranges == []
-    rules = load(dumps(rules))
-    assert rules.every == 100
-    assert rules.at == []
-    assert rules.ranges == []
-
-    rules = CheckpointRules(at=[4, 1, 3])
-    assert rules.at == [1, 3, 4]  # test sorting
-    assert rules.every is None
-    assert rules.ranges == []
-    rules = load(dumps(rules))
-    assert rules.at == [1, 3, 4]
-    assert rules.every is None
-    assert rules.ranges == []
-
-    rules = CheckpointRules(ranges=[
-        CheckpointRange(start=300, stop=500, step=1),
-        CheckpointRange(start=0, stop=100, step=3),
-        CheckpointRange(start=100, stop=300, step=2)])
-    assert rules.every is None
-    assert rules.at == []
-    assert rules.ranges[0].start == 0
-    assert rules.ranges[1].start == 100
-    assert rules.ranges[2].start == 300
-    assert rules.ranges[0].step == 3
-    assert rules.ranges[1].step == 2
-    assert rules.ranges[2].step == 1
-    assert rules.ranges[0].stop == 100
-    assert rules.ranges[1].stop == 300
-    assert rules.ranges[2].stop == 500
-    rules = load(dumps(rules))
-    assert rules.every is None
-    assert rules.at == []
-    assert rules.ranges[0].start == 0
-    assert rules.ranges[1].start == 100
-    assert rules.ranges[2].start == 300
-    assert rules.ranges[0].step == 3
-    assert rules.ranges[1].step == 2
-    assert rules.ranges[2].step == 1
-    assert rules.ranges[0].stop == 100
-    assert rules.ranges[1].stop == 300
-    assert rules.ranges[2].stop == 500
-
-    with pytest.raises(RuntimeError):
-        CheckpointRules(every=1, ranges=[CheckpointRange(10)])
+def test_checkpoints():
+    dumps = yatiml.dumps_function(CheckpointRangeRule)
+    load = yatiml.load_function(CheckpointRangeRule)
 
 
 def test_checkpointrules_update():
-    load = yatiml.load_function(CheckpointRules, CheckpointRange)
-    rules1 = load("every: 300")
-    rules2 = load("at: [10, 20]")
-    rules3 = load("at: [15, 5]")
-    rules4 = load("ranges: [{start: 0, stop: 50, step: 10}]")
-    rules5 = load("ranges: [{start: 50, stop: 100, step: 10}]")
+    load = yatiml.load_function(
+            Checkpoints, CheckpointRangeRule, CheckpointAtRule, CheckpointRule)
+    rule1 = load("simulation_time: [{every: 300}]")
+    rule2 = load("wallclock_time: [{at: [10, 20]}]")
+    rule3 = load("wallclock_time: [{at: [15, 5]}]")
+    rule4 = load("wallclock_time: [{start: 0, stop: 50, every: 10}]")
+    rule5 = load("simulation_time: [{start: 50, stop: 100, every: 10}]")
 
-    rules2.update(rules3)
-    assert rules2.at == [5, 10, 15, 20]
-    assert rules2.every is None
-    assert rules2.ranges == []
+    rule2.update(rule3)
+    assert rule2.simulation_time == []
+    assert len(rule2.wallclock_time) == 2
+    assert isinstance(rule2.wallclock_time[0], CheckpointAtRule)
+    assert isinstance(rule2.wallclock_time[1], CheckpointAtRule)
+    assert cast(CheckpointAtRule, rule2.wallclock_time[0]).at == [10, 20]
+    assert cast(CheckpointAtRule, rule2.wallclock_time[1]).at == [5, 15]
 
-    rules1.update(rules2)
-    assert rules1.every == 300
-    assert rules1.at == [5, 10, 15, 20]
-    assert rules2.ranges == []
+    rule1.update(rule2)
+    assert len(rule1.simulation_time) == 1
+    assert len(rule1.wallclock_time) == 2
 
-    rules1.update(rules5)
-    rules1.update(rules4)
-    assert len(rules1.ranges) == 2
-    assert rules1.ranges[0].start == 0
-    assert rules1.ranges[1].start == 50
+    rule1.update(rule5)
+    rule1.update(rule4)
+    assert len(rule1.wallclock_time) == 3
+    assert len(rule1.simulation_time) == 2
 
 
 def test_checkpointrules_scalar_at():
-    load = yatiml.load_function(CheckpointRules)
+    load = yatiml.load_function(CheckpointAtRule)
 
-    rules = load("at: 5")
-    assert rules.at == [5]
+    rule = load("at: 5")
+    assert rule.at == [5]
 
-    rules = load("at: 1e-12")
-    assert rules.at == [1e-12]
+    rule = load("at: 1e-12")
+    assert rule.at == [1e-12]

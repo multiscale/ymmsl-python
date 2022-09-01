@@ -5,7 +5,7 @@ import pytest
 
 from ymmsl import (
         Component, Conduit, Configuration, ExecutionModel, Implementation,
-        CheckpointRange, CheckpointRules, Checkpoints, ImplementationState,
+        CheckpointRangeRule, CheckpointAtRule, Checkpoints, ImplementationState,
         Model, ModelReference, MPICoresResReq, MPINodesResReq,
         PartialConfiguration, Ports, Reference, Settings, ThreadedResReq)
 
@@ -113,18 +113,17 @@ def test_yaml4() -> str:
             '  this workflow\n'
             'checkpoints:\n'
             '  wallclock_time:\n'
-            '    every: 100\n'
-            '    at:\n'
+            '  - every: 100\n'
+            '  - at:\n'
             '    - 10\n'
             '    - 20\n'
             '    - 50\n'
             '  simulation_time:\n'
-            '    ranges:\n'
-            '    - step: 2\n'
-            '      start: 0\n'
-            '      stop: 10\n'
-            '    - step: 5\n'
-            '      start: 10\n'
+            '  - start: 0\n'
+            '    stop: 10\n'
+            '    every: 2\n'
+            '  - start: 10\n'
+            '    every: 5\n'
             'resume:\n'
             '  ic: /path/to/snapshots/ic.pack\n'
             '  smc: /path/to/snapshots/smc.pack\n'
@@ -155,10 +154,10 @@ def test_config4() -> PartialConfiguration:
             ThreadedResReq(Reference('bf2smc'), 1)]
     description = "Multiline description for\nthis workflow"
     checkpoints = Checkpoints(
-            CheckpointRules(every=100, at=[10,20,50]),
-            CheckpointRules(ranges=[
-                    CheckpointRange(start=0, stop=10, step=2),
-                    CheckpointRange(start=10, step=5)]))
+            [CheckpointRangeRule(every=100),
+             CheckpointAtRule([10,20,50])],
+            [CheckpointRangeRule(start=0, stop=10, every=2),
+             CheckpointRangeRule(start=10, every=5)])
     resume = {'ic': Path('/path/to/snapshots/ic.pack'),
               'smc': Path('/path/to/snapshots/smc.pack'),
               'bf': Path('/path/to/snapshots/bf.pack'),
@@ -436,7 +435,7 @@ def test_yaml8() -> str:
             '  - wallclock_time >= 1800\n'
             'checkpoints:\n'
             '  wallclock_time:\n'
-            '    every: 600\n'
+            '  - every: 600\n'
             'resume:\n'
             '  macro: macro.pack\n'
             '  micro1: micro1.pack\n')
@@ -481,7 +480,7 @@ def test_config8() -> Configuration:
                    'Snapshot triggers:\n'
                    '- wallclock_time >= 1800')
 
-    checkpoints = Checkpoints(wallclock_time=CheckpointRules(every=600))
+    checkpoints = Checkpoints(wallclock_time=[CheckpointRangeRule(every=600)])
 
     resume = {
             'macro': Path('macro.pack'),

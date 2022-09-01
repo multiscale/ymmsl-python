@@ -172,8 +172,8 @@ def test_configuration_update_checkpoint(
     overlay = PartialConfiguration(checkpoints=Checkpoints(
             simulation_time=test_config4.checkpoints.simulation_time))
 
-    assert base.checkpoints.simulation_time is None
-    assert overlay.checkpoints.wallclock_time is None
+    assert base.checkpoints.simulation_time == []
+    assert overlay.checkpoints.wallclock_time == []
 
     base.update(overlay)
     assert (base.checkpoints.simulation_time
