@@ -102,7 +102,8 @@ class Implementation:
         script: A script that starts the implementation
         can_share_resources: Whether this implementation can share
             resources (cores) with other components or not
-        state: Is this implementation stateful
+        stateful: Is this implementation stateful, see
+            :class:`ImplementationState`
         supports_checkpoint: Does this implementation support the checkpointing
             API
     """
@@ -118,7 +119,7 @@ class Implementation:
             args: Union[str, List[str], None] = None,
             script: Union[str, List[str], None] = None,
             can_share_resources: bool = True,
-            state: ImplementationState = ImplementationState.STATEFUL,
+            stateful: ImplementationState = ImplementationState.STATEFUL,
             supports_checkpoint: bool = False
             ) -> None:
         """Create an Implementation description.
@@ -146,7 +147,8 @@ class Implementation:
             can_share_resources: Whether this implementation can share
                     resources (cores) with other components or not.
                     See above.
-            state: Is this implementation stateful
+            stateful: Is this implementation stateful, see
+                :class:`ImplementationState`
             supports_checkpoint: Does this implementation support the
                 checkpointing API
         """
@@ -198,7 +200,7 @@ class Implementation:
             self.args = args
 
         self.can_share_resources = can_share_resources
-        self.state = state
+        self.stateful = stateful
         self.supports_checkpoint = supports_checkpoint
 
     @classmethod
@@ -221,7 +223,7 @@ class Implementation:
                         if value_node.tag == 'tag:yaml.org,2002:bool':
                             value_node.tag = 'tag:yaml.org,2002:str'
 
-    _yatiml_defaults = {'execution_model': 'direct', 'state': 'stateful'}
+    _yatiml_defaults = {'execution_model': 'direct', 'stateful': 'stateful'}
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:

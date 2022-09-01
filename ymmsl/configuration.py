@@ -373,13 +373,13 @@ class Configuration(PartialConfiguration):
                         ' specify a number of mpi processes.').format(comp))
 
             if (is_resuming
-                    and impl.state is ImplementationState.STATEFUL
+                    and impl.stateful is ImplementationState.STATEFUL
                     and comp.name not in self.resume):
                 raise RuntimeError((
                         'Model component {} is missing a resume definition'
                         ).format(comp))
             if (must_support_checkpoints
-                    and impl.state is ImplementationState.STATEFUL
+                    and impl.stateful is ImplementationState.STATEFUL
                     and not impl.supports_checkpoint):
                 raise RuntimeError((
                         'Model component {}\'s implementation does not support'
@@ -390,7 +390,7 @@ class Configuration(PartialConfiguration):
                         ' this implementation has no internal state that needs'
                         ' saving in a checkpoint.').format(comp))
             if (must_support_checkpoints
-                    and impl.state is ImplementationState.WEAKLY_STATEFUL
+                    and impl.stateful is ImplementationState.WEAKLY_STATEFUL
                     and not impl.supports_checkpoint):
                 _logger.warning((
                         'Model component {}\'s implementation is weakly'
