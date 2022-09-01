@@ -159,11 +159,11 @@ def test_config4() -> PartialConfiguration:
             CheckpointRules(ranges=[
                     CheckpointRange(start=0, stop=10, step=2),
                     CheckpointRange(start=10, step=5)]))
-    resume = {'ic': '/path/to/snapshots/ic.pack',
-              'smc': '/path/to/snapshots/smc.pack',
-              'bf': '/path/to/snapshots/bf.pack',
-              'smc2bf': '/path/to/snapshots/smc2bf.pack',
-              'bf2smc': '/path/to/snapshots/bf2smc.pack'}
+    resume = {'ic': Path('/path/to/snapshots/ic.pack'),
+              'smc': Path('/path/to/snapshots/smc.pack'),
+              'bf': Path('/path/to/snapshots/bf.pack'),
+              'smc2bf': Path('/path/to/snapshots/smc2bf.pack'),
+              'bf2smc': Path('/path/to/snapshots/bf2smc.pack')}
 
     return PartialConfiguration(None, None, implementations, resources,
                                 description, checkpoints, resume)
@@ -483,8 +483,8 @@ def test_config8() -> Configuration:
     checkpoints = Checkpoints(wallclock_time=CheckpointRules(every=600))
 
     resume = {
-            'macro': 'macro.pack',
-            'micro1': 'micro1.pack'}
+            'macro': Path('macro.pack'),
+            'micro1': Path('micro1.pack')}
 
     return Configuration(model, None, implementations, resources,
             description, checkpoints, resume)

@@ -2,6 +2,7 @@
 from collections import OrderedDict
 import collections.abc as abc
 import logging
+from pathlib import Path
 from typing import (
         Dict, List, MutableMapping, Optional, Sequence, Union, cast)
 
@@ -55,7 +56,7 @@ class PartialConfiguration(Document):
                      MutableMapping[Reference, ResourceRequirements]]] = None,
                  description: Optional[str] = None,
                  checkpoints: Optional[Checkpoints] = None,
-                 resume: Optional[Dict[Reference, str]] = None
+                 resume: Optional[Dict[Reference, Path]] = None
                  ) -> None:
         """Create a Configuration.
 
@@ -107,7 +108,7 @@ class PartialConfiguration(Document):
             self.checkpoints = checkpoints
 
         if resume is None:
-            self.resume = dict()    # type: Dict[Reference, str]
+            self.resume = dict()    # type: Dict[Reference, Path]
         else:
             self.resume = resume
 
@@ -270,7 +271,7 @@ class Configuration(PartialConfiguration):
                      MutableMapping[Reference, ResourceRequirements]] = [],
                  description: Optional[str] = None,
                  checkpoints: Optional[Checkpoints] = None,
-                 resume: Optional[Dict[Reference, str]] = None
+                 resume: Optional[Dict[Reference, Path]] = None
                  ) -> None:
         """Create a Configuration.
 
@@ -324,7 +325,7 @@ class Configuration(PartialConfiguration):
             self.checkpoints = checkpoints
 
         if resume is None:
-            self.resume = dict()    # type: Dict[Reference, str]
+            self.resume = dict()    # type: Dict[Reference, Path]
         else:
             self.resume = resume
 
