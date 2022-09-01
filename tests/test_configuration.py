@@ -181,23 +181,23 @@ def test_configuration_update_checkpoint(
 
 
 def test_configuration_update_resume() -> None:
-    base = PartialConfiguration(resume={'a': 'a'})
-    overlay = PartialConfiguration(resume={'b': 'b'})
+    base = PartialConfiguration(resume={'a': Path('a')})
+    overlay = PartialConfiguration(resume={'b': Path('b')})
 
     base.update(overlay)
     assert len(base.resume) == 2
-    assert base.resume['a'] == 'a'
-    assert base.resume['b'] == 'b'
+    assert base.resume['a'] == Path('a')
+    assert base.resume['b'] == Path('b')
 
 
 def test_configuration_update_resume_override() -> None:
-    base = PartialConfiguration(resume={'a': 'a', 'b': 'b'})
-    overlay = PartialConfiguration(resume={'b': 'b_update'})
+    base = PartialConfiguration(resume={'a': Path('a'), 'b': Path('b')})
+    overlay = PartialConfiguration(resume={'b': Path('b_update')})
 
     base.update(overlay)
     assert len(base.resume) == 2
-    assert base.resume['a'] == 'a'
-    assert base.resume['b'] == 'b_update'
+    assert base.resume['a'] == Path('a')
+    assert base.resume['b'] == Path('b_update')
 
 
 def test_as_configuration(
