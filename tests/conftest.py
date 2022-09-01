@@ -418,11 +418,11 @@ def test_yaml8() -> str:
             '    executable: python\n'
             '    args:\n'
             '    - micro1.py\n'
-            '    state: weakly_stateful\n'
+            '    stateful: weakly_stateful\n'
             '    supports_checkpoint: true\n'
             '  micro2_fortran:\n'
             '    executable: bin/micro2\n'
-            '    state: stateless\n'
+            '    stateful: stateless\n'
             'resources:\n'
             '  macro:\n'
             '    threads: 1\n'
@@ -465,11 +465,12 @@ def test_config8() -> Configuration:
             Implementation(Reference('macro_python'), executable='python',
                     args='macro.py', supports_checkpoint=True),
             Implementation(Reference('micro1_python'), executable='python',
-                    args='micro1.py', state=ImplementationState.WEAKLY_STATEFUL,
+                    args='micro1.py',
+                    stateful=ImplementationState.WEAKLY_STATEFUL,
                     supports_checkpoint=True),
             Implementation(Reference('micro2_fortran'),
                     executable='bin/micro2',
-                    state=ImplementationState.STATELESS)]
+                    stateful=ImplementationState.STATELESS)]
 
     resources = [
             ThreadedResReq(Reference('macro'), 1),

@@ -257,7 +257,7 @@ def test_check_consistent_checkpoints(test_config8: Configuration) -> None:
     impl_micro1.supports_checkpoint = False
     test_config8.check_consistent()
 
-    impl_micro1.state = ImplementationState.STATEFUL
+    impl_micro1.stateful = ImplementationState.STATEFUL
     with pytest.raises(RuntimeError):
         test_config8.check_consistent()
 
