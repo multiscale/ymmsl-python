@@ -289,45 +289,12 @@ class Configuration(PartialConfiguration):
             resume: What snapshot each component should resume from
 
         """
-        # mypy doesn't get it when we call super().__init__ here, so
-        # it's duplicated.
-        self.model = model  # type: Model
-
-        if settings is None:
-            self.settings = Settings()
-        else:
-            self.settings = settings
-
-        if implementations is None:
-            self.implementations = dict()   # type: _ImplType
-        elif isinstance(implementations, list):
-            self.implementations = OrderedDict([
-                (impl.name, impl) for impl in implementations])
-        else:
-            self.implementations = implementations
-
-        if resources is None:
-            self.resources = dict()     # type: _ResType
-        elif isinstance(resources, abc.Sequence):
-            self.resources = OrderedDict([
-                (res.name, res) for res in resources])
-        else:
-            self.resources = resources
-
-        if description is None:
-            self.description = ''
-        else:
-            self.description = description
-
-        if checkpoints is None:
-            self.checkpoints = Checkpoints()
-        else:
-            self.checkpoints = checkpoints
-
-        if resume is None:
-            self.resume = dict()    # type: Dict[Reference, Path]
-        else:
-            self.resume = resume
+        # Make mypy recognize that, unlike PartialConfiguration.model,
+        # Configuration.model always has type Model
+        self.model: Model
+        super().__init__(
+                model, settings, implementations, resources, description,
+                checkpoints, resume)
 
     def check_consistent(self) -> None:
         """Checks that the configuration is internally consistent.
