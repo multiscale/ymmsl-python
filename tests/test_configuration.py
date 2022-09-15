@@ -265,6 +265,21 @@ def test_check_consistent_checkpoints(test_config8: Configuration) -> None:
     test_config8.check_consistent()
 
 
+def test_check_consistent_checkpoints_multiplicity(
+        test_config8: Configuration) -> None:
+    test_config8.check_consistent()
+
+    assert test_config8.model.components[0].name == 'macro'
+    test_config8.model.components[0].multiplicity = [2]
+    with pytest.raises(RuntimeError):
+        test_config8.check_consistent()
+
+    del test_config8.resume['macro']
+    test_config8.resume['macro[0]'] = 'macro_0.pack'
+    test_config8.resume['macro[1]'] = 'macro_1.pack'
+    test_config8.check_consistent()
+
+
 def test_load_nil_settings() -> None:
     text = (
             'ymmsl_version: v0.1\n'

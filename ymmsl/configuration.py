@@ -340,11 +340,12 @@ class Configuration(PartialConfiguration):
                         ' specify a number of mpi processes.').format(comp))
 
             if (is_resuming
-                    and impl.stateful is ImplementationState.STATEFUL
-                    and comp.name not in self.resume):
-                raise RuntimeError((
-                        'Model component {} is missing a resume definition'
-                        ).format(comp))
+                    and impl.stateful is ImplementationState.STATEFUL):
+                for instance in comp.instances():
+                    if instance not in self.resume:
+                        raise RuntimeError((
+                                'Model instance {} is missing a resume'
+                                ' definition').format(instance))
             if (must_support_checkpoints
                     and impl.stateful is ImplementationState.STATEFUL
                     and not impl.supports_checkpoint):
