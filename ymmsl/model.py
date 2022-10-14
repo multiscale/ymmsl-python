@@ -296,6 +296,7 @@ class Model(ModelReference):
                         pass
             return False
 
+        receivers_seen = set()
         for conduit in self.conduits:
             scomp = conduit.sending_component()
             if not component_exists(scomp):
@@ -322,6 +323,12 @@ class Model(ModelReference):
                         'Invalid conduit "{}": component "{}" does not'
                         ' have a receiving port "{}"'.format(
                             conduit, rcomp, rport))
+
+            if conduit.receiver in receivers_seen:
+                raise RuntimeError(
+                        'Receiving port "{}" is connected by multiple'
+                        ' conduits.'.format(conduit.receiver))
+            receivers_seen.add(conduit.receiver)
 
     def conduits_for_export(self) -> List[AnyConduit]:
         cond_dct = OrderedDict()  # type: OrderedDict[Reference, List[Conduit]]
