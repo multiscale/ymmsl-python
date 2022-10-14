@@ -12,14 +12,14 @@ from ymmsl.execution import (
         MPINodesResReq, ThreadedResReq)
 from ymmsl.settings import Settings
 from ymmsl.identity import Identifier, Reference
-from ymmsl.model import Conduit, Model, ModelReference
+from ymmsl.model import Conduit, MulticastConduit, Model, ModelReference
 
 
 _classes = (
         PartialConfiguration, Component, Conduit, Configuration, Document,
         ExecutionModel, Identifier, Implementation, Model, ModelReference,
         MPICoresResReq, MPINodesResReq, Ports, Reference, ResourceRequirements,
-        Settings, ThreadedResReq)
+        Settings, ThreadedResReq, MulticastConduit)
 
 
 _load = yatiml.load_function(*_classes)

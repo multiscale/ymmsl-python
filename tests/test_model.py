@@ -5,18 +5,20 @@ import yatiml
 
 from ymmsl import (Component, Conduit, Identifier, Model, ModelReference,
                    Ports, Reference)
-
+from ymmsl.model import MulticastConduit
 
 @pytest.fixture
 def load_model() -> Callable:
     return yatiml.load_function(
-            Model, Component, Conduit, Identifier, Ports, Reference)
+            Model, Component, Conduit, Identifier, Ports, Reference,
+            MulticastConduit)
 
 
 @pytest.fixture
 def dump_model() -> Callable:
     return yatiml.dumps_function(
-            Component, Conduit, Identifier, Model, Ports, Reference)
+            Component, Conduit, Identifier, Model, Ports, Reference,
+            MulticastConduit)
 
 
 @pytest.fixture
@@ -77,7 +79,7 @@ def test_conduit() -> None:
 def test_load_model_reference() -> None:
     load = yatiml.load_function(
             ModelReference, Component, Conduit, Identifier, Model,
-            ModelReference, Reference)
+            MulticastConduit, Reference)
 
     text = 'name: test_model\n'
     model = load(text)
