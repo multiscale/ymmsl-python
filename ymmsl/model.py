@@ -137,8 +137,23 @@ class Conduit:
 
 
 class MulticastConduit:
+    """Multicast conduits connect multiple input ports to a single output port.
+
+    In yMMSL they are expressed as a mapping:
+
+    .. code-block:: yaml
+
+        sender.port:
+        - receiver1.port
+        - receiver2.port
+
+    This class is only used in the parsing and storing of the yMMSL file.
+    Once parsed and populated in :class:`Model`, a multicast is identified by
+    two or more conduits with the same :attr:`Conduit.sender`.
+    """
+
     def __init__(self, sender: str, receiver: List[str]) -> None:
-        """Create a Conduit.
+        """Create a Multicast Conduit.
 
         Args:
             sender: The sending component and port, as a Reference.
@@ -153,6 +168,11 @@ class MulticastConduit:
         self._conduits = [Conduit(sender, recv) for recv in receiver]
 
     def as_conduits(self) -> List[Conduit]:
+        """Retrieve the conduits that are part of this multicast conduit.
+
+        Returns:
+            A list of conduits, one conduit for each receiver.
+        """
         return self._conduits
 
 
@@ -204,7 +224,6 @@ class Model(ModelReference):
             name: Name of this model.
             components: A list of components making up the model.
             conduits: A list of conduits connecting the components.
-
         """
         super().__init__(name)
         self.components = components
@@ -225,9 +244,9 @@ class Model(ModelReference):
         are overwritten if they have the same name as an existing
         argument or else added.
 
-        Conduits are added. If a conduit was already connected to one
-        of the endpoints of a conduit in the overlay, the old conduit
-        is removed.
+        Conduits are added. If a receiving conduit was already connected, the
+        old conduit is removed. If a sending conduit was already connected, the
+        new conduit is added and the sending port acts as a multicast port.
 
         Args:
             overlay: A Model definition to overlay on top of this one.
@@ -330,7 +349,12 @@ class Model(ModelReference):
                         ' conduits.'.format(conduit.receiver))
             receivers_seen.add(conduit.receiver)
 
-    def conduits_for_export(self) -> List[AnyConduit]:
+    def __conduits_for_export(self) -> List[AnyConduit]:
+        """Process conduits and identify MulticastConduits for exporting.
+
+        Returns:
+            A list of Conduits and MulticastConduits.
+        """
         cond_dct = OrderedDict()  # type: OrderedDict[Reference, List[Conduit]]
         for conduit in self.conduits:
             cond_dct.setdefault(conduit.sender, []).append(conduit)
@@ -348,7 +372,7 @@ class Model(ModelReference):
         return OrderedDict([
             ('name', self.name),
             ('components', self.components),
-            ('conduits', self.conduits_for_export())])
+            ('conduits', self.__conduits_for_export())])
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
