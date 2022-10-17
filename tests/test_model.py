@@ -4,7 +4,7 @@ import pytest
 import yatiml
 
 from ymmsl import (Component, Conduit, Identifier, Model, ModelReference,
-                   Ports, Reference)
+                   Ports, Reference, load, dump)
 from ymmsl.model import MulticastConduit
 
 @pytest.fixture
@@ -215,6 +215,52 @@ def test_model_update_set_implementation() -> None:
     assert base.components[0].implementation == 'reaction_python'
 
 
+def test_model_multicast() -> None:
+    config_txt = """ymmsl_version: v0.1
+
+model:
+  name: multicast
+  components:
+    sender: sender
+    receiver: receiver
+    receiver1: receiver
+    receiver2: receiver
+  conduits:
+    sender.port: receiver.port
+    sender.multicast:
+    - receiver1.port
+    - receiver2.port"""
+
+    config = load(config_txt)
+    assert len(config.model.conduits) == 3
+    assert config.model.conduits[0].sender == "sender.port"
+    assert config.model.conduits[1].sender == "sender.multicast"
+    assert config.model.conduits[1].receiver == "receiver1.port"
+    assert config.model.conduits[2].sender == "sender.multicast"
+    assert config.model.conduits[2].receiver == "receiver2.port"
+
+    model_overlay = Model('multicast', [],
+            [Conduit("sender.port", "receiver2.port")])
+    config.model.update(model_overlay)
+    assert len(config.model.conduits) == 3
+
+    updated_config_txt = dump(config)
+    assert updated_config_txt == """ymmsl_version: v0.1
+model:
+  name: multicast
+  components:
+    sender: sender
+    receiver: receiver
+    receiver1: receiver
+    receiver2: receiver
+  conduits:
+    sender.port:
+    - receiver.port
+    - receiver2.port
+    sender.multicast: receiver1.port
+"""
+
+
 def test_model_check_consistent1(macro_micro: Model) -> None:
     macro_micro.check_consistent()
 
@@ -245,6 +291,13 @@ def test_model_check_consistent5(macro_micro: Model) -> None:
 
 def test_model_check_consistent6(macro_micro: Model) -> None:
     macro_micro.conduits[0].receiver = Reference('micro.final_state')
+    with pytest.raises(RuntimeError):
+        macro_micro.check_consistent()
+
+
+def test_model_check_consistent7(macro_micro: Model) -> None:
+    conduit = Conduit('macro.intermediate_state', 'micro.initial_state')
+    macro_micro.conduits.append(conduit)
     with pytest.raises(RuntimeError):
         macro_micro.check_consistent()
 
