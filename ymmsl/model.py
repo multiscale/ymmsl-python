@@ -161,7 +161,7 @@ class MulticastConduit:
                     References.
         """
         self.sender = sender
-        # note: atrribute must be called receiver to transparently work with
+        # note: attribute must be called receiver to transparently work with
         # seq_attribute_to_map and map_attribute_to_seq in
         # Model._yatiml_savorize and Model._yatiml_sweeten
         self.receiver = receiver
@@ -244,8 +244,8 @@ class Model(ModelReference):
         are overwritten if they have the same name as an existing
         argument or else added.
 
-        Conduits are added. If a receiving conduit was already connected, the
-        old conduit is removed. If a sending conduit was already connected, the
+        Conduits are added. If a receiving port was already connected, the
+        old conduit is removed. If a sending port was already connected, the
         new conduit is added and the sending port acts as a multicast port.
 
         Args:
