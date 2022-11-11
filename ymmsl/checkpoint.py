@@ -154,10 +154,11 @@ class Checkpoints:
     def update(self, overlay: 'Checkpoints') -> None:
         """Update this checkpoints with the given overlay.
 
-        Overwrites the `at_end` definition and updates the checkpoint rules for
-        wallclock time and simulation time. See :meth:`CheckpointRules.update`.
+        Sets `at_end` to True if it is set in the overlay, otherwise `at_end`
+        remains as is. Updates the checkpoint rules for wallclock time and
+        simulation time. See :meth:`CheckpointRules.update`.
         """
-        self.at_end = overlay.at_end
+        self.at_end |= overlay.at_end
         self.wallclock_time.extend(overlay.wallclock_time)
         self.simulation_time.extend(overlay.simulation_time)
 
