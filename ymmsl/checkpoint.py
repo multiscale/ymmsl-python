@@ -128,8 +128,9 @@ class Checkpoints:
     """
     def __init__(self,
                  at_end: bool = False,
-                 wallclock_time: List[CheckpointRule] = None,
-                 simulation_time: List[CheckpointRule] = None) -> None:
+                 wallclock_time: Optional[List[CheckpointRule]] = None,
+                 simulation_time: Optional[List[CheckpointRule]] = None
+                 ) -> None:
         """Create checkpoint definitions.
 
         Args:
