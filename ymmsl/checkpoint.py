@@ -10,26 +10,28 @@ class CheckpointRule:
     """Defines a checkpoint rule.
 
     There are two flavors of rules: :class:`CheckpointRangeRule` and
-    :class:`CheckpointAtRule`.
+    :class:`CheckpointAtRule`. Do not use this class directly.
     """
 
 
 class CheckpointRangeRule(CheckpointRule):
     """Defines a range of checkpoint moments.
 
-    Equivalent to an "at" rule ``[start, start + every, start + 2*every, ...]``
-    for as long as ``start + i*every <= stop``.
+    If ``start`` is supplied, this rule specifies a checkpoint at: ``start``,
+    ``start + every``, ``start + 2*every``, etc., for as long as
+    ``start + n*every <= stop``, with ``n`` a whole number. If stop is not
+    given, the range continues indefinitely.
 
-    Stop may be omitted, in which case the range is infinite.
-
-    Start may be omitted, in which case the range is equivalent to an "at" rule
-    ``[..., -n*every, ..., -every, 0, every, 2*every, ...]`` for as long as
-    ``i*every <= stop``.
+    Start may be omitted, in which case a checkpoint is defined for ``0``,
+    ``every``, ``2*every``, etc. Note that in this case the range also extends
+    to negative numbers (``-every``, ``-2*every``, etc.), as simulated time may
+    be negative (e.g. in rocket launch, ``t=0`` is generally taken as lift-off
+    time, but events already take place before that moment).
 
     Attributes:
-        start: start of the range (or None if omitted)
-        stop: stopping criterium of the range (or None if omitted)
-        every: step size of the range
+        start: Start of the range.
+        stop: Stopping criterium of the range.
+        every: Step size of the range, must be positive.
     """
 
     def __init__(self,
@@ -39,17 +41,17 @@ class CheckpointRangeRule(CheckpointRule):
         """Create a checkpoint range.
 
         Args:
-            start: start of the range. Defaults to None.
-            stop: stop criterium of the range. Defaults to None.
-            every: step size, must be larger than 0.
+            start: Start of the range. Defaults to None.
+            stop: Stop criterium of the range. Defaults to None.
+            every: Step size, must be larger than 0.
         """
         if every <= 0:
             raise ValueError(f"Invalid every {every} in checkpoint range:"
-                             " must be larger than 0")
+                             " must be larger than 0.")
         if start is not None and stop is not None and start > stop:
             raise ValueError(f"Invalid start {start} and stop {stop} in"
                              "checkpoint range: stop cannot be smaller than"
-                             " start")
+                             " start.")
         self.start = start
         self.stop = stop
         self.every = every
@@ -73,14 +75,14 @@ class CheckpointAtRule(CheckpointRule):
     An "at" checkpoint rule creates a snapshot at the specified moments.
 
     Attributes:
-        at: list of checkpoints
+        at: List of checkpoints.
     """
 
     def __init__(self, at: Optional[List[Union[float, int]]]) -> None:
         """Create checkpoint rules.
 
         Args:
-            at: list of checkpoints. Defaults to None.
+            at: List of checkpoints. Defaults to None.
         """
         if at is None:
             at = []
@@ -108,28 +110,31 @@ class CheckpointAtRule(CheckpointRule):
 class Checkpoints:
     """Defines checkpoints in a configuration.
 
-    There exist two checkpoint triggers: `wallclock_time` and
-    `simulation_time`. The `wallclock_time` trigger is based on the elapsed
-    real time since starting the muscle_manager in seconds. The
-    `simulation_time` trigger is based on the time in the simulation as
-    reported by the instances.
+    There are three checkpoint triggers: `at_end`, `wallclock_time` and
+    `simulation_time`. The `at_end` trigger specifies that a checkpoint should
+    be created just before the workflow finishes. The `wallclock_time` trigger
+    is based on the elapsed real time since starting the muscle_manager in
+    seconds. The `simulation_time` trigger is based on the time in the
+    simulation as reported by the instances.
 
     Note that the `simulation_time` trigger assumes a shared concept of time
     among all components of the model.
 
     Attributes:
-        wallclock_time: checkpoint rules for the wallclock_time trigger
-        simulation_time: checkpoint rules for the simulation_time trigger
+        at_end: Whether a checkpoint should be created just before ending the
+            workflow.
+        wallclock_time: Checkpoint rules for the wallclock_time trigger.
+        simulation_time: Checkpoint rules for the simulation_time trigger.
     """
     def __init__(self,
                  at_end: bool = False,
                  wallclock_time: List[CheckpointRule] = None,
                  simulation_time: List[CheckpointRule] = None) -> None:
-        """Create checkpoint definitions
+        """Create checkpoint definitions.
 
         Args:
-            wallclock_time: checkpoint rules for the wallclock_time trigger.
-            simulation_time: checkpoint rules for the simulation_time trigger.
+            wallclock_time: Checkpoint rules for the wallclock_time trigger.
+            simulation_time: Checkpoint rules for the simulation_time trigger.
         """
         self.at_end = at_end
         if wallclock_time is None:
@@ -140,14 +145,18 @@ class Checkpoints:
         self.simulation_time = simulation_time
 
     def __bool__(self) -> bool:
-        """Evaluate to true iff any rules are defined"""
-        return bool(self.wallclock_time) or bool(self.simulation_time)
+        """Evaluate to true iff any rules are defined."""
+        return (self.at_end or
+                bool(self.wallclock_time) or
+                bool(self.simulation_time))
 
     def update(self, overlay: 'Checkpoints') -> None:
         """Update this checkpoints with the given overlay.
 
-        See :meth:`CheckpointRules.update`.
+        Overwrites the `at_end` definition and updates the checkpoint rules for
+        wallclock time and simulation time. See :meth:`CheckpointRules.update`.
         """
+        self.at_end = overlay.at_end
         self.wallclock_time.extend(overlay.wallclock_time)
         self.simulation_time.extend(overlay.simulation_time)
 
