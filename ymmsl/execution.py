@@ -10,12 +10,16 @@ from ymmsl.identity import Reference
 
 
 class ImplementationState(Enum):
-    """Describes whether an implementation has internal state"""
-    STATELESS = 1
-    """The implementation has no internal state."""
-    STATEFUL = 2
+    """Describes whether an implementation has internal state.
+
+    See also :ref:`Implementation state`.
+    """
+
+    STATEFUL = 1
     """The implementation has an internal state that is required for continuing
     the implementation."""
+    STATELESS = 2
+    """The implementation has no internal state."""
     WEAKLY_STATEFUL = 3
     """The implementation has an internal state, which can be regenerated.
     However, doing so may be expensive."""
