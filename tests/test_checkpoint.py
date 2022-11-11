@@ -56,6 +56,7 @@ def test_checkpointrules_update():
     rule3 = load("wallclock_time: [{at: [15, 5]}]")
     rule4 = load("wallclock_time: [{start: 0, stop: 50, every: 10}]")
     rule5 = load("simulation_time: [{start: 50, stop: 100, every: 10}]")
+    rule6 = load("at_end: true")
 
     rule2.update(rule3)
     assert rule2.simulation_time == []
@@ -69,10 +70,15 @@ def test_checkpointrules_update():
     assert len(rule1.simulation_time) == 1
     assert len(rule1.wallclock_time) == 2
 
+    assert rule1.at_end is False
+    rule1.update(rule6)
+    assert rule1.at_end is True
+
     rule1.update(rule5)
     rule1.update(rule4)
     assert len(rule1.wallclock_time) == 3
     assert len(rule1.simulation_time) == 2
+    assert rule1.at_end is True
 
 
 def test_checkpointrules_scalar_at():
