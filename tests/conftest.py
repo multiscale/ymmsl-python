@@ -112,6 +112,7 @@ def test_yaml4() -> str:
             '  Multiline description for\n'
             '  this workflow\n'
             'checkpoints:\n'
+            '  at_end: true\n'
             '  wallclock_time:\n'
             '  - every: 100\n'
             '  - at:\n'
@@ -154,8 +155,9 @@ def test_config4() -> PartialConfiguration:
             ThreadedResReq(Reference('bf2smc'), 1)]
     description = "Multiline description for\nthis workflow"
     checkpoints = Checkpoints(
+            True,
             [CheckpointRangeRule(every=100),
-             CheckpointAtRule([10,20,50])],
+             CheckpointAtRule([10, 20, 50])],
             [CheckpointRangeRule(start=0, stop=10, every=2),
              CheckpointRangeRule(start=10, every=5)])
     resume = {'ic': Path('/path/to/snapshots/ic.pack'),
