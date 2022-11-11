@@ -76,6 +76,8 @@ def test_load_string4(test_yaml4: str) -> None:
     assert isinstance(bf2smc_res, ThreadedResReq)
     assert bf2smc_res.threads == 1
 
+    assert configuration.checkpoints.at_end
+
 
 def test_load_string5(test_yaml5: str) -> None:
     configuration = load(test_yaml5)

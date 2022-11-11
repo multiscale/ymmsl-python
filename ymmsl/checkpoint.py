@@ -122,6 +122,7 @@ class Checkpoints:
         simulation_time: checkpoint rules for the simulation_time trigger
     """
     def __init__(self,
+                 at_end: bool = False,
                  wallclock_time: List[CheckpointRule] = None,
                  simulation_time: List[CheckpointRule] = None) -> None:
         """Create checkpoint definitions
@@ -130,6 +131,7 @@ class Checkpoints:
             wallclock_time: checkpoint rules for the wallclock_time trigger.
             simulation_time: checkpoint rules for the simulation_time trigger.
         """
+        self.at_end = at_end
         if wallclock_time is None:
             wallclock_time = []
         if simulation_time is None:
@@ -151,6 +153,9 @@ class Checkpoints:
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        if not node.get_attribute("at_end").get_value():
+            node.remove_attribute("at_end")
+
         wallclock_time = node.get_attribute("wallclock_time")
         if wallclock_time.is_scalar(type(None)) or (
                 wallclock_time.is_sequence() and wallclock_time.is_empty()):
