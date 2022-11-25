@@ -2,7 +2,8 @@
 from collections import OrderedDict
 from enum import Enum
 import logging
-from typing import Dict, Iterable, List, Optional, Union
+from typing import Dict     # noqa: F401
+from typing import Iterable, List, Optional, Union
 
 import ruamel.yaml as yaml
 import yatiml

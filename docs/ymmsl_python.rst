@@ -189,6 +189,38 @@ interpret these fields, e.g. to extract the component and port name parts.
 Note that the format allows specifying a slot here, but this is currently not
 supported and illegal in MUSCLE3.
 
+Multicast conduits
+^^^^^^^^^^^^^^^^^^
+
+In yMMSL you can specify that an output port is connected to multiple input
+ports. When a message is sent on the output port, it is copied and delivered to
+all connected input ports. This is called multicast and is expressed as
+follows:
+
+.. code-block:: yaml
+    :caption: Specifying multicast in yMMSL
+
+    conduits:
+      sender.port:
+      - receiver1.port
+      - receiver2.port
+
+This multicast conduit is converted to a a list of conduits sharing the same
+sender:
+
+.. code-block:: python
+    :caption: Multicast conduits in python code
+
+    from pathlib import Path
+    import ymmsl
+
+    config = ymmsl.load(Path('multicast.ymmsl'))
+
+    conduits = config.model.conduits
+    print(len(conduits))    # output: 2
+    print(conduits[0])      # output: Conduit(sender.port -> receiver1.port)
+    print(conduits[1])      # output: Conduit(sender.port -> receiver2.port)
+
 Settings
 --------
 
