@@ -414,13 +414,11 @@ def test_yaml8() -> str:
             '    executable: python\n'
             '    args:\n'
             '    - macro.py\n'
-            '    supports_checkpoint: true\n'
             '  micro1_python:\n'
             '    executable: python\n'
             '    args:\n'
             '    - micro1.py\n'
             '    stateful: weakly_stateful\n'
-            '    supports_checkpoint: true\n'
             '  micro2_fortran:\n'
             '    executable: bin/micro2\n'
             '    stateful: stateless\n'
@@ -464,11 +462,10 @@ def test_config8() -> Configuration:
 
     implementations = [
             Implementation(Reference('macro_python'), executable='python',
-                    args='macro.py', supports_checkpoint=True),
+                    args='macro.py'),
             Implementation(Reference('micro1_python'), executable='python',
                     args='micro1.py',
-                    stateful=ImplementationState.WEAKLY_STATEFUL,
-                    supports_checkpoint=True),
+                    stateful=ImplementationState.WEAKLY_STATEFUL),
             Implementation(Reference('micro2_fortran'),
                     executable='bin/micro2',
                     stateful=ImplementationState.STATELESS)]

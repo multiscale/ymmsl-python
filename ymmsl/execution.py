@@ -124,7 +124,6 @@ class Implementation:
             script: Union[str, List[str], None] = None,
             can_share_resources: bool = True,
             stateful: ImplementationState = ImplementationState.STATEFUL,
-            supports_checkpoint: bool = False
             ) -> None:
         """Create an Implementation description.
 
@@ -205,7 +204,6 @@ class Implementation:
 
         self.can_share_resources = can_share_resources
         self.stateful = stateful
-        self.supports_checkpoint = supports_checkpoint
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
