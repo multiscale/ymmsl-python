@@ -10,7 +10,7 @@ from ymmsl.component import Component, Operator, Port, Ports
 from ymmsl.configuration import Configuration, PartialConfiguration
 from ymmsl.execution import (
         ExecutionModel, Implementation, MPICoresResReq, MPINodesResReq,
-        ResourceRequirements, ThreadedResReq, ImplementationState)
+        ResourceRequirements, ThreadedResReq, KeepsStateForNextUse)
 from ymmsl.settings import Settings, SettingValue
 from ymmsl.identity import Identifier, Reference
 from ymmsl.io import load, dump, save
@@ -26,7 +26,7 @@ __all__ = [
         'CheckpointRule', 'CheckpointRangeRule', 'CheckpointAtRule',
         'Checkpoints', 'Component', 'Conduit', 'Configuration', 'dump',
         'ExecutionModel', 'Identifier', 'Implementation',
-        'ImplementationState', 'load', 'Model', 'ModelReference',
+        'KeepsStateForNextUse', 'load', 'Model', 'ModelReference',
         'MPICoresResReq', 'MPINodesResReq', 'Operator', 'PartialConfiguration',
         'Port', 'Ports', 'Reference', 'ResourceRequirements', 'save',
         'Settings', 'SettingValue', 'ThreadedResReq']

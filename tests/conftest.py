@@ -5,7 +5,7 @@ import pytest
 
 from ymmsl import (
         Component, Conduit, Configuration, ExecutionModel, Implementation,
-        CheckpointRangeRule, CheckpointAtRule, Checkpoints, ImplementationState,
+        CheckpointRangeRule, CheckpointAtRule, Checkpoints, KeepsStateForNextUse,
         Model, ModelReference, MPICoresResReq, MPINodesResReq,
         PartialConfiguration, Ports, Reference, Settings, ThreadedResReq)
 
@@ -418,10 +418,10 @@ def test_yaml8() -> str:
             '    executable: python\n'
             '    args:\n'
             '    - micro1.py\n'
-            '    stateful: weakly_stateful\n'
+            '    keeps_state_for_next_use: helpful\n'
             '  micro2_fortran:\n'
             '    executable: bin/micro2\n'
-            '    stateful: stateless\n'
+            '    keeps_state_for_next_use: no\n'
             'resources:\n'
             '  macro:\n'
             '    threads: 1\n'
@@ -465,10 +465,10 @@ def test_config8() -> Configuration:
                     args='macro.py'),
             Implementation(Reference('micro1_python'), executable='python',
                     args='micro1.py',
-                    stateful=ImplementationState.WEAKLY_STATEFUL),
+                    keeps_state_for_next_use=KeepsStateForNextUse.HELPFUL),
             Implementation(Reference('micro2_fortran'),
                     executable='bin/micro2',
-                    stateful=ImplementationState.STATELESS)]
+                    keeps_state_for_next_use=KeepsStateForNextUse.NO)]
 
     resources = [
             ThreadedResReq(Reference('macro'), 1),

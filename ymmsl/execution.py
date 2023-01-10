@@ -9,20 +9,21 @@ import yatiml
 from ymmsl.identity import Reference
 
 
-class ImplementationState(Enum):
-    """Describes whether an implementation has internal state.
+class KeepsStateForNextUse(Enum):
+    """Describes whether an implementation keeps internal state between
+    iterations of the reuse loop.
 
-    See also :ref:`Implementation state`.
+    See also :ref:`Keeps state for next use`.
     """
 
-    STATEFUL = 1
-    """The implementation has an internal state that is required for continuing
-    the implementation."""
-    STATELESS = 2
+    NECESSARY = 1
+    """The implementation has an internal state that is necessary for
+    continuing the implementation."""
+    NO = 2
     """The implementation has no internal state."""
-    WEAKLY_STATEFUL = 3
-    """The implementation has an internal state, which can be regenerated.
-    However, doing so may be expensive."""
+    HELPFUL = 3
+    """The implementation has an internal state, though this could be
+    regenerated. Doing so may be expensive."""
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
@@ -106,8 +107,8 @@ class Implementation:
         script: A script that starts the implementation
         can_share_resources: Whether this implementation can share
             resources (cores) with other components or not
-        stateful: Is this implementation stateful, see
-            :class:`ImplementationState`
+        keeps_state_for_next_use: Does this implementation keep state for the
+            next iteration of the reuse loop. See :class:`ImplementationState`.
     """
 
     def __init__(
@@ -121,7 +122,8 @@ class Implementation:
             args: Union[str, List[str], None] = None,
             script: Union[str, List[str], None] = None,
             can_share_resources: bool = True,
-            stateful: ImplementationState = ImplementationState.STATEFUL
+            keeps_state_for_next_use: KeepsStateForNextUse
+            = KeepsStateForNextUse.NECESSARY
             ) -> None:
         """Create an Implementation description.
 
@@ -148,8 +150,9 @@ class Implementation:
             can_share_resources: Whether this implementation can share
                     resources (cores) with other components or not.
                     See above.
-            stateful: Is this implementation stateful, see
-                :class:`ImplementationState`
+            keeps_state_for_next_use: Does this implementation keep state for
+                the next iteration of the reuse loop. See
+                :class:`ImplementationState`.
         """
         if script is not None:
             if (
@@ -199,7 +202,7 @@ class Implementation:
             self.args = args
 
         self.can_share_resources = can_share_resources
-        self.stateful = stateful
+        self.keeps_state_for_next_use = keeps_state_for_next_use
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
@@ -221,7 +224,9 @@ class Implementation:
                         if value_node.tag == 'tag:yaml.org,2002:bool':
                             value_node.tag = 'tag:yaml.org,2002:str'
 
-    _yatiml_defaults = {'execution_model': 'direct', 'stateful': 'stateful'}
+    _yatiml_defaults = {
+        'execution_model': 'direct',
+        'keeps_state_for_next_use': 'necessary'}
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:

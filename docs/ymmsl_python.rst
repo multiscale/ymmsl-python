@@ -362,24 +362,27 @@ Finally, if you need to do something complicated, you can write an inline script
 to start the implementation. This currently only works for non-MPI programs
 however.
 
-Implementation state
-````````````````````
+Keeps state for next use
+````````````````````````
 
 Implementations may indicate if they carry state between reuses. This is
-currently only used in conjunction with `checkpoints`_, but might see further
+currently only used for `checkpoints`_, but might see further
 use in the future (e.g. for load balancers). There are three possible values
 an implementation may indicate.
 
-Stateful
+Necessary
   This implementation remembers state between consecutive iterations of the
-  reuse loop. This this state is required for the proper execution of the
+  reuse loop. That state is required for the proper execution of the
   implementation.
 
   This is the default value when not specified.
 
-  **Example:** TODO
+  **Example:** A micro model simulating an enclosed volume, where every reuse
+  the boundary conditions are updated by the connected macro model. This micro
+  model must keep track of the state inside the simulated volume between
+  iterations of the reuse loop.
 
-Stateless
+No
   This implementation has no state between consecutive iterations of the reuse
   loop.
 
@@ -387,15 +390,15 @@ Stateless
   the data and outputs it on an ``O_F`` port. The transformation is only
   dependent on the information of the ``F_INIT`` message.
 
-Weakly stateful
-  Like stateful implementations, this implementation remembers state between
-  consecutive iterations of the reuse loop. However, this state is not required
-  for proper execution.
+Helpful
+  This implementation remembers state between consecutive iterations of the
+  reuse loop. However, this state is not required for proper execution.
 
   **Example:** A simulation of a fluid in a pipe with obstacles. The simulation
   converges much faster when starting from the solution of the previous
   iteration. However, the same solution can still be found when starting from
   scratch.
+
 
 Resources
 ---------

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from ymmsl import (
         Component, Configuration, ExecutionModel, Implementation, Model,
-        ModelReference, MPICoresResReq, Checkpoints, ImplementationState,
+        ModelReference, MPICoresResReq, Checkpoints, KeepsStateForNextUse,
         PartialConfiguration, Reference, Settings, ThreadedResReq, load, dump)
 from ymmsl import SettingValue     # noqa: F401 # pylint: disable=unused-import
 
