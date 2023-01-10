@@ -236,50 +236,6 @@ def test_check_consistent(test_config6: Configuration) -> None:
         test_config6.check_consistent()
 
 
-def test_check_consistent_checkpoints(test_config8: Configuration) -> None:
-    test_config8.check_consistent()
-
-    del test_config8.resume['macro']
-    with pytest.raises(RuntimeError):
-        test_config8.check_consistent()
-
-    test_config8.resume = {}  # disable resuming
-    test_config8.check_consistent()
-
-    impl_macro = test_config8.implementations['macro_python']
-    impl_micro1 = test_config8.implementations['micro1_python']
-
-    impl_macro.supports_checkpoint = False
-    with pytest.raises(RuntimeError):
-        test_config8.check_consistent()
-
-    impl_macro.supports_checkpoint = True
-    impl_micro1.supports_checkpoint = False
-    test_config8.check_consistent()
-
-    impl_micro1.stateful = ImplementationState.STATEFUL
-    with pytest.raises(RuntimeError):
-        test_config8.check_consistent()
-
-    test_config8.checkpoints = Checkpoints()  # disable checkpointing
-    test_config8.check_consistent()
-
-
-def test_check_consistent_checkpoints_multiplicity(
-        test_config8: Configuration) -> None:
-    test_config8.check_consistent()
-
-    assert test_config8.model.components[0].name == 'macro'
-    test_config8.model.components[0].multiplicity = [2]
-    with pytest.raises(RuntimeError):
-        test_config8.check_consistent()
-
-    del test_config8.resume['macro']
-    test_config8.resume['macro[0]'] = 'macro_0.pack'
-    test_config8.resume['macro[1]'] = 'macro_1.pack'
-    test_config8.check_consistent()
-
-
 def test_load_nil_settings() -> None:
     text = (
             'ymmsl_version: v0.1\n'

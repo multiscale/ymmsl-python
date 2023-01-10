@@ -13,7 +13,7 @@ from ymmsl.checkpoint import Checkpoints
 from ymmsl.document import Document
 from ymmsl.identity import Reference
 from ymmsl.execution import (
-        ExecutionModel, Implementation, ImplementationState,
+        ExecutionModel, Implementation,
         ResourceRequirements, ThreadedResReq)
 from ymmsl.settings import Settings
 from ymmsl.model import Model, ModelReference
@@ -309,8 +309,6 @@ class Configuration(PartialConfiguration):
         """
         self.model.check_consistent()
 
-        is_resuming = bool(self.resume)
-        must_support_checkpoints = bool(self.checkpoints) or is_resuming
         for comp in self.model.components:
             if comp.implementation not in self.implementations:
                 raise RuntimeError((
@@ -338,34 +336,6 @@ class Configuration(PartialConfiguration):
                         ' but threads are specified in its resources. Please'
                         ' either set "execution_model" to "direct", or'
                         ' specify a number of mpi processes.').format(comp))
-
-            if (is_resuming
-                    and impl.stateful is ImplementationState.STATEFUL):
-                for instance in comp.instances():
-                    if instance not in self.resume:
-                        raise RuntimeError((
-                                'Model instance {} is missing a resume'
-                                ' definition').format(instance))
-            if (must_support_checkpoints
-                    and impl.stateful is ImplementationState.STATEFUL
-                    and not impl.supports_checkpoint):
-                raise RuntimeError((
-                        'Model component {}\'s implementation does not support'
-                        ' creating checkpoints, while checkpoints are'
-                        ' configured. Please set "supports_checkpoint" to'
-                        ' "true" when this implementation uses the'
-                        ' checkpointing API, or set "state" to "stateless" if'
-                        ' this implementation has no internal state that needs'
-                        ' saving in a checkpoint.').format(comp))
-            if (must_support_checkpoints
-                    and impl.stateful is ImplementationState.WEAKLY_STATEFUL
-                    and not impl.supports_checkpoint):
-                _logger.warning((
-                        'Model component {}\'s implementation is weakly'
-                        ' stateful, but does not explicitly support the'
-                        ' checkpointing API. Checkpointing is possible but'
-                        ' implementing the checkpointing API may be more'
-                        ' efficient').format(comp))
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:

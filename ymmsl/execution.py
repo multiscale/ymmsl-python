@@ -108,8 +108,6 @@ class Implementation:
             resources (cores) with other components or not
         stateful: Is this implementation stateful, see
             :class:`ImplementationState`
-        supports_checkpoint: Does this implementation support the checkpointing
-            API
     """
 
     def __init__(
@@ -123,8 +121,7 @@ class Implementation:
             args: Union[str, List[str], None] = None,
             script: Union[str, List[str], None] = None,
             can_share_resources: bool = True,
-            stateful: ImplementationState = ImplementationState.STATEFUL,
-            supports_checkpoint: bool = False
+            stateful: ImplementationState = ImplementationState.STATEFUL
             ) -> None:
         """Create an Implementation description.
 
@@ -153,8 +150,6 @@ class Implementation:
                     See above.
             stateful: Is this implementation stateful, see
                 :class:`ImplementationState`
-            supports_checkpoint: Does this implementation support the
-                checkpointing API
         """
         if script is not None:
             if (
@@ -205,7 +200,6 @@ class Implementation:
 
         self.can_share_resources = can_share_resources
         self.stateful = stateful
-        self.supports_checkpoint = supports_checkpoint
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
