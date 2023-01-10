@@ -31,6 +31,7 @@ implementations:
   my.micro_model:
     modules: gcc openmpi
     execution_model: openmpi
+    executable: /home/user/model2
 
 resources:
   macro:
@@ -38,3 +39,7 @@ resources:
   micro:
     mpi_processes: 8
 
+checkpoints:
+  at_end: true
+  simulation_time:
+  - every: 50
