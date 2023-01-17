@@ -34,7 +34,7 @@ Documentation
 *************
 
 This is an ordinary Python library that can be installed via pip. It requires
-Python 3.6 or higher. More information is available in the `online
+Python 3.7 or higher. More information is available in the `online
 documentation for ymmsl-python <https://ymmsl-python.readthedocs.io>`_.
 
 Development
