@@ -53,7 +53,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'yMMSL Python bindings'
-copyright = u'2018-2023, Netherlands eScience Center and University of Amsterdam'
+copyright = u'2018-2023, Netherlands eScience Center and University of Amsterdam, 2022-2023 ITER Organisation'
 author = u'Lourens Veen'
 
 # The version info for the project you're documenting, acts as replacement for
