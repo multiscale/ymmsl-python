@@ -14,10 +14,6 @@
     :target: https://www.codacy.com/gh/multiscale/ymmsl-python/dashboard
     :alt: Test Coverage
 
-.. image:: https://requires.io/github/multiscale/ymmsl-python/requirements.svg?branch=develop
-    :target: https://requires.io/github/multiscale/ymmsl-python/requirements/?branch=develop
-    :alt: Requirements Status
-
 .. image:: https://zenodo.org/badge/153272345.svg
    :target: https://zenodo.org/badge/latestdoi/153272345
 
