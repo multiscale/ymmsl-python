@@ -17,7 +17,7 @@ from ymmsl.io import load, dump, save
 from ymmsl.model import Conduit, Model, ModelReference
 
 
-__version__ = '0.12.1.dev'
+__version__ = '0.13.0'
 __author__ = 'Lourens Veen'
 __email__ = 'l.veen@esciencecenter.nl'
 
