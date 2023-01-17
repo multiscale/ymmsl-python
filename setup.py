@@ -38,7 +38,7 @@ setup(
     python_requires='>=3.7, <4',
     test_suite='tests',
     install_requires=[
-        'ruamel.yaml<=0.16.12',
+        'ruamel.yaml<=0.17.21,!=0.17.5',
         'yatiml>=0.10.0,<0.11.0'
     ],
 )
