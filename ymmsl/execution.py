@@ -9,6 +9,35 @@ import yatiml
 from ymmsl.identity import Reference
 
 
+class KeepsStateForNextUse(Enum):
+    """Describes whether an implementation keeps internal state between
+    iterations of the reuse loop.
+
+    See also :ref:`Keeps state for next use`.
+    """
+
+    NECESSARY = 1
+    """The implementation has an internal state that is necessary for
+    continuing the implementation."""
+    NO = 2
+    """The implementation has no internal state."""
+    HELPFUL = 3
+    """The implementation has an internal state, though this could be
+    regenerated. Doing so may be expensive."""
+
+    @classmethod
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
+        if node.is_scalar(str):
+            val = cast(str, node.get_value())
+            node.set_value(val.upper())
+
+    @classmethod
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        val = node.get_value()
+        if isinstance(val, str):
+            node.set_value(val.lower())
+
+
 class ExecutionModel(Enum):
     """Describes how to start a model component."""
     DIRECT = 1
@@ -78,6 +107,8 @@ class Implementation:
         script: A script that starts the implementation
         can_share_resources: Whether this implementation can share
             resources (cores) with other components or not
+        keeps_state_for_next_use: Does this implementation keep state for the
+            next iteration of the reuse loop. See :class:`ImplementationState`.
     """
 
     def __init__(
@@ -90,7 +121,9 @@ class Implementation:
             executable: Optional[Path] = None,
             args: Union[str, List[str], None] = None,
             script: Union[str, List[str], None] = None,
-            can_share_resources: bool = True
+            can_share_resources: bool = True,
+            keeps_state_for_next_use: KeepsStateForNextUse
+            = KeepsStateForNextUse.NECESSARY
             ) -> None:
         """Create an Implementation description.
 
@@ -117,6 +150,9 @@ class Implementation:
             can_share_resources: Whether this implementation can share
                     resources (cores) with other components or not.
                     See above.
+            keeps_state_for_next_use: Does this implementation keep state for
+                the next iteration of the reuse loop. See
+                :class:`ImplementationState`.
         """
         if script is not None:
             if (
@@ -166,6 +202,7 @@ class Implementation:
             self.args = args
 
         self.can_share_resources = can_share_resources
+        self.keeps_state_for_next_use = keeps_state_for_next_use
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
@@ -187,7 +224,9 @@ class Implementation:
                         if value_node.tag == 'tag:yaml.org,2002:bool':
                             value_node.tag = 'tag:yaml.org,2002:str'
 
-    _yatiml_defaults = {'execution_model': 'direct'}
+    _yatiml_defaults = {
+        'execution_model': 'direct',
+        'keeps_state_for_next_use': 'necessary'}
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:

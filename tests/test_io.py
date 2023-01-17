@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -7,7 +7,7 @@ from yatiml import RecognitionError
 from ymmsl import (
         Configuration, dump, load, save, Model, ModelReference,
         MPICoresResReq, MPINodesResReq, PartialConfiguration, Reference,
-        ThreadedResReq)
+        ThreadedResReq, CheckpointRangeRule)
 
 
 @pytest.fixture
@@ -76,6 +76,8 @@ def test_load_string4(test_yaml4: str) -> None:
     assert isinstance(bf2smc_res, ThreadedResReq)
     assert bf2smc_res.threads == 1
 
+    assert configuration.checkpoints.at_end
+
 
 def test_load_string5(test_yaml5: str) -> None:
     configuration = load(test_yaml5)
@@ -143,6 +145,22 @@ def test_load_string7(test_yaml7: str) -> None:
     assert components[1].ports.o_f == ['final_output', 'extra_output']
 
 
+def test_load_string8(test_yaml8: str) -> None:
+    configuration = load(test_yaml8)
+    assert isinstance(configuration, PartialConfiguration)
+
+    checkpoints = configuration.checkpoints
+    assert checkpoints.simulation_time == []
+    assert len(checkpoints.wallclock_time) == 1
+    rule = checkpoints.wallclock_time[0]
+    assert isinstance(rule, CheckpointRangeRule)
+    assert cast(CheckpointRangeRule, rule).every == 600
+
+    assert len(configuration.resume) == 2
+
+    assert len(configuration.description.splitlines()) == 3
+
+
 def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
     test_file = tmpdir_path / 'test_yaml1.ymmsl'
     with test_file.open('w') as f:
@@ -196,6 +214,11 @@ def test_dump6(test_yaml6: str, test_config6: Configuration) -> None:
 def test_dump7(test_yaml7: str, test_config7: Configuration) -> None:
     text = dump(test_config7)
     assert text == test_yaml7
+
+
+def test_dump8(test_yaml8: str, test_config8: Configuration) -> None:
+    text = dump(test_config8)
+    assert text == test_yaml8
 
 
 def test_save_str(test_config1: PartialConfiguration, test_yaml1: str,

@@ -1,18 +1,25 @@
 """This module contains all the definitions for yMMSL."""
 from collections import OrderedDict
 import collections.abc as abc
+import logging
+from pathlib import Path
 from typing import (
-        Dict, List, MutableMapping, Optional, Sequence, Union)
+        Dict, List, MutableMapping, Optional, Sequence, Union, cast)
 
 import yatiml
+from ruamel import yaml
 
+from ymmsl.checkpoint import Checkpoints
 from ymmsl.document import Document
 from ymmsl.identity import Reference
 from ymmsl.execution import (
-        ExecutionModel, Implementation, ResourceRequirements, ThreadedResReq)
+        ExecutionModel, Implementation,
+        ResourceRequirements, ThreadedResReq)
 from ymmsl.settings import Settings
 from ymmsl.model import Model, ModelReference
 
+
+_logger = logging.getLogger(__name__)
 
 # This should be a local definition, but that triggers a mypy issue:
 # https://github.com/python/mypy/issues/7281
@@ -34,6 +41,9 @@ class PartialConfiguration(Document):
         resources: Resources to allocate for the model components.
             Dictionary mapping component names to ResourceRequirements
             objects.
+        description: A human-readable description of the configuration.
+        checkpoints: Defines when each model component should create a snapshot
+        resume: Defines what snapshot each model component should resume from
     """
     def __init__(self,
                  model: Optional[ModelReference] = None,
@@ -43,7 +53,10 @@ class PartialConfiguration(Document):
                      Dict[Reference, Implementation]]] = None,
                  resources: Optional[Union[
                      Sequence[ResourceRequirements],
-                     MutableMapping[Reference, ResourceRequirements]]] = None
+                     MutableMapping[Reference, ResourceRequirements]]] = None,
+                 description: Optional[str] = None,
+                 checkpoints: Optional[Checkpoints] = None,
+                 resume: Optional[Dict[Reference, Path]] = None
                  ) -> None:
         """Create a Configuration.
 
@@ -56,6 +69,9 @@ class PartialConfiguration(Document):
             settings: Settings to run the model with.
             implementations: Implementations to choose from.
             resources: Resources to allocate for the model components.
+            description: Human-readable description
+            checkpoints: When each component should create a snapshot
+            resume: What snapshot each component should resume from
 
         """
         self.model = model
@@ -81,13 +97,30 @@ class PartialConfiguration(Document):
         else:
             self.resources = resources
 
+        if description is None:
+            self.description = ''
+        else:
+            self.description = description
+
+        if checkpoints is None:
+            self.checkpoints = Checkpoints()
+        else:
+            self.checkpoints = checkpoints
+
+        if resume is None:
+            self.resume = dict()    # type: Dict[Reference, Path]
+        else:
+            self.resume = resume
+
     def update(self, overlay: 'PartialConfiguration') -> None:
         """Update this configuration with the given overlay.
 
-        This will update the model according to :meth:`Model.update`,
-        copy settings from overlay on top of the current settings,
-        overwrite implementations with the same name and add
-        implementations with a new name, and likewise for resources.
+        This will update the model according to :meth:`Model.update`, copy
+        settings from overlay on top of the current settings, overwrite
+        implementations with the same name and add implementations with a new
+        name, and likewise for resources and resume. The description of the
+        overlay is appended to the current description. Checkpoints are updated
+        according to :meth:`Checkpoints.update`.
 
         Args:
             overlay: A configuration to overlay onto this one.
@@ -105,12 +138,16 @@ class PartialConfiguration(Document):
             self.model.name = overlay.model.name
 
         self.settings.update(overlay.settings)
+        self.implementations.update(overlay.implementations)
+        self.resources.update(overlay.resources)
 
-        for newi_name, newi in overlay.implementations.items():
-            self.implementations[newi_name] = newi
+        if not self.description:
+            self.description = overlay.description
+        elif overlay.description:
+            self.description += '\n\n' + overlay.description
 
-        for newr_name, newr in overlay.resources.items():
-            self.resources[newr_name] = newr
+        self.checkpoints.update(overlay.checkpoints)
+        self.resume.update(overlay.resume)
 
     def as_configuration(self) -> 'Configuration':
         """Converts to a full Configuration object.
@@ -134,7 +171,8 @@ class PartialConfiguration(Document):
                 self.implementations and self.resources):
             return Configuration(
                     self.model, self.settings, self.implementations,
-                    self.resources)
+                    self.resources, self.description, self.checkpoints,
+                    self.resume)
         raise ValueError(
                 'Model, implementations or resources are missing from the'
                 ' configuration.')
@@ -178,6 +216,25 @@ class PartialConfiguration(Document):
             node.remove_attribute('resources')
         node.index_attribute_to_map('resources', 'name')
 
+        descr = node.get_attribute('description')
+        if descr.is_scalar(type(None)) or descr.get_value() == '':
+            node.remove_attribute('description')
+        if descr.is_scalar(str) and '\n' in cast(str, descr.get_value()):
+            # output multi-line string in literal mode
+            cast(yaml.ScalarNode, descr.yaml_node).style = '|'
+
+        cp = node.get_attribute('checkpoints')
+        if (
+                cp.is_scalar(type(None)) or
+                cp.is_mapping() and cp.is_empty()):
+            node.remove_attribute('checkpoints')
+
+        resu = node.get_attribute('resume')
+        if (
+                resu.is_scalar(type(None)) or
+                resu.is_mapping() and resu.is_empty()):
+            node.remove_attribute('resume')
+
 
 class Configuration(PartialConfiguration):
     """Configuration that includes all information for a simulation.
@@ -199,6 +256,9 @@ class Configuration(PartialConfiguration):
             Implementation objects.
         resources: Resources to allocate for the model components.
             Dictionary mapping component names to Resources objects.
+        description: A human-readable description of the configuration.
+        checkpoints: Defines when each model component should create a snapshot
+        resume: Defines what snapshot each model component should resume from
     """
     def __init__(self,
                  model: Model,
@@ -208,7 +268,10 @@ class Configuration(PartialConfiguration):
                      Dict[Reference, Implementation]] = [],
                  resources: Union[
                      Sequence[ResourceRequirements],
-                     MutableMapping[Reference, ResourceRequirements]] = []
+                     MutableMapping[Reference, ResourceRequirements]] = [],
+                 description: Optional[str] = None,
+                 checkpoints: Optional[Checkpoints] = None,
+                 resume: Optional[Dict[Reference, Path]] = None
                  ) -> None:
         """Create a Configuration.
 
@@ -221,32 +284,17 @@ class Configuration(PartialConfiguration):
             settings: Settings to run the model with.
             implementations: Implementations to choose from.
             resources: Resources to allocate for the model components.
+            description: Human-readable description
+            checkpoints: When each component should create a snapshot
+            resume: What snapshot each component should resume from
 
         """
-        # mypy doesn't get it when we call super().__init__ here, so
-        # it's duplicated.
-        self.model = model  # type: Model
-
-        if settings is None:
-            self.settings = Settings()
-        else:
-            self.settings = settings
-
-        if implementations is None:
-            self.implementations = dict()   # type: _ImplType
-        elif isinstance(implementations, list):
-            self.implementations = OrderedDict([
-                (impl.name, impl) for impl in implementations])
-        else:
-            self.implementations = implementations
-
-        if resources is None:
-            self.resources = dict()     # type: _ResType
-        elif isinstance(resources, abc.Sequence):
-            self.resources = OrderedDict([
-                (res.name, res) for res in resources])
-        else:
-            self.resources = resources
+        # Make mypy recognize that, unlike PartialConfiguration.model,
+        # Configuration.model always has type Model
+        self.model: Model
+        super().__init__(
+                model, settings, implementations, resources, description,
+                checkpoints, resume)
 
     def check_consistent(self) -> None:
         """Checks that the configuration is internally consistent.
@@ -287,7 +335,7 @@ class Configuration(PartialConfiguration):
                         'Model component {}\'s implementation specifies MPI,'
                         ' but threads are specified in its resources. Please'
                         ' either set "execution_model" to "direct", or'
-                        ' specify a number of mpi processes.'))
+                        ' specify a number of mpi processes.').format(comp))
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:

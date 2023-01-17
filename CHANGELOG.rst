@@ -5,6 +5,17 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.13.0
+******
+
+Added
+-----
+
+- Support for connecting multiple conduits to an outgoing port
+- Checkpointing support (preview release)
+- Improved error messages
+
+
 0.12.0
 ******
 

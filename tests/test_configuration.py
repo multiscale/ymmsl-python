@@ -1,34 +1,12 @@
 from collections import OrderedDict
 from pathlib import Path
-from typing import Callable
 
 import pytest
-import yatiml
 from ymmsl import (
-        Component, Configuration, ExecutionModel, Identifier, Implementation,
-        Model, ModelReference, MPICoresResReq, MPINodesResReq,
-        PartialConfiguration, Reference, Settings, ThreadedResReq)
+        Component, Configuration, ExecutionModel, Implementation, Model,
+        ModelReference, MPICoresResReq, Checkpoints, KeepsStateForNextUse,
+        PartialConfiguration, Reference, Settings, ThreadedResReq, load, dump)
 from ymmsl import SettingValue     # noqa: F401 # pylint: disable=unused-import
-from ymmsl.document import Document
-from ymmsl.execution import ResourceRequirements
-
-
-@pytest.fixture
-def load_configuration() -> Callable:
-    return yatiml.load_function(
-            Document, ExecutionModel, Configuration, Identifier,
-            Implementation, MPICoresResReq, MPINodesResReq,
-            PartialConfiguration, Reference, ResourceRequirements, Settings,
-            ThreadedResReq)
-
-
-@pytest.fixture
-def dump_configuration() -> Callable:
-    return yatiml.dumps_function(
-            Configuration, Document, ExecutionModel, Identifier,
-            Implementation, MPICoresResReq, MPINodesResReq,
-            PartialConfiguration, Reference, ResourceRequirements, Settings,
-            ThreadedResReq)
 
 
 def test_configuration() -> None:
@@ -162,6 +140,66 @@ def test_configuration_update_resources_override() -> None:
     assert base.resources[Reference('my.micro')] == resources3
 
 
+def test_configuration_update_description() -> None:
+    description1 = ''
+    description2 = 'single line description'
+    description3 = 'multiline\ndescription'
+
+    overlay1 = PartialConfiguration(description=description1)
+    overlay2 = PartialConfiguration(description=description2)
+    overlay3 = PartialConfiguration(description=description3)
+
+    base = PartialConfiguration(description=description1)
+
+    base.update(overlay1)
+    assert base.description == ''
+
+    base.update(overlay2)
+    assert base.description == description2
+
+    base.update(overlay3)
+    assert base.description == description2 + '\n\n' + description3
+
+    base.update(overlay1)
+    assert base.description == description2 + '\n\n' + description3
+
+
+def test_configuration_update_checkpoint(
+        test_config4: PartialConfiguration) -> None:
+    # Note: test_checkpoint.py tests merging of checkpoint definitions
+    base = PartialConfiguration(checkpoints=Checkpoints(
+            wallclock_time=test_config4.checkpoints.wallclock_time))
+    overlay = PartialConfiguration(checkpoints=Checkpoints(
+            simulation_time=test_config4.checkpoints.simulation_time))
+
+    assert base.checkpoints.simulation_time == []
+    assert overlay.checkpoints.wallclock_time == []
+
+    base.update(overlay)
+    assert (base.checkpoints.simulation_time
+            == overlay.checkpoints.simulation_time)
+
+
+def test_configuration_update_resume() -> None:
+    base = PartialConfiguration(resume={'a': Path('a')})
+    overlay = PartialConfiguration(resume={'b': Path('b')})
+
+    base.update(overlay)
+    assert len(base.resume) == 2
+    assert base.resume['a'] == Path('a')
+    assert base.resume['b'] == Path('b')
+
+
+def test_configuration_update_resume_override() -> None:
+    base = PartialConfiguration(resume={'a': Path('a'), 'b': Path('b')})
+    overlay = PartialConfiguration(resume={'b': Path('b_update')})
+
+    base.update(overlay)
+    assert len(base.resume) == 2
+    assert base.resume['a'] == Path('a')
+    assert base.resume['b'] == Path('b_update')
+
+
 def test_as_configuration(
         test_config2: PartialConfiguration, test_config4: PartialConfiguration
         ) -> None:
@@ -179,6 +217,9 @@ def test_as_configuration(
     assert config.model == test_config4.model
     assert config.implementations == test_config4.implementations
     assert config.resources == test_config4.resources
+    assert config.description == test_config4.description
+    assert config.checkpoints == test_config4.checkpoints
+    assert config.resume == test_config4.resume
 
 
 def test_check_consistent(test_config6: Configuration) -> None:
@@ -195,13 +236,13 @@ def test_check_consistent(test_config6: Configuration) -> None:
         test_config6.check_consistent()
 
 
-def test_load_nil_settings(load_configuration: Callable) -> None:
+def test_load_nil_settings() -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'settings:\n'
     )
 
-    configuration = load_configuration(text)
+    configuration = load(text)
 
     assert isinstance(configuration.settings, Settings)
     assert len(configuration.settings) == 0
@@ -209,12 +250,12 @@ def test_load_nil_settings(load_configuration: Callable) -> None:
     assert len(configuration.resources) == 0
 
 
-def test_load_no_settings(load_configuration: Callable) -> None:
+def test_load_no_settings() -> None:
     text = (
             'ymmsl_version: v0.1\n'
             )
 
-    configuration = load_configuration(text)
+    configuration = load(text)
 
     assert isinstance(configuration.settings, Settings)
     assert len(configuration.settings) == 0
@@ -222,14 +263,14 @@ def test_load_no_settings(load_configuration: Callable) -> None:
     assert len(configuration.resources) == 0
 
 
-def test_dump_empty_settings(dump_configuration: Callable) -> None:
+def test_dump_empty_settings() -> None:
     configuration = PartialConfiguration(None, Settings())
-    text = dump_configuration(configuration)
+    text = dump(configuration)
 
     assert text == 'ymmsl_version: v0.1\n'
 
 
-def test_load_implementations(load_configuration: Callable) -> None:
+def test_load_implementations() -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'implementations:\n'
@@ -260,7 +301,7 @@ def test_load_implementations(load_configuration: Callable) -> None:
             '      - -t\n'
             )
 
-    configuration = load_configuration(text)
+    configuration = load(text)
 
     assert configuration.implementations['macro'].name == 'macro'
     assert configuration.implementations['macro'].script == (
@@ -287,8 +328,7 @@ def test_load_implementations(load_configuration: Callable) -> None:
     assert m2.execution_model == ExecutionModel.DIRECT
 
 
-def test_load_implementations_script_list(
-        load_configuration: Callable) -> None:
+def test_load_implementations_script_list() -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'implementations:\n'
@@ -305,7 +345,7 @@ def test_load_implementations_script_list(
             '  micro: /home/test/micro\n'
             )
 
-    configuration = load_configuration(text)
+    configuration = load(text)
 
     assert configuration.implementations['macro'].name == 'macro'
     assert configuration.implementations['macro'].script == (
@@ -318,7 +358,7 @@ def test_load_implementations_script_list(
             '/home/test/micro')
 
 
-def test_dump_implementations(dump_configuration: Callable) -> None:
+def test_dump_implementations() -> None:
     implementations = [
             Implementation(
                 name=Reference('macro'),
@@ -339,7 +379,7 @@ def test_dump_implementations(dump_configuration: Callable) -> None:
 
     configuration = PartialConfiguration(None, None, implementations)
 
-    text = dump_configuration(configuration)
+    text = dump(configuration)
     assert text == (
             'ymmsl_version: v0.1\n'
             'implementations:\n'
@@ -368,7 +408,7 @@ def test_dump_implementations(dump_configuration: Callable) -> None:
             )
 
 
-def test_load_resources(load_configuration: Callable) -> None:
+def test_load_resources() -> None:
     text = (
             'ymmsl_version: v0.1\n'
             'resources:\n'
@@ -378,7 +418,7 @@ def test_load_resources(load_configuration: Callable) -> None:
             '    threads: 1\n'
             )
 
-    configuration = load_configuration(text)
+    configuration = load(text)
 
     assert configuration.resources['macro'].name == 'macro'
     assert configuration.resources['macro'].threads == 10
@@ -386,14 +426,14 @@ def test_load_resources(load_configuration: Callable) -> None:
     assert configuration.resources['micro'].threads == 1
 
 
-def test_dump_resources(dump_configuration: Callable) -> None:
+def test_dump_resources() -> None:
     resources = [
             ThreadedResReq(Reference('macro'), 10),
             ThreadedResReq(Reference('micro'), 1)]
 
     configuration = PartialConfiguration(None, None, None, resources)
 
-    text = dump_configuration(configuration)
+    text = dump(configuration)
     assert text == (
             'ymmsl_version: v0.1\n'
             'resources:\n'

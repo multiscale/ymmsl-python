@@ -189,6 +189,38 @@ interpret these fields, e.g. to extract the component and port name parts.
 Note that the format allows specifying a slot here, but this is currently not
 supported and illegal in MUSCLE3.
 
+Multicast conduits
+^^^^^^^^^^^^^^^^^^
+
+In yMMSL you can specify that an output port is connected to multiple input
+ports. When a message is sent on the output port, it is copied and delivered to
+all connected input ports. This is called multicast and is expressed as
+follows:
+
+.. code-block:: yaml
+    :caption: Specifying multicast in yMMSL
+
+    conduits:
+      sender.port:
+      - receiver1.port
+      - receiver2.port
+
+This multicast conduit is converted to a a list of conduits sharing the same
+sender:
+
+.. code-block:: python
+    :caption: Multicast conduits in python code
+
+    from pathlib import Path
+    import ymmsl
+
+    config = ymmsl.load(Path('multicast.ymmsl'))
+
+    conduits = config.model.conduits
+    print(len(conduits))    # output: 2
+    print(conduits[0])      # output: Conduit(sender.port -> receiver1.port)
+    print(conduits[1])      # output: Conduit(sender.port -> receiver2.port)
+
 Settings
 --------
 
@@ -330,6 +362,44 @@ Finally, if you need to do something complicated, you can write an inline script
 to start the implementation. This currently only works for non-MPI programs
 however.
 
+Keeps state for next use
+````````````````````````
+
+Implementations may indicate if they carry state between reuses. This is
+currently only used for `checkpoints`_, but might see further
+use in the future (e.g. for load balancers). There are three possible values
+an implementation may indicate.
+
+Necessary
+  This implementation remembers state between consecutive iterations of the
+  reuse loop. That state is required for the proper execution of the
+  implementation.
+
+  This is the default value when not specified.
+
+  **Example:** A micro model simulating an enclosed volume, where every reuse
+  the boundary conditions are updated by the connected macro model. This micro
+  model must keep track of the state inside the simulated volume between
+  iterations of the reuse loop.
+
+No
+  This implementation has no state between consecutive iterations of the reuse
+  loop.
+
+  **Example:** A data converter that receives on an ``F_INIT`` port, transforms
+  the data and outputs it on an ``O_F`` port. The transformation is only
+  dependent on the information of the ``F_INIT`` message.
+
+Helpful
+  This implementation remembers state between consecutive iterations of the
+  reuse loop. However, this state is not required for proper execution.
+
+  **Example:** A simulation of a fluid in a pipe with obstacles. The simulation
+  converges much faster when starting from the solution of the previous
+  iteration. However, the same solution can still be found when starting from
+  scratch.
+
+
 Resources
 ---------
 
@@ -403,6 +473,72 @@ based on this can be found in the `High-Performance
 Computing section in the MUSCLE3 documentation
 <https://muscle3.readthedocs.io/en/latest/distributed_execution.html#high-performance-computing>`_.
 
+
+Checkpoints
+-----------
+
+In yMMSL you can specify if you expect the workflow to create checkpoints. Note
+that all implementations in your workflow must support checkpointing, MUSCLE3
+will generate an error for you otherwise. See the `documentation for MUSCLE3
+<https://muscle3.readthedocs.io/en/latest/>`_ on checkpointing for details on
+enabling checkpointing for an implementation.
+
+Checkpoint triggers
+```````````````````
+
+In yMMSL you have three possible checkpoint triggers:
+
+``at_end``
+  Create a checkpoint just before the instance shuts down. This can be a useful
+  checkpoint if you intend to resume the workflow at some later point, e.g.
+  when you wish to simulate a longer time span. This trigger is either on or
+  off, specified with a boolean ``true`` or ``false`` (default) in the
+  configuration.
+
+``simulation_time``
+  Create checkpoints based on the passed simulation time. This can only work
+  properly if there is a shared concept of simulated time in the workflow.
+
+``wallclock_time``
+  Create checkpoints based on the passed wall clock time (also called `elapsed
+  real time <https://en.wikipedia.org/wiki/Elapsed_real_time>`_). This method
+  is not perfect and may result in missed checkpoints in certain coupling
+  scenarios. See the MUSCLE3 documentation for a discussion of the limitations.
+
+When you use any of the time-based triggers, you must also specify at what
+moments a checkpoint is expected. MUSCLE3 will then snapshot as soon as
+possible **after** reaching the specified times. You may indicate specific
+moments with ``at``-rules, but can also create repetitive checkpoints.
+
+.. code-block:: yaml
+    :caption: Example checkpoint definition
+
+    checkpoints:
+      at_end: true
+      simulation_time:
+      - at: [1.2, 1.4]
+      - every: 1
+      wallclock_time:
+      - every: 60
+        stop: 600
+      - every: 600
+        start: 600
+        stop: 3600
+      - every: 1800
+        start: 3600
+
+Above example demonstrates all possible checkpoint options. The workflow will
+create checkpoints:
+
+- At the end: ``at_end: true``.
+- Every second of passed simulated time (``t=0,1,2,...``), and additionally at
+  ``t=1.2`` and ``t=1.4``.
+- Every minute of real elapsed time, for the first 10 minutes; then every 10
+  minutes for the remainder of the first hour; then every 30 minutes until the
+  end.
+
+See the API documentation for :py:class:`~ymmsl.CheckpointRangeRule` for more
+details on the behaviour of the repetitive checkpoints.
 
 Examples
 --------

@@ -1,5 +1,6 @@
 """This module contains all the definitions for yMMSL."""
-from typing import Any, List, Optional, cast
+from collections import OrderedDict
+from typing import Any, List, Optional, Union, cast
 from typing import Dict     # noqa
 
 import yatiml
@@ -63,11 +64,13 @@ class Conduit:
 
         # check that the length is at least 2
         if len(Conduit.__stem(ref)) < 2:
-            raise ValueError('Senders and receivers in conduits must have'
-                             ' a component name, a period, and then'
-                             ' a port name and optionally a slot. Reference {}'
-                             ' is missing either the component or the'
-                             ' port'.format(ref))
+            raise ValueError((
+                    'Senders and receivers in conduits must have a component'
+                    ' name, a period, and then a port name and optionally a'
+                    ' slot. Reference {} is missing either the component or'
+                    ' the port. Did you perhaps type a comma or an underscore'
+                    ' instead of a period? It should be "component.port"'
+                    ).format(ref))
 
     def sending_component(self) -> Reference:
         """Returns a reference to the sending component."""
@@ -135,6 +138,49 @@ class Conduit:
         return reference[:i]    # type: ignore
 
 
+class MulticastConduit:
+    """Multicast conduits connect multiple input ports to a single output port.
+
+    In yMMSL they are expressed as a mapping:
+
+    .. code-block:: yaml
+
+        sender.port:
+        - receiver1.port
+        - receiver2.port
+
+    This class is only used in the parsing and storing of the yMMSL file.
+    Once parsed and populated in :class:`Model`, a multicast is identified by
+    two or more conduits with the same :attr:`Conduit.sender`.
+    """
+
+    def __init__(self, sender: str, receiver: List[str]) -> None:
+        """Create a Multicast Conduit.
+
+        Args:
+            sender: The sending component and port, as a Reference.
+            receiver: The receiving components and ports, as a list of
+                    References.
+        """
+        self.sender = sender
+        # note: attribute must be called receiver to transparently work with
+        # seq_attribute_to_map and map_attribute_to_seq in
+        # Model._yatiml_savorize and Model._yatiml_sweeten
+        self.receiver = receiver
+        self._conduits = [Conduit(sender, recv) for recv in receiver]
+
+    def as_conduits(self) -> List[Conduit]:
+        """Retrieve the conduits that are part of this multicast conduit.
+
+        Returns:
+            A list of conduits, one conduit for each receiver.
+        """
+        return self._conduits
+
+
+AnyConduit = Union[Conduit, MulticastConduit]
+
+
 class ModelReference:
     """Describes a reference (by name) to a model.
 
@@ -173,22 +219,24 @@ class Model(ModelReference):
     """
     def __init__(self, name: str,
                  components: List[Component],
-                 conduits: Optional[List[Conduit]] = None) -> None:
+                 conduits: Optional[List[AnyConduit]] = None) -> None:
         """Create a Model.
 
         Args:
             name: Name of this model.
             components: A list of components making up the model.
             conduits: A list of conduits connecting the components.
-
         """
         super().__init__(name)
         self.components = components
 
-        if conduits is None:
-            self.conduits = list()      # type: List[Conduit]
-        else:
-            self.conduits = conduits
+        self.conduits = list()      # type: List[Conduit]
+        if conduits:
+            for conduit in conduits:
+                if isinstance(conduit, Conduit):
+                    self.conduits.append(conduit)
+                if isinstance(conduit, MulticastConduit):
+                    self.conduits.extend(conduit.as_conduits())
 
     def update(self, overlay: 'Model') -> None:
         """Overlay another model definition on top of this one.
@@ -198,9 +246,9 @@ class Model(ModelReference):
         are overwritten if they have the same name as an existing
         argument or else added.
 
-        Conduits are added. If a conduit was already connected to one
-        of the endpoints of a conduit in the overlay, the old conduit
-        is removed.
+        Conduits are added. If a receiving port was already connected, the
+        old conduit is removed. If a sending port was already connected, the
+        new conduit is added and the sending port acts as a multicast port.
 
         Args:
             overlay: A Model definition to overlay on top of this one.
@@ -218,8 +266,8 @@ class Model(ModelReference):
         # remove overwritten conduits
         for newt in overlay.conduits:
             for oldt in self.conduits.copy():
-                if oldt.sender == newt.sender:
-                    self.conduits.remove(oldt)
+                # Multiple conduits can be connected to one sending port
+                # (multicast), only overwrite connections to a receiving port
                 if oldt.receiver == newt.receiver:
                     self.conduits.remove(oldt)
 
@@ -269,6 +317,7 @@ class Model(ModelReference):
                         pass
             return False
 
+        receivers_seen = set()
         for conduit in self.conduits:
             scomp = conduit.sending_component()
             if not component_exists(scomp):
@@ -295,6 +344,37 @@ class Model(ModelReference):
                         'Invalid conduit "{}": component "{}" does not'
                         ' have a receiving port "{}"'.format(
                             conduit, rcomp, rport))
+
+            if conduit.receiver in receivers_seen:
+                raise RuntimeError(
+                        'Receiving port "{}" is connected by multiple'
+                        ' conduits.'.format(conduit.receiver))
+            receivers_seen.add(conduit.receiver)
+
+    def __conduits_for_export(self) -> List[AnyConduit]:
+        """Process conduits and identify MulticastConduits for exporting.
+
+        Returns:
+            A list of Conduits and MulticastConduits.
+        """
+        cond_dct = OrderedDict()  # type: OrderedDict[Reference, List[Conduit]]
+        for conduit in self.conduits:
+            cond_dct.setdefault(conduit.sender, []).append(conduit)
+        conduit_list = []   # type: List[AnyConduit]
+        for sender, conduits in cond_dct.items():
+            if len(conduits) == 1:
+                conduit_list.append(conduits[0])
+            else:
+                conduit_list.append(MulticastConduit(
+                        str(sender),
+                        [str(conduit.receiver) for conduit in conduits]))
+        return conduit_list
+
+    def _yatiml_attributes(self) -> OrderedDict:
+        return OrderedDict([
+            ('name', self.name),
+            ('components', self.components),
+            ('conduits', self.__conduits_for_export())])
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:

@@ -1,5 +1,5 @@
-.. image:: https://readthedocs.org/projects/ymmsl-python/badge/?version=latest
-    :target: https://ymmsl-python.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/ymmsl-python/badge/?version=master
+    :target: https://ymmsl-python.readthedocs.io/en/latest/?badge=master
     :alt: Documentation Build Status
 
 .. image:: https://github.com/multiscale/ymmsl-python/workflows/continuous_integration/badge.svg
@@ -13,10 +13,6 @@
 .. image:: https://app.codacy.com/project/badge/Coverage/e8be82b26b1e44e19374a65a35c193bf
     :target: https://www.codacy.com/gh/multiscale/ymmsl-python/dashboard
     :alt: Test Coverage
-
-.. image:: https://requires.io/github/multiscale/ymmsl-python/requirements.svg?branch=master
-    :target: https://requires.io/github/multiscale/ymmsl-python/requirements/?branch=master
-    :alt: Requirements Status
 
 .. image:: https://zenodo.org/badge/153272345.svg
    :target: https://zenodo.org/badge/latestdoi/153272345
@@ -38,7 +34,7 @@ Documentation
 *************
 
 This is an ordinary Python library that can be installed via pip. It requires
-Python 3.6 or higher. More information is available in the `online
+Python 3.7 or higher. More information is available in the `online
 documentation for ymmsl-python <https://ymmsl-python.readthedocs.io>`_.
 
 Development
@@ -51,6 +47,7 @@ something is unclear, please file an issue.
 Legal
 *****
 
-ymmsl_python is Copyright 2018-2022 Netherlands eScience Center and University
-of Amsterdam. Licensed under the Apache 2.0 license.
+ymmsl_python is Copyright 2018-2023 Netherlands eScience Center and University
+of Amsterdam, and Copyright 2022-2023 ITER Organisation. Licensed under the
+Apache 2.0 license.
 
