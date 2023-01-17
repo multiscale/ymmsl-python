@@ -64,11 +64,13 @@ class Conduit:
 
         # check that the length is at least 2
         if len(Conduit.__stem(ref)) < 2:
-            raise ValueError('Senders and receivers in conduits must have'
-                             ' a component name, a period, and then'
-                             ' a port name and optionally a slot. Reference {}'
-                             ' is missing either the component or the'
-                             ' port'.format(ref))
+            raise ValueError((
+                    'Senders and receivers in conduits must have a component'
+                    ' name, a period, and then a port name and optionally a'
+                    ' slot. Reference {} is missing either the component or'
+                    ' the port. Did you perhaps type a comma or an underscore'
+                    ' instead of a period? It should be "component.port"'
+                    ).format(ref))
 
     def sending_component(self) -> Reference:
         """Returns a reference to the sending component."""
