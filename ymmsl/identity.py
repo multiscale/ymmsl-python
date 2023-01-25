@@ -31,7 +31,8 @@ class Identifier(UserString):
             raise ValueError('Identifiers must consist only of'
                              ' lower- and uppercase letters, digits and'
                              ' underscores, must start with a letter or'
-                             ' an underscore, and must not be empty.')
+                             ' an underscore, and must not be empty.'
+                             ' "{}" is therefore invalid.'.format(self.data))
 
 
 ReferencePart = Union[Identifier, int]
