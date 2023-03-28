@@ -232,8 +232,9 @@ def test_check_consistent(test_config6: Configuration) -> None:
             ExecutionModel.OPENMPI)
     test_config6.resources[Reference('singlethreaded')] = MPICoresResReq(
             Reference('singlethreaded'), 16, 8)
-    with pytest.raises(RuntimeError):
-        test_config6.check_consistent()
+    # singlethreaded is started with a script, for which we allow either
+    # MPICoresResReq or ThreadedResReq
+    test_config6.check_consistent()
 
 
 def test_load_nil_settings() -> None:
