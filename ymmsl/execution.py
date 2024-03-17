@@ -3,7 +3,7 @@ from enum import Enum
 from pathlib import Path
 from typing import cast, Dict, List, Optional, Union
 
-from ruamel import yaml
+import yaml
 import yatiml
 
 from ymmsl.identity import Reference

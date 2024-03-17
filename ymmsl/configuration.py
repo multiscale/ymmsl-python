@@ -7,7 +7,7 @@ from typing import (
         Dict, List, MutableMapping, Optional, Sequence, Union, cast)
 
 import yatiml
-from ruamel import yaml
+import yaml
 
 from ymmsl.checkpoint import Checkpoints
 from ymmsl.document import Document

@@ -5,7 +5,7 @@ import logging
 from typing import Dict     # noqa: F401
 from typing import Iterable, List, Optional, Union
 
-import ruamel.yaml as yaml
+import yaml
 import yatiml
 
 from ymmsl.identity import Identifier, Reference
@@ -308,5 +308,5 @@ class Component:
             node.set_attribute('multiplicity', items[0].get_value())
 
         ports_node = node.get_attribute('ports').yaml_node
-        if len(ports_node.value) == 0:
+        if ports_node.tag == 'tag:yaml.org,2002:null':
             node.remove_attribute('ports')

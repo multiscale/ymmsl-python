@@ -421,7 +421,7 @@ def test_yaml8() -> str:
             '    keeps_state_for_next_use: helpful\n'
             '  micro2_fortran:\n'
             '    executable: bin/micro2\n'
-            '    keeps_state_for_next_use: no\n'
+            '    keeps_state_for_next_use: \'no\'\n'
             'resources:\n'
             '  macro:\n'
             '    threads: 1\n'
