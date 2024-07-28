@@ -7,7 +7,7 @@ from typing import (
         Dict, List, MutableMapping, Optional, Sequence, Union, cast)
 
 import yatiml
-from ruamel import yaml
+import yaml
 
 from ymmsl.checkpoint import Checkpoints
 from ymmsl.document import Document
@@ -322,7 +322,9 @@ class Configuration(PartialConfiguration):
             impl = self.implementations[comp.implementation]
             res = self.resources[comp.name]
             if impl.execution_model == ExecutionModel.DIRECT:
-                if not isinstance(res, ThreadedResReq):
+                if not isinstance(res, ThreadedResReq) and impl.script is None:
+                    # Assume that people know what they're doing if they use
+                    # script for specifying an implementation.
                     raise RuntimeError((
                         'Model component {}\'s implementation does not'
                         ' specify MPI, but mpi_processes are specified in its'

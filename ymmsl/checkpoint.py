@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Union
 
-from ruamel import yaml
+import yaml
 import yatiml
 
 

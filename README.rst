@@ -48,6 +48,6 @@ Legal
 *****
 
 ymmsl_python is Copyright 2018-2023 Netherlands eScience Center and University
-of Amsterdam, and Copyright 2022-2023 ITER Organisation. Licensed under the
-Apache 2.0 license.
+of Amsterdam, Copyright 2022-2023 The ITER Organisation, and Copyright 2024
+Netherlands eScience Center. Licensed under the Apache 2.0 license.
 

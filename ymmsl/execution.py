@@ -3,7 +3,7 @@ from enum import Enum
 from pathlib import Path
 from typing import cast, Dict, List, Optional, Union
 
-from ruamel import yaml
+import yaml
 import yatiml
 
 from ymmsl.identity import Reference
@@ -207,8 +207,8 @@ class Implementation:
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         # There's no ambiguity, and we want to allow some leeway
-        # and savorize things, so disable recognition.
-        pass
+        # and savorize things, so only require that the node is a mapping.
+        node.require_mapping()
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:

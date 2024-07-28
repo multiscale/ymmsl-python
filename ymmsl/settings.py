@@ -41,10 +41,13 @@ class Settings(MutableMapping):
                 self[key] = deepcopy(value)
 
     def __eq__(self, other: Any) -> bool:
-        """Returns whether keys and values are identical."""
+        """Returns whether keys and values are identical.
+
+        The comparison ignores the order of the settings.
+        """
         if not isinstance(other, Settings):
             return NotImplemented
-        return self._store == other._store
+        return dict(self._store.items()) == dict(other._store.items())
 
     def __str__(self) -> str:
         """Represent as a string."""
