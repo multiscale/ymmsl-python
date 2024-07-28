@@ -8,7 +8,7 @@ with open('README.rst') as readme_file:
 
 setup(
     name='ymmsl',
-    version='0.13.1-dev',
+    version='0.13.1',
     description="Python bindings for the YAML version of the Multiscale Modeling and Simulation Language",
     long_description=readme + '\n\n',
     author="Lourens Veen",
