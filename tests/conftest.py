@@ -487,3 +487,18 @@ def test_config8() -> Configuration:
 
     return Configuration(model, None, implementations, resources,
             description, checkpoints, resume)
+
+
+@pytest.fixture
+def test_yaml9() -> str:
+    text = ('ymmsl_version: v0.1\n'
+            'implementations:\n'
+            '  isr2d.initial_conditions:\n'
+            '    execution_model: openmpi\n'
+            '    can_share_resources: true\n'
+            '    keeps_state_for_next_use: helpful\n'
+            '    script: |\n'
+            '      #!/bin/bash\n'
+            '\n'
+            '      mpirun my_model\n')
+    return text

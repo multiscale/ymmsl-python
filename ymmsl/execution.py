@@ -69,7 +69,8 @@ class Implementation:
     needed attributes, with ``script`` set to None. You should specify
     a script only as a last resort, probably after getting some help
     from the authors of this library. If a script is specified, all
-    other attributes except for the name must be ``None``.
+    other attributes except for the name, the execution model,
+    can_share_resources and keeps_state_for_next_use must be ``None``.
 
     For ``execution_model``, the following values are supported:
 
@@ -107,8 +108,9 @@ class Implementation:
         script: A script that starts the implementation
         can_share_resources: Whether this implementation can share
             resources (cores) with other components or not
-        keeps_state_for_next_use: Does this implementation keep state for the
-            next iteration of the reuse loop. See :class:`ImplementationState`.
+        keeps_state_for_next_use: Does this implementation keep state
+            for the next iteration of the reuse loop. See
+            :class:`KeepsStateForNextUse`.
     """
 
     def __init__(
@@ -155,22 +157,24 @@ class Implementation:
                 :class:`ImplementationState`.
         """
         if script is not None:
-            if (
-                    modules is not None or virtual_env is not None or
-                    env is not None or
-                    execution_model is not ExecutionModel.DIRECT or
-                    executable is not None or args is not None):
+            err_arg = []
+            if modules is not None:
+                err_arg.append('"modules"')
+            if virtual_env is not None:
+                err_arg.append('"virtual_env"')
+            if env is not None:
+                err_arg.append('"env"')
+            if executable is not None:
+                err_arg.append('"executable"')
+            if args is not None:
+                err_arg.append('"args"')
+            if err_arg:
                 raise RuntimeError(
                         'When creating an Implementation, script was specified'
-                        ' together with another argument, which is not'
-                        ' supported. Please specify either a script or an'
-                        ' executable.')
-
-        if executable is not None and script is not None:
-            raise RuntimeError(
-                    f'In {name}, both a script and an executable were given.'
-                    ' Please specify either a script, or the other parameters.'
-                    )
+                        ' together with the arguments {", ".join(err_arg)},'
+                        ' which is not supported, as they are supposed to be'
+                        ' inside the script if there is one. Please use either'
+                        ' a script or the arguments listed above.')
 
         if executable is None and script is None:
             raise RuntimeError(

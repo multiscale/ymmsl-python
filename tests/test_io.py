@@ -5,8 +5,8 @@ import pytest
 
 from yatiml import RecognitionError
 from ymmsl import (
-        Configuration, dump, load, save, Model, ModelReference,
-        MPICoresResReq, MPINodesResReq, PartialConfiguration, Reference,
+        Configuration, dump, ExecutionModel, KeepsStateForNextUse, load, save, Model,
+        ModelReference, MPICoresResReq, MPINodesResReq, PartialConfiguration, Reference,
         ThreadedResReq, CheckpointRangeRule)
 
 
@@ -159,6 +159,18 @@ def test_load_string8(test_yaml8: str) -> None:
     assert len(configuration.resume) == 2
 
     assert len(configuration.description.splitlines()) == 3
+
+
+def test_load_string9(test_yaml9: str) -> None:
+    configuration = load(test_yaml9)
+    assert isinstance(configuration, PartialConfiguration)
+
+    implementation = configuration.implementations['isr2d.initial_conditions']
+    assert implementation.name == 'isr2d.initial_conditions'
+    assert implementation.execution_model == ExecutionModel.OPENMPI
+    assert implementation.can_share_resources is True
+    assert implementation.keeps_state_for_next_use == KeepsStateForNextUse.HELPFUL
+    assert implementation.script == '#!/bin/bash\n\nmpirun my_model\n'
 
 
 def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
