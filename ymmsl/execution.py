@@ -171,7 +171,7 @@ class Implementation:
             if err_arg:
                 raise RuntimeError(
                         'When creating an Implementation, script was specified'
-                        ' together with the arguments {", ".join(err_arg)},'
+                        f' together with the arguments {", ".join(err_arg)},'
                         ' which is not supported, as they are supposed to be'
                         ' inside the script if there is one. Please use either'
                         ' a script or the arguments listed above.')

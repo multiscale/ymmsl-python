@@ -70,3 +70,12 @@ def test_implementations_script() -> None:
     assert impl.can_share_resources is False
     assert impl.keeps_state_for_next_use == KeepsStateForNextUse.HELPFUL
     assert impl.script == script
+
+
+def test_implementations_script_invalid_args() -> None:
+    with pytest.raises(RuntimeError):
+        Implementation(
+                name=Reference('test_impl'),
+                execution_model=ExecutionModel.DIRECT,
+                env={'TEST': 'NOT_ALLOWED'},
+                script='test')
