@@ -85,22 +85,6 @@ todo_include_todos = False
 
 add_module_names = False
 
-def strip_signatures(app, what, name, obj, options, signature, return_annotation):
-    sig = None
-    if signature is not None:
-        sig = re.sub('ymmsl\.[^.]*\.', '', signature)
-
-    ret = None
-    if return_annotation is not None:
-        ret = re.sub('ymmsl\.[^.]*\.', '', signature)
-
-    return sig, ret
-
-
-def setup(app):
-    app.connect('autodoc-process-signature', strip_signatures)
-
-
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
