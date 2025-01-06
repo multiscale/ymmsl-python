@@ -1,7 +1,8 @@
 from pathlib import Path
 
 import pytest
-from ymmsl import ExecutionModel, Implementation, KeepsStateForNextUse, Reference
+from ymmsl import (
+        BaseEnv, ExecutionModel, Implementation, KeepsStateForNextUse, Reference)
 
 
 def test_implementation() -> None:
@@ -25,6 +26,7 @@ def test_implementation_script_list() -> None:
 def test_implementations_executable() -> None:
     impl = Implementation(
             name=Reference('test_impl'),
+            base_env=BaseEnv.MANAGER,
             modules=['python/3.6.0', 'gcc/9.3.0'],
             virtual_env=Path('/home/user/envs/venv'),
             env={
@@ -36,6 +38,7 @@ def test_implementations_executable() -> None:
             can_share_resources=False)
 
     assert impl.name == 'test_impl'
+    assert impl.base_env == BaseEnv.MANAGER
     assert impl.modules == ['python/3.6.0', 'gcc/9.3.0']
     assert impl.virtual_env == Path('/home/user/envs/venv')
     assert impl.env is not None

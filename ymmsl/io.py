@@ -10,15 +10,15 @@ from ymmsl.component import Component, Ports
 from ymmsl.configuration import Configuration, PartialConfiguration
 from ymmsl.document import Document
 from ymmsl.execution import (
-        ExecutionModel, Implementation, ResourceRequirements, MPICoresResReq,
-        MPINodesResReq, ThreadedResReq, KeepsStateForNextUse)
+        BaseEnv, ExecutionModel, Implementation, ResourceRequirements,
+        MPICoresResReq, MPINodesResReq, ThreadedResReq, KeepsStateForNextUse)
 from ymmsl.settings import Settings
 from ymmsl.identity import Identifier, Reference
 from ymmsl.model import Conduit, MulticastConduit, Model, ModelReference
 
 
 _classes = (
-        PartialConfiguration, CheckpointRangeRule, CheckpointAtRule,
+        PartialConfiguration, BaseEnv, CheckpointRangeRule, CheckpointAtRule,
         CheckpointRule, Checkpoints, Component, Conduit, Configuration,
         Document, ExecutionModel, Identifier, Implementation,
         KeepsStateForNextUse, Model, ModelReference,

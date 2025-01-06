@@ -9,6 +9,33 @@ import yatiml
 from ymmsl.identity import Reference
 
 
+class BaseEnv(Enum):
+    """Describes the base shell environment for execution.
+
+    Many of the options in :class:`Implementation` describe additions to
+    the shell environment to make subsequently, but we need to start
+    somewhere.
+    """
+    LOGIN = 1
+    """Start with a fresh login shell (bash -l)."""
+    MANAGER = 2
+    """Start with the environment the manager was started with."""
+    CLEAN = 3
+    """Like MANAGER, but with any modules unloaded and venvs deactivated."""
+
+    @classmethod
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
+        if node.is_scalar(str):
+            val = cast(str, node.get_value())
+            node.set_value(val.upper())
+
+    @classmethod
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        val = node.get_value()
+        if isinstance(val, str):
+            node.set_value(val.lower())
+
+
 class KeepsStateForNextUse(Enum):
     """Describes whether an implementation keeps internal state between
     iterations of the reuse loop.
@@ -99,6 +126,7 @@ class Implementation:
 
     Attributes:
         name: Name of the implementation
+        base_env: Base environment to start from
         modules: HPC software modules to load
         virtual_env: Path to a virtual env to activate
         env: Environment variables to set
@@ -116,6 +144,7 @@ class Implementation:
     def __init__(
             self,
             name: Reference,
+            base_env: Optional[BaseEnv] = None,
             modules: Union[str, List[str], None] = None,
             virtual_env: Optional[Path] = None,
             env: Optional[Dict[str, str]] = None,
@@ -133,8 +162,9 @@ class Implementation:
         needed arguments, with ``script`` set to ``None``. You should
         specify a script only as a last resort, probably after getting
         some help from the authors of this library. If ``script`` is
-        specified, all other arguments except for ``name`` must be
-        ``None``.
+        specified, all other arguments except for ``name``,
+        ``execution model``, ``can_share_resources`` and
+        ``keeps_state_for_next_use`` must be ``None``.
 
         If script is a list, each string in it is a line, and the
         lines will be concatenated into a single string to put into
@@ -142,6 +172,7 @@ class Implementation:
 
         Args:
             name: Name of the implementation
+            base_env: Base environment to start from, defaults to clean
             modules: HPC software modules to load
             virtual_env: Path to a virtual env to activate
             env: Environment variables to set
@@ -158,6 +189,8 @@ class Implementation:
         """
         if script is not None:
             err_arg = []
+            if base_env is not None:
+                err_arg.append('"base_env"')
             if modules is not None:
                 err_arg.append('"modules"')
             if virtual_env is not None:
@@ -188,6 +221,8 @@ class Implementation:
             self.script = '\n'.join(script) + '\n'  # type: Optional[str]
         else:
             self.script = script
+
+        self.base_env = base_env if base_env else BaseEnv.CLEAN
 
         if isinstance(modules, str):
             self.modules = modules.split(' ')   # type: Optional[List[str]]
@@ -229,6 +264,7 @@ class Implementation:
                             value_node.tag = 'tag:yaml.org,2002:str'
 
     _yatiml_defaults = {
+        'base_env': 'clean',
         'execution_model': 'direct',
         'keeps_state_for_next_use': 'necessary'}
 
