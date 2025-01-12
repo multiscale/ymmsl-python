@@ -15,13 +15,15 @@ class BaseEnv(Enum):
     Many of the options in :class:`Implementation` describe additions to
     the shell environment to make subsequently, but we need to start
     somewhere.
+
+    See the MUSCLE3 documentation for more details.
     """
     LOGIN = 1
-    """Start with a fresh login shell (bash -l)."""
-    MANAGER = 2
-    """Start with the environment the manager was started with."""
-    CLEAN = 3
+    """The environment you get after logging in when using bash."""
+    CLEAN = 2
     """Like MANAGER, but with any modules unloaded and venvs deactivated."""
+    MANAGER = 3
+    """The environment the manager was started in."""
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
@@ -98,6 +100,8 @@ class Implementation:
     from the authors of this library. If a script is specified, all
     other attributes except for the name, the execution model,
     can_share_resources and keeps_state_for_next_use must be ``None``.
+
+    If base_env is not specified then it defaults to MANAGER.
 
     For ``execution_model``, the following values are supported:
 
@@ -222,7 +226,7 @@ class Implementation:
         else:
             self.script = script
 
-        self.base_env = base_env if base_env else BaseEnv.CLEAN
+        self.base_env = base_env if base_env else BaseEnv.MANAGER
 
         if isinstance(modules, str):
             self.modules = modules.split(' ')   # type: Optional[List[str]]
