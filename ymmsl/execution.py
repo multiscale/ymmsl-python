@@ -12,11 +12,41 @@ from ymmsl.identity import Reference
 class BaseEnv(Enum):
     """Describes the base shell environment for execution.
 
-    Many of the options in :class:`Implementation` describe additions to
-    the shell environment to make subsequently, but we need to start
-    somewhere.
+    Several options in :class:`Implementation` describe additions to the
+    shell environment to make subsequently, but we need to start
+    somewhere. Different starting points make sense in different
+    contexts, so there's a choice:
 
-    See the MUSCLE3 documentation for more details.
+    ``LOGIN`` starts from an environment that resembles the default
+    environment of the user running the simulation. This will copy
+    ``TERM``, ``HOME``, ``SHELL``, ``USER``, ``LOGNAME``, and ``PATH``
+    from the manager environment, and then run ``/bin/bash -il`` with a
+    script that starts the program.
+
+    This will cause bash to first load ``/etc/profile``, and then the
+    first of ``~/.bash_profile``, ``~/.bash_login``, and ``~/.profile``
+    that it finds. Note that on many machines, these files will load
+    other files in turn, often including ``~/.bashrc``.
+
+    ``CLEAN`` starts from the environment that ``muscle_manager`` was
+    started in, and then unloads any loaded modules and deactivates any
+    active Python virtual environments. Any modules specified in
+    ``modules`` and any virtual environment specified in ``virtual_env``
+    will be activate after that, of course.
+
+    Note that on some HPC machines, SLURM is made available though the
+    environment modules. If you use the SRUNMPI execution model, then
+    you'll have to load it again explicitly to make the ``srun`` command
+    available, or MUSCLE3 won't be able to start your program.
+
+    ``MANAGER`` starts from the exact environment that
+    ``muscle_manager`` was started in, including any loaded modules and
+    active virtual environments. Any modules specified in ``modules``
+    are then loaded on top of this, which may cause some of the existing
+    modules to be unloaded if they are incompatible. If a virtual
+    environment is specified in ``virtual_env``, then it will replace
+    the active environment.
+
     """
     LOGIN = 1
     """The environment you get after logging in when using bash."""
