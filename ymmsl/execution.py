@@ -302,7 +302,7 @@ class Implementation:
                             value_node.tag = 'tag:yaml.org,2002:str'
 
     _yatiml_defaults = {
-        'base_env': 'clean',
+        'base_env': 'manager',
         'execution_model': 'direct',
         'keeps_state_for_next_use': 'necessary'}
 
