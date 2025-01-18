@@ -18,15 +18,19 @@ class BaseEnv(Enum):
     contexts, so there's a choice:
 
     ``LOGIN`` starts from an environment that resembles the default
-    environment of the user running the simulation. This will copy
-    ``TERM``, ``HOME``, ``SHELL``, ``USER``, ``LOGNAME``, and ``PATH``
-    from the manager environment, and then run ``/bin/bash -il`` with a
-    script that starts the program.
+    environment of the user running the simulation. The exact
+    environment you get when you log in depends on whether you're on a
+    text terminal, graphical terminal, or using SSH, and also on the
+    operating system and any local changes made by your system
+    administrator. This cannot be reproduced exactly in all
+    circumstances, but the below should get close on most systems.
 
-    This will cause bash to first load ``/etc/profile``, and then the
-    first of ``~/.bash_profile``, ``~/.bash_login``, and ``~/.profile``
-    that it finds. Note that on many machines, these files will load
-    other files in turn, often including ``~/.bashrc``.
+    This will copy ``TERM``, ``HOME``, ``SHELL``, ``USER``, and
+    ``LOGNAME`` from the manager environment, then run ``/bin/bash``
+    and have it load ``/etc/environment``, ``/etc/profile``, and then
+    the first of ``~/.bash_profile``, ``~/.bash_login``, and
+    ``~/.profile`` that it finds. Note that on most machines, these
+    files will load other files in turn, often including ``~/.bashrc``.
 
     ``CLEAN`` starts from the environment that ``muscle_manager`` was
     started in, and then unloads any loaded modules and deactivates any
