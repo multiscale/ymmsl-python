@@ -10,14 +10,14 @@ from ymmsl.identity import Reference
 
 
 SettingValue = Union[
-        str, int, float, bool, List[float], List[List[float]],
+        str, int, float, bool, List[int], List[float], List[List[float]],
         yatiml.bool_union_fix]
 
 
 class Settings(MutableMapping):
     """Settings for doing an experiment.
 
-    An experiment is done by running a model with particular settings, \
+    An experiment is done by running a model with particular settings,
     for the submodel scales, model parameters and any other configuration.
     """
 

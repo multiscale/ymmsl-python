@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from ymmsl import (
-        Component, Conduit, Configuration, ExecutionModel, Implementation,
+        BaseEnv, Component, Conduit, Configuration, ExecutionModel, Implementation,
         CheckpointRangeRule, CheckpointAtRule, Checkpoints, KeepsStateForNextUse,
         Model, ModelReference, MPICoresResReq, MPINodesResReq,
         PartialConfiguration, Ports, Reference, Settings, ThreadedResReq)
@@ -262,12 +262,14 @@ def test_yaml6() -> str:
             '  a: /home/user/models/bin/modela\n'
             '  b: /home/user/models/bin/modelb\n'
             '  c:\n'
+            '    base_env: login\n'
             '    modules:\n'
             '    - gcc-6.3.0\n'
             '    - openmpi-1.10\n'
             '    execution_model: openmpi\n'
             '    executable: /home/user/models/bin/modelc\n'
             '  d:\n'
+            '    base_env: clean\n'
             '    modules:\n'
             '    - icc-18.0\n'
             '    - IntelMPI-2021-3\n'
@@ -312,11 +314,17 @@ def test_config6() -> Configuration:
             Implementation(
                 Reference('b'), script='/home/user/models/bin/modelb'),
             Implementation(
-                Reference('c'), ['gcc-6.3.0', 'openmpi-1.10'], None, None,
-                ExecutionModel.OPENMPI, Path('/home/user/models/bin/modelc')),
+                Reference('c'),
+                base_env=BaseEnv.LOGIN,
+                modules=['gcc-6.3.0', 'openmpi-1.10'],
+                execution_model=ExecutionModel.OPENMPI,
+                executable=Path('/home/user/models/bin/modelc')),
             Implementation(
-                Reference('d'), ['icc-18.0', 'IntelMPI-2021-3'], None, None,
-                ExecutionModel.INTELMPI, Path('/home/user/models/bin/modeld'))]
+                Reference('d'),
+                base_env=BaseEnv.CLEAN,
+                modules=['icc-18.0', 'IntelMPI-2021-3'],
+                execution_model=ExecutionModel.INTELMPI,
+                executable=Path('/home/user/models/bin/modeld'))]
 
     resources = [
             ThreadedResReq(Reference('singlethreaded'), 1),
@@ -461,14 +469,14 @@ def test_config8() -> Configuration:
                 Conduit('micro2.final_output', 'macro.x_in2')] )
 
     implementations = [
-            Implementation(Reference('macro_python'), executable='python',
-                    args='macro.py'),
+            Implementation(Reference('macro_python'), base_env=BaseEnv.MANAGER,
+                executable='python', args='macro.py'),
             Implementation(Reference('micro1_python'), executable='python',
-                    args='micro1.py',
-                    keeps_state_for_next_use=KeepsStateForNextUse.HELPFUL),
+                args='micro1.py',
+                keeps_state_for_next_use=KeepsStateForNextUse.HELPFUL),
             Implementation(Reference('micro2_fortran'),
-                    executable='bin/micro2',
-                    keeps_state_for_next_use=KeepsStateForNextUse.NO)]
+                executable='bin/micro2',
+                keeps_state_for_next_use=KeepsStateForNextUse.NO)]
 
     resources = [
             ThreadedResReq(Reference('macro'), 1),
@@ -487,3 +495,18 @@ def test_config8() -> Configuration:
 
     return Configuration(model, None, implementations, resources,
             description, checkpoints, resume)
+
+
+@pytest.fixture
+def test_yaml9() -> str:
+    text = ('ymmsl_version: v0.1\n'
+            'implementations:\n'
+            '  isr2d.initial_conditions:\n'
+            '    execution_model: openmpi\n'
+            '    can_share_resources: true\n'
+            '    keeps_state_for_next_use: helpful\n'
+            '    script: |\n'
+            '      #!/bin/bash\n'
+            '\n'
+            '      mpirun my_model\n')
+    return text

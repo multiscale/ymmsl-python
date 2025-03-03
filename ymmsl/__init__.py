@@ -9,21 +9,22 @@ from ymmsl.checkpoint import (
 from ymmsl.component import Component, Operator, Port, Ports
 from ymmsl.configuration import Configuration, PartialConfiguration
 from ymmsl.execution import (
-        ExecutionModel, Implementation, MPICoresResReq, MPINodesResReq,
-        ResourceRequirements, ThreadedResReq, KeepsStateForNextUse)
+        BaseEnv, ExecutionModel, Implementation, MPICoresResReq,
+        MPINodesResReq, ResourceRequirements, ThreadedResReq,
+        KeepsStateForNextUse)
 from ymmsl.settings import Settings, SettingValue
 from ymmsl.identity import Identifier, Reference
 from ymmsl.io import load, dump, save
 from ymmsl.model import Conduit, Model, ModelReference
 
 
-__version__ = '0.13.1'
+__version__ = '0.14.0'
 __author__ = 'Lourens Veen'
 __email__ = 'l.veen@esciencecenter.nl'
 
 
 __all__ = [
-        'CheckpointRule', 'CheckpointRangeRule', 'CheckpointAtRule',
+        'BaseEnv', 'CheckpointRule', 'CheckpointRangeRule', 'CheckpointAtRule',
         'Checkpoints', 'Component', 'Conduit', 'Configuration', 'dump',
         'ExecutionModel', 'Identifier', 'Implementation',
         'KeepsStateForNextUse', 'load', 'Model', 'ModelReference',

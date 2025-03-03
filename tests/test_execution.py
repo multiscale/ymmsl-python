@@ -1,7 +1,8 @@
 from pathlib import Path
 
 import pytest
-from ymmsl import ExecutionModel, Implementation, Reference
+from ymmsl import (
+        BaseEnv, ExecutionModel, Implementation, KeepsStateForNextUse, Reference)
 
 
 def test_implementation() -> None:
@@ -25,6 +26,7 @@ def test_implementation_script_list() -> None:
 def test_implementations_executable() -> None:
     impl = Implementation(
             name=Reference('test_impl'),
+            base_env=BaseEnv.MANAGER,
             modules=['python/3.6.0', 'gcc/9.3.0'],
             virtual_env=Path('/home/user/envs/venv'),
             env={
@@ -36,6 +38,7 @@ def test_implementations_executable() -> None:
             can_share_resources=False)
 
     assert impl.name == 'test_impl'
+    assert impl.base_env == BaseEnv.MANAGER
     assert impl.modules == ['python/3.6.0', 'gcc/9.3.0']
     assert impl.virtual_env == Path('/home/user/envs/venv')
     assert impl.env is not None
@@ -50,3 +53,32 @@ def test_implementations_executable() -> None:
 def test_implementations_exclusive() -> None:
     with pytest.raises(RuntimeError):
         Implementation(name=Reference('test'), script='', executable=Path())
+
+
+def test_implementations_script() -> None:
+    script = (
+            '#!/bin/bash\n'
+            '\n'
+            'mpirun my_model\n')
+
+    impl = Implementation(
+            name=Reference('test_impl'),
+            execution_model=ExecutionModel.OPENMPI,
+            can_share_resources=False,
+            keeps_state_for_next_use=KeepsStateForNextUse.HELPFUL,
+            script=script)
+
+    assert impl.name == 'test_impl'
+    assert impl.execution_model == ExecutionModel.OPENMPI
+    assert impl.can_share_resources is False
+    assert impl.keeps_state_for_next_use == KeepsStateForNextUse.HELPFUL
+    assert impl.script == script
+
+
+def test_implementations_script_invalid_args() -> None:
+    with pytest.raises(RuntimeError):
+        Implementation(
+                name=Reference('test_impl'),
+                execution_model=ExecutionModel.DIRECT,
+                env={'TEST': 'NOT_ALLOWED'},
+                script='test')

@@ -207,10 +207,11 @@ def test_load_settings() -> None:
             'test_str: value\n'
             'test_int: 13\n'
             'test_bool: true\n'
-            'test_list: [12.3, 1.3]\n')
+            'test_list_int: [5, 7]\n'
+            'test_list_float: [12.3, 1.3]\n')
 
     settings = load_settings(text)
-    assert len(settings) == 8
+    assert len(settings) == 9
     assert str(settings.ordered_items()[0][0]) == 'domain1._muscle_grain'
     assert cast(List[float], settings['domain1._muscle_grain'])[0] == 0.01
     assert settings['submodel1._muscle_total_time'] == 100.0
@@ -219,9 +220,12 @@ def test_load_settings() -> None:
     assert ([str(s[0]) for s in settings.ordered_items()]
             == ['domain1._muscle_grain', 'domain1._muscle_extent',
                 'submodel1._muscle_timestep', 'submodel1._muscle_total_time',
-                'test_str', 'test_int', 'test_bool', 'test_list'])
+                'test_str', 'test_int', 'test_bool', 'test_list_int',
+                'test_list_float'])
+
     assert settings['test_bool'] is True
-    assert settings['test_list'] == [12.3, 1.3]
+    assert settings['test_list_int'] == [5, 7]
+    assert settings['test_list_float'] == [12.3, 1.3]
 
 
 def test_dump_settings() -> None:
@@ -235,7 +239,8 @@ def test_dump_settings() -> None:
             ('test_str', 'value'),
             ('test_int', 12),
             ('test_bool', True),
-            ('test_list', [12.3, 1.3])]))
+            ('test_list_int', [19, 13]),
+            ('test_list_float', [12.3, 1.3])]))
 
     text = dump_settings(settings)
     assert text == ('domain1._muscle_grain: [0.01]\n'
@@ -245,4 +250,5 @@ def test_dump_settings() -> None:
                     'test_str: value\n'
                     'test_int: 12\n'
                     'test_bool: true\n'
-                    'test_list: [12.3, 1.3]\n')
+                    'test_list_int: [19, 13]\n'
+                    'test_list_float: [12.3, 1.3]\n')

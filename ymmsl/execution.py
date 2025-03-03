@@ -9,6 +9,69 @@ import yatiml
 from ymmsl.identity import Reference
 
 
+class BaseEnv(Enum):
+    """Describes the base shell environment for execution.
+
+    Several options in :class:`Implementation` describe additions to the
+    shell environment to make subsequently, but we need to start
+    somewhere. Different starting points make sense in different
+    contexts, so there's a choice:
+
+    ``LOGIN`` starts from an environment that resembles the default
+    environment of the user running the simulation. The exact
+    environment you get when you log in depends on whether you're on a
+    text terminal, graphical terminal, or using SSH, and also on the
+    operating system and any local changes made by your system
+    administrator. This cannot be reproduced exactly in all
+    circumstances, but the below should get close on most systems.
+
+    This will copy ``TERM``, ``HOME``, ``SHELL``, ``USER``, and
+    ``LOGNAME`` from the manager environment, then run ``/bin/bash``
+    and have it load ``/etc/environment``, ``/etc/profile``, and then
+    the first of ``~/.bash_profile``, ``~/.bash_login``, and
+    ``~/.profile`` that it finds. Note that on most machines, these
+    files will load other files in turn, often including ``~/.bashrc``.
+
+    ``CLEAN`` starts from the environment that ``muscle_manager`` was
+    started in, and then unloads any loaded modules and deactivates any
+    active Python virtual environments. Any modules specified in
+    ``modules`` and any virtual environment specified in ``virtual_env``
+    will be activate after that, of course.
+
+    Note that on some HPC machines, SLURM is made available though the
+    environment modules. If you use the SRUNMPI execution model, then
+    you'll have to load it again explicitly to make the ``srun`` command
+    available, or MUSCLE3 won't be able to start your program.
+
+    ``MANAGER`` starts from the exact environment that
+    ``muscle_manager`` was started in, including any loaded modules and
+    active virtual environments. Any modules specified in ``modules``
+    are then loaded on top of this, which may cause some of the existing
+    modules to be unloaded if they are incompatible. If a virtual
+    environment is specified in ``virtual_env``, then it will replace
+    the active environment.
+
+    """
+    LOGIN = 1
+    """The environment you get after logging in when using bash."""
+    CLEAN = 2
+    """Like MANAGER, but with any modules unloaded and venvs deactivated."""
+    MANAGER = 3
+    """The environment the manager was started in."""
+
+    @classmethod
+    def _yatiml_savorize(cls, node: yatiml.Node) -> None:
+        if node.is_scalar(str):
+            val = cast(str, node.get_value())
+            node.set_value(val.upper())
+
+    @classmethod
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        val = node.get_value()
+        if isinstance(val, str):
+            node.set_value(val.lower())
+
+
 class KeepsStateForNextUse(Enum):
     """Describes whether an implementation keeps internal state between
     iterations of the reuse loop.
@@ -69,7 +132,10 @@ class Implementation:
     needed attributes, with ``script`` set to None. You should specify
     a script only as a last resort, probably after getting some help
     from the authors of this library. If a script is specified, all
-    other attributes except for the name must be ``None``.
+    other attributes except for the name, the execution model,
+    can_share_resources and keeps_state_for_next_use must be ``None``.
+
+    If base_env is not specified then it defaults to MANAGER.
 
     For ``execution_model``, the following values are supported:
 
@@ -98,6 +164,7 @@ class Implementation:
 
     Attributes:
         name: Name of the implementation
+        base_env: Base environment to start from
         modules: HPC software modules to load
         virtual_env: Path to a virtual env to activate
         env: Environment variables to set
@@ -107,13 +174,15 @@ class Implementation:
         script: A script that starts the implementation
         can_share_resources: Whether this implementation can share
             resources (cores) with other components or not
-        keeps_state_for_next_use: Does this implementation keep state for the
-            next iteration of the reuse loop. See :class:`ImplementationState`.
+        keeps_state_for_next_use: Does this implementation keep state
+            for the next iteration of the reuse loop. See
+            :class:`KeepsStateForNextUse`.
     """
 
     def __init__(
             self,
             name: Reference,
+            base_env: Optional[BaseEnv] = None,
             modules: Union[str, List[str], None] = None,
             virtual_env: Optional[Path] = None,
             env: Optional[Dict[str, str]] = None,
@@ -131,8 +200,9 @@ class Implementation:
         needed arguments, with ``script`` set to ``None``. You should
         specify a script only as a last resort, probably after getting
         some help from the authors of this library. If ``script`` is
-        specified, all other arguments except for ``name`` must be
-        ``None``.
+        specified, all other arguments except for ``name``,
+        ``execution model``, ``can_share_resources`` and
+        ``keeps_state_for_next_use`` must be ``None``.
 
         If script is a list, each string in it is a line, and the
         lines will be concatenated into a single string to put into
@@ -140,6 +210,7 @@ class Implementation:
 
         Args:
             name: Name of the implementation
+            base_env: Base environment to start from, defaults to clean
             modules: HPC software modules to load
             virtual_env: Path to a virtual env to activate
             env: Environment variables to set
@@ -155,22 +226,26 @@ class Implementation:
                 :class:`ImplementationState`.
         """
         if script is not None:
-            if (
-                    modules is not None or virtual_env is not None or
-                    env is not None or
-                    execution_model is not ExecutionModel.DIRECT or
-                    executable is not None or args is not None):
+            err_arg = []
+            if base_env is not None:
+                err_arg.append('"base_env"')
+            if modules is not None:
+                err_arg.append('"modules"')
+            if virtual_env is not None:
+                err_arg.append('"virtual_env"')
+            if env is not None:
+                err_arg.append('"env"')
+            if executable is not None:
+                err_arg.append('"executable"')
+            if args is not None:
+                err_arg.append('"args"')
+            if err_arg:
                 raise RuntimeError(
                         'When creating an Implementation, script was specified'
-                        ' together with another argument, which is not'
-                        ' supported. Please specify either a script or an'
-                        ' executable.')
-
-        if executable is not None and script is not None:
-            raise RuntimeError(
-                    f'In {name}, both a script and an executable were given.'
-                    ' Please specify either a script, or the other parameters.'
-                    )
+                        f' together with the arguments {", ".join(err_arg)},'
+                        ' which is not supported, as they are supposed to be'
+                        ' inside the script if there is one. Please use either'
+                        ' a script or the arguments listed above.')
 
         if executable is None and script is None:
             raise RuntimeError(
@@ -184,6 +259,8 @@ class Implementation:
             self.script = '\n'.join(script) + '\n'  # type: Optional[str]
         else:
             self.script = script
+
+        self.base_env = base_env if base_env else BaseEnv.MANAGER
 
         if isinstance(modules, str):
             self.modules = modules.split(' ')   # type: Optional[List[str]]
@@ -225,6 +302,7 @@ class Implementation:
                             value_node.tag = 'tag:yaml.org,2002:str'
 
     _yatiml_defaults = {
+        'base_env': 'manager',
         'execution_model': 'direct',
         'keeps_state_for_next_use': 'necessary'}
 

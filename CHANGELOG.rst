@@ -5,6 +5,21 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.14.0
+******
+
+Added
+-----
+
+- Implementations.base_env
+- List of ints is now a valid SettingValue
+
+Fixed
+-----
+
+- Handling of Implementation.script
+
+
 0.13.1
 ******
 
