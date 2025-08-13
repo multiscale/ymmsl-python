@@ -18,11 +18,6 @@ from ymmsl.v0_1.io import load, dump, save
 from ymmsl.v0_1.model import Conduit, Model, ModelReference
 
 
-__version__ = '0.14.1-dev'
-__author__ = 'Lourens Veen'
-__email__ = 'l.veen@esciencecenter.nl'
-
-
 __all__ = [
         'BaseEnv', 'CheckpointRule', 'CheckpointRangeRule', 'CheckpointAtRule',
         'Checkpoints', 'Component', 'Conduit', 'Configuration', 'dump',

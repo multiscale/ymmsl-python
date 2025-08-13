@@ -8,7 +8,7 @@ from typing import Iterable, List, Optional, Union
 import yaml
 import yatiml
 
-from ymmsl.identity import Identifier, Reference
+from ymmsl.v0_1.identity import Identifier, Reference
 
 
 _logger = logging.getLogger(__name__)

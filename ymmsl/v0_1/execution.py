@@ -6,7 +6,7 @@ from typing import cast, Dict, List, Optional, Union
 import yaml
 import yatiml
 
-from ymmsl.identity import Reference
+from ymmsl.v0_1.identity import Reference
 
 
 class BaseEnv(Enum):

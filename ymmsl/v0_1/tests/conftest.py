@@ -10,6 +10,9 @@ from ymmsl import (
         PartialConfiguration, Ports, Reference, Settings, ThreadedResReq)
 
 
+Ref = Reference
+
+
 @pytest.fixture
 def test_yaml1() -> str:
     text = ('ymmsl_version: v0.1\n'
@@ -160,11 +163,11 @@ def test_config4() -> PartialConfiguration:
              CheckpointAtRule([10, 20, 50])],
             [CheckpointRangeRule(start=0, stop=10, every=2),
              CheckpointRangeRule(start=10, every=5)])
-    resume = {'ic': Path('/path/to/snapshots/ic.pack'),
-              'smc': Path('/path/to/snapshots/smc.pack'),
-              'bf': Path('/path/to/snapshots/bf.pack'),
-              'smc2bf': Path('/path/to/snapshots/smc2bf.pack'),
-              'bf2smc': Path('/path/to/snapshots/bf2smc.pack')}
+    resume = {Ref('ic'): Path('/path/to/snapshots/ic.pack'),
+              Ref('smc'): Path('/path/to/snapshots/smc.pack'),
+              Ref('bf'): Path('/path/to/snapshots/bf.pack'),
+              Ref('smc2bf'): Path('/path/to/snapshots/smc2bf.pack'),
+              Ref('bf2smc'): Path('/path/to/snapshots/bf2smc.pack')}
 
     return PartialConfiguration(None, None, implementations, resources,
                                 description, checkpoints, resume)
@@ -466,16 +469,19 @@ def test_config8() -> Configuration:
                 Conduit('macro.state_out1', 'micro1.init_in'),
                 Conduit('macro.state_out2', 'micro2.init_in'),
                 Conduit('micro1.final_output', 'macro.x_in1'),
-                Conduit('micro2.final_output', 'macro.x_in2')] )
+                Conduit('micro2.final_output', 'macro.x_in2')])
 
     implementations = [
-            Implementation(Reference('macro_python'), base_env=BaseEnv.MANAGER,
-                executable='python', args='macro.py'),
-            Implementation(Reference('micro1_python'), executable='python',
+            Implementation(
+                Reference('macro_python'), base_env=BaseEnv.MANAGER,
+                executable=Path('python'), args='macro.py'),
+            Implementation(
+                Reference('micro1_python'), executable=Path('python'),
                 args='micro1.py',
                 keeps_state_for_next_use=KeepsStateForNextUse.HELPFUL),
-            Implementation(Reference('micro2_fortran'),
-                executable='bin/micro2',
+            Implementation(
+                Reference('micro2_fortran'),
+                executable=Path('bin/micro2'),
                 keeps_state_for_next_use=KeepsStateForNextUse.NO)]
 
     resources = [
@@ -490,11 +496,11 @@ def test_config8() -> Configuration:
     checkpoints = Checkpoints(wallclock_time=[CheckpointRangeRule(every=600)])
 
     resume = {
-            'macro': Path('macro.pack'),
-            'micro1': Path('micro1.pack')}
+            Ref('macro'): Path('macro.pack'),
+            Ref('micro1'): Path('micro1.pack')}
 
-    return Configuration(model, None, implementations, resources,
-            description, checkpoints, resume)
+    return Configuration(
+            model, None, implementations, resources, description, checkpoints, resume)
 
 
 @pytest.fixture

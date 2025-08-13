@@ -1,5 +1,5 @@
-from ymmsl import Identifier, Reference, Settings
-from ymmsl import SettingValue  # noqa: F401 # pytest: disable=W0611
+from ymmsl.v0_1 import Identifier, Reference, Settings
+from ymmsl.v0_1 import SettingValue  # noqa: F401 # pytest: disable=W0611
 
 from collections import OrderedDict
 from typing import cast, List

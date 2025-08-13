@@ -3,11 +3,11 @@ from typing import cast
 import pytest
 import yatiml
 
-from ymmsl.checkpoint import (
+from ymmsl.v0_1.checkpoint import (
         CheckpointRangeRule, CheckpointAtRule, CheckpointRule, Checkpoints)
 
 
-def test_checkpointrange():
+def test_checkpointrange() -> None:
     dumps = yatiml.dumps_function(CheckpointRangeRule)
     load = yatiml.load_function(CheckpointRangeRule)
 
@@ -43,12 +43,12 @@ def test_checkpointrange():
     CheckpointRangeRule(start=10, stop=10, every=1)
 
 
-def test_checkpoints():
-    dumps = yatiml.dumps_function(CheckpointRangeRule)
-    load = yatiml.load_function(CheckpointRangeRule)
+def test_checkpoints() -> None:
+    yatiml.dumps_function(CheckpointRangeRule)
+    yatiml.load_function(CheckpointRangeRule)
 
 
-def test_checkpointrules_update():
+def test_checkpointrules_update() -> None:
     load = yatiml.load_function(
             Checkpoints, CheckpointRangeRule, CheckpointAtRule, CheckpointRule)
     rule1 = load("simulation_time: [{every: 300}]")
@@ -81,7 +81,7 @@ def test_checkpointrules_update():
     assert rule1.at_end is True
 
 
-def test_checkpointrules_scalar_at():
+def test_checkpointrules_scalar_at() -> None:
     load = yatiml.load_function(CheckpointAtRule)
 
     rule = load("at: 5")

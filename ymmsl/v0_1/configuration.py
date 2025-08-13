@@ -9,14 +9,14 @@ from typing import (
 import yatiml
 import yaml
 
-from ymmsl.checkpoint import Checkpoints
-from ymmsl.document import Document
-from ymmsl.identity import Reference
-from ymmsl.execution import (
+from ymmsl.v0_1.checkpoint import Checkpoints
+from ymmsl.v0_1.document import Document
+from ymmsl.v0_1.identity import Reference
+from ymmsl.v0_1.execution import (
         ExecutionModel, Implementation,
         ResourceRequirements, ThreadedResReq)
-from ymmsl.settings import Settings
-from ymmsl.model import Model, ModelReference
+from ymmsl.v0_1.settings import Settings
+from ymmsl.v0_1.model import Model, ModelReference
 
 
 _logger = logging.getLogger(__name__)

@@ -4,17 +4,17 @@ from typing import Any, IO, Union
 
 import yatiml
 
-from ymmsl.checkpoint import (
+from ymmsl.v0_1.checkpoint import (
         CheckpointRule, CheckpointRangeRule, CheckpointAtRule, Checkpoints)
-from ymmsl.component import Component, Ports
-from ymmsl.configuration import Configuration, PartialConfiguration
-from ymmsl.document import Document
-from ymmsl.execution import (
+from ymmsl.v0_1.component import Component, Ports
+from ymmsl.v0_1.configuration import Configuration, PartialConfiguration
+from ymmsl.v0_1.document import Document
+from ymmsl.v0_1.execution import (
         BaseEnv, ExecutionModel, Implementation, ResourceRequirements,
         MPICoresResReq, MPINodesResReq, ThreadedResReq, KeepsStateForNextUse)
-from ymmsl.settings import Settings
-from ymmsl.identity import Identifier, Reference
-from ymmsl.model import Conduit, MulticastConduit, Model, ModelReference
+from ymmsl.v0_1.settings import Settings
+from ymmsl.v0_1.identity import Identifier, Reference
+from ymmsl.v0_1.model import Conduit, MulticastConduit, Model, ModelReference
 
 
 _classes = (
