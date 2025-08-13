@@ -5,9 +5,9 @@ from typing import Dict     # noqa
 
 import yatiml
 
-from ymmsl.component import Operator    # noqa
-from ymmsl.component import Component
-from ymmsl.identity import Identifier, Reference
+from ymmsl.v0_1.component import Operator    # noqa
+from ymmsl.v0_1.component import Component
+from ymmsl.v0_1.identity import Identifier, Reference
 
 
 class Conduit:

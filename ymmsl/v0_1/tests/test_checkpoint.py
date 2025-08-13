@@ -3,7 +3,7 @@ from typing import cast
 import pytest
 import yatiml
 
-from ymmsl.checkpoint import (
+from ymmsl.v0_1.checkpoint import (
         CheckpointRangeRule, CheckpointAtRule, CheckpointRule, Checkpoints)
 
 

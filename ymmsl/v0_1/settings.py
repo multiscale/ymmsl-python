@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 import yatiml
 
-from ymmsl.identity import Reference
+from ymmsl.v0_1.identity import Reference
 
 
 SettingValue = Union[

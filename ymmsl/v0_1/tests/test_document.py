@@ -3,7 +3,7 @@ from typing import Callable
 import pytest
 import yatiml
 
-from ymmsl.document import Document
+from ymmsl.v0_1.document import Document
 
 
 @pytest.fixture

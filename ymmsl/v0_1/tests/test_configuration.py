@@ -2,11 +2,11 @@ from collections import OrderedDict
 from pathlib import Path
 
 import pytest
-from ymmsl import (
+from ymmsl.v0_1 import (
         Component, Configuration, ExecutionModel, Implementation, Model,
         ModelReference, MPICoresResReq, Checkpoints, KeepsStateForNextUse,
         PartialConfiguration, Reference, Settings, ThreadedResReq, load, dump)
-from ymmsl import SettingValue     # noqa: F401 # pylint: disable=unused-import
+from ymmsl.v0_1 import SettingValue     # noqa: F401 # pylint: disable=unused-import
 
 
 def test_configuration() -> None:

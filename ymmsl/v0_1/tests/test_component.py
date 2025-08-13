@@ -2,7 +2,7 @@ from typing import Iterable
 
 import pytest
 
-from ymmsl import Component, Identifier, Operator, Port, Ports, Reference
+from ymmsl.v0_1 import Component, Identifier, Operator, Port, Ports, Reference
 
 
 def test_operator() -> None:

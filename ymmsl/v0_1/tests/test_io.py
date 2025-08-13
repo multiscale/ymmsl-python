@@ -4,7 +4,7 @@ from typing import Any, cast
 import pytest
 
 from yatiml import RecognitionError
-from ymmsl import (
+from ymmsl.v0_1 import (
         Configuration, dump, ExecutionModel, KeepsStateForNextUse, load, save, Model,
         ModelReference, MPICoresResReq, MPINodesResReq, PartialConfiguration, Reference,
         ThreadedResReq, CheckpointRangeRule)
