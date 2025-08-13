@@ -3,9 +3,11 @@ from typing import Callable
 import pytest
 import yatiml
 
-from ymmsl.v0_1 import (Component, Conduit, Identifier, Model, ModelReference,
-                   Ports, Reference, load, dump)
+from ymmsl.v0_1 import (
+        Component, Conduit, Identifier, Model, ModelReference, Ports, Reference, load,
+        dump)
 from ymmsl.v0_1.model import MulticastConduit
+
 
 @pytest.fixture
 def load_model() -> Callable:
@@ -232,6 +234,7 @@ model:
     - receiver2.port"""
 
     config = load(config_txt)
+    assert isinstance(config.model, Model)
     assert len(config.model.conduits) == 3
     assert config.model.conduits[0].sender == "sender.port"
     assert config.model.conduits[1].sender == "sender.multicast"
@@ -239,8 +242,8 @@ model:
     assert config.model.conduits[2].sender == "sender.multicast"
     assert config.model.conduits[2].receiver == "receiver2.port"
 
-    model_overlay = Model('multicast', [],
-            [Conduit("sender.port", "receiver2.port")])
+    model_overlay = Model(
+            'multicast', [], [Conduit("sender.port", "receiver2.port")])
     config.model.update(model_overlay)
     assert len(config.model.conduits) == 3
 

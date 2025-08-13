@@ -1,6 +1,6 @@
 """This module contains all the definitions for yMMSL."""
 from collections import OrderedDict
-from typing import Any, List, Optional, Union, cast
+from typing import Any, List, Optional, Sequence, Union, cast
 from typing import Dict     # noqa
 
 import yatiml
@@ -219,7 +219,7 @@ class Model(ModelReference):
     """
     def __init__(self, name: str,
                  components: List[Component],
-                 conduits: Optional[List[AnyConduit]] = None) -> None:
+                 conduits: Optional[Sequence[AnyConduit]] = None) -> None:
         """Create a Model.
 
         Args:

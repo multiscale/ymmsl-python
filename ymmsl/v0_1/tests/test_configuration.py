@@ -3,10 +3,13 @@ from pathlib import Path
 
 import pytest
 from ymmsl.v0_1 import (
-        Component, Configuration, ExecutionModel, Implementation, Model,
-        ModelReference, MPICoresResReq, Checkpoints, KeepsStateForNextUse,
-        PartialConfiguration, Reference, Settings, ThreadedResReq, load, dump)
+        Component, Configuration, ExecutionModel, Implementation, Model, ModelReference,
+        MPICoresResReq, Checkpoints, PartialConfiguration, Reference, Settings,
+        ThreadedResReq, load, dump)
 from ymmsl.v0_1 import SettingValue     # noqa: F401 # pylint: disable=unused-import
+
+
+Ref = Reference
 
 
 def test_configuration() -> None:
@@ -78,66 +81,66 @@ def test_configuration_update_model4() -> None:
 
 def test_configuration_update_implementations_add() -> None:
     implementation1 = Implementation(
-            Reference('my.macro'), executable=Path('/home/test/macro.py'))
+            Ref('my.macro'), executable=Path('/home/test/macro.py'))
     base = PartialConfiguration(implementations=[implementation1])
 
     implementation2 = Implementation(
-            Reference('my.micro'), executable=Path('/home/test/micro.py'))
+            Ref('my.micro'), executable=Path('/home/test/micro.py'))
     overlay = PartialConfiguration(implementations=[implementation2])
 
     base.update(overlay)
 
     assert len(base.implementations) == 2
-    assert base.implementations[Reference('my.macro')] == implementation1
-    assert base.implementations[Reference('my.micro')] == implementation2
+    assert base.implementations[Ref('my.macro')] == implementation1
+    assert base.implementations[Ref('my.micro')] == implementation2
 
 
 def test_configuration_update_implementations_override() -> None:
     implementation1 = Implementation(
-            Reference('my.macro'), executable=Path('/home/test/macro.py'))
+            Ref('my.macro'), executable=Path('/home/test/macro.py'))
     implementation2 = Implementation(
-            Reference('my.micro'), executable=Path('/home/test/micro.py'))
+            Ref('my.micro'), executable=Path('/home/test/micro.py'))
     base = PartialConfiguration(
             implementations=[implementation1, implementation2])
 
     implementation3 = Implementation(
-            Reference('my.micro'), executable=Path('/home/test/surrogate.py'))
+            Ref('my.micro'), executable=Path('/home/test/surrogate.py'))
     overlay = PartialConfiguration(implementations=[implementation3])
 
     base.update(overlay)
 
     assert len(base.implementations) == 2
-    assert base.implementations[Reference('my.macro')] == implementation1
-    assert base.implementations[Reference('my.micro')] == implementation3
+    assert base.implementations[Ref('my.macro')] == implementation1
+    assert base.implementations[Ref('my.micro')] == implementation3
 
 
 def test_configuration_update_resources_add() -> None:
-    resources1 = ThreadedResReq(Reference('my.macro'), 10)
+    resources1 = ThreadedResReq(Ref('my.macro'), 10)
     base = PartialConfiguration(resources=[resources1])
 
-    resources2 = ThreadedResReq(Reference('my.micro'), 2)
+    resources2 = ThreadedResReq(Ref('my.micro'), 2)
     overlay = PartialConfiguration(resources=[resources2])
 
     base.update(overlay)
 
     assert len(base.resources) == 2
-    assert base.resources[Reference('my.macro')] == resources1
-    assert base.resources[Reference('my.micro')] == resources2
+    assert base.resources[Ref('my.macro')] == resources1
+    assert base.resources[Ref('my.micro')] == resources2
 
 
 def test_configuration_update_resources_override() -> None:
-    resources1 = ThreadedResReq(Reference('my.macro'), 10)
-    resources2 = ThreadedResReq(Reference('my.micro'), 100)
+    resources1 = ThreadedResReq(Ref('my.macro'), 10)
+    resources2 = ThreadedResReq(Ref('my.micro'), 100)
     base = PartialConfiguration(resources=[resources1, resources2])
 
-    resources3 = ThreadedResReq(Reference('my.micro'), 2)
+    resources3 = ThreadedResReq(Ref('my.micro'), 2)
     overlay = PartialConfiguration(resources=[resources3])
 
     base.update(overlay)
 
     assert len(base.resources) == 2
-    assert base.resources[Reference('my.macro')] == resources1
-    assert base.resources[Reference('my.micro')] == resources3
+    assert base.resources[Ref('my.macro')] == resources1
+    assert base.resources[Ref('my.micro')] == resources3
 
 
 def test_configuration_update_description() -> None:
@@ -181,23 +184,23 @@ def test_configuration_update_checkpoint(
 
 
 def test_configuration_update_resume() -> None:
-    base = PartialConfiguration(resume={'a': Path('a')})
-    overlay = PartialConfiguration(resume={'b': Path('b')})
+    base = PartialConfiguration(resume={Ref('a'): Path('a')})
+    overlay = PartialConfiguration(resume={Ref('b'): Path('b')})
 
     base.update(overlay)
     assert len(base.resume) == 2
-    assert base.resume['a'] == Path('a')
-    assert base.resume['b'] == Path('b')
+    assert base.resume[Ref('a')] == Path('a')
+    assert base.resume[Ref('b')] == Path('b')
 
 
 def test_configuration_update_resume_override() -> None:
-    base = PartialConfiguration(resume={'a': Path('a'), 'b': Path('b')})
-    overlay = PartialConfiguration(resume={'b': Path('b_update')})
+    base = PartialConfiguration(resume={Ref('a'): Path('a'), Ref('b'): Path('b')})
+    overlay = PartialConfiguration(resume={Ref('b'): Path('b_update')})
 
     base.update(overlay)
     assert len(base.resume) == 2
-    assert base.resume['a'] == Path('a')
-    assert base.resume['b'] == Path('b_update')
+    assert base.resume[Ref('a')] == Path('a')
+    assert base.resume[Ref('b')] == Path('b_update')
 
 
 def test_as_configuration(
@@ -224,14 +227,14 @@ def test_as_configuration(
 
 def test_check_consistent(test_config6: Configuration) -> None:
     test_config6.check_consistent()
-    test_config6.implementations[Reference('c')].execution_model = (
+    test_config6.implementations[Ref('c')].execution_model = (
             ExecutionModel.DIRECT)
     with pytest.raises(RuntimeError):
         test_config6.check_consistent()
-    test_config6.implementations[Reference('c')].execution_model = (
+    test_config6.implementations[Ref('c')].execution_model = (
             ExecutionModel.OPENMPI)
-    test_config6.resources[Reference('singlethreaded')] = MPICoresResReq(
-            Reference('singlethreaded'), 16, 8)
+    test_config6.resources[Ref('singlethreaded')] = MPICoresResReq(
+            Ref('singlethreaded'), 16, 8)
     # singlethreaded is started with a script, for which we allow either
     # MPICoresResReq or ThreadedResReq
     test_config6.check_consistent()
@@ -304,17 +307,17 @@ def test_load_implementations() -> None:
 
     configuration = load(text)
 
-    assert configuration.implementations['macro'].name == 'macro'
-    assert configuration.implementations['macro'].script == (
+    assert configuration.implementations[Ref('macro')].name == 'macro'
+    assert configuration.implementations[Ref('macro')].script == (
             '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n')
-    assert configuration.implementations['meso'].name == 'meso'
-    assert configuration.implementations['meso'].script == (
+    assert configuration.implementations[Ref('meso')].name == 'meso'
+    assert configuration.implementations[Ref('meso')].script == (
             '#!/bin/bash\n\n/home/test/meso.py\n')
-    assert configuration.implementations['micro'].name == 'micro'
-    assert configuration.implementations['micro'].script == (
+    assert configuration.implementations[Ref('micro')].name == 'micro'
+    assert configuration.implementations[Ref('micro')].script == (
             '/home/test/micro')
 
-    m2 = configuration.implementations['micro2']
+    m2 = configuration.implementations[Ref('micro2')]
     assert m2.name == 'micro2'
     assert m2.script is None
     assert m2.modules == ['python/3.6.0']
@@ -348,29 +351,29 @@ def test_load_implementations_script_list() -> None:
 
     configuration = load(text)
 
-    assert configuration.implementations['macro'].name == 'macro'
-    assert configuration.implementations['macro'].script == (
+    assert configuration.implementations[Ref('macro')].name == 'macro'
+    assert configuration.implementations[Ref('macro')].script == (
             '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n\n')
-    assert configuration.implementations['meso'].name == 'meso'
-    assert configuration.implementations['meso'].script == (
+    assert configuration.implementations[Ref('meso')].name == 'meso'
+    assert configuration.implementations[Ref('meso')].script == (
             '#!/bin/bash\n\n/home/test/meso.py\n')
-    assert configuration.implementations['micro'].name == 'micro'
-    assert configuration.implementations['micro'].script == (
+    assert configuration.implementations[Ref('micro')].name == 'micro'
+    assert configuration.implementations[Ref('micro')].script == (
             '/home/test/micro')
 
 
 def test_dump_implementations() -> None:
     implementations = [
             Implementation(
-                name=Reference('macro'),
+                name=Ref('macro'),
                 script='#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n'
                 ),
             Implementation(
-                name=Reference('meso'),
+                name=Ref('meso'),
                 script='#!/bin/bash\n\n/home/test/meso.py'),
-            Implementation(name=Reference('micro'), script='/home/test/micro'),
+            Implementation(name=Ref('micro'), script='/home/test/micro'),
             Implementation(
-                name=Reference('micro2'),
+                name=Ref('micro2'),
                 modules=['python/3.6.0', 'gcc/9.3.0'],
                 virtual_env=Path('/home/test/env'),
                 env={'VAR1': '10', 'VAR2': 'Test'},
@@ -421,16 +424,16 @@ def test_load_resources() -> None:
 
     configuration = load(text)
 
-    assert configuration.resources['macro'].name == 'macro'
-    assert configuration.resources['macro'].threads == 10
-    assert configuration.resources['micro'].name == 'micro'
-    assert configuration.resources['micro'].threads == 1
+    assert configuration.resources[Ref('macro')].name == 'macro'
+    assert configuration.resources[Ref('macro')].threads == 10      # type: ignore
+    assert configuration.resources[Ref('micro')].name == 'micro'
+    assert configuration.resources[Ref('micro')].threads == 1       # type: ignore
 
 
 def test_dump_resources() -> None:
     resources = [
-            ThreadedResReq(Reference('macro'), 10),
-            ThreadedResReq(Reference('micro'), 1)]
+            ThreadedResReq(Ref('macro'), 10),
+            ThreadedResReq(Ref('micro'), 1)]
 
     configuration = PartialConfiguration(None, None, None, resources)
 
