@@ -3,9 +3,9 @@ from typing import Callable
 import pytest
 import yatiml
 
+from ymmsl.io import load, dump
 from ymmsl.v0_1 import (
-        Component, Conduit, Identifier, Model, ModelReference, Ports, Reference, load,
-        dump)
+        Component, Conduit, Identifier, Model, ModelReference, Ports, Reference)
 from ymmsl.v0_1.model import MulticastConduit
 
 

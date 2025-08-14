@@ -4,32 +4,25 @@ from typing import Any, IO, Union
 
 import yatiml
 
-from ymmsl.v0_1.checkpoint import (
-        CheckpointRule, CheckpointRangeRule, CheckpointAtRule, Checkpoints)
-from ymmsl.v0_1.component import Component, Ports
-from ymmsl.v0_1.configuration import Configuration, PartialConfiguration
-from ymmsl.v0_1.document import Document
-from ymmsl.v0_1.execution import (
-        BaseEnv, ExecutionModel, Implementation, ResourceRequirements,
-        MPICoresResReq, MPINodesResReq, ThreadedResReq, KeepsStateForNextUse)
-from ymmsl.v0_1.settings import Settings
-from ymmsl.v0_1.identity import Identifier, Reference
-from ymmsl.v0_1.model import Conduit, MulticastConduit, Model, ModelReference
+import ymmsl.v0_1 as v0_1
+from ymmsl.v0_1.document import Document as v0_1_Document
+from ymmsl.v0_1.model import MulticastConduit as v0_1_MulticastConduit
 
 
 _classes = (
-        PartialConfiguration, BaseEnv, CheckpointRangeRule, CheckpointAtRule,
-        CheckpointRule, Checkpoints, Component, Conduit, Configuration,
-        Document, ExecutionModel, Identifier, Implementation,
-        KeepsStateForNextUse, Model, ModelReference,
-        MPICoresResReq, MPINodesResReq, Ports, Reference, ResourceRequirements,
-        Settings, ThreadedResReq, MulticastConduit)
+        v0_1.PartialConfiguration, v0_1.BaseEnv, v0_1.CheckpointRangeRule,
+        v0_1.CheckpointAtRule, v0_1.CheckpointRule, v0_1.Checkpoints, v0_1.Component,
+        v0_1.Conduit, v0_1.Configuration, v0_1_Document, v0_1.ExecutionModel,
+        v0_1.Identifier, v0_1.Implementation, v0_1.KeepsStateForNextUse, v0_1.Model,
+        v0_1.ModelReference, v0_1.MPICoresResReq, v0_1.MPINodesResReq, v0_1.Ports,
+        v0_1.Reference, v0_1.ResourceRequirements, v0_1.Settings, v0_1.ThreadedResReq,
+        v0_1_MulticastConduit)
 
 
 _load = yatiml.load_function(*_classes)
 
 
-def load(source: Union[str, Path, IO[Any]]) -> PartialConfiguration:
+def load(source: Union[str, Path, IO[Any]]) -> v0_1.PartialConfiguration:
     """Loads a yMMSL document from a string or a file.
 
     Args:
@@ -48,7 +41,7 @@ def load(source: Union[str, Path, IO[Any]]) -> PartialConfiguration:
 _dump = yatiml.dumps_function(*_classes)
 
 
-def dump(config: PartialConfiguration) -> str:
+def dump(config: v0_1.PartialConfiguration) -> str:
     """Converts a yMMSL configuration to a string containing YAML.
 
     Args:
@@ -66,7 +59,7 @@ _save = yatiml.dump_function(*_classes)
 
 
 def save(
-        config: PartialConfiguration, target: Union[str, Path, IO[Any]]
+        config: v0_1.PartialConfiguration, target: Union[str, Path, IO[Any]]
         ) -> None:
     """Saves a yMMSL configuration to a file.
 

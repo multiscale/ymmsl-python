@@ -3,7 +3,9 @@
 This package contains all the classes needed to represent a yMMSL file,
 as well as to read and write yMMSL files.
 """
+from ymmsl.io import dump, load, save
 
+# Below imports are for backwards compatibility only, and deprecated
 from ymmsl.v0_1.checkpoint import (
         CheckpointRule, CheckpointRangeRule, CheckpointAtRule, Checkpoints)
 from ymmsl.v0_1.component import Component, Operator, Port, Ports
@@ -14,9 +16,7 @@ from ymmsl.v0_1.execution import (
         KeepsStateForNextUse)
 from ymmsl.v0_1.settings import Settings, SettingValue
 from ymmsl.v0_1.identity import Identifier, Reference
-from ymmsl.v0_1.io import load, dump, save
 from ymmsl.v0_1.model import Conduit, Model, ModelReference
-
 
 __version__ = '0.14.1-dev'
 __author__ = 'Lourens Veen'

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from ymmsl import (
+from ymmsl.v0_1 import (
         BaseEnv, ExecutionModel, Implementation, KeepsStateForNextUse, Reference)
 
 
