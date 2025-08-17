@@ -30,6 +30,7 @@ def test_load_string1(test_yaml1: str) -> None:
     assert settings['test_list'][1] == 1.3
 
     configuration = load(test_yaml1)
+    assert isinstance(configuration, PartialConfiguration)
     assert configuration.settings is not None
     assert configuration.settings['test_str'] == 'value'
     assert configuration.settings['test_int'] == 13
@@ -185,6 +186,7 @@ def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
     with test_file.open('r') as f:
         configuration = load(f)
 
+    assert isinstance(configuration, PartialConfiguration)
     assert configuration.settings is not None
 
 
@@ -194,6 +196,7 @@ def test_load_path(test_yaml1: str, tmpdir_path: Path) -> None:
         f.write(test_yaml1)
 
     configuration = load(test_file)
+    assert isinstance(configuration, PartialConfiguration)
     assert configuration.settings is not None
 
 

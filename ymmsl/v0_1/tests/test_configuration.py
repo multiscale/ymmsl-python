@@ -249,6 +249,7 @@ def test_load_nil_settings() -> None:
 
     configuration = load(text)
 
+    assert isinstance(configuration, PartialConfiguration)
     assert isinstance(configuration.settings, Settings)
     assert len(configuration.settings) == 0
     assert len(configuration.implementations) == 0
@@ -262,6 +263,7 @@ def test_load_no_settings() -> None:
 
     configuration = load(text)
 
+    assert isinstance(configuration, PartialConfiguration)
     assert isinstance(configuration.settings, Settings)
     assert len(configuration.settings) == 0
     assert len(configuration.implementations) == 0
@@ -308,6 +310,7 @@ def test_load_implementations() -> None:
 
     configuration = load(text)
 
+    assert isinstance(configuration, PartialConfiguration)
     assert configuration.implementations[Ref('macro')].name == 'macro'
     assert configuration.implementations[Ref('macro')].script == (
             '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n')
@@ -352,6 +355,7 @@ def test_load_implementations_script_list() -> None:
 
     configuration = load(text)
 
+    assert isinstance(configuration, PartialConfiguration)
     assert configuration.implementations[Ref('macro')].name == 'macro'
     assert configuration.implementations[Ref('macro')].script == (
             '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n\n')
@@ -425,6 +429,7 @@ def test_load_resources() -> None:
 
     configuration = load(text)
 
+    assert isinstance(configuration, PartialConfiguration)
     assert configuration.resources[Ref('macro')].name == 'macro'
     assert configuration.resources[Ref('macro')].threads == 10      # type: ignore
     assert configuration.resources[Ref('micro')].name == 'micro'

@@ -39,6 +39,7 @@ setup(
     python_requires='>=3.7, <4',
     test_suite='tests',
     install_requires=[
-        'yatiml>=0.11.1,<0.12.0'
+        # 'yatiml>=0.11.1,<0.12.0',
+        'yatiml @ git+https://github.com/yatiml/yatiml@develop#egg=yatiml'
     ],
 )
