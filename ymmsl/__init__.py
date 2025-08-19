@@ -3,8 +3,9 @@
 This package contains all the classes needed to represent a yMMSL file,
 as well as to read and write yMMSL files.
 """
+from ymmsl.conversion.converter import convert_to, DowngradeError
 from ymmsl.document import Document
-from ymmsl.io import dump, load, save
+from ymmsl.io import dump, load, load_as, save
 
 # Below imports are for backwards compatibility only, and deprecated
 from ymmsl.v0_1.checkpoint import (
@@ -26,9 +27,9 @@ __email__ = 'l.veen@esciencecenter.nl'
 
 __all__ = [
         'BaseEnv', 'CheckpointRule', 'CheckpointRangeRule', 'CheckpointAtRule',
-        'Checkpoints', 'Component', 'Conduit', 'Configuration', 'Document', 'dump',
-        'ExecutionModel', 'Identifier', 'Implementation',
-        'KeepsStateForNextUse', 'load', 'Model', 'ModelReference',
-        'MPICoresResReq', 'MPINodesResReq', 'Operator', 'PartialConfiguration',
-        'Port', 'Ports', 'Reference', 'ResourceRequirements', 'save',
-        'Settings', 'SettingValue', 'ThreadedResReq']
+        'Checkpoints', 'Component', 'Conduit', 'Configuration', 'convert_to',
+        'Document', 'dump', 'DowngradeError', 'ExecutionModel', 'Identifier',
+        'Implementation', 'KeepsStateForNextUse', 'load', 'load_as', 'Model',
+        'ModelReference', 'MPICoresResReq', 'MPINodesResReq', 'Operator',
+        'PartialConfiguration', 'Port', 'Ports', 'Reference', 'ResourceRequirements',
+        'save', 'Settings', 'SettingValue', 'ThreadedResReq']

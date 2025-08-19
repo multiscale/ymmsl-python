@@ -1,9 +1,10 @@
 """Loading and saving functions."""
 from pathlib import Path
-from typing import Any, IO, Union
+from typing import Any, IO, Type, TypeVar, Union
 
 import yatiml
 
+from ymmsl.conversion.converter import convert_to
 from ymmsl.document import Document
 
 import ymmsl.v0_1 as v0_1
@@ -46,6 +47,37 @@ def load(source: Union[str, Path, IO[Any]]) -> Document:
     """
     # This wrapper is just here to render the documentation.
     return _load(source)
+
+
+T = TypeVar('T', bound=Document)
+
+
+def load_as(as_type: Type[T], source: Union[str, Path, IO[Any]]) -> T:
+    """Loads and converts a yMMSL document from a string or a file.
+
+    If the file is of a version older than the specified version, then it will be
+    converted automatically. If it is of a newer version, then an exception will be
+    raised.
+
+    Currently supported values for `as_type` are `ymmsl.v0_1.PartialConfiguration`,
+    and `ymmsl.v0_2.Configuration`. Only the final one makes sense at the moment, as
+    there's no point in converting from v0.1 to v0.1.
+
+    Args:
+        as_type: Configuration class to return, as above
+        source: A string containing yMMSL data, a pathlib Path to a
+                file containing yMMSL data, or an open file-like
+                object containing from which yMMSL data can be read.
+
+    Returns:
+        A configuration object corresponding to the input data and the requested
+        version.
+
+    Raises:
+        DowngradeError: If the requested version is older than the version of the input.
+
+    """
+    return convert_to(as_type, _load(source))
 
 
 _dump = yatiml.dumps_function(*_classes)
