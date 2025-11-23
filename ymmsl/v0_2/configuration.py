@@ -3,7 +3,7 @@ import collections.abc as abc
 import logging
 from pathlib import Path
 from typing import (
-        Dict, MutableMapping, Optional, Sequence, Union, cast)
+        Dict, List, MutableMapping, Optional, Sequence, Union, cast)
 
 import yatiml
 import yaml
@@ -11,6 +11,7 @@ import yaml
 from ymmsl.v0_2.document import Document
 from ymmsl.v0_2 import (
         Checkpoints, Reference, ResourceRequirements, Settings)
+from ymmsl.v0_2.model import Component, Model
 
 
 _logger = logging.getLogger(__name__)
@@ -24,14 +25,17 @@ class Configuration(Document):
 
     Attributes:
         description: A human-readable description of the configuration
-        settings: Settings to run the model with
+        models: A list of possibly connected models to run
+        settings: Settings to run the models with
         resources: Resources to allocate for the model components.
             Dictionary mapping component names to ResourceRequirements objects.
         checkpoints: Defines when each model component should create a snapshot
         resume: Defines what snapshot each model component should resume from
     """
     def __init__(
-            self, description: str, settings: Optional[Settings] = None,
+            self, description: str,
+            models: Optional[Union[Model, Sequence[Model]]] = None,
+            settings: Optional[Settings] = None,
             resources: Optional[Union[
                 Sequence[ResourceRequirements],
                 MutableMapping[Reference, ResourceRequirements]]] = None,
@@ -56,7 +60,12 @@ class Configuration(Document):
 
         # TODO: imports
 
-        # TODO: models
+        if models is None:
+            self.models: Sequence[Model] = list()
+        elif isinstance(models, Model):
+            self.models = [models]
+        else:
+            self.models = models
 
         if settings is None:
             self.settings = Settings()
@@ -85,6 +94,29 @@ class Configuration(Document):
         else:
             self.resume = resume
 
+    def check_consistent(self) -> None:
+        """Checks that the configuration is internally consistent.
+
+        This checks whether all conduits are connected to existing components or to a
+        model port, and that resources have been requested for each component that has
+        an implementation.
+
+        If any of these requirements is false, this function will raise a RuntimeError
+        with an explanation of the problem.
+        """
+        program_component_paths = self._program_component_paths()
+        for model in self.models:
+            model.check_consistent()
+            for component in model.components:
+                if component in program_component_paths:
+                    path = program_component_paths[component]
+
+                    if path not in self.resources:
+                        raise RuntimeError(
+                                f'Model component {path} is missing a resource request')
+
+                # TODO: check that resources and implementation both do or don't MPI
+
     def update(self, overlay: 'Configuration') -> None:
         """Update this configuration with the given overlay.
 
@@ -99,12 +131,56 @@ class Configuration(Document):
         elif overlay.description:
             self.description += '\n\n' + overlay.description
 
+        if self.models and overlay.models:
+            raise RuntimeError(
+                    'Multiple ymmsl files containing models specified. Please'
+                    ' use the import functionality instead.')
+
         self.settings.update(overlay.settings)
 
         self.resources.update(overlay.resources)
 
         self.checkpoints.update(overlay.checkpoints)
         self.resume.update(overlay.resume)
+
+    def _top_models(self) -> List[Model]:
+        """Models in this configuration that are not used as implementations."""
+        top_models = {model.name: model for model in self.models}
+
+        for model in self.models:
+            for component in model.components:
+                if component.implementation in top_models:
+                    del top_models[component.implementation]
+
+        return list(top_models.values())
+
+    def _program_component_paths(self) -> Dict[Component, Reference]:
+        """Return component paths for program-implemented components.
+
+        Component paths are of the form component1.component2, where component1 is a
+        component inside the top-level model that has an implementation which is a
+        submodel, and component2 is a component inside that submodel.
+
+        The returned dict contains only components that have a program for their
+        implementation; components with no implementation or whose implementation is a
+        model are not included.
+        """
+        models_by_name = {model.name: model for model in self.models}
+
+        result = dict()
+        queue = [(m, Reference([])) for m in self._top_models()]
+
+        while queue:
+            model, prefix = queue.pop(0)
+            for component in model.components:
+                if component.implementation in models_by_name:
+                    queue.append((
+                        models_by_name[component.implementation],
+                        prefix + component.name))
+                elif component.implementation is not None:
+                    result[component] = prefix + component.name
+
+        return result
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
@@ -126,6 +202,10 @@ class Configuration(Document):
         if descr.is_scalar(str) and '\n' in cast(str, descr.get_value()):
             # output multi-line string in literal mode
             cast(yaml.ScalarNode, descr.yaml_node).style = '|'
+
+        models = node.get_attribute('models')
+        if models.is_sequence() and models.is_empty():
+            node.remove_attribute('models')
 
         if node.get_attribute('settings').is_scalar(type(None)):
             node.remove_attribute('settings')
@@ -150,16 +230,3 @@ class Configuration(Document):
                 resu.is_scalar(type(None)) or
                 resu.is_mapping() and resu.is_empty()):
             node.remove_attribute('resume')
-
-    def check_consistent(self) -> None:
-        """Checks that the configuration is internally consistent.
-
-        This checks whether all conduits are connected to existing
-        components, that there's an implementation for every component,
-        and that resources have been requested for each component.
-
-        If any of these requirements is false, this function will
-        raise a RuntimeError with an explanation of the problem.
-
-        """
-        # TODO
