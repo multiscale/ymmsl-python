@@ -323,6 +323,9 @@ class Reference(yatiml.String):
             Their string form.
 
         """
+        if len(parts) == 0:
+            return '[]'
+
         text = str(parts[0])
         for part in parts[1:]:
             if isinstance(part, int):

@@ -1,9 +1,12 @@
 from collections import OrderedDict
 from pathlib import Path
 
+import pytest
+
 from ymmsl.io import load, dump
 from ymmsl.v0_2 import (
-        Configuration, Checkpoints, Reference, Settings, ThreadedResReq)
+        Configuration, Checkpoints, Component, Conduit, Model, Ports, Reference,
+        Settings, ThreadedResReq)
 from ymmsl.v0_2 import SettingValue     # noqa: F401 # pylint: disable=unused-import
 
 
@@ -13,13 +16,27 @@ Ref = Reference
 def test_configuration() -> None:
     setting_values = OrderedDict()    # type: OrderedDict[str, SettingValue]
     settings = Settings(setting_values)
-    config = Configuration('', settings)
+    model1 = Model('model1', None, [])
+    model2 = Model('model2', None, [])
+    config = Configuration('testing', [model1, model2], settings)
+
+    assert config.description == 'testing'
+
+    assert len(config.models) == 2
+    assert config.models[0] is model1
+    assert config.models[1] is model2
+
     assert isinstance(config.settings, Settings)
     assert len(config.settings) == 0
 
 
 def test_check_consistent(test_config6: Configuration) -> None:
     test_config6.check_consistent()
+
+
+def test_check_inconsistent(test_config7: Configuration) -> None:
+    with pytest.raises(RuntimeError):
+        test_config7.check_consistent()
 
 
 def test_configuration_update_description() -> None:
@@ -44,6 +61,126 @@ def test_configuration_update_description() -> None:
 
     base.update(overlay1)
     assert base.description == description2 + '\n\n' + description3
+
+
+def test_configuration_update_model_error() -> None:
+    base = Configuration(
+            'Configuration for testing', Model('model', Ports(), [
+                Component('macro', Ports(o_i='out', s='in')),
+                Component('micro', Ports(f_init='init', o_f='final'))
+            ], [
+                Conduit('macro.out', 'micro.init'),
+                Conduit('micro.final', 'macro.in')]
+            ))
+
+    overlay1 = Configuration(
+            'Extra component',
+            Model('model', None, [Component('micro2', Ports())], []))
+
+    with pytest.raises(RuntimeError):
+        base.update(overlay1)
+
+    overlay2 = Configuration(
+            'Extra conduit', Model('model', None, [], [
+                Conduit('micro.final', 'macro.in2')]))
+
+    with pytest.raises(RuntimeError):
+        base.update(overlay2)
+
+
+def test_configuration_update_resources_override() -> None:
+    resources1 = ThreadedResReq(Ref('my.macro'), 10)
+    resources2 = ThreadedResReq(Ref('my.micro'), 100)
+    base = Configuration('', resources=[resources1, resources2])
+
+    resources3 = ThreadedResReq(Ref('my.micro'), 2)
+    overlay = Configuration('', resources=[resources3])
+
+    base.update(overlay)
+
+    assert len(base.resources) == 2
+    assert base.resources[Ref('my.macro')] == resources1
+    assert base.resources[Ref('my.micro')] == resources3
+
+
+def test_configuration_update_checkpoint(test_config4: Configuration) -> None:
+    # Note: test_checkpoint.py tests merging of checkpoint definitions
+    base = Configuration('', checkpoints=Checkpoints(
+            wallclock_time=test_config4.checkpoints.wallclock_time))
+    overlay = Configuration('', checkpoints=Checkpoints(
+            simulation_time=test_config4.checkpoints.simulation_time))
+
+    assert base.checkpoints.simulation_time == []
+    assert overlay.checkpoints.wallclock_time == []
+
+    base.update(overlay)
+    assert (base.checkpoints.simulation_time == overlay.checkpoints.simulation_time)
+
+
+def test_configuration_update_resume() -> None:
+    base = Configuration('', resume={Ref('a'): Path('a')})
+    overlay = Configuration('', resume={Ref('b'): Path('b')})
+
+    base.update(overlay)
+    assert len(base.resume) == 2
+    assert base.resume[Ref('a')] == Path('a')
+    assert base.resume[Ref('b')] == Path('b')
+
+
+def test_configuration_update_resume_override() -> None:
+    base = Configuration('', resume={Ref('a'): Path('a'), Ref('b'): Path('b')})
+    overlay = Configuration('', resume={Ref('b'): Path('b_update')})
+
+    base.update(overlay)
+    assert len(base.resume) == 2
+    assert base.resume[Ref('a')] == Path('a')
+    assert base.resume[Ref('b')] == Path('b_update')
+
+
+def test_configuration_update_resources_add() -> None:
+    resources1 = ThreadedResReq(Ref('my.macro'), 10)
+    base = Configuration('', resources=[resources1])
+
+    resources2 = ThreadedResReq(Ref('my.micro'), 2)
+    overlay = Configuration('', resources=[resources2])
+
+    base.update(overlay)
+
+    assert len(base.resources) == 2
+    assert base.resources[Ref('my.macro')] == resources1
+    assert base.resources[Ref('my.micro')] == resources2
+
+
+def test_load_models() -> None:
+    text = (
+            'ymmsl_version: v0.2\n'
+            'description: Test loading multiple models\n'
+            'models:\n'
+            '  - name: macro_micro\n'
+            '    components:\n'
+            '      macro:\n'
+            '        ports:\n'
+            '          o_i: out\n'
+            '          s: in\n'
+            '        implementation: macro_program\n'
+            '      micro:\n'
+            '        ports:\n'
+            '          f_init: init\n'
+            '          o_f: final\n'
+            '        implementation: micro_program\n'
+            '  - name: do_nothing\n'
+            '    components:\n'
+            '      nil:\n'
+            '        ports: {}\n'
+            '        implementation: nil_program\n'
+            )
+
+    configuration = load(text)
+
+    assert isinstance(configuration, Configuration)
+    assert len(configuration.models) == 2
+    assert configuration.models[0].name == 'macro_micro'
+    assert configuration.models[1].name == 'do_nothing'
 
 
 def test_load_nil_settings() -> None:
@@ -76,26 +213,12 @@ def test_load_no_settings() -> None:
 
 
 def test_dump_empty_settings() -> None:
-    configuration = Configuration('', Settings())
+    configuration = Configuration('', None, Settings())
     text = dump(configuration)
 
     assert text == (
             'ymmsl_version: v0.2\n'
             'description: \'\'\n')
-
-
-def test_configuration_update_resources_add() -> None:
-    resources1 = ThreadedResReq(Ref('my.macro'), 10)
-    base = Configuration('', resources=[resources1])
-
-    resources2 = ThreadedResReq(Ref('my.micro'), 2)
-    overlay = Configuration('', resources=[resources2])
-
-    base.update(overlay)
-
-    assert len(base.resources) == 2
-    assert base.resources[Ref('my.macro')] == resources1
-    assert base.resources[Ref('my.micro')] == resources2
 
 
 def test_load_resources() -> None:
@@ -123,7 +246,7 @@ def test_dump_resources() -> None:
             ThreadedResReq(Ref('macro'), 10),
             ThreadedResReq(Ref('micro'), 1)]
 
-    configuration = Configuration('', None, resources)
+    configuration = Configuration('', None, None, resources)
 
     text = dump(configuration)
     assert text == (
@@ -135,54 +258,3 @@ def test_dump_resources() -> None:
             '  micro:\n'
             '    threads: 1\n'
             )
-
-
-def test_configuration_update_resources_override() -> None:
-    resources1 = ThreadedResReq(Ref('my.macro'), 10)
-    resources2 = ThreadedResReq(Ref('my.micro'), 100)
-    base = Configuration('', resources=[resources1, resources2])
-
-    resources3 = ThreadedResReq(Ref('my.micro'), 2)
-    overlay = Configuration('', resources=[resources3])
-
-    base.update(overlay)
-
-    assert len(base.resources) == 2
-    assert base.resources[Ref('my.macro')] == resources1
-    assert base.resources[Ref('my.micro')] == resources3
-
-
-def test_configuration_update_checkpoint(
-        test_config4: Configuration) -> None:
-    # Note: test_checkpoint.py tests merging of checkpoint definitions
-    base = Configuration('', checkpoints=Checkpoints(
-            wallclock_time=test_config4.checkpoints.wallclock_time))
-    overlay = Configuration('', checkpoints=Checkpoints(
-            simulation_time=test_config4.checkpoints.simulation_time))
-
-    assert base.checkpoints.simulation_time == []
-    assert overlay.checkpoints.wallclock_time == []
-
-    base.update(overlay)
-    assert (base.checkpoints.simulation_time
-            == overlay.checkpoints.simulation_time)
-
-
-def test_configuration_update_resume() -> None:
-    base = Configuration('', resume={Ref('a'): Path('a')})
-    overlay = Configuration('', resume={Ref('b'): Path('b')})
-
-    base.update(overlay)
-    assert len(base.resume) == 2
-    assert base.resume[Ref('a')] == Path('a')
-    assert base.resume[Ref('b')] == Path('b')
-
-
-def test_configuration_update_resume_override() -> None:
-    base = Configuration('', resume={Ref('a'): Path('a'), Ref('b'): Path('b')})
-    overlay = Configuration('', resume={Ref('b'): Path('b_update')})
-
-    base.update(overlay)
-    assert len(base.resume) == 2
-    assert base.resume[Ref('a')] == Path('a')
-    assert base.resume[Ref('b')] == Path('b_update')

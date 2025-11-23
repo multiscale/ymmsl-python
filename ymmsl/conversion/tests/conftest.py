@@ -14,11 +14,23 @@ def empty_config() -> v0_1.PartialConfiguration:
 def full_config() -> v0_1.PartialConfiguration:
     # TODO: return a Configuration once we have everything in here
 
-    description = 'Testing a full configuration'
+    components = [
+            v0_1.Component(
+                'macro', 'macro_impl', 10, v0_1.Ports(o_i=['out'], s=['in'])),
+            v0_1.Component(
+                'micro', 'micro_impl', 10, v0_1.Ports(f_init=['init'], o_f=['final']))]
+
+    conduits = [
+            v0_1.Conduit('macro.out', 'micro.init'),
+            v0_1.Conduit('micro.final', 'macro.in')]
+
+    model = v0_1.Model('test_model', components, conduits)
     settings = v0_1.Settings({'a': 42, 'b': 'Test'})
     resources = [
             v0_1.ThreadedResReq(v0_1.Reference('A'), 8),
             v0_1.MPICoresResReq(v0_1.Reference('B'), 4, 8)]
+
+    description = 'Testing a full configuration'
 
     checkpoints = v0_1.Checkpoints(
             True, [
@@ -35,4 +47,5 @@ def full_config() -> v0_1.PartialConfiguration:
             v0_1.Reference('B'): Path('/path/to/snapshot_B.pack')}
 
     return v0_1.PartialConfiguration(
-            None, settings, None, resources, description, checkpoints, resume)
+           model, settings, None, resources, description,
+           checkpoints, resume)

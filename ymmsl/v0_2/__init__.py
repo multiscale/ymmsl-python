@@ -5,17 +5,20 @@ from ymmsl.v0_1.execution import (
         BaseEnv, ExecutionModel, MPICoresResReq, MPINodesResReq, ResourceRequirements,
         ThreadedResReq, KeepsStateForNextUse)
 from ymmsl.v0_1.identity import Identifier, Reference, ReferencePart
-from ymmsl.v0_1.model import Conduit
 from ymmsl.v0_1.settings import Settings, SettingValue
 
+from ymmsl.v0_2.component import Component
 from ymmsl.v0_2.configuration import Configuration
 from ymmsl.v0_2.document import Document
+from ymmsl.v0_2.implementation import Implementation
+from ymmsl.v0_2.model import Conduit, Model
 
 
 __all__ = [
         'BaseEnv', 'CheckpointRule', 'CheckpointRangeRule', 'CheckpointAtRule',
-        'Checkpoints', 'Conduit', 'Configuration', 'Document', 'ExecutionModel',
-        'Identifier', 'KeepsStateForNextUse', 'MPICoresResReq', 'MPINodesResReq',
-        'Operator', 'Port', 'Ports', 'Reference', 'ReferencePart',
-        'ResourceRequirements', 'Settings', 'SettingValue', 'ThreadedResReq'
-]
+        'Checkpoints', 'Component', 'Ports', 'Conduit', 'Configuration', 'Document',
+        'ExecutionModel', 'Identifier', 'Implementation', 'KeepsStateForNextUse',
+        'Model', 'MPICoresResReq', 'MPINodesResReq', 'Operator', 'Port', 'Ports',
+        'Reference', 'ReferencePart', 'ResourceRequirements', 'Settings',
+        'SettingValue', 'ThreadedResReq'
+        ]
