@@ -17,8 +17,7 @@ setup(
     packages=[
         'ymmsl',
     ],
-    package_dir={'ymmsl':
-                 'ymmsl'},
+    package_dir={'ymmsl': 'ymmsl'},
     include_package_data=True,
     license="Apache Software License 2.0",
     zip_safe=False,
@@ -39,6 +38,11 @@ setup(
     python_requires='>=3.7, <4',
     test_suite='tests',
     install_requires=[
-        'yatiml>=0.11.1,<0.12.0'
+        'click>=6.5',
+        # 'yatiml>=0.11.1,<0.12.0',
+        'yatiml @ git+https://github.com/yatiml/yatiml@develop#egg=yatiml'
     ],
+    entry_points={
+        'console_scripts': ['ymmsl=ymmsl.command_line:ymmsl']
+    },
 )

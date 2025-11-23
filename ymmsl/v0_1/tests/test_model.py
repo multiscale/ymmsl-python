@@ -3,9 +3,10 @@ from typing import Callable
 import pytest
 import yatiml
 
+from ymmsl.io import load, dump
 from ymmsl.v0_1 import (
-        Component, Conduit, Identifier, Model, ModelReference, Ports, Reference, load,
-        dump)
+        Component, Conduit, Identifier, Model, ModelReference,
+        PartialConfiguration, Ports, Reference)
 from ymmsl.v0_1.model import MulticastConduit
 
 
@@ -234,6 +235,7 @@ model:
     - receiver2.port"""
 
     config = load(config_txt)
+    assert isinstance(config, PartialConfiguration)
     assert isinstance(config.model, Model)
     assert len(config.model.conduits) == 3
     assert config.model.conduits[0].sender == "sender.port"

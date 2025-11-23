@@ -2,11 +2,12 @@ from collections import OrderedDict
 from pathlib import Path
 
 import pytest
+from ymmsl.io import load, dump
 from ymmsl.v0_1 import (
-        Component, Configuration, ExecutionModel, Implementation, Model, ModelReference,
-        MPICoresResReq, Checkpoints, PartialConfiguration, Reference, Settings,
-        ThreadedResReq, load, dump)
+        Component, Configuration, ExecutionModel, Implementation, Model, MPICoresResReq,
+        Checkpoints, PartialConfiguration, Reference, Settings, ThreadedResReq)
 from ymmsl.v0_1 import SettingValue     # noqa: F401 # pylint: disable=unused-import
+from ymmsl.v0_1.model import ModelReference
 
 
 Ref = Reference
@@ -248,6 +249,7 @@ def test_load_nil_settings() -> None:
 
     configuration = load(text)
 
+    assert isinstance(configuration, PartialConfiguration)
     assert isinstance(configuration.settings, Settings)
     assert len(configuration.settings) == 0
     assert len(configuration.implementations) == 0
@@ -261,6 +263,7 @@ def test_load_no_settings() -> None:
 
     configuration = load(text)
 
+    assert isinstance(configuration, PartialConfiguration)
     assert isinstance(configuration.settings, Settings)
     assert len(configuration.settings) == 0
     assert len(configuration.implementations) == 0
@@ -307,6 +310,7 @@ def test_load_implementations() -> None:
 
     configuration = load(text)
 
+    assert isinstance(configuration, PartialConfiguration)
     assert configuration.implementations[Ref('macro')].name == 'macro'
     assert configuration.implementations[Ref('macro')].script == (
             '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n')
@@ -351,6 +355,7 @@ def test_load_implementations_script_list() -> None:
 
     configuration = load(text)
 
+    assert isinstance(configuration, PartialConfiguration)
     assert configuration.implementations[Ref('macro')].name == 'macro'
     assert configuration.implementations[Ref('macro')].script == (
             '#!/bin/bash\n\n/usr/bin/python3 /home/test/macro.py\n\n')
@@ -424,6 +429,7 @@ def test_load_resources() -> None:
 
     configuration = load(text)
 
+    assert isinstance(configuration, PartialConfiguration)
     assert configuration.resources[Ref('macro')].name == 'macro'
     assert configuration.resources[Ref('macro')].threads == 10      # type: ignore
     assert configuration.resources[Ref('micro')].name == 'micro'
