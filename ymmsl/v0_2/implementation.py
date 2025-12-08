@@ -16,14 +16,18 @@ class Implementation:
         name: Name of this implementation, must be a valid Reference
         ports: The ports this implementation has on which it sends and receives messages
     """
-    def __init__(self, name: str, ports: Optional[Ports] = None) -> None:
+    def __init__(
+            self, name: str, ports: Optional[Ports] = None) -> None:
         """Create an Implementation
 
         Args:
-            name: Name of this implementation
+            name: Name of this implementation, must be a valid reference
             ports: The ports this implementation communicates on
         """
-        self.name = Reference(name)
+        if not isinstance(name, Reference):
+            self.name = Reference(name)
+        else:
+            self.name = name
 
         if ports is None:
             self.ports = Ports()

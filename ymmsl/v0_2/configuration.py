@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import collections.abc as abc
 import logging
 from pathlib import Path
@@ -8,16 +7,16 @@ from typing import (
 import yatiml
 import yaml
 
+from ymmsl.v0_1.checkpoint import Checkpoints
+from ymmsl.v0_1.execution import ResourceRequirements
+from ymmsl.v0_1.identity import Reference
+from ymmsl.v0_1.settings import Settings
 from ymmsl.v0_2.document import Document
-from ymmsl.v0_2 import (
-        Checkpoints, Reference, ResourceRequirements, Settings)
+from ymmsl.v0_2.program import Program
 from ymmsl.v0_2.model import Component, Model
 
 
 _logger = logging.getLogger(__name__)
-
-
-_ResType = MutableMapping[Reference, ResourceRequirements]
 
 
 class Configuration(Document):
@@ -27,6 +26,8 @@ class Configuration(Document):
         description: A human-readable description of the configuration
         models: A list of possibly connected models to run
         settings: Settings to run the models with
+        programs: Programs to use to run the model. Dictionary mapping program names (as
+            References) to Program objects.
         resources: Resources to allocate for the model components.
             Dictionary mapping component names to ResourceRequirements objects.
         checkpoints: Defines when each model component should create a snapshot
@@ -36,6 +37,8 @@ class Configuration(Document):
             self, description: str,
             models: Optional[Union[Model, Sequence[Model]]] = None,
             settings: Optional[Settings] = None,
+            programs: Optional[Union[
+                Sequence[Program], MutableMapping[Reference, Program]]] = None,
             resources: Optional[Union[
                 Sequence[ResourceRequirements],
                 MutableMapping[Reference, ResourceRequirements]]] = None,
@@ -72,15 +75,17 @@ class Configuration(Document):
         else:
             self.settings = settings
 
-        # TODO: programs
-
-        # TODO: installations
+        if programs is None:
+            self.programs: MutableMapping[Reference, Program] = dict()
+        elif isinstance(programs, abc.Sequence):
+            self.programs = {prog.name: prog for prog in programs}
+        else:
+            self.programs = programs
 
         if resources is None:
-            self.resources = dict()     # type: _ResType
+            self.resources: MutableMapping[Reference, ResourceRequirements] = dict()
         elif isinstance(resources, abc.Sequence):
-            self.resources = OrderedDict([
-                (res.name, res) for res in resources])
+            self.resources = {res.name: res for res in resources}
         else:
             self.resources = resources
 
@@ -138,6 +143,14 @@ class Configuration(Document):
 
         self.settings.update(overlay.settings)
 
+        overlap = [p for p in self.programs if p in overlay.programs]
+        if any(overlap):
+            raise RuntimeError(
+                    'Multiple programs with the same name were found. Please ensure'
+                    ' that all programs have a unique name. The duplicate names were:'
+                    f' {", ".join(map(str, overlap))}.')
+        self.programs.update(overlay.programs)
+
         self.resources.update(overlay.resources)
 
         self.checkpoints.update(overlay.checkpoints)
@@ -194,6 +207,7 @@ class Configuration(Document):
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         if not node.has_attribute('settings'):
             node.set_attribute('settings', None)
+        node.map_attribute_to_index('programs', 'name')
         node.map_attribute_to_index('resources', 'name')
 
     @classmethod
@@ -211,6 +225,11 @@ class Configuration(Document):
             node.remove_attribute('settings')
         if len(node.get_attribute('settings').yaml_node.value) == 0:
             node.remove_attribute('settings')
+
+        progs = node.get_attribute('programs')
+        if (progs.is_scalar(type(None)) or progs.is_mapping() and progs.is_empty()):
+            node.remove_attribute('programs')
+        node.index_attribute_to_map('programs', 'name')
 
         res = node.get_attribute('resources')
         if (

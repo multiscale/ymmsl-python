@@ -10,7 +10,7 @@ class Component:
     """Describes a simulation component
 
     Simulation components are the abstract boxes that models consist of. Components are
-    implemented by an Implementation, which describes how to do the calculations needed
+    implemented by an implementation, which describes how to do the calculations needed
     for this component, they have a multiplicity, which describes how many copies of
     that implementation need to be started (for e.g. ensembles), and they have ports,
     which are used to connect components to each other.

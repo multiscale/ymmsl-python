@@ -141,8 +141,7 @@ class Model(Implementation):
     from the YAML file; the `conduits` attribute will then be set to an empty list.
 
     Attributes:
-        name: The name by which this simulation model is known to the system. Must be a
-                valid Identifier.
+        name: The name by which this simulation model is known to the system.
         ports: Ports through which this model can communicate with other models.
         components: A list of components making up the model.
         conduits: A list of conduits connecting the components.
@@ -154,7 +153,7 @@ class Model(Implementation):
         """Create a Model.
 
         Args:
-            name: Name of this model
+            name: Name of this model, must be a valid reference
             ports: Ports of this model
             components: A list of components making up the model
             conduits: A list of conduits connecting the components

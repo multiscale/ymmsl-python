@@ -26,6 +26,21 @@ def full_config() -> v0_1.PartialConfiguration:
 
     model = v0_1.Model('test_model', components, conduits)
     settings = v0_1.Settings({'a': 42, 'b': 'Test'})
+
+    implementations = [
+            v0_1.Implementation(
+                v0_1.Reference('macro_impl'),
+                v0_1.BaseEnv.LOGIN, ['OpenMPI/4.1.0', 'FFTW/3.1.0'],
+                Path('/home/user/venv'), {'ENV1': '23'},
+                v0_1.ExecutionModel.DIRECT,
+                Path('/home/user/models/macro'), ['-a', '-b'],
+                None),
+            v0_1.Implementation(
+                v0_1.Reference('micro_impl'),
+                script=(['#!/bin/bash', '/home/user/models/micro']),
+                can_share_resources=False,
+                keeps_state_for_next_use=v0_1.KeepsStateForNextUse.HELPFUL)]
+
     resources = [
             v0_1.ThreadedResReq(v0_1.Reference('A'), 8),
             v0_1.MPICoresResReq(v0_1.Reference('B'), 4, 8)]
@@ -47,5 +62,5 @@ def full_config() -> v0_1.PartialConfiguration:
             v0_1.Reference('B'): Path('/path/to/snapshot_B.pack')}
 
     return v0_1.PartialConfiguration(
-           model, settings, None, resources, description,
-           checkpoints, resume)
+           model, settings, implementations, resources, description, checkpoints,
+           resume)

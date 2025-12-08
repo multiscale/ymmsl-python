@@ -5,16 +5,17 @@ import pytest
 
 from ymmsl.io import load, dump
 from ymmsl.v0_2 import (
-        Configuration, Checkpoints, Component, Conduit, Model, Ports, Reference,
-        Settings, ThreadedResReq)
-from ymmsl.v0_2 import SettingValue     # noqa: F401 # pylint: disable=unused-import
+        BaseEnv, Configuration, Checkpoints, Component, Conduit, ExecutionModel,
+        KeepsStateForNextUse, Model, Ports, Program, Reference, Settings,
+        ThreadedResReq)
+from ymmsl.v0_2 import SettingValue
 
 
 Ref = Reference
 
 
 def test_configuration() -> None:
-    setting_values = OrderedDict()    # type: OrderedDict[str, SettingValue]
+    setting_values: OrderedDict[str, SettingValue] = OrderedDict()
     settings = Settings(setting_values)
     model1 = Model('model1', None, [])
     model2 = Model('model2', None, [])
@@ -83,6 +84,28 @@ def test_configuration_update_model_error() -> None:
     overlay2 = Configuration(
             'Extra conduit', Model('model', None, [], [
                 Conduit('micro.final', 'macro.in2')]))
+
+    with pytest.raises(RuntimeError):
+        base.update(overlay2)
+
+
+def test_configuration_update_programs() -> None:
+    base = Configuration(
+            'Configuration for testing',
+            programs=[Program('impl1', executable=Path('impl1'))])
+
+    overlay1 = Configuration(
+            'Extra program',
+            programs=[Program('impl2', executable=Path('impl2'))])
+
+    base.update(overlay1)
+
+    assert base.programs[Reference('impl1')].name == 'impl1'
+    assert base.programs[Reference('impl2')].name == 'impl2'
+
+    overlay2 = Configuration(
+            'Conflicting program',
+            programs=[Program('impl1', executable=Path('impl3'))])
 
     with pytest.raises(RuntimeError):
         base.update(overlay2)
@@ -221,6 +244,36 @@ def test_dump_empty_settings() -> None:
             'description: \'\'\n')
 
 
+def test_load_programs(test_config5_text: str) -> None:
+    configuration = load(test_config5_text)
+
+    assert isinstance(configuration, Configuration)
+    assert len(configuration.programs) == 1
+    prog = configuration.programs[Reference('macro')]
+    assert prog.name == 'macro'
+    assert prog.ports.o_i == ['out1', 'out2']
+    assert prog.base_env == BaseEnv.LOGIN
+    assert prog.modules is not None
+    assert len(prog.modules) == 2
+    assert prog.modules[0] == 'gcc/13.3.0'
+    assert prog.modules[1] == 'FFTW/3.2.1'
+    assert prog.virtual_env == Path('/home/user/.venv')
+    assert len(prog.env) == 2
+    assert prog.env['SETTING'] == 'something'
+    assert prog.env['VARIABLE'] == '42'
+    assert prog.execution_model == ExecutionModel.INTELMPI
+    assert prog.executable == Path('python3')
+    assert prog.args == ['/home/user/script.py']
+    assert prog.can_share_resources is False
+    assert prog.keeps_state_for_next_use == KeepsStateForNextUse.HELPFUL
+
+
+def test_dump_configuration(
+        test_config5: Configuration, test_config5_text: str) -> None:
+    text = dump(test_config5)
+    assert text == test_config5_text
+
+
 def test_load_resources() -> None:
     text = (
             'ymmsl_version: v0.2\n'
@@ -246,7 +299,7 @@ def test_dump_resources() -> None:
             ThreadedResReq(Ref('macro'), 10),
             ThreadedResReq(Ref('micro'), 1)]
 
-    configuration = Configuration('', None, None, resources)
+    configuration = Configuration('', resources=resources)
 
     text = dump(configuration)
     assert text == (

@@ -223,7 +223,7 @@ class Implementation:
                     See above.
             keeps_state_for_next_use: Does this implementation keep state for
                 the next iteration of the reuse loop. See
-                :class:`ImplementationState`.
+                :class:`KeepsStateForNextUse`.
         """
         if script is not None:
             err_arg = []

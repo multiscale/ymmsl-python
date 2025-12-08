@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from ymmsl.conversion.convert_v0_1_to_v0_2 import convert_v0_1_to_v0_2
 
 import ymmsl.v0_1 as v0_1
@@ -26,13 +28,37 @@ def test_convert_simple_config(empty_config: v0_1.PartialConfiguration) -> None:
 
 
 def test_convert_full_config(full_config: v0_1.Configuration) -> None:
-    v2 = convert_v0_1_to_v0_2(full_config)
+    with pytest.warns(UserWarning):
+        v2 = convert_v0_1_to_v0_2(full_config)
     assert v2.description == 'Testing a full configuration'
 
     assert v2.settings is not full_config.settings
     assert len(v2.settings) == 2
     assert v2.settings['a'] == 42
     assert v2.settings['b'] == 'Test'
+
+    assert len(v2.programs) == 2
+    assert Ref2('macro_impl') in v2.programs
+
+    macro_prog = v2.programs[Ref2('macro_impl')]
+    assert macro_prog.name == Ref2('macro_impl')
+    assert macro_prog.base_env == v0_2.BaseEnv.LOGIN
+    assert macro_prog.modules == ['OpenMPI/4.1.0', 'FFTW/3.1.0']
+    assert macro_prog.virtual_env == Path('/home/user/venv')
+    assert macro_prog.env == {'ENV1': '23'}
+    assert macro_prog.execution_model == v0_2.ExecutionModel.DIRECT
+    assert macro_prog.executable == Path('/home/user/models/macro')
+    assert macro_prog.args == ['-a', '-b']
+    assert macro_prog.script is None
+    assert macro_prog.can_share_resources is True
+    assert macro_prog.keeps_state_for_next_use == v0_2.KeepsStateForNextUse.NECESSARY
+
+    assert Ref2('micro_impl') in v2.programs
+    micro_prog = v2.programs[Ref2('micro_impl')]
+    assert micro_prog.name == Ref2('micro_impl')
+    assert micro_prog.script == '#!/bin/bash\n/home/user/models/micro\n'
+    assert micro_prog.can_share_resources is False
+    assert micro_prog.keeps_state_for_next_use == v0_2.KeepsStateForNextUse.HELPFUL
 
     assert v2.resources is not full_config.resources
     assert len(v2.resources) == 2
