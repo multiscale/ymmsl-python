@@ -5,7 +5,7 @@ from typing import cast, Dict, List, Optional, Union
 import yaml
 import yatiml
 
-from ymmsl.v0_1.component import Ports
+from ymmsl.v0_2.ports import Ports
 from ymmsl.v0_1.execution import BaseEnv, ExecutionModel, KeepsStateForNextUse
 from ymmsl.v0_2.implementation import Implementation
 

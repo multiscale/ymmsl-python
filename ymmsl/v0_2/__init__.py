@@ -1,11 +1,11 @@
-from ymmsl.v0_1.checkpoint import (
+from ymmsl.v0_2.checkpoint import (
         CheckpointRule, CheckpointRangeRule, CheckpointAtRule, Checkpoints)
-from ymmsl.v0_1.component import Operator, Port, Ports
-from ymmsl.v0_1.execution import (
-        BaseEnv, ExecutionModel, MPICoresResReq, MPINodesResReq, ResourceRequirements,
-        ThreadedResReq, KeepsStateForNextUse)
-from ymmsl.v0_1.identity import Identifier, Reference, ReferencePart
-from ymmsl.v0_1.settings import Settings, SettingValue
+from ymmsl.v0_2.ports import Operator, Port, Ports
+from ymmsl.v0_2.program import BaseEnv, ExecutionModel, KeepsStateForNextUse
+from ymmsl.v0_2.identity import Identifier, Reference, ReferencePart
+from ymmsl.v0_2.resources import (
+        MPICoresResReq, MPINodesResReq, ResourceRequirements, ThreadedResReq)
+from ymmsl.v0_2.settings import Settings, SettingValue
 
 from ymmsl.v0_2.component import Component
 from ymmsl.v0_2.configuration import Configuration

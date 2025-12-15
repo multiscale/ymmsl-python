@@ -3,8 +3,8 @@ from typing import Any, cast, List, Optional, Sequence, Union
 
 import yatiml
 
-from ymmsl.v0_1.component import Ports
-from ymmsl.v0_1.identity import Identifier, Reference
+from ymmsl.v0_2.ports import Ports
+from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.component import Component
 from ymmsl.v0_2.implementation import Implementation
 

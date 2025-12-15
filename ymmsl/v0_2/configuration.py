@@ -7,10 +7,10 @@ from typing import (
 import yatiml
 import yaml
 
-from ymmsl.v0_1.checkpoint import Checkpoints
-from ymmsl.v0_1.execution import ResourceRequirements
-from ymmsl.v0_1.identity import Reference
-from ymmsl.v0_1.settings import Settings
+from ymmsl.v0_2.checkpoint import Checkpoints
+from ymmsl.v0_2.resources import ResourceRequirements
+from ymmsl.v0_2.identity import Reference
+from ymmsl.v0_2.settings import Settings
 from ymmsl.v0_2.document import Document
 from ymmsl.v0_2.implementation import Implementation
 from ymmsl.v0_2.program import Program
