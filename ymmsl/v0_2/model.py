@@ -141,8 +141,7 @@ class Model(Implementation):
     from the YAML file; the `conduits` attribute will then be set to an empty list.
 
     Attributes:
-        name: The name by which this simulation model is known to the system. Must be a
-                valid Identifier.
+        name: The name by which this simulation model is known to the system.
         ports: Ports through which this model can communicate with other models.
         components: A list of components making up the model.
         conduits: A list of conduits connecting the components.
@@ -154,7 +153,7 @@ class Model(Implementation):
         """Create a Model.
 
         Args:
-            name: Name of this model
+            name: Name of this model, must be a valid reference
             ports: Ports of this model
             components: A list of components making up the model
             conduits: A list of conduits connecting the components
@@ -177,11 +176,13 @@ class Model(Implementation):
     def check_consistent(self) -> None:
         """Check that the model is internally consistent.
 
-        This checks that every conduit is connected to two existing ports on existing
-        components, or on the model itself.
+        This checks:
+            - that no two components have the same name
+            - that every conduit is connected to two existing ports on existing
+              components, or on the model itself.
 
         Raises:
-            RuntimeError: If there's a problem with the wiring.
+            RuntimeError: If an inconsistency was found
         """
         errors: List[str] = list()
 
@@ -198,6 +199,23 @@ class Model(Implementation):
             raise RuntimeError(
                     f'One or more errors were found in model {self.name}:\n-'
                     ' {"\n- ".join(errors)}')
+
+    def _check_component_name_conflicts(self) -> List[str]:
+        """Check that no two components have the same name.
+
+        Returns a list of errors.
+        """
+        errors = list()
+
+        for i1, c1 in enumerate(self.components):
+            num_conflicts = 0
+            for i2 in range(i1-1):
+                if c1.name == self.components[i2].name:
+                    num_conflicts += 1
+            if num_conflicts > 0:
+                errors.append(f'There are {num_conflicts + 1} models named {c1.name}.')
+
+        return errors
 
     def _check_sending_side(
             self, conduit: Conduit, model_receiving_ports: List[Identifier]
@@ -264,23 +282,6 @@ class Model(Implementation):
                                 f' {conduit.receiving_port()}, which is not present'
                                 f' on receiving component {rcvng_cmp[0].name}, or not'
                                 ' an F_INIT or S port.')
-        return errors
-
-    def _check_component_name_conflicts(self) -> List[str]:
-        """Check that no two components have the same name.
-
-        Returns a list of errors.
-        """
-        errors = list()
-
-        for i1, c1 in enumerate(self.components):
-            num_conflicts = 0
-            for i2 in range(i1-1):
-                if c1.name == self.components[i2].name:
-                    num_conflicts += 1
-            if num_conflicts > 0:
-                errors.append(f'There are {num_conflicts + 1} models named {c1.name}.')
-
         return errors
 
     def _conduits_for_export(self) -> List[AnyConduit]:

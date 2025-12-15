@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import collections.abc as abc
 import logging
 from pathlib import Path
@@ -8,16 +7,17 @@ from typing import (
 import yatiml
 import yaml
 
+from ymmsl.v0_1.checkpoint import Checkpoints
+from ymmsl.v0_1.execution import ResourceRequirements
+from ymmsl.v0_1.identity import Reference
+from ymmsl.v0_1.settings import Settings
 from ymmsl.v0_2.document import Document
-from ymmsl.v0_2 import (
-        Checkpoints, Reference, ResourceRequirements, Settings)
+from ymmsl.v0_2.implementation import Implementation
+from ymmsl.v0_2.program import Program
 from ymmsl.v0_2.model import Component, Model
 
 
 _logger = logging.getLogger(__name__)
-
-
-_ResType = MutableMapping[Reference, ResourceRequirements]
 
 
 class Configuration(Document):
@@ -27,6 +27,8 @@ class Configuration(Document):
         description: A human-readable description of the configuration
         models: A list of possibly connected models to run
         settings: Settings to run the models with
+        programs: Programs to use to run the model. Dictionary mapping program names (as
+            References) to Program objects.
         resources: Resources to allocate for the model components.
             Dictionary mapping component names to ResourceRequirements objects.
         checkpoints: Defines when each model component should create a snapshot
@@ -36,6 +38,8 @@ class Configuration(Document):
             self, description: str,
             models: Optional[Union[Model, Sequence[Model]]] = None,
             settings: Optional[Settings] = None,
+            programs: Optional[Union[
+                Sequence[Program], MutableMapping[Reference, Program]]] = None,
             resources: Optional[Union[
                 Sequence[ResourceRequirements],
                 MutableMapping[Reference, ResourceRequirements]]] = None,
@@ -72,15 +76,17 @@ class Configuration(Document):
         else:
             self.settings = settings
 
-        # TODO: programs
-
-        # TODO: installations
+        if programs is None:
+            self.programs: MutableMapping[Reference, Program] = dict()
+        elif isinstance(programs, abc.Sequence):
+            self.programs = {prog.name: prog for prog in programs}
+        else:
+            self.programs = programs
 
         if resources is None:
-            self.resources = dict()     # type: _ResType
+            self.resources: MutableMapping[Reference, ResourceRequirements] = dict()
         elif isinstance(resources, abc.Sequence):
-            self.resources = OrderedDict([
-                (res.name, res) for res in resources])
+            self.resources = {res.name: res for res in resources}
         else:
             self.resources = resources
 
@@ -97,13 +103,19 @@ class Configuration(Document):
     def check_consistent(self) -> None:
         """Checks that the configuration is internally consistent.
 
-        This checks whether all conduits are connected to existing components or to a
-        model port, and that resources have been requested for each component that has
-        an implementation.
+        This checks:
+
+            - Whether all conduits are connected to existing components or to a model
+              port
+            - Whether ports on components are consistent with their implementations
+            - That resources have been requested for each component that has an
+              implementation
 
         If any of these requirements is false, this function will raise a RuntimeError
         with an explanation of the problem.
         """
+        errors = list()
+
         program_component_paths = self._program_component_paths()
         for model in self.models:
             model.check_consistent()
@@ -112,10 +124,18 @@ class Configuration(Document):
                     path = program_component_paths[component]
 
                     if path not in self.resources:
-                        raise RuntimeError(
-                                f'Model component {path} is missing a resource request')
+                        errors.append(
+                                f'Component {path} is missing a resource request')
+
+                errors.extend(self._check_consistent_ports(component))
 
                 # TODO: check that resources and implementation both do or don't MPI
+
+        if errors:
+            raise RuntimeError(
+                    'The configuration is internally inconsistent. The following'
+                    ' problems were found:\n- '
+                    f'{"\n- ".join(errors)}')
 
     def update(self, overlay: 'Configuration') -> None:
         """Update this configuration with the given overlay.
@@ -137,6 +157,14 @@ class Configuration(Document):
                     ' use the import functionality instead.')
 
         self.settings.update(overlay.settings)
+
+        overlap = [p for p in self.programs if p in overlay.programs]
+        if any(overlap):
+            raise RuntimeError(
+                    'Multiple programs with the same name were found. Please ensure'
+                    ' that all programs have a unique name. The duplicate names were:'
+                    f' {", ".join(map(str, overlap))}.')
+        self.programs.update(overlay.programs)
 
         self.resources.update(overlay.resources)
 
@@ -182,6 +210,41 @@ class Configuration(Document):
 
         return result
 
+    def _check_consistent_ports(self, component: Component) -> List[str]:
+        """Check that components have implementations with compatible ports.
+
+        This checks that each component declares ports that its implementation also
+        declares, if it has an implementation and the implementation has a ports
+        declaration.
+
+        Returns a list of errors, or an empty list if all is okay.
+        """
+        def check_ports(cmp: Component, impl: Implementation, op: str) -> List[str]:
+            """Check two sets of ports, return errors"""
+            cmp_ports = set(getattr(cmp.ports, op))
+            impl_ports = set(getattr(impl.ports, op))
+            missing_ports = cmp_ports - impl_ports
+            if missing_ports:
+                return [
+                        f'Component {cmp.name} declares {op} ports'
+                        f' ({", ".join(map(str, missing_ports))}) that its'
+                        f' implementation {impl.name} does not have.']
+
+            return []
+
+        errors = list()
+
+        if component.implementation is not None:
+            if component.implementation in self.programs:
+                impl = self.programs[component.implementation]
+                if list(impl.ports.all_ports()):
+                    errors += check_ports(component, impl, 'f_init')
+                    errors += check_ports(component, impl, 'o_i')
+                    errors += check_ports(component, impl, 's')
+                    errors += check_ports(component, impl, 'o_f')
+
+        return errors
+
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         # Because of the syntactic sugar below, the YAML doesn't match the types
@@ -194,6 +257,7 @@ class Configuration(Document):
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         if not node.has_attribute('settings'):
             node.set_attribute('settings', None)
+        node.map_attribute_to_index('programs', 'name')
         node.map_attribute_to_index('resources', 'name')
 
     @classmethod
@@ -211,6 +275,11 @@ class Configuration(Document):
             node.remove_attribute('settings')
         if len(node.get_attribute('settings').yaml_node.value) == 0:
             node.remove_attribute('settings')
+
+        progs = node.get_attribute('programs')
+        if (progs.is_scalar(type(None)) or progs.is_mapping() and progs.is_empty()):
+            node.remove_attribute('programs')
+        node.index_attribute_to_map('programs', 'name')
 
         res = node.get_attribute('resources')
         if (

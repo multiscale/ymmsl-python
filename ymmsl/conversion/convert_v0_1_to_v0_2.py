@@ -1,5 +1,6 @@
 from copy import deepcopy
-from typing import Optional
+from typing import Dict, Optional
+import warnings
 
 import ymmsl.v0_1 as v0_1
 import ymmsl.v0_2 as v0_2
@@ -17,12 +18,14 @@ def convert_v0_1_to_v0_2(config: v0_1.PartialConfiguration) -> v0_2.Configuratio
     description = '' if config.description is None else config.description
     model = convert_model(config.model) if config.model is not None else None
     settings = deepcopy(config.settings)
+    programs = [
+            convert_implementation(impl) for impl in config.implementations.values()]
     resources = deepcopy(config.resources)
     checkpoints = deepcopy(config.checkpoints)
     resume = deepcopy(config.resume)
 
     return v0_2.Configuration(
-            description, model, settings, resources, checkpoints, resume)
+            description, model, settings, programs, resources, checkpoints, resume)
 
 
 def convert_component(component: v0_1.Component) -> v0_2.Component:
@@ -56,3 +59,36 @@ def convert_model(model: v0_1.ModelReference) -> v0_2.Model:
                 list(map(convert_conduit, model.conduits)))
     else:
         return v0_2.Model(str(model.name), None, [], [])
+
+
+def convert_implementation(impl: v0_1.Implementation) -> v0_2.Program:
+    """Convert a v0.1 Implementation object to a v0.2 Program.
+
+    Note that v0.2 also has an Implementation, but that is now a base class of Program
+    and Model, because in v0.2 models can be implementations too.
+
+    Args:
+        impl: An Implementation to convert
+
+    Returns:
+        The corresponding program expressed in yMMSL v0.2.
+    """
+    warnings.warn(
+            'In yMMSL v0.2 implementations have become programs, and you can now'
+            ' specify the ports of a program in the yMMSL description. If your program'
+            ' has fixed ports then you should do this, because it will make incorrect'
+            ' wiring easier to debug.')
+
+    base_env: Optional[v0_1.BaseEnv] = impl.base_env
+    env: Optional[Dict[str, str]] = impl.env
+
+    if impl.script is not None:
+        if base_env == v0_1.BaseEnv.MANAGER:
+            base_env = None
+        if not env:
+            env = None
+
+    return v0_2.Program(
+                str(impl.name), None, base_env, impl.modules, impl.virtual_env, env,
+                impl.execution_model, impl.executable, impl.args, impl.script,
+                impl.can_share_resources, impl.keeps_state_for_next_use)

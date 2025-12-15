@@ -12,6 +12,7 @@ from ymmsl.v0_2.configuration import Configuration
 from ymmsl.v0_2.document import Document
 from ymmsl.v0_2.implementation import Implementation
 from ymmsl.v0_2.model import Conduit, Model
+from ymmsl.v0_2.program import Program
 
 
 __all__ = [
@@ -19,6 +20,6 @@ __all__ = [
         'Checkpoints', 'Component', 'Ports', 'Conduit', 'Configuration', 'Document',
         'ExecutionModel', 'Identifier', 'Implementation', 'KeepsStateForNextUse',
         'Model', 'MPICoresResReq', 'MPINodesResReq', 'Operator', 'Port', 'Ports',
-        'Reference', 'ReferencePart', 'ResourceRequirements', 'Settings',
+        'Program', 'Reference', 'ReferencePart', 'ResourceRequirements', 'Settings',
         'SettingValue', 'ThreadedResReq'
         ]
