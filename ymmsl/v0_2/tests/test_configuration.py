@@ -31,13 +31,24 @@ def test_configuration() -> None:
     assert len(config.settings) == 0
 
 
-def test_check_consistent(test_config6: Configuration) -> None:
+def test_check_consistent_resources(test_config6: Configuration) -> None:
     test_config6.check_consistent()
 
 
-def test_check_inconsistent(test_config7: Configuration) -> None:
+def test_check_inconsistent_resources(test_config7: Configuration) -> None:
     with pytest.raises(RuntimeError):
         test_config7.check_consistent()
+
+
+def test_check_consistent_implementations(test_config8: Configuration) -> None:
+    test_config8.check_consistent()
+
+
+def test_check_inconsistent_implementations(test_config9: Configuration) -> None:
+    with pytest.raises(RuntimeError) as e:
+        test_config9.check_consistent()
+
+    assert len(str(e.value).split('\n')) == 5
 
 
 def test_configuration_update_description() -> None:

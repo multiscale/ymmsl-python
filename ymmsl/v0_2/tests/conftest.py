@@ -148,26 +148,6 @@ def test_config6() -> Configuration:
                 Component('mpi_nodes2', Ports(), 'd')],
             [])
 
-    '''
-    implementations = [
-            Implementation(
-                Reference('a'), script='/home/user/models/bin/modela'),
-            Implementation(
-                Reference('b'), script='/home/user/models/bin/modelb'),
-            Implementation(
-                Reference('c'),
-                base_env=BaseEnv.LOGIN,
-                modules=['gcc-6.3.0', 'openmpi-1.10'],
-                execution_model=ExecutionModel.OPENMPI,
-                executable=Path('/home/user/models/bin/modelc')),
-            Implementation(
-                Reference('d'),
-                base_env=BaseEnv.CLEAN,
-                modules=['icc-18.0', 'IntelMPI-2021-3'],
-                execution_model=ExecutionModel.INTELMPI,
-                executable=Path('/home/user/models/bin/modeld'))]
-    '''
-
     resources = [
             ThreadedResReq(Reference('singlethreaded'), 1),
             ThreadedResReq(Reference('multithreaded'), 8),
@@ -187,3 +167,87 @@ def test_config7() -> Configuration:
     resources = [ThreadedResReq(Ref('got_resources.singlethreaded'), 1)]
 
     return Configuration('test_config7', [model1, model2], None, None, resources)
+
+
+@pytest.fixture
+def test_config8() -> Configuration:
+    model1 = Model(
+            'implementations_test',
+            None,
+            [
+                Component('no_implementation', Ports(o_i=['out'], s=['in']), None),
+                Component(
+                    'impl_no_ports', Ports(f_init=['in'], o_f=['out']), 'no_ports'),
+            ])
+
+    model2 = Model(
+            'implementations_test2',
+            None,
+            [
+                Component(
+                    'impl_with_ports', Ports(f_init=['in'], o_f=['out']), 'with_ports'),
+            ])
+
+    programs = [
+            Program(
+                'no_ports', None,
+                script='/home/user/models/bin/modela'),
+            Program(
+                'with_ports',
+                base_env=BaseEnv.LOGIN,
+                modules=['gcc-6.3.0', 'openmpi-1.10'],
+                execution_model=ExecutionModel.OPENMPI,
+                executable=Path('/home/user/models/bin/modelc')),
+            ]
+
+    resources = [
+            ThreadedResReq(Reference('impl_no_ports'), 1),
+            MPICoresResReq(Reference('impl_with_ports'), 4, 4),
+            ]
+
+    return Configuration('config8', [model1, model2], None, programs, resources)
+
+
+@pytest.fixture
+def test_config9() -> Configuration:
+    model1 = Model(
+            'implementations_test_broken',
+            None,
+            [
+                Component('no_implementation', Ports(o_i=['out'], s=['in']), None),
+                Component(
+                    'impl_ports_mismatch', Ports(f_init=['in'], o_f=['out']), 'ports1'),
+            ])
+
+    model2 = Model(
+            'implementations_test2',
+            None,
+            [
+                Component(
+                    'impl_also_wrong', Ports(o_i=['out'], s=['in']), 'ports2'),
+                Component(
+                    'impl_extra_ports', Ports(f_init=['in']), 'ports3'),
+            ])
+
+    programs = [
+            Program(
+                'ports1', Ports(s=['test']),
+                script='/home/user/models/bin/modela'),
+            Program(
+                'ports2', Ports(f_init=['in'], o_f=['out'], s=['wrong']),
+                base_env=BaseEnv.LOGIN,
+                modules=['gcc-6.3.0', 'openmpi-1.10'],
+                execution_model=ExecutionModel.OPENMPI,
+                executable=Path('/home/user/models/bin/modelb')),
+            Program(
+                'ports3', Ports(f_init=['in'], s=['test']),
+                script='/home/user/models/bin/modelc'),
+             ]
+
+    resources = [
+            ThreadedResReq(Reference('impl_ports_mismatch'), 1),
+            MPICoresResReq(Reference('impl_also_wrong'), 4, 4),
+            ThreadedResReq(Reference('impl_extra_ports'), 1),
+            ]
+
+    return Configuration('config9', [model1, model2], None, programs, resources)

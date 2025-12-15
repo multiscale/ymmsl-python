@@ -12,6 +12,7 @@ from ymmsl.v0_1.execution import ResourceRequirements
 from ymmsl.v0_1.identity import Reference
 from ymmsl.v0_1.settings import Settings
 from ymmsl.v0_2.document import Document
+from ymmsl.v0_2.implementation import Implementation
 from ymmsl.v0_2.program import Program
 from ymmsl.v0_2.model import Component, Model
 
@@ -102,13 +103,19 @@ class Configuration(Document):
     def check_consistent(self) -> None:
         """Checks that the configuration is internally consistent.
 
-        This checks whether all conduits are connected to existing components or to a
-        model port, and that resources have been requested for each component that has
-        an implementation.
+        This checks:
+
+            - Whether all conduits are connected to existing components or to a model
+              port
+            - Whether ports on components are consistent with their implementations
+            - That resources have been requested for each component that has an
+              implementation
 
         If any of these requirements is false, this function will raise a RuntimeError
         with an explanation of the problem.
         """
+        errors = list()
+
         program_component_paths = self._program_component_paths()
         for model in self.models:
             model.check_consistent()
@@ -117,10 +124,18 @@ class Configuration(Document):
                     path = program_component_paths[component]
 
                     if path not in self.resources:
-                        raise RuntimeError(
-                                f'Model component {path} is missing a resource request')
+                        errors.append(
+                                f'Component {path} is missing a resource request')
+
+                errors.extend(self._check_consistent_ports(component))
 
                 # TODO: check that resources and implementation both do or don't MPI
+
+        if errors:
+            raise RuntimeError(
+                    'The configuration is internally inconsistent. The following'
+                    ' problems were found:\n- '
+                    f'{"\n- ".join(errors)}')
 
     def update(self, overlay: 'Configuration') -> None:
         """Update this configuration with the given overlay.
@@ -194,6 +209,41 @@ class Configuration(Document):
                     result[component] = prefix + component.name
 
         return result
+
+    def _check_consistent_ports(self, component: Component) -> List[str]:
+        """Check that components have implementations with compatible ports.
+
+        This checks that each component declares ports that its implementation also
+        declares, if it has an implementation and the implementation has a ports
+        declaration.
+
+        Returns a list of errors, or an empty list if all is okay.
+        """
+        def check_ports(cmp: Component, impl: Implementation, op: str) -> List[str]:
+            """Check two sets of ports, return errors"""
+            cmp_ports = set(getattr(cmp.ports, op))
+            impl_ports = set(getattr(impl.ports, op))
+            missing_ports = cmp_ports - impl_ports
+            if missing_ports:
+                return [
+                        f'Component {cmp.name} declares {op} ports'
+                        f' ({", ".join(map(str, missing_ports))}) that its'
+                        f' implementation {impl.name} does not have.']
+
+            return []
+
+        errors = list()
+
+        if component.implementation is not None:
+            if component.implementation in self.programs:
+                impl = self.programs[component.implementation]
+                if list(impl.ports.all_ports()):
+                    errors += check_ports(component, impl, 'f_init')
+                    errors += check_ports(component, impl, 'o_i')
+                    errors += check_ports(component, impl, 's')
+                    errors += check_ports(component, impl, 'o_f')
+
+        return errors
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
