@@ -145,7 +145,7 @@ class Configuration(Document):
             raise RuntimeError(
                     'The configuration is internally inconsistent. The following'
                     ' problems were found:\n- '
-                    f'{"\n- ".join(errors)}')
+                    + '\n- '.join(errors))
 
     def update(self, overlay: 'Configuration') -> None:
         """Update this configuration with the given overlay.
