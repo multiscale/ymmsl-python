@@ -10,6 +10,7 @@ import yaml
 from ymmsl.v0_2.checkpoint import Checkpoints
 from ymmsl.v0_2.resources import ResourceRequirements
 from ymmsl.v0_2.identity import Reference
+from ymmsl.v0_2.imports import ImportStatement
 from ymmsl.v0_2.settings import Settings
 from ymmsl.v0_2.document import Document
 from ymmsl.v0_2.implementation import Implementation
@@ -25,6 +26,7 @@ class Configuration(Document):
 
     Attributes:
         description: A human-readable description of the configuration
+        imports: A list of import statements
         models: A list of possibly connected models to run
         settings: Settings to run the models with
         programs: Programs to use to run the model. Dictionary mapping program names (as
@@ -36,6 +38,7 @@ class Configuration(Document):
     """
     def __init__(
             self, description: str,
+            imports: Optional[Sequence[ImportStatement]] = None,
             models: Optional[Union[Model, Sequence[Model]]] = None,
             settings: Optional[Settings] = None,
             programs: Optional[Union[
@@ -54,15 +57,20 @@ class Configuration(Document):
 
         Args:
             description: Human-readable description
+            imports: A list of import statements
+            models: A list of possibly connected models to run
             settings: Settings to run the model with.
+            programs: Programs to use when running the model
             resources: Resources to allocate for the model components.
             checkpoints: When each component should create a snapshot
             resume: What snapshot each component should resume from
-
         """
         self.description = description
 
-        # TODO: imports
+        if imports is None:
+            self.imports: List[ImportStatement] = list()
+        else:
+            self.imports = list(imports)
 
         if models is None:
             self.models: Sequence[Model] = list()
@@ -131,6 +139,8 @@ class Configuration(Document):
 
                 # TODO: check that resources and implementation both do or don't MPI
 
+        # TODO: no two implementations (programs or models) with the same name
+
         if errors:
             raise RuntimeError(
                     'The configuration is internally inconsistent. The following'
@@ -150,6 +160,12 @@ class Configuration(Document):
             self.description = overlay.description
         elif overlay.description:
             self.description += '\n\n' + overlay.description
+
+        if not self.imports:
+            self.imports = overlay.imports
+        else:
+            if overlay.imports:
+                self.imports.extend(overlay.imports)
 
         if self.models and overlay.models:
             raise RuntimeError(
@@ -266,6 +282,10 @@ class Configuration(Document):
         if descr.is_scalar(str) and '\n' in cast(str, descr.get_value()):
             # output multi-line string in literal mode
             cast(yaml.ScalarNode, descr.yaml_node).style = '|'
+
+        imports = node.get_attribute('imports')
+        if imports.is_sequence() and imports.is_empty():
+            node.remove_attribute('imports')
 
         models = node.get_attribute('models')
         if models.is_sequence() and models.is_empty():

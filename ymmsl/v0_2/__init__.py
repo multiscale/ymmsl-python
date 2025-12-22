@@ -1,5 +1,6 @@
 from ymmsl.v0_2.checkpoint import (
         CheckpointRule, CheckpointRangeRule, CheckpointAtRule, Checkpoints)
+from ymmsl.v0_2.imports import ImportKind, ImportStatement
 from ymmsl.v0_2.ports import Operator, Port, Ports
 from ymmsl.v0_2.program import BaseEnv, ExecutionModel, KeepsStateForNextUse
 from ymmsl.v0_2.identity import Identifier, Reference, ReferencePart
@@ -18,8 +19,8 @@ from ymmsl.v0_2.program import Program
 __all__ = [
         'BaseEnv', 'CheckpointRule', 'CheckpointRangeRule', 'CheckpointAtRule',
         'Checkpoints', 'Component', 'Ports', 'Conduit', 'Configuration', 'Document',
-        'ExecutionModel', 'Identifier', 'Implementation', 'KeepsStateForNextUse',
-        'Model', 'MPICoresResReq', 'MPINodesResReq', 'Operator', 'Port', 'Ports',
-        'Program', 'Reference', 'ReferencePart', 'ResourceRequirements', 'Settings',
-        'SettingValue', 'ThreadedResReq'
-        ]
+        'ExecutionModel', 'Identifier', 'Implementation', 'ImportKind',
+        'ImportStatement', 'KeepsStateForNextUse', 'Model', 'MPICoresResReq',
+        'MPINodesResReq', 'Operator', 'Port', 'Ports', 'Program', 'Reference',
+        'ReferencePart', 'ResourceRequirements', 'Settings', 'SettingValue',
+        'ThreadedResReq']
