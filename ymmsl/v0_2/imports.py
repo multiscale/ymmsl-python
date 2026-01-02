@@ -4,7 +4,7 @@ from typing import cast, Tuple
 
 import yatiml
 
-from ymmsl.v0_2.identity import Identifier
+from ymmsl.v0_2.identity import Identifier, Reference
 
 
 class ImportKind(Enum):
@@ -57,7 +57,7 @@ class ImportStatement:
         for path_part in path_parts:
             Identifier(path_part)
 
-        self.module = module
+        self.module = Reference(module)
 
         try:
             self.kind = ImportKind[kind.upper()]
@@ -73,7 +73,14 @@ class ImportStatement:
 
         This returns a path a/b/c.ymmsl for module a.b.c.
         """
-        return Path('/'.join(self.module.split('.')) + '.ymmsl')
+        return Path('/'.join(map(str, self.module)) + '.ymmsl')
+
+    def full_name(self) -> Reference:
+        """Return the full name of the imported object.
+
+        This returns a reference a.b.c.p for a statement import p from a.b.c.
+        """
+        return self.module + self.name
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:

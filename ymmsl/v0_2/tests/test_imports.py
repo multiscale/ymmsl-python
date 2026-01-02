@@ -4,7 +4,7 @@ import yatiml
 
 import pytest
 
-from ymmsl.v0_2.identity import Identifier
+from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.imports import ImportKind, ImportStatement
 
 
@@ -33,7 +33,8 @@ def test_load_import_statement2(load_import: LoadImport) -> None:
 
 
 def test_save_import_statement() -> None:
-    dumps_import = yatiml.dumps_function(Identifier, ImportKind, ImportStatement)
+    dumps_import = yatiml.dumps_function(
+            Identifier, ImportKind, ImportStatement, Reference)
     imp = ImportStatement('nlesc.examples', 'implementation', 'example')
     text = dumps_import(imp)
 
