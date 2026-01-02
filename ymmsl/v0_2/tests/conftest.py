@@ -67,7 +67,7 @@ def test_config4() -> Configuration:
               Ref('bf2smc'): Path('/path/to/snapshots/bf2smc.pack')}
 
     return Configuration(
-            description, None, None, None, resources, checkpoints, resume)
+            description, None, None, None, None, resources, checkpoints, resume)
 
 
 @pytest.fixture
@@ -156,7 +156,7 @@ def test_config6() -> Configuration:
             MPINodesResReq(Reference('submodel.mpi_nodes1'), 10, 16),
             MPINodesResReq(Reference('submodel.mpi_nodes2'), 10, 4, 4)]
 
-    return Configuration('config6', [model1, model2], None, None, resources)
+    return Configuration('config6', None, [model1, model2], None, None, resources)
 
 
 @pytest.fixture
@@ -166,7 +166,7 @@ def test_config7() -> Configuration:
             'missing_resources', None, [Component('singlethreaded', Ports(), 'b')])
     resources = [ThreadedResReq(Ref('got_resources.singlethreaded'), 1)]
 
-    return Configuration('test_config7', [model1, model2], None, None, resources)
+    return Configuration('test_config7', None, [model1, model2], None, None, resources)
 
 
 @pytest.fixture
@@ -205,7 +205,7 @@ def test_config8() -> Configuration:
             MPICoresResReq(Reference('impl_with_ports'), 4, 4),
             ]
 
-    return Configuration('config8', [model1, model2], None, programs, resources)
+    return Configuration('config8', None, [model1, model2], None, programs, resources)
 
 
 @pytest.fixture
@@ -250,4 +250,4 @@ def test_config9() -> Configuration:
             ThreadedResReq(Reference('impl_extra_ports'), 1),
             ]
 
-    return Configuration('config9', [model1, model2], None, programs, resources)
+    return Configuration('config9', None, [model1, model2], None, programs, resources)

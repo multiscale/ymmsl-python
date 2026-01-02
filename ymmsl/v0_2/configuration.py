@@ -1,4 +1,5 @@
 import collections.abc as abc
+from copy import copy
 import logging
 from pathlib import Path
 from typing import (
@@ -10,6 +11,7 @@ import yaml
 from ymmsl.v0_2.checkpoint import Checkpoints
 from ymmsl.v0_2.resources import ResourceRequirements
 from ymmsl.v0_2.identity import Reference
+from ymmsl.v0_2.imports import ImportStatement
 from ymmsl.v0_2.settings import Settings
 from ymmsl.v0_2.document import Document
 from ymmsl.v0_2.implementation import Implementation
@@ -25,7 +27,9 @@ class Configuration(Document):
 
     Attributes:
         description: A human-readable description of the configuration
-        models: A list of possibly connected models to run
+        imports: A list of import statements
+        models: Model (with submodels) to run. Dictionary mapping model names (as
+            References) to Model objects.
         settings: Settings to run the models with
         programs: Programs to use to run the model. Dictionary mapping program names (as
             References) to Program objects.
@@ -36,7 +40,9 @@ class Configuration(Document):
     """
     def __init__(
             self, description: str,
-            models: Optional[Union[Model, Sequence[Model]]] = None,
+            imports: Optional[Sequence[ImportStatement]] = None,
+            models: Optional[Union[
+                Sequence[Model], MutableMapping[Reference, Model]]] = None,
             settings: Optional[Settings] = None,
             programs: Optional[Union[
                 Sequence[Program], MutableMapping[Reference, Program]]] = None,
@@ -54,20 +60,27 @@ class Configuration(Document):
 
         Args:
             description: Human-readable description
+            imports: A list of import statements
+            models: Model (possibly with submodels) to run
             settings: Settings to run the model with.
+            programs: Programs to use when running the model
             resources: Resources to allocate for the model components.
             checkpoints: When each component should create a snapshot
             resume: What snapshot each component should resume from
-
         """
         self.description = description
 
-        # TODO: imports
+        if imports is None:
+            self.imports: List[ImportStatement] = list()
+        else:
+            self.imports = list(imports)
 
         if models is None:
-            self.models: Sequence[Model] = list()
+            self.models: MutableMapping[Reference, Model] = dict()
+        elif isinstance(models, abc.Sequence):
+            self.models = {model.name: model for model in models}
         elif isinstance(models, Model):
-            self.models = [models]
+            self.models = {models.name: models}
         else:
             self.models = models
 
@@ -117,7 +130,7 @@ class Configuration(Document):
         errors = list()
 
         program_component_paths = self._program_component_paths()
-        for model in self.models:
+        for model in self.models.values():
             model.check_consistent()
             for component in model.components:
                 if component in program_component_paths:
@@ -131,11 +144,13 @@ class Configuration(Document):
 
                 # TODO: check that resources and implementation both do or don't MPI
 
+        # TODO: no two implementations (programs or models) with the same name
+
         if errors:
             raise RuntimeError(
                     'The configuration is internally inconsistent. The following'
                     ' problems were found:\n- '
-                    f'{"\n- ".join(errors)}')
+                    + '\n- '.join(errors))
 
     def update(self, overlay: 'Configuration') -> None:
         """Update this configuration with the given overlay.
@@ -150,6 +165,12 @@ class Configuration(Document):
             self.description = overlay.description
         elif overlay.description:
             self.description += '\n\n' + overlay.description
+
+        if not self.imports:
+            self.imports = overlay.imports
+        else:
+            if overlay.imports:
+                self.imports.extend(overlay.imports)
 
         if self.models and overlay.models:
             raise RuntimeError(
@@ -173,12 +194,13 @@ class Configuration(Document):
 
     def _top_models(self) -> List[Model]:
         """Models in this configuration that are not used as implementations."""
-        top_models = {model.name: model for model in self.models}
+        top_models = copy(self.models)
 
-        for model in self.models:
+        for model in self.models.values():
             for component in model.components:
-                if component.implementation in top_models:
-                    del top_models[component.implementation]
+                if component.implementation:
+                    if component.implementation in top_models:
+                        del top_models[component.implementation]
 
         return list(top_models.values())
 
@@ -193,20 +215,19 @@ class Configuration(Document):
         implementation; components with no implementation or whose implementation is a
         model are not included.
         """
-        models_by_name = {model.name: model for model in self.models}
-
         result = dict()
         queue = [(m, Reference([])) for m in self._top_models()]
 
         while queue:
             model, prefix = queue.pop(0)
             for component in model.components:
-                if component.implementation in models_by_name:
-                    queue.append((
-                        models_by_name[component.implementation],
-                        prefix + component.name))
-                elif component.implementation is not None:
-                    result[component] = prefix + component.name
+                if component.implementation:
+                    if component.implementation in self.models:
+                        queue.append((
+                            self.models[component.implementation],
+                            prefix + component.name))
+                    elif component.implementation is not None:
+                        result[component] = prefix + component.name
 
         return result
 
@@ -255,6 +276,7 @@ class Configuration(Document):
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
+        node.map_attribute_to_index('models', 'name')
         if not node.has_attribute('settings'):
             node.set_attribute('settings', None)
         node.map_attribute_to_index('programs', 'name')
@@ -267,8 +289,12 @@ class Configuration(Document):
             # output multi-line string in literal mode
             cast(yaml.ScalarNode, descr.yaml_node).style = '|'
 
+        imports = node.get_attribute('imports')
+        if imports.is_sequence() and imports.is_empty():
+            node.remove_attribute('imports')
+
         models = node.get_attribute('models')
-        if models.is_sequence() and models.is_empty():
+        if (models.is_scalar(type(None)) or models.is_mapping() and models.is_empty()):
             node.remove_attribute('models')
 
         if node.get_attribute('settings').is_scalar(type(None)):

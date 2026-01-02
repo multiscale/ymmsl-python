@@ -6,8 +6,8 @@ import pytest
 from ymmsl.io import load, dump
 from ymmsl.v0_2 import (
         BaseEnv, Configuration, Checkpoints, Component, Conduit, ExecutionModel,
-        KeepsStateForNextUse, Model, Ports, Program, Reference, Settings,
-        ThreadedResReq)
+        ImportStatement, KeepsStateForNextUse, Model, Ports, Program, Reference,
+        Settings, ThreadedResReq)
 from ymmsl.v0_2 import SettingValue
 
 
@@ -19,36 +19,157 @@ def test_configuration() -> None:
     settings = Settings(setting_values)
     model1 = Model('model1', None, [])
     model2 = Model('model2', None, [])
-    config = Configuration('testing', [model1, model2], settings)
+    config = Configuration('testing', None, [model1, model2], settings)
 
     assert config.description == 'testing'
 
     assert len(config.models) == 2
-    assert config.models[0] is model1
-    assert config.models[1] is model2
+    assert config.models[Ref('model1')] is model1
+    assert config.models[Ref('model2')] is model2
 
     assert isinstance(config.settings, Settings)
     assert len(config.settings) == 0
 
 
-def test_check_consistent_resources(test_config6: Configuration) -> None:
-    test_config6.check_consistent()
+def test_load_models() -> None:
+    text = (
+            'ymmsl_version: v0.2\n'
+            'description: Test loading multiple models\n'
+            'models:\n'
+            '  macro_micro:\n'
+            '    components:\n'
+            '      macro:\n'
+            '        ports:\n'
+            '          o_i: out\n'
+            '          s: in\n'
+            '        implementation: macro_program\n'
+            '      micro:\n'
+            '        ports:\n'
+            '          f_init: init\n'
+            '          o_f: final\n'
+            '        implementation: micro_program\n'
+            '  do_nothing:\n'
+            '    components:\n'
+            '      nil:\n'
+            '        ports: {}\n'
+            '        implementation: nil_program\n'
+            )
+
+    configuration = load(text)
+
+    assert isinstance(configuration, Configuration)
+    assert len(configuration.models) == 2
+    mm = configuration.models[Ref('macro_micro')]
+    assert mm.components[0].ports.o_i == ['out']
+    dn = configuration.models[Ref('do_nothing')]
+    assert dn.components[0].ports.o_f == []
 
 
-def test_check_inconsistent_resources(test_config7: Configuration) -> None:
-    with pytest.raises(RuntimeError):
-        test_config7.check_consistent()
+def test_load_nil_settings() -> None:
+    text = (
+            'ymmsl_version: v0.2\n'
+            'description: test loading nil-valued settings\n'
+            'settings:\n'
+    )
+
+    configuration = load(text)
+
+    assert isinstance(configuration, Configuration)
+    assert isinstance(configuration.settings, Settings)
+    assert len(configuration.settings) == 0
+    assert len(configuration.resources) == 0
 
 
-def test_check_consistent_implementations(test_config8: Configuration) -> None:
-    test_config8.check_consistent()
+def test_load_no_settings() -> None:
+    text = (
+            'ymmsl_version: v0.2\n'
+            'description: test loading with no settings\n'
+            )
+
+    configuration = load(text)
+
+    assert isinstance(configuration, Configuration)
+    assert isinstance(configuration.settings, Settings)
+    assert len(configuration.settings) == 0
+    assert len(configuration.resources) == 0
 
 
-def test_check_inconsistent_implementations(test_config9: Configuration) -> None:
-    with pytest.raises(RuntimeError) as e:
-        test_config9.check_consistent()
+def test_dump_empty_settings() -> None:
+    configuration = Configuration('', None, None, Settings())
+    text = dump(configuration)
 
-    assert len(str(e.value).split('\n')) == 5
+    assert text == (
+            'ymmsl_version: v0.2\n'
+            'description: \'\'\n')
+
+
+def test_load_programs(test_config5_text: str) -> None:
+    configuration = load(test_config5_text)
+
+    assert isinstance(configuration, Configuration)
+    assert len(configuration.programs) == 1
+    prog = configuration.programs[Reference('macro')]
+    assert prog.name == 'macro'
+    assert prog.ports.o_i == ['out1', 'out2']
+    assert prog.base_env == BaseEnv.LOGIN
+    assert prog.modules is not None
+    assert len(prog.modules) == 2
+    assert prog.modules[0] == 'gcc/13.3.0'
+    assert prog.modules[1] == 'FFTW/3.2.1'
+    assert prog.virtual_env == Path('/home/user/.venv')
+    assert len(prog.env) == 2
+    assert prog.env['SETTING'] == 'something'
+    assert prog.env['VARIABLE'] == '42'
+    assert prog.execution_model == ExecutionModel.INTELMPI
+    assert prog.executable == Path('python3')
+    assert prog.args == ['/home/user/script.py']
+    assert prog.can_share_resources is False
+    assert prog.keeps_state_for_next_use == KeepsStateForNextUse.HELPFUL
+
+
+def test_dump_configuration(
+        test_config5: Configuration, test_config5_text: str) -> None:
+    text = dump(test_config5)
+    assert text == test_config5_text
+
+
+def test_load_resources() -> None:
+    text = (
+            'ymmsl_version: v0.2\n'
+            'description: testing loading of resources\n'
+            'resources:\n'
+            '  macro:\n'
+            '    threads: 10\n'
+            '  micro:\n'
+            '    threads: 1\n'
+            )
+
+    configuration = load(text)
+
+    assert isinstance(configuration, Configuration)
+    assert configuration.resources[Ref('macro')].name == 'macro'
+    assert configuration.resources[Ref('macro')].threads == 10      # type: ignore
+    assert configuration.resources[Ref('micro')].name == 'micro'
+    assert configuration.resources[Ref('micro')].threads == 1       # type: ignore
+
+
+def test_dump_resources() -> None:
+    resources = [
+            ThreadedResReq(Ref('macro'), 10),
+            ThreadedResReq(Ref('micro'), 1)]
+
+    configuration = Configuration('', resources=resources)
+
+    text = dump(configuration)
+    assert text == (
+            'ymmsl_version: v0.2\n'
+            'description: \'\'\n'
+            'resources:\n'
+            '  macro:\n'
+            '    threads: 10\n'
+            '  micro:\n'
+            '    threads: 1\n'
+            )
 
 
 def test_configuration_update_description() -> None:
@@ -77,27 +198,48 @@ def test_configuration_update_description() -> None:
 
 def test_configuration_update_model_error() -> None:
     base = Configuration(
-            'Configuration for testing', Model('model', Ports(), [
+            'Configuration for testing', None, [Model('model', Ports(), [
                 Component('macro', Ports(o_i='out', s='in')),
                 Component('micro', Ports(f_init='init', o_f='final'))
             ], [
                 Conduit('macro.out', 'micro.init'),
                 Conduit('micro.final', 'macro.in')]
-            ))
+            )])
 
     overlay1 = Configuration(
-            'Extra component',
-            Model('model', None, [Component('micro2', Ports())], []))
+            'Extra component', None,
+            [Model('model', None, [Component('micro2', Ports())], [])])
 
     with pytest.raises(RuntimeError):
         base.update(overlay1)
 
     overlay2 = Configuration(
-            'Extra conduit', Model('model', None, [], [
-                Conduit('micro.final', 'macro.in2')]))
+            'Extra conduit', None, [Model('model', None, [], [
+                Conduit('micro.final', 'macro.in2')])])
 
     with pytest.raises(RuntimeError):
         base.update(overlay2)
+
+
+def test_configuration_update_imports() -> None:
+    base = Configuration('', [
+        ImportStatement('a.b.c', 'implementation', 'p'),
+        ImportStatement('d.b.c', 'implementation', 'q')])
+
+    overlay = Configuration('', [
+        ImportStatement('e.f.g', 'implementation', 's'),
+        ImportStatement('b.f.h', 'implementation', 't')])
+
+    base.update(overlay)
+
+    assert base.imports[0].module == 'a.b.c'
+    assert base.imports[0].name == 'p'
+    assert base.imports[1].module == 'd.b.c'
+    assert base.imports[1].name == 'q'
+    assert base.imports[2].module == 'e.f.g'
+    assert base.imports[2].name == 's'
+    assert base.imports[3].module == 'b.f.h'
+    assert base.imports[3].name == 't'
 
 
 def test_configuration_update_programs() -> None:
@@ -185,140 +327,21 @@ def test_configuration_update_resources_add() -> None:
     assert base.resources[Ref('my.micro')] == resources2
 
 
-def test_load_models() -> None:
-    text = (
-            'ymmsl_version: v0.2\n'
-            'description: Test loading multiple models\n'
-            'models:\n'
-            '  - name: macro_micro\n'
-            '    components:\n'
-            '      macro:\n'
-            '        ports:\n'
-            '          o_i: out\n'
-            '          s: in\n'
-            '        implementation: macro_program\n'
-            '      micro:\n'
-            '        ports:\n'
-            '          f_init: init\n'
-            '          o_f: final\n'
-            '        implementation: micro_program\n'
-            '  - name: do_nothing\n'
-            '    components:\n'
-            '      nil:\n'
-            '        ports: {}\n'
-            '        implementation: nil_program\n'
-            )
-
-    configuration = load(text)
-
-    assert isinstance(configuration, Configuration)
-    assert len(configuration.models) == 2
-    assert configuration.models[0].name == 'macro_micro'
-    assert configuration.models[1].name == 'do_nothing'
+def test_check_consistent_resources(test_config6: Configuration) -> None:
+    test_config6.check_consistent()
 
 
-def test_load_nil_settings() -> None:
-    text = (
-            'ymmsl_version: v0.2\n'
-            'description: test loading nil-valued settings\n'
-            'settings:\n'
-    )
-
-    configuration = load(text)
-
-    assert isinstance(configuration, Configuration)
-    assert isinstance(configuration.settings, Settings)
-    assert len(configuration.settings) == 0
-    assert len(configuration.resources) == 0
+def test_check_inconsistent_resources(test_config7: Configuration) -> None:
+    with pytest.raises(RuntimeError):
+        test_config7.check_consistent()
 
 
-def test_load_no_settings() -> None:
-    text = (
-            'ymmsl_version: v0.2\n'
-            'description: test loading with no settings\n'
-            )
-
-    configuration = load(text)
-
-    assert isinstance(configuration, Configuration)
-    assert isinstance(configuration.settings, Settings)
-    assert len(configuration.settings) == 0
-    assert len(configuration.resources) == 0
+def test_check_consistent_implementations(test_config8: Configuration) -> None:
+    test_config8.check_consistent()
 
 
-def test_dump_empty_settings() -> None:
-    configuration = Configuration('', None, Settings())
-    text = dump(configuration)
+def test_check_inconsistent_implementations(test_config9: Configuration) -> None:
+    with pytest.raises(RuntimeError) as e:
+        test_config9.check_consistent()
 
-    assert text == (
-            'ymmsl_version: v0.2\n'
-            'description: \'\'\n')
-
-
-def test_load_programs(test_config5_text: str) -> None:
-    configuration = load(test_config5_text)
-
-    assert isinstance(configuration, Configuration)
-    assert len(configuration.programs) == 1
-    prog = configuration.programs[Reference('macro')]
-    assert prog.name == 'macro'
-    assert prog.ports.o_i == ['out1', 'out2']
-    assert prog.base_env == BaseEnv.LOGIN
-    assert prog.modules is not None
-    assert len(prog.modules) == 2
-    assert prog.modules[0] == 'gcc/13.3.0'
-    assert prog.modules[1] == 'FFTW/3.2.1'
-    assert prog.virtual_env == Path('/home/user/.venv')
-    assert len(prog.env) == 2
-    assert prog.env['SETTING'] == 'something'
-    assert prog.env['VARIABLE'] == '42'
-    assert prog.execution_model == ExecutionModel.INTELMPI
-    assert prog.executable == Path('python3')
-    assert prog.args == ['/home/user/script.py']
-    assert prog.can_share_resources is False
-    assert prog.keeps_state_for_next_use == KeepsStateForNextUse.HELPFUL
-
-
-def test_dump_configuration(
-        test_config5: Configuration, test_config5_text: str) -> None:
-    text = dump(test_config5)
-    assert text == test_config5_text
-
-
-def test_load_resources() -> None:
-    text = (
-            'ymmsl_version: v0.2\n'
-            'description: testing loading of resources\n'
-            'resources:\n'
-            '  macro:\n'
-            '    threads: 10\n'
-            '  micro:\n'
-            '    threads: 1\n'
-            )
-
-    configuration = load(text)
-
-    assert isinstance(configuration, Configuration)
-    assert configuration.resources[Ref('macro')].name == 'macro'
-    assert configuration.resources[Ref('macro')].threads == 10      # type: ignore
-    assert configuration.resources[Ref('micro')].name == 'micro'
-    assert configuration.resources[Ref('micro')].threads == 1       # type: ignore
-
-
-def test_dump_resources() -> None:
-    resources = [
-            ThreadedResReq(Ref('macro'), 10),
-            ThreadedResReq(Ref('micro'), 1)]
-
-    configuration = Configuration('', resources=resources)
-
-    text = dump(configuration)
-    assert text == (
-            'ymmsl_version: v0.2\n'
-            'description: \'\'\n'
-            'resources:\n'
-            '  macro:\n'
-            '    threads: 10\n'
-            '  micro:\n'
-            '    threads: 1\n'
-            )
+    assert len(str(e.value).split('\n')) == 5
