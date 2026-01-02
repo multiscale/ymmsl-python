@@ -24,8 +24,8 @@ def test_configuration() -> None:
     assert config.description == 'testing'
 
     assert len(config.models) == 2
-    assert config.models[0] is model1
-    assert config.models[1] is model2
+    assert config.models[Ref('model1')] is model1
+    assert config.models[Ref('model2')] is model2
 
     assert isinstance(config.settings, Settings)
     assert len(config.settings) == 0
@@ -36,7 +36,7 @@ def test_load_models() -> None:
             'ymmsl_version: v0.2\n'
             'description: Test loading multiple models\n'
             'models:\n'
-            '  - name: macro_micro\n'
+            '  macro_micro:\n'
             '    components:\n'
             '      macro:\n'
             '        ports:\n'
@@ -48,7 +48,7 @@ def test_load_models() -> None:
             '          f_init: init\n'
             '          o_f: final\n'
             '        implementation: micro_program\n'
-            '  - name: do_nothing\n'
+            '  do_nothing:\n'
             '    components:\n'
             '      nil:\n'
             '        ports: {}\n'
@@ -59,8 +59,10 @@ def test_load_models() -> None:
 
     assert isinstance(configuration, Configuration)
     assert len(configuration.models) == 2
-    assert configuration.models[0].name == 'macro_micro'
-    assert configuration.models[1].name == 'do_nothing'
+    mm = configuration.models[Ref('macro_micro')]
+    assert mm.components[0].ports.o_i == ['out']
+    dn = configuration.models[Ref('do_nothing')]
+    assert dn.components[0].ports.o_f == []
 
 
 def test_load_nil_settings() -> None:
@@ -196,24 +198,24 @@ def test_configuration_update_description() -> None:
 
 def test_configuration_update_model_error() -> None:
     base = Configuration(
-            'Configuration for testing', None, Model('model', Ports(), [
+            'Configuration for testing', None, [Model('model', Ports(), [
                 Component('macro', Ports(o_i='out', s='in')),
                 Component('micro', Ports(f_init='init', o_f='final'))
             ], [
                 Conduit('macro.out', 'micro.init'),
                 Conduit('micro.final', 'macro.in')]
-            ))
+            )])
 
     overlay1 = Configuration(
             'Extra component', None,
-            Model('model', None, [Component('micro2', Ports())], []))
+            [Model('model', None, [Component('micro2', Ports())], [])])
 
     with pytest.raises(RuntimeError):
         base.update(overlay1)
 
     overlay2 = Configuration(
-            'Extra conduit', None, Model('model', None, [], [
-                Conduit('micro.final', 'macro.in2')]))
+            'Extra conduit', None, [Model('model', None, [], [
+                Conduit('micro.final', 'macro.in2')])])
 
     with pytest.raises(RuntimeError):
         base.update(overlay2)

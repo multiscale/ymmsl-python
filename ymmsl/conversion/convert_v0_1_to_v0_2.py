@@ -16,7 +16,7 @@ def convert_v0_1_to_v0_2(config: v0_1.PartialConfiguration) -> v0_2.Configuratio
         The corresponding configuration expressed in yMMSL v0.2.
     """
     description = '' if config.description is None else config.description
-    model = convert_model(config.model) if config.model is not None else None
+    models = [convert_model(config.model)] if config.model is not None else None
     settings = deepcopy(config.settings)
     programs = [
             convert_implementation(impl) for impl in config.implementations.values()]
@@ -25,7 +25,7 @@ def convert_v0_1_to_v0_2(config: v0_1.PartialConfiguration) -> v0_2.Configuratio
     resume = deepcopy(config.resume)
 
     return v0_2.Configuration(
-            description, None, model, settings, programs, resources, checkpoints,
+            description, None, models, settings, programs, resources, checkpoints,
             resume)
 
 
