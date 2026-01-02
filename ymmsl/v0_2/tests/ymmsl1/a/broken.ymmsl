@@ -1,0 +1,9 @@
+ymmsl_version: v0.2
+
+description: A broken ymmsl file for testing
+
+imports:
+- from a.b.c import implementation macro
+
+model:
+  test_importing: {}

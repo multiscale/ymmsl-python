@@ -1,0 +1,11 @@
+ymmsl_version: v0.2
+description: Testing importing implementations
+programs:
+  macro:
+    ports:
+      f_init: init
+      o_i: out1 out2
+      s: in1 in2
+      o_f: final
+    executable: my_program
+
