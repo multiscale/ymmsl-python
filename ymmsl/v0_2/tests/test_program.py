@@ -2,9 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from ymmsl.v0_1.component import Ports
-from ymmsl.v0_1.execution import BaseEnv, ExecutionModel, KeepsStateForNextUse
-from ymmsl.v0_1.identity import Reference
+from ymmsl.v0_2.ports import Ports
+from ymmsl.v0_2.execution import BaseEnv, ExecutionModel, KeepsStateForNextUse
+from ymmsl.v0_2.identity import Reference
 from ymmsl.v0_2.program import Program
 
 

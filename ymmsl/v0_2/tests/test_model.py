@@ -1,4 +1,4 @@
-from ymmsl.v0_1.identity import Identifier
+from ymmsl.v0_2.identity import Identifier
 from ymmsl.v0_2.model import (
         Component, Conduit, Implementation, Model, MulticastConduit, Ports, Reference)
 
