@@ -18,17 +18,20 @@ class Component:
     Attributes:
         name: The name of this component
         ports: The ports by which this component can be connected to others
+        description: A human-readable description of this component
         implementation: A Model or Program implementing this component
         multiplicity: The shape of the set of instances
     """
     def __init__(
             self, name: str, ports: Ports,
+            description: str,
             implementation: Optional[str] = None,
             multiplicity: Union[None, int, List[int]] = None) -> None:
         """Create a Component
 
         Args:
             name: The name of the component, must be a valid Identifier
+            description: Human-readable description of this component
             ports: Ports on this component that can be used to connect it
             implementation: The name of the implementation, must be a valid Reference
             multiplicity: The shape of the set of instances, or a number describing the
@@ -36,6 +39,7 @@ class Component:
         """
         self.name = Identifier(name)
         self.ports = ports
+        self.description = description
 
         if implementation is not None:
             self.implementation: Optional[Reference] = Reference(implementation)

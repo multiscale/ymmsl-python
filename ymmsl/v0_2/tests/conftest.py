@@ -78,6 +78,7 @@ def test_config5() -> Configuration:
                 'macro', Ports(
                     f_init='init', o_i=['out1', 'out2'], s=['in1', 'in2'],
                     o_f=['final']),
+                'description',
                 BaseEnv.LOGIN,
                 ['gcc/13.3.0', 'FFTW/3.2.1'],
                 Path('/home/user/.venv'),
@@ -110,6 +111,7 @@ def test_config5_text() -> str:
             '      - in2\n'
             '      o_f:\n'
             '      - final\n'
+            '    description: description\n'
             '    base_env: login\n'
             '    modules:\n'
             '    - gcc/13.3.0\n'
@@ -132,6 +134,7 @@ def test_config6() -> Configuration:
     model1 = Model(
             'resources_test',
             None,
+            'description',
             [
                 Component('singlethreaded', Ports(), 'a'),
                 Component('multithreaded', Ports(), 'b'),
@@ -141,6 +144,7 @@ def test_config6() -> Configuration:
     model2 = Model(
             'resources_test2',
             None,
+            'description',
             [
                 Component('mpi_cores1', Ports(), 'c'),
                 Component('mpi_cores2', Ports(), 'd'),
@@ -161,9 +165,12 @@ def test_config6() -> Configuration:
 
 @pytest.fixture
 def test_config7() -> Configuration:
-    model1 = Model('got_resources', None, [Component('singlethreaded', Ports(), 'a')])
+    model1 = Model(
+            'got_resources', None, 'description',
+            [Component('singlethreaded', Ports(), 'description', 'a')])
     model2 = Model(
-            'missing_resources', None, [Component('singlethreaded', Ports(), 'b')])
+            'missing_resources', None, 'description',
+            [Component('singlethreaded', Ports(), 'description', 'b')])
     resources = [ThreadedResReq(Ref('got_resources.singlethreaded'), 1)]
 
     return Configuration('test_config7', None, [model1, model2], None, None, resources)
@@ -173,16 +180,19 @@ def test_config7() -> Configuration:
 def test_config8() -> Configuration:
     model1 = Model(
             'implementations_test',
-            None,
+            None, 'description',
             [
-                Component('no_implementation', Ports(o_i=['out'], s=['in']), None),
                 Component(
-                    'impl_no_ports', Ports(f_init=['in'], o_f=['out']), 'no_ports'),
+                    'no_implementation', Ports(o_i=['out'], s=['in']), 'description',
+                    None),
+                Component(
+                    'impl_no_ports', Ports(f_init=['in'], o_f=['out']), 'description',
+                    'no_ports'),
             ])
 
     model2 = Model(
             'implementations_test2',
-            None,
+            None, 'description',
             [
                 Component(
                     'impl_with_ports', Ports(f_init=['in'], o_f=['out']), 'with_ports'),
@@ -190,7 +200,7 @@ def test_config8() -> Configuration:
 
     programs = [
             Program(
-                'no_ports', None,
+                'no_ports', None, 'description',
                 script='/home/user/models/bin/modela'),
             Program(
                 'with_ports',
@@ -212,21 +222,25 @@ def test_config8() -> Configuration:
 def test_config9() -> Configuration:
     model1 = Model(
             'implementations_test_broken',
-            None,
+            None, 'description',
             [
-                Component('no_implementation', Ports(o_i=['out'], s=['in']), None),
                 Component(
-                    'impl_ports_mismatch', Ports(f_init=['in'], o_f=['out']), 'ports1'),
+                    'no_implementation', Ports(o_i=['out'], s=['in']), 'description',
+                    None),
+                Component(
+                    'impl_ports_mismatch', Ports(f_init=['in'], o_f=['out']),
+                    'description', 'ports1'),
             ])
 
     model2 = Model(
             'implementations_test2',
-            None,
+            None, 'description',
             [
                 Component(
-                    'impl_also_wrong', Ports(o_i=['out'], s=['in']), 'ports2'),
+                    'impl_also_wrong', Ports(o_i=['out'], s=['in']), 'description',
+                    'ports2'),
                 Component(
-                    'impl_extra_ports', Ports(f_init=['in']), 'ports3'),
+                    'impl_extra_ports', Ports(f_init=['in']), 'description', 'ports3'),
             ])
 
     programs = [

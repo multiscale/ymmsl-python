@@ -18,11 +18,13 @@ models:
           o_i: out1
           s: in1
           o_f: final
+        description: The macro1 component
         implementation: macro
       micro1:
         ports:
           f_init: init
           o_f: final
+        description: The micro1 component
         implementation: micro
 
     conduits:
@@ -36,5 +38,6 @@ programs:
     ports:
       f_init: init
       o_f: final
+    description: The micro program
     executable: python3
     args: /home/user/script.py

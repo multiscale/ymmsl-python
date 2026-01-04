@@ -8,7 +8,7 @@ import yatiml
 def test_multicast_conduits() -> None:
     c1 = Conduit('macro.out', 'micro.init')
     mc1 = MulticastConduit('micro.final', ['macro.in', 'micro2.init'])
-    m = Model('test_model', None, [], [c1, mc1])
+    m = Model('test_model', None, 'description', [], [c1, mc1])
 
     assert m.conduits[0] is c1
     assert m.conduits[1].sender == 'micro.final'
@@ -27,6 +27,7 @@ def test_load_model() -> None:
             'ports:\n'
             '  f_init: in\n'
             '  o_f: out\n'
+            'description: Description of what this does\n'
             'components:\n'
             '  macro1:\n'
             '    ports:\n'
@@ -34,11 +35,13 @@ def test_load_model() -> None:
             '      o_i: out\n'
             '      s: in\n'
             '      o_f: final\n'
+            '    description: description\n'
             '    implementation: macro\n'
             '  micro1:\n'
             '    ports:\n'
             '      f_init: init\n'
             '      o_f: final\n'
+            '    description: description\n'
             '    implementation: micro\n'
             'conduits:\n'
             '  in: macro1.init\n'
@@ -53,6 +56,7 @@ def test_load_model() -> None:
     assert m.ports is not None
     assert m.ports.f_init == ['in']
     assert m.ports.o_f == ['out']
+    assert m.description == 'Description of what this does'
     assert m.components[0].name == Reference('macro1')
     assert m.components[1].name == Reference('micro1')
     assert m.conduits[0].sender == Reference('in')
@@ -76,6 +80,6 @@ def test_consistent() -> None:
             Conduit('micro.mfinal', 'macro.Min'),
             Conduit('macro.Mfinal', 'model_final')]
 
-    model = Model('with_conduits', model_ports, [macro, micro], conduits)
+    model = Model('with_conduits', model_ports, 'description', [macro, micro], conduits)
 
     model.check_consistent()

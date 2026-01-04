@@ -17,11 +17,11 @@ Ref = Reference
 def test_configuration() -> None:
     setting_values: OrderedDict[str, SettingValue] = OrderedDict()
     settings = Settings(setting_values)
-    model1 = Model('model1', None, [])
-    model2 = Model('model2', None, [])
-    config = Configuration('testing', None, [model1, model2], settings)
+    model1 = Model('model1', None, 'description', [])
+    model2 = Model('model2', None, 'description', [])
+    config = Configuration('description', None, [model1, model2], settings)
 
-    assert config.description == 'testing'
+    assert config.description == 'description'
 
     assert len(config.models) == 2
     assert config.models[Ref('model1')] is model1
@@ -42,16 +42,19 @@ def test_load_models() -> None:
             '        ports:\n'
             '          o_i: out\n'
             '          s: in\n'
+            '        description: the macro component\n'
             '        implementation: macro_program\n'
             '      micro:\n'
             '        ports:\n'
             '          f_init: init\n'
             '          o_f: final\n'
+            '        description: the micro component\n'
             '        implementation: micro_program\n'
             '  do_nothing:\n'
             '    components:\n'
             '      nil:\n'
             '        ports: {}\n'
+            '        description: a component that does nothing\n'
             '        implementation: nil_program\n'
             )
 
@@ -198,9 +201,9 @@ def test_configuration_update_description() -> None:
 
 def test_configuration_update_model_error() -> None:
     base = Configuration(
-            'Configuration for testing', None, [Model('model', Ports(), [
-                Component('macro', Ports(o_i='out', s='in')),
-                Component('micro', Ports(f_init='init', o_f='final'))
+            'Configuration for testing', None, [Model('model', Ports(), 'description', [
+                Component('macro', Ports(o_i='out', s='in'), 'description'),
+                Component('micro', Ports(f_init='init', o_f='final'), 'description')
             ], [
                 Conduit('macro.out', 'micro.init'),
                 Conduit('micro.final', 'macro.in')]
@@ -208,13 +211,16 @@ def test_configuration_update_model_error() -> None:
 
     overlay1 = Configuration(
             'Extra component', None,
-            [Model('model', None, [Component('micro2', Ports())], [])])
+            [
+                Model('model', None, 'description',
+                      [Component('micro2', Ports(), 'description')], [])
+            ])
 
     with pytest.raises(RuntimeError):
         base.update(overlay1)
 
     overlay2 = Configuration(
-            'Extra conduit', None, [Model('model', None, [], [
+            'Extra conduit', None, [Model('model', None, 'description', [], [
                 Conduit('micro.final', 'macro.in2')])])
 
     with pytest.raises(RuntimeError):

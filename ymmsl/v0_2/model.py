@@ -143,11 +143,13 @@ class Model(Implementation):
     Attributes:
         name: The name by which this simulation model is known to the system.
         ports: Ports through which this model can communicate with other models.
+        description: Human-readable description of the model.
         components: A list of components making up the model.
         conduits: A list of conduits connecting the components.
     """
     def __init__(
             self, name: str, ports: Optional[Ports] = None,
+            description: str = '',
             components: Optional[List[Component]] = None,
             conduits: Optional[Sequence[AnyConduit]] = None) -> None:
         """Create a Model.
@@ -155,10 +157,11 @@ class Model(Implementation):
         Args:
             name: Name of this model, must be a valid reference
             ports: Ports of this model
+            description: Human-readable description of the model
             components: A list of components making up the model
             conduits: A list of conduits connecting the components
         """
-        super().__init__(name, ports)
+        super().__init__(name, ports, description)
 
         if components is None:
             self.components = []

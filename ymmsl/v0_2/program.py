@@ -46,6 +46,7 @@ class Program(Implementation):
     Attributes:
         name: Name of the program
         ports: Ports this program supports, if fixed
+        description: Human-readable description of this program
         base_env: Base environment to start from
         modules: HPC software modules to load
         virtual_env: Path to a virtual env to activate
@@ -63,6 +64,7 @@ class Program(Implementation):
             self,
             name: str,
             ports: Optional[Ports] = None,
+            description: str = '',
             base_env: Optional[BaseEnv] = None,
             modules: Union[str, List[str], None] = None,
             virtual_env: Optional[Path] = None,
@@ -89,6 +91,7 @@ class Program(Implementation):
         Args:
             name: Name of the program, must be a valid reference
             ports: Ports this program has
+            description: Human-readable description of this program
             base_env: Base environment to start from, defaults to clean
             modules: HPC software modules to load
             virtual_env: Path to a virtual env to activate
@@ -102,7 +105,7 @@ class Program(Implementation):
             keeps_state_for_next_use: Does this program keep state for the next
                 iteration of the reuse loop. See :class:`KeepsStateForNextUse`.
         """
-        super().__init__(name, ports)
+        super().__init__(name, ports, description)
 
         if script is not None:
             err_arg = []

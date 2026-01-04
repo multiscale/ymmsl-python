@@ -31,13 +31,13 @@ def convert_v0_1_to_v0_2(config: v0_1.PartialConfiguration) -> v0_2.Configuratio
 
 def convert_component(component: v0_1.Component) -> v0_2.Component:
     """Convert a v0.1 Component object to a v0.2 Component."""
-    ports = component.ports if component.ports else v0_1.Ports()
+    ports = component.ports if component.ports else v0_2.Ports()
     implementation: Optional[str] = None
     if component.implementation is not None:
         implementation = str(component.implementation)
 
     return v0_2.Component(
-            str(component.name), ports, implementation, component.multiplicity)
+            str(component.name), ports, '', implementation, component.multiplicity)
 
 
 def convert_conduit(conduit: v0_1.Conduit) -> v0_2.Conduit:
@@ -56,10 +56,11 @@ def convert_model(model: v0_1.ModelReference) -> v0_2.Model:
     """
     if isinstance(model, v0_1.Model):
         return v0_2.Model(
-                str(model.name), None, list(map(convert_component, model.components)),
+                str(model.name), None, '',
+                list(map(convert_component, model.components)),
                 list(map(convert_conduit, model.conduits)))
     else:
-        return v0_2.Model(str(model.name), None, [], [])
+        return v0_2.Model(str(model.name), None, '', [], [])
 
 
 def convert_implementation(impl: v0_1.Implementation) -> v0_2.Program:
@@ -78,7 +79,7 @@ def convert_implementation(impl: v0_1.Implementation) -> v0_2.Program:
             'In yMMSL v0.2 implementations have become programs, and you can now'
             ' specify the ports of a program in the yMMSL description. If your program'
             ' has fixed ports then you should do this, because it will make incorrect'
-            ' wiring easier to debug.')
+            ' wiring easier to debug. While there, add a description too!')
 
     base_env: Optional[v0_1.BaseEnv] = impl.base_env
     env: Optional[Dict[str, str]] = impl.env
@@ -90,6 +91,6 @@ def convert_implementation(impl: v0_1.Implementation) -> v0_2.Program:
             env = None
 
     return v0_2.Program(
-                str(impl.name), None, base_env, impl.modules, impl.virtual_env, env,
+                str(impl.name), None, '', base_env, impl.modules, impl.virtual_env, env,
                 impl.execution_model, impl.executable, impl.args, impl.script,
                 impl.can_share_resources, impl.keeps_state_for_next_use)
