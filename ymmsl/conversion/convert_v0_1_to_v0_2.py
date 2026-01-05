@@ -85,6 +85,8 @@ def convert_implementation(impl: v0_1.Implementation) -> v0_2.Program:
     base_env: Optional[v0_1.BaseEnv] = impl.base_env
     env: Optional[Dict[str, str]] = impl.env
 
+    execution_model = v0_2.ExecutionModel[impl.execution_model.name]
+
     if impl.script is not None:
         if base_env == v0_1.BaseEnv.MANAGER:
             base_env = None
@@ -93,5 +95,5 @@ def convert_implementation(impl: v0_1.Implementation) -> v0_2.Program:
 
     return v0_2.Program(
                 str(impl.name), None, '', base_env, impl.modules, impl.virtual_env, env,
-                impl.execution_model, impl.executable, impl.args, impl.script,
+                execution_model, impl.executable, impl.args, impl.script,
                 impl.can_share_resources, impl.keeps_state_for_next_use)
