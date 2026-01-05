@@ -136,9 +136,9 @@ def test_config6() -> Configuration:
             None,
             'description',
             [
-                Component('singlethreaded', Ports(), 'a'),
-                Component('multithreaded', Ports(), 'b'),
-                Component('submodel', Ports(), 'resources_test2'),
+                Component('singlethreaded', Ports(), 'description', False, 'a'),
+                Component('multithreaded', Ports(), 'description', False, 'b'),
+                Component('submodel', Ports(), 'description', False, 'resources_test2'),
             ])
 
     model2 = Model(
@@ -146,10 +146,10 @@ def test_config6() -> Configuration:
             None,
             'description',
             [
-                Component('mpi_cores1', Ports(), 'c'),
-                Component('mpi_cores2', Ports(), 'd'),
-                Component('mpi_nodes1', Ports(), 'c'),
-                Component('mpi_nodes2', Ports(), 'd')],
+                Component('mpi_cores1', Ports(), 'description', False, 'c'),
+                Component('mpi_cores2', Ports(), 'description', False, 'd'),
+                Component('mpi_nodes1', Ports(), 'description', False, 'c'),
+                Component('mpi_nodes2', Ports(), 'description', False, 'd')],
             [])
 
     resources = [
@@ -167,10 +167,10 @@ def test_config6() -> Configuration:
 def test_config7() -> Configuration:
     model1 = Model(
             'got_resources', None, 'description',
-            [Component('singlethreaded', Ports(), 'description', 'a')])
+            [Component('singlethreaded', Ports(), 'description', False, 'a')])
     model2 = Model(
             'missing_resources', None, 'description',
-            [Component('singlethreaded', Ports(), 'description', 'b')])
+            [Component('singlethreaded', Ports(), 'description', False, 'b')])
     resources = [ThreadedResReq(Ref('got_resources.singlethreaded'), 1)]
 
     return Configuration('test_config7', None, [model1, model2], None, None, resources)
@@ -184,10 +184,10 @@ def test_config8() -> Configuration:
             [
                 Component(
                     'no_implementation', Ports(o_i=['out'], s=['in']), 'description',
-                    None),
+                    False, None),
                 Component(
                     'impl_no_ports', Ports(f_init=['in'], o_f=['out']), 'description',
-                    'no_ports'),
+                    False, 'no_ports'),
             ])
 
     model2 = Model(
@@ -195,7 +195,8 @@ def test_config8() -> Configuration:
             None, 'description',
             [
                 Component(
-                    'impl_with_ports', Ports(f_init=['in'], o_f=['out']), 'with_ports'),
+                    'impl_with_ports', Ports(f_init=['in'], o_f=['out']), 'description',
+                    False, 'with_ports'),
             ])
 
     programs = [
@@ -226,10 +227,10 @@ def test_config9() -> Configuration:
             [
                 Component(
                     'no_implementation', Ports(o_i=['out'], s=['in']), 'description',
-                    None),
+                    False, None),
                 Component(
                     'impl_ports_mismatch', Ports(f_init=['in'], o_f=['out']),
-                    'description', 'ports1'),
+                    'description', False, 'ports1'),
             ])
 
     model2 = Model(
@@ -238,9 +239,10 @@ def test_config9() -> Configuration:
             [
                 Component(
                     'impl_also_wrong', Ports(o_i=['out'], s=['in']), 'description',
-                    'ports2'),
+                    False, 'ports2'),
                 Component(
-                    'impl_extra_ports', Ports(f_init=['in']), 'description', 'ports3'),
+                    'impl_extra_ports', Ports(f_init=['in']), 'description', False,
+                    'ports3'),
             ])
 
     programs = [

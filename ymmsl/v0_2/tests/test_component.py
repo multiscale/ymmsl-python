@@ -4,13 +4,15 @@ import pytest
 
 
 def test_component_declaration() -> None:
-    test_decl = Component('test', Ports(), 'description', 'ns.model')
+    test_decl = Component('test', Ports(), 'description', False, 'ns.model')
     assert isinstance(test_decl.name, Identifier)
     assert str(test_decl.name) == 'test'
 
     assert len(test_decl.ports.f_init) == 0
 
     assert test_decl.description == 'description'
+
+    assert test_decl.optional is False
 
     assert isinstance(test_decl.implementation, Reference)
     assert str(test_decl.implementation) == 'ns.model'
@@ -20,13 +22,13 @@ def test_component_declaration() -> None:
 
 
 def test_component_multiplicity() -> None:
-    test_decl = Component('test', Ports(), 'description', 'ns.model', 10)
+    test_decl = Component('test', Ports(), 'description', False, 'ns.model', 10)
     assert isinstance(test_decl.name, Identifier)
     assert str(test_decl.name) == 'test'
     assert test_decl.multiplicity == [10]
     assert str(test_decl) == 'test[0:10]'
 
-    test_decl = Component('test', Ports(), 'description', 'ns2.model2', [1, 2])
+    test_decl = Component('test', Ports(), 'description', False, 'ns2.model2', [1, 2])
     assert isinstance(test_decl.name, Identifier)
     assert str(test_decl.name) == 'test'
     assert str(test_decl.implementation) == 'ns2.model2'
@@ -34,18 +36,18 @@ def test_component_multiplicity() -> None:
     assert str(test_decl) == 'test[0:1][0:2]'
 
     with pytest.raises(ValueError):
-        test_decl = Component('test', Ports(), 'description', 'ns2.model2[1]')
+        test_decl = Component('test', Ports(), 'description', False, 'ns2.model2[1]')
 
 
 def test_component_instances() -> None:
-    c1 = Component('test', Ports(), 'model')
+    c1 = Component('test', Ports(), 'description', False, 'model')
     assert c1.instances() == [Reference('test')]
 
-    c2 = Component('test', Ports(), 'description', 'model', 3)
+    c2 = Component('test', Ports(), 'description', False, 'model', 3)
     assert c2.instances() == [
             Reference('test[0]'), Reference('test[1]'), Reference('test[2]')]
 
-    c3 = Component('test', Ports(), 'description', 'model', [2, 2])
+    c3 = Component('test', Ports(), 'description', False, 'model', [2, 2])
     assert c3.instances() == [
             Reference('test[0][0]'), Reference('test[0][1]'),
             Reference('test[1][0]'), Reference('test[1][1]')]

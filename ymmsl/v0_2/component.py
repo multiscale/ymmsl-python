@@ -15,16 +15,23 @@ class Component:
     that implementation need to be started (for e.g. ensembles), and they have ports,
     which are used to connect components to each other.
 
+    Components may be optional. If a component is optional, then a missing
+    implementation in the final configuration that is run is valid, and will result in
+    the component and all connected conduits being removed from the simulation. If a
+    component is not optional, then trying to run a simulation with a component that
+    does not have an implementation will result in an error.
+
     Attributes:
         name: The name of this component
         ports: The ports by which this component can be connected to others
         description: A human-readable description of this component
+        optional: Whether this component is optional
         implementation: A Model or Program implementing this component
         multiplicity: The shape of the set of instances
     """
     def __init__(
             self, name: str, ports: Ports,
-            description: str,
+            description: str, optional: bool = False,
             implementation: Optional[str] = None,
             multiplicity: Union[None, int, List[int]] = None) -> None:
         """Create a Component
@@ -32,6 +39,7 @@ class Component:
         Args:
             name: The name of the component, must be a valid Identifier
             description: Human-readable description of this component
+            optional: Whether this component is optional.
             ports: Ports on this component that can be used to connect it
             implementation: The name of the implementation, must be a valid Reference
             multiplicity: The shape of the set of instances, or a number describing the
@@ -40,6 +48,8 @@ class Component:
         self.name = Identifier(name)
         self.ports = ports
         self.description = description
+
+        self.optional = optional
 
         if implementation is not None:
             self.implementation: Optional[Reference] = Reference(implementation)
