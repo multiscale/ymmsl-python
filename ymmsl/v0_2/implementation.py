@@ -1,7 +1,8 @@
 from typing import Optional
 
-from ymmsl.v0_2.ports import Ports
 from ymmsl.v0_2.identity import Reference
+from ymmsl.v0_2.ports import Ports
+from ymmsl.v0_2.supported_settings import SupportedSettings
 
 
 class Implementation:
@@ -18,13 +19,15 @@ class Implementation:
     """
     def __init__(
             self, name: str, ports: Optional[Ports] = None,
-            description: str = 'Please add a description!') -> None:
+            description: str = 'Please add a description!',
+            supported_settings: Optional[SupportedSettings] = None) -> None:
         """Create an Implementation
 
         Args:
             name: Name of this implementation, must be a valid reference
             ports: The ports this implementation communicates on
             description: Human-readable description of this implementation
+            supported_settings: Settings supported by this implementation
         """
         if not isinstance(name, Reference):
             self.name = Reference(name)
@@ -37,3 +40,4 @@ class Implementation:
             self.ports = ports
 
         self.description = description
+        self.supported_settings = supported_settings

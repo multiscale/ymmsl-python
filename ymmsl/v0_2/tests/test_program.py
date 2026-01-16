@@ -6,6 +6,7 @@ from ymmsl.v0_2.ports import Ports
 from ymmsl.v0_2.execution import BaseEnv, ExecutionModel, KeepsStateForNextUse
 from ymmsl.v0_2.identity import Reference
 from ymmsl.v0_2.program import Program
+from ymmsl.v0_2.supported_settings import SettingType, SupportedSettings
 
 
 def test_program_script_list() -> None:
@@ -28,6 +29,8 @@ def test_program_executable() -> None:
     prog = Program(
             name='test_prog',
             ports=Ports(o_i=['out'], s=['in']),
+            description='Description of the program',
+            supported_settings=SupportedSettings({'a': '[int]', 'b': 'str'}),
             base_env=BaseEnv.MANAGER,
             modules=['python/3.10.0', 'gcc/13.3.0'],
             virtual_env=Path('/home/user/envs/venv'),
@@ -44,6 +47,10 @@ def test_program_executable() -> None:
     assert prog.ports.o_i == ['out']
     assert prog.ports.s == ['in']
     assert prog.ports.o_f == []
+    assert prog.description == 'Description of the program'
+    assert prog.supported_settings is not None
+    assert prog.supported_settings['a'] == SettingType.LIST_INT
+    assert prog.supported_settings['b'] == SettingType.STR
     assert prog.base_env == BaseEnv.MANAGER
     assert prog.modules == ['python/3.10.0', 'gcc/13.3.0']
     assert prog.virtual_env == Path('/home/user/envs/venv')

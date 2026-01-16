@@ -17,8 +17,8 @@ Ref = Reference
 def test_configuration() -> None:
     setting_values: OrderedDict[str, SettingValue] = OrderedDict()
     settings = Settings(setting_values)
-    model1 = Model('model1', None, 'description', [])
-    model2 = Model('model2', None, 'description', [])
+    model1 = Model('model1', None, 'description', None, [])
+    model2 = Model('model2', None, 'description', None, [])
     config = Configuration('description', None, [model1, model2], settings)
 
     assert config.description == 'description'
@@ -201,18 +201,20 @@ def test_configuration_update_description() -> None:
 
 def test_configuration_update_model_error() -> None:
     base = Configuration(
-            'Configuration for testing', None, [Model('model', Ports(), 'description', [
-                Component('macro', Ports(o_i='out', s='in'), 'description'),
-                Component('micro', Ports(f_init='init', o_f='final'), 'description')
-            ], [
-                Conduit('macro.out', 'micro.init'),
-                Conduit('micro.final', 'macro.in')]
-            )])
+            'Configuration for testing', None, [
+                Model('model', Ports(), 'description', None, [
+                    Component('macro', Ports(o_i='out', s='in'), 'description'),
+                    Component('micro', Ports(f_init='init', o_f='final'), 'description')
+                ], [
+                    Conduit('macro.out', 'micro.init'),
+                    Conduit('micro.final', 'macro.in')]
+                )
+            ])
 
     overlay1 = Configuration(
             'Extra component', None,
             [
-                Model('model', None, 'description',
+                Model('model', None, 'description', None,
                       [Component('micro2', Ports(), 'description')], [])
             ])
 
@@ -220,7 +222,7 @@ def test_configuration_update_model_error() -> None:
         base.update(overlay1)
 
     overlay2 = Configuration(
-            'Extra conduit', None, [Model('model', None, 'description', [], [
+            'Extra conduit', None, [Model('model', None, 'description', None, [], [
                 Conduit('micro.final', 'macro.in2')])])
 
     with pytest.raises(RuntimeError):

@@ -57,11 +57,11 @@ def convert_model(model: v0_1.ModelReference) -> v0_2.Model:
     """
     if isinstance(model, v0_1.Model):
         return v0_2.Model(
-                str(model.name), None, '',
+                str(model.name), None, '', None,
                 list(map(convert_component, model.components)),
                 list(map(convert_conduit, model.conduits)))
     else:
-        return v0_2.Model(str(model.name), None, '', [], [])
+        return v0_2.Model(str(model.name), None, '', None, [], [])
 
 
 def convert_implementation(impl: v0_1.Implementation) -> v0_2.Program:
@@ -94,6 +94,6 @@ def convert_implementation(impl: v0_1.Implementation) -> v0_2.Program:
             env = None
 
     return v0_2.Program(
-                str(impl.name), None, '', base_env, impl.modules, impl.virtual_env, env,
-                execution_model, impl.executable, impl.args, impl.script,
-                impl.can_share_resources, impl.keeps_state_for_next_use)
+                str(impl.name), None, '', None, base_env, impl.modules,
+                impl.virtual_env, env, execution_model, impl.executable, impl.args,
+                impl.script, impl.can_share_resources, impl.keeps_state_for_next_use)

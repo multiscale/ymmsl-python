@@ -3,10 +3,11 @@ from typing import Any, cast, List, Optional, Sequence, Union
 
 import yatiml
 
-from ymmsl.v0_2.ports import Ports
-from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.component import Component
+from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.implementation import Implementation
+from ymmsl.v0_2.ports import Ports
+from ymmsl.v0_2.supported_settings import SupportedSettings
 
 
 class Conduit:
@@ -144,12 +145,14 @@ class Model(Implementation):
         name: The name by which this simulation model is known to the system.
         ports: Ports through which this model can communicate with other models.
         description: Human-readable description of the model.
+        supported_settings: Settings supported by this model.
         components: A list of components making up the model.
         conduits: A list of conduits connecting the components.
     """
     def __init__(
             self, name: str, ports: Optional[Ports] = None,
             description: str = '',
+            supported_settings: Optional[SupportedSettings] = None,
             components: Optional[List[Component]] = None,
             conduits: Optional[Sequence[AnyConduit]] = None) -> None:
         """Create a Model.
@@ -158,10 +161,11 @@ class Model(Implementation):
             name: Name of this model, must be a valid reference
             ports: Ports of this model
             description: Human-readable description of the model
+            supported_settings: Settings supported by this model
             components: A list of components making up the model
             conduits: A list of conduits connecting the components
         """
-        super().__init__(name, ports, description)
+        super().__init__(name, ports, description, supported_settings)
 
         if components is None:
             self.components = []
