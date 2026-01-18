@@ -89,6 +89,15 @@ def test_to_string(settings: Settings) -> None:
     assert '42' in str(settings)
 
 
+def test_contains(settings: Settings) -> None:
+    assert 'test' not in settings
+    assert Reference('test') not in settings
+
+    settings['test'] = 1
+    assert 'test' in settings
+    assert Reference('test') in settings
+
+
 def test_get_item(settings: Settings) -> None:
     settings._store[Reference('test')] = 13
     assert settings[Reference('test')] == 13
