@@ -1,5 +1,6 @@
 import collections.abc as abc
 from copy import copy
+import itertools
 import logging
 from pathlib import Path
 from typing import (
@@ -12,7 +13,8 @@ from ymmsl.v0_2.checkpoint import Checkpoints
 from ymmsl.v0_2.resources import ResourceRequirements
 from ymmsl.v0_2.identity import Reference
 from ymmsl.v0_2.imports import ImportStatement
-from ymmsl.v0_2.settings import Settings
+from ymmsl.v0_2.settings import Settings, SettingValue
+from ymmsl.v0_2.supported_settings import SettingType
 from ymmsl.v0_2.document import Document
 from ymmsl.v0_2.implementation import Implementation
 from ymmsl.v0_2.program import Program
@@ -121,6 +123,7 @@ class Configuration(Document):
             - Whether all conduits are connected to existing components or to a model
               port
             - Whether ports on components are consistent with their implementations
+            - Whether settings are consistent with supported_settings, if specified
             - That resources have been requested for each component that has an
               implementation
 
@@ -143,6 +146,8 @@ class Configuration(Document):
                 errors.extend(self._check_consistent_ports(component))
 
                 # TODO: check that resources and implementation both do or don't MPI
+
+        errors.extend(self._check_consistent_settings(program_component_paths))
 
         # TODO: no two implementations (programs or models) with the same name
 
@@ -265,6 +270,90 @@ class Configuration(Document):
                     errors += check_ports(component, impl, 'o_f')
 
         return errors
+
+    def _check_consistent_settings(
+            self, component_paths: Dict[Component, Reference]) -> List[str]:
+        """Check that setting names and types match supported settings.
+
+        This checks that every implementation with a supported_settings declaration will
+        find a setting of the given type.
+
+        Args:
+            component_paths: The output of _program_component_paths above.
+
+        Returns a list of errors, or an empty list if all is okay.
+        """
+        errors = list()
+        for component, path in component_paths.items():
+            if component.implementation is None:
+                continue
+
+            if component.implementation in self.programs:
+                program = self.programs[component.implementation]
+                if program.supported_settings:
+                    for name, typ in program.supported_settings:
+                        errors.extend(
+                                self._check_supported_setting(
+                                    component, path, name, typ, program))
+
+        return errors
+
+    def _check_supported_setting(
+            self, component: Component, component_path: Reference, name: Reference,
+            typ: SettingType, program: Program) -> List[str]:
+        """Check that the value of the given setting matches the given type.
+
+        This implements the standard setting lookup, then checks any found setting value
+        against the given type. Returns a list containing a single error message if
+        there's an issue, or an empty list if the type matches.
+        """
+        errors = list()
+        dims = []
+        if component.multiplicity:
+            dims = component.multiplicity
+
+        for index in itertools.product(*map(range, dims)):
+            instance_path = component_path + index
+            for j in range(len(instance_path), -1, -1):
+                found_setting = instance_path[:j] + name
+                if found_setting in self.settings:
+                    val = self.settings[found_setting]
+                    if not self._setting_type_matches(val, typ):
+                        val_str = str(val)
+                        if isinstance(val, str):
+                            val_str = f'"{val}"'
+                        errors.append(
+                                f'Instance "{instance_path}" of component'
+                                f' "{component_path}" with implementation program'
+                                f' "{program.name}" has a supported setting "{name}"'
+                                f' with type {typ.value}, but setting "{found_setting}"'
+                                f' has value {val_str}, which does not match that type')
+                    break
+
+        return errors
+
+    def _setting_type_matches(self, value: SettingValue, typ: SettingType) -> bool:
+        """Check that the type of value matches the given type."""
+        if isinstance(value, str):
+            return typ == SettingType.STR
+        elif isinstance(value, bool):
+            return typ == SettingType.BOOL
+        elif isinstance(value, int):
+            return typ == SettingType.INT
+        elif isinstance(value, float):
+            return typ == SettingType.FLOAT
+        elif isinstance(value, list):
+            if len(value) == 0:
+                return typ in (SettingType.LIST_INT, SettingType.LIST_FLOAT)
+
+            if isinstance(value[0], int):
+                return typ == SettingType.LIST_INT
+            elif isinstance(value[0], float):
+                return typ == SettingType.LIST_FLOAT
+            elif isinstance(value[0], list):
+                if len(value[0]) == 0 or isinstance(value[0][0], float):
+                    return typ == SettingType.LIST_LIST_FLOAT
+        return False
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:

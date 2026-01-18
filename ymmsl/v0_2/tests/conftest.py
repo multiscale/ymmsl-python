@@ -5,7 +5,8 @@ import pytest
 from ymmsl.v0_2 import (
         BaseEnv, Component, Configuration, CheckpointRangeRule, CheckpointAtRule,
         Checkpoints, KeepsStateForNextUse, ExecutionModel, Model, MPICoresResReq,
-        MPINodesResReq, Ports, Program, Reference, SupportedSettings, ThreadedResReq)
+        MPINodesResReq, Ports, Program, Reference, Settings, SupportedSettings,
+        ThreadedResReq)
 
 
 Ref = Reference
@@ -30,6 +31,61 @@ def test_config2() -> PartialConfiguration:
                 Conduit('bf2smc.out', 'smc.wss_in')])
     return PartialConfiguration(model)
 '''
+
+
+@pytest.fixture
+def test_config3() -> Configuration:
+    model1 = Model(
+            'supported_settings_test',
+            None,
+            'description',
+            None,
+            [
+                Component('c1', Ports(), 'description', False, 'a'),
+                Component(
+                    'submodel', Ports(), 'description', False,
+                    'supported_settings_test2'),
+            ])
+
+    model2 = Model(
+            'supported_settings_test2',
+            None,
+            'description',
+            None,
+            [
+                Component('c1', Ports(), 'description', False, 'b'),
+                Component('c2', Ports(), 'description', False, 'c', 10)],
+            [])
+
+    settings = Settings({
+        'alpha': 3.2,
+        'beta': 10,
+        'gamma': 'text',
+        'delta': 'text',
+        'submodel.delta': False,
+        'epsilon': [10, 11]})
+
+    program_a = Program(
+            'a', Ports(), 'a', SupportedSettings({'alpha': 'float', 'beta': 'int'}),
+            execution_model=ExecutionModel.DIRECT, executable=Path('a'))
+
+    program_b = Program(
+            'b', Ports(), 'b', SupportedSettings({'gamma': 'str'}),
+            execution_model=ExecutionModel.INTELMPI, executable=Path('b'))
+
+    program_c = Program(
+            'c', Ports(), 'c', SupportedSettings({'delta': 'bool'}),
+            execution_model=ExecutionModel.OPENMPI, executable=Path('c'))
+
+    programs = [program_a, program_b, program_c]
+
+    resources = [
+            ThreadedResReq(Reference('c1'), 1),
+            MPICoresResReq(Reference('submodel.c1'), 16),
+            MPICoresResReq(Reference('submodel.c2'), 4, 4)]
+
+    return Configuration(
+            'config3', None, [model1, model2], settings, programs, resources)
 
 
 @pytest.fixture

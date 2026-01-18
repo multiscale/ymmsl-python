@@ -353,3 +353,21 @@ def test_check_inconsistent_implementations(test_config9: Configuration) -> None
         test_config9.check_consistent()
 
     assert len(str(e.value).split('\n')) == 5
+
+
+def test_check_consistent_settings(test_config3: Configuration) -> None:
+    test_config3.check_consistent()
+
+    test_config3.settings['submodel.c2[3].delta'] = 10
+    with pytest.raises(RuntimeError) as e:
+        test_config3.check_consistent()
+
+    assert len(str(e.value).split('\n')) == 2
+
+    del test_config3.settings['submodel.c2[3].delta']
+    test_config3.settings['alpha'] = [[1.2,  3.4], [5.6, 7.8]]
+
+    with pytest.raises(RuntimeError) as e:
+        test_config3.check_consistent()
+
+    assert len(str(e.value).split('\n')) == 2
