@@ -38,9 +38,9 @@ class Component:
 
         Args:
             name: The name of the component, must be a valid Identifier
+            ports: Ports on this component that can be used to connect it
             description: Human-readable description of this component
             optional: Whether this component is optional.
-            ports: Ports on this component that can be used to connect it
             implementation: The name of the implementation, must be a valid Reference
             multiplicity: The shape of the set of instances, or a number describing the
                 size of a 1D set of them, or None to have a single instance.

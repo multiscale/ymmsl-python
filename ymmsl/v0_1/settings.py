@@ -2,7 +2,7 @@
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from copy import deepcopy
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, overload, Tuple, TypeVar, Union
 
 import yatiml
 
@@ -12,6 +12,9 @@ from ymmsl.v0_1.identity import Reference
 SettingValue = Union[
         str, int, float, bool, List[int], List[float], List[List[float]],
         yatiml.bool_union_fix]
+
+
+_T = TypeVar('_T')
 
 
 class Settings(MutableMapping):
@@ -53,6 +56,14 @@ class Settings(MutableMapping):
         """Represent as a string."""
         return str(self.as_ordered_dict())
 
+    def __contains__(self, key: object) -> bool:
+        """Returns whether an item with the given name is set."""
+        if isinstance(key, str):
+            key = Reference(key)
+        if not isinstance(key, Reference):
+            return False
+        return key in self._store
+
     def __getitem__(self, key: Union[str, Reference]) -> SettingValue:
         """Returns an item, implements settings[name]."""
         if isinstance(key, str):
@@ -79,6 +90,25 @@ class Settings(MutableMapping):
     def __len__(self) -> int:
         """Returns the number of settings."""
         return len(self._store)
+
+    @overload
+    def get(self, key: Any, /) -> Any | None: ...
+
+    @overload
+    def get(
+            self, key: Any, /, default: _T) -> Union[Any, _T]: ...
+
+    def get(
+            self, key: Any, /, default: Union[_T, None] = None) -> Union[Any, _T]:
+        """Return the given setting, or default if it is not set.
+
+        If default is not given, returns None.
+        """
+        if isinstance(key, str):
+            key = Reference(key)
+        if not isinstance(key, Reference):
+            return default
+        return self._store.get(key, default)
 
     def ordered_items(self) -> List[Tuple[Reference, SettingValue]]:
         """Return settings as a list of tuples."""

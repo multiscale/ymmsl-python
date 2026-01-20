@@ -8,7 +8,7 @@ import yatiml
 def test_multicast_conduits() -> None:
     c1 = Conduit('macro.out', 'micro.init')
     mc1 = MulticastConduit('micro.final', ['macro.in', 'micro2.init'])
-    m = Model('test_model', None, 'description', [], [c1, mc1])
+    m = Model('test_model', None, 'description', None, [], [c1, mc1])
 
     assert m.conduits[0] is c1
     assert m.conduits[1].sender == 'micro.final'
@@ -80,6 +80,7 @@ def test_consistent() -> None:
             Conduit('micro.mfinal', 'macro.Min'),
             Conduit('macro.Mfinal', 'model_final')]
 
-    model = Model('with_conduits', model_ports, 'description', [macro, micro], conduits)
+    model = Model(
+            'with_conduits', model_ports, 'description', None, [macro, micro], conduits)
 
     model.check_consistent()

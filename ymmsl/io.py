@@ -29,8 +29,8 @@ _classes = (
         v0_2.Configuration, v0_2.Document, v0_2.ExecutionModel, v0_2.Identifier,
         v0_2.ImportKind, v0_2.ImportStatement, v0_2.KeepsStateForNextUse, v0_2.Model,
         v0_2.MPICoresResReq, v0_2.MPINodesResReq, v0_2_MulticastConduit, v0_2.Ports,
-        v0_2.Program, v0_2.Reference, v0_2.ResourceRequirements, v0_2.Settings,
-        v0_2.ThreadedResReq)
+        v0_2.Program, v0_2.Reference, v0_2.ResourceRequirements, v0_2.SettingType,
+        v0_2.Settings, v0_2.SupportedSettings, v0_2.ThreadedResReq)
 
 
 _load = yatiml.load_function(*_classes)

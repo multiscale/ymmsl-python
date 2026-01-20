@@ -5,7 +5,8 @@ import pytest
 from ymmsl.v0_2 import (
         BaseEnv, Component, Configuration, CheckpointRangeRule, CheckpointAtRule,
         Checkpoints, KeepsStateForNextUse, ExecutionModel, Model, MPICoresResReq,
-        MPINodesResReq, Ports, Program, Reference, ThreadedResReq)
+        MPINodesResReq, Ports, Program, Reference, Settings, SupportedSettings,
+        ThreadedResReq)
 
 
 Ref = Reference
@@ -30,6 +31,61 @@ def test_config2() -> PartialConfiguration:
                 Conduit('bf2smc.out', 'smc.wss_in')])
     return PartialConfiguration(model)
 '''
+
+
+@pytest.fixture
+def test_config3() -> Configuration:
+    model1 = Model(
+            'supported_settings_test',
+            None,
+            'description',
+            None,
+            [
+                Component('c1', Ports(), 'description', False, 'a'),
+                Component(
+                    'submodel', Ports(), 'description', False,
+                    'supported_settings_test2'),
+            ])
+
+    model2 = Model(
+            'supported_settings_test2',
+            None,
+            'description',
+            None,
+            [
+                Component('c1', Ports(), 'description', False, 'b'),
+                Component('c2', Ports(), 'description', False, 'c', 10)],
+            [])
+
+    settings = Settings({
+        'alpha': 3.2,
+        'beta': 10,
+        'gamma': 'text',
+        'delta': 'text',
+        'submodel.delta': False,
+        'epsilon': [10, 11]})
+
+    program_a = Program(
+            'a', Ports(), 'a', SupportedSettings({'alpha': 'float', 'beta': 'int'}),
+            execution_model=ExecutionModel.DIRECT, executable=Path('a'))
+
+    program_b = Program(
+            'b', Ports(), 'b', SupportedSettings({'gamma': 'str'}),
+            execution_model=ExecutionModel.INTELMPI, executable=Path('b'))
+
+    program_c = Program(
+            'c', Ports(), 'c', SupportedSettings({'delta': 'bool'}),
+            execution_model=ExecutionModel.OPENMPI, executable=Path('c'))
+
+    programs = [program_a, program_b, program_c]
+
+    resources = [
+            ThreadedResReq(Reference('c1'), 1),
+            MPICoresResReq(Reference('submodel.c1'), 16),
+            MPICoresResReq(Reference('submodel.c2'), 4, 4)]
+
+    return Configuration(
+            'config3', None, [model1, model2], settings, programs, resources)
 
 
 @pytest.fixture
@@ -79,6 +135,7 @@ def test_config5() -> Configuration:
                     f_init='init', o_i=['out1', 'out2'], s=['in1', 'in2'],
                     o_f=['final']),
                 'description',
+                SupportedSettings({'alpha': 'float'}),
                 BaseEnv.LOGIN,
                 ['gcc/13.3.0', 'FFTW/3.2.1'],
                 Path('/home/user/.venv'),
@@ -112,6 +169,8 @@ def test_config5_text() -> str:
             '      o_f:\n'
             '      - final\n'
             '    description: description\n'
+            '    supported_settings:\n'
+            '      alpha: float\n'
             '    base_env: login\n'
             '    modules:\n'
             '    - gcc/13.3.0\n'
@@ -135,6 +194,7 @@ def test_config6() -> Configuration:
             'resources_test',
             None,
             'description',
+            None,
             [
                 Component('singlethreaded', Ports(), 'description', False, 'a'),
                 Component('multithreaded', Ports(), 'description', False, 'b'),
@@ -145,6 +205,7 @@ def test_config6() -> Configuration:
             'resources_test2',
             None,
             'description',
+            None,
             [
                 Component('mpi_cores1', Ports(), 'description', False, 'c'),
                 Component('mpi_cores2', Ports(), 'description', False, 'd'),
@@ -166,10 +227,10 @@ def test_config6() -> Configuration:
 @pytest.fixture
 def test_config7() -> Configuration:
     model1 = Model(
-            'got_resources', None, 'description',
+            'got_resources', None, 'description', None,
             [Component('singlethreaded', Ports(), 'description', False, 'a')])
     model2 = Model(
-            'missing_resources', None, 'description',
+            'missing_resources', None, 'description', None,
             [Component('singlethreaded', Ports(), 'description', False, 'b')])
     resources = [ThreadedResReq(Ref('got_resources.singlethreaded'), 1)]
 
@@ -180,7 +241,7 @@ def test_config7() -> Configuration:
 def test_config8() -> Configuration:
     model1 = Model(
             'implementations_test',
-            None, 'description',
+            None, 'description', None,
             [
                 Component(
                     'no_implementation', Ports(o_i=['out'], s=['in']), 'description',
@@ -192,7 +253,7 @@ def test_config8() -> Configuration:
 
     model2 = Model(
             'implementations_test2',
-            None, 'description',
+            None, 'description', None,
             [
                 Component(
                     'impl_with_ports', Ports(f_init=['in'], o_f=['out']), 'description',
@@ -201,7 +262,7 @@ def test_config8() -> Configuration:
 
     programs = [
             Program(
-                'no_ports', None, 'description',
+                'no_ports', None, 'description', None,
                 script='/home/user/models/bin/modela'),
             Program(
                 'with_ports',
@@ -223,7 +284,7 @@ def test_config8() -> Configuration:
 def test_config9() -> Configuration:
     model1 = Model(
             'implementations_test_broken',
-            None, 'description',
+            None, 'description', None,
             [
                 Component(
                     'no_implementation', Ports(o_i=['out'], s=['in']), 'description',
@@ -235,7 +296,7 @@ def test_config9() -> Configuration:
 
     model2 = Model(
             'implementations_test2',
-            None, 'description',
+            None, 'description', None,
             [
                 Component(
                     'impl_also_wrong', Ports(o_i=['out'], s=['in']), 'description',
