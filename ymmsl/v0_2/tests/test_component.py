@@ -1,4 +1,4 @@
-from ymmsl.v0_2 import Identifier, Component, Ports, Reference
+from ymmsl.v0_2 import Identifier, Component, Operator, Port, Ports, Reference, Timeline
 
 import pytest
 
@@ -8,7 +8,7 @@ def test_component_declaration() -> None:
     assert isinstance(test_decl.name, Identifier)
     assert str(test_decl.name) == 'test'
 
-    assert len(test_decl.ports.f_init) == 0
+    assert len(test_decl.ports) == 0
 
     assert test_decl.description == 'description'
 
@@ -57,7 +57,7 @@ def test_component_ports() -> None:
     c = Component('test', Ports(['init'], ['out'], ['in'], ['final']), 'description')
     assert isinstance(c.ports, Ports)
 
-    assert c.ports.f_init == ['init']
-    assert c.ports.o_i == ['out']
-    assert c.ports.s == ['in']
-    assert c.ports.o_f == ['final']
+    assert c.ports['init'] == Port(Identifier('init'), Operator.F_INIT, Timeline(''))
+    assert c.ports['out'] == Port(Identifier('out'), Operator.O_I, Timeline(''))
+    assert c.ports['in'] == Port(Identifier('in'), Operator.S, Timeline(''))
+    assert c.ports['final'] == Port(Identifier('final'), Operator.O_F, Timeline(''))

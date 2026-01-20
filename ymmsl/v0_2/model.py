@@ -195,8 +195,8 @@ class Model(Implementation):
 
         errors.extend(self._check_component_name_conflicts())
 
-        model_receiving_ports = self.ports.f_init + self.ports.s
-        model_sending_ports = self.ports.o_i + self.ports.o_f
+        model_receiving_ports = self.ports.receiving_port_names()
+        model_sending_ports = self.ports.sending_port_names()
 
         for conduit in self.conduits:
             errors.extend(self._check_sending_side(conduit, model_receiving_ports))
@@ -247,7 +247,7 @@ class Model(Implementation):
                         ' the model.')
             else:
                 if len(snd_cmp) == 1:
-                    cmp_sending_ports = snd_cmp[0].ports.o_i + snd_cmp[0].ports.o_f
+                    cmp_sending_ports = snd_cmp[0].ports.sending_port_names()
                     if conduit.sending_port() not in cmp_sending_ports:
                         errors.append(
                                 f'Conduit {conduit} refers to a sending port named'
@@ -280,7 +280,7 @@ class Model(Implementation):
             else:
                 if len(rcvng_cmp) == 1:
                     rcvr_recv_ports = (
-                            rcvng_cmp[0].ports.f_init + rcvng_cmp[0].ports.s +
+                            rcvng_cmp[0].ports.receiving_port_names() +
                             ['muscle_settings_in'])
 
                     if conduit.receiving_port() not in rcvr_recv_ports:

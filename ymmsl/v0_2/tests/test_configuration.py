@@ -6,8 +6,8 @@ import pytest
 from ymmsl.io import load, dump
 from ymmsl.v0_2 import (
         BaseEnv, Configuration, Checkpoints, Component, Conduit, ExecutionModel,
-        ImportStatement, KeepsStateForNextUse, Model, Ports, Program, Reference,
-        Settings, ThreadedResReq)
+        Identifier, ImportStatement, KeepsStateForNextUse, Model, Operator, Port, Ports,
+        Program, Reference, Settings, ThreadedResReq, Timeline)
 from ymmsl.v0_2 import SettingValue
 
 
@@ -63,9 +63,10 @@ def test_load_models() -> None:
     assert isinstance(configuration, Configuration)
     assert len(configuration.models) == 2
     mm = configuration.models[Ref('macro_micro')]
-    assert mm.components[0].ports.o_i == ['out']
+    assert mm.components[0].ports['out'] == Port(
+            Identifier('out'), Operator.O_I, Timeline(''))
     dn = configuration.models[Ref('do_nothing')]
-    assert dn.components[0].ports.o_f == []
+    assert len(dn.components[0].ports) == 0
 
 
 def test_load_nil_settings() -> None:
@@ -113,7 +114,8 @@ def test_load_programs(test_config5_text: str) -> None:
     assert len(configuration.programs) == 1
     prog = configuration.programs[Reference('macro')]
     assert prog.name == 'macro'
-    assert prog.ports.o_i == ['out1', 'out2']
+    assert prog.ports.sending_port_names() == ['final', 'out1', 'out2']
+    assert prog.ports.receiving_port_names() == ['init', 'in1', 'in2']
     assert prog.base_env == BaseEnv.LOGIN
     assert prog.modules is not None
     assert len(prog.modules) == 2

@@ -158,16 +158,10 @@ def test_config5_text() -> str:
             'programs:\n'
             '  macro:\n'
             '    ports:\n'
-            '      f_init:\n'
-            '      - init\n'
-            '      o_i:\n'
-            '      - out1\n'
-            '      - out2\n'
-            '      s:\n'
-            '      - in1\n'
-            '      - in2\n'
-            '      o_f:\n'
-            '      - final\n'
+            '      f_init: init\n'
+            '      o_i: out1 out2\n'
+            '      s: in1 in2\n'
+            '      o_f: final\n'
             '    description: description\n'
             '    supported_settings:\n'
             '      alpha: float\n'
@@ -265,7 +259,7 @@ def test_config8() -> Configuration:
                 'no_ports', None, 'description', None,
                 script='/home/user/models/bin/modela'),
             Program(
-                'with_ports',
+                'with_ports', Ports(f_init=['in'], o_f=['out']),
                 base_env=BaseEnv.LOGIN,
                 modules=['gcc-6.3.0', 'openmpi-1.10'],
                 execution_model=ExecutionModel.OPENMPI,

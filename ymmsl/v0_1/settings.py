@@ -92,7 +92,7 @@ class Settings(MutableMapping):
         return len(self._store)
 
     @overload
-    def get(self, key: Any, /) -> Any | None: ...
+    def get(self, key: Any, /) -> Union[Any, None]: ...
 
     @overload
     def get(

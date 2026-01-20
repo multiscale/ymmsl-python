@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from ymmsl.v0_2.ports import Ports
+from ymmsl.v0_2.ports import Operator, Ports
 from ymmsl.v0_2.execution import BaseEnv, ExecutionModel, KeepsStateForNextUse
 from ymmsl.v0_2.identity import Reference
 from ymmsl.v0_2.program import Program
@@ -20,8 +20,9 @@ def test_program_script_list() -> None:
 
     assert isinstance(prog.name, Reference)
     assert prog.name == 'test_prog'
-    assert prog.ports.f_init == ['init']
-    assert prog.ports.s == ['bc_in']
+    assert len(prog.ports) == 2
+    assert prog.ports['init'].operator == Operator.F_INIT
+    assert prog.ports['bc_in'].operator == Operator.S
     assert prog.script == '#!/bin/bash\n\ntest_prog\n'
 
 
@@ -43,10 +44,9 @@ def test_program_executable() -> None:
             can_share_resources=False)
 
     assert prog.name == 'test_prog'
-    assert prog.ports.f_init == []
-    assert prog.ports.o_i == ['out']
-    assert prog.ports.s == ['in']
-    assert prog.ports.o_f == []
+    assert len(prog.ports) == 2
+    assert prog.ports['out'].operator == Operator.O_I
+    assert prog.ports['in'].operator == Operator.S
     assert prog.description == 'Description of the program'
     assert prog.supported_settings is not None
     assert prog.supported_settings['a'] == SettingType.LIST_INT
