@@ -16,7 +16,6 @@ from ymmsl.v0_2.imports import ImportStatement
 from ymmsl.v0_2.settings import Settings, SettingValue
 from ymmsl.v0_2.supported_settings import SettingType
 from ymmsl.v0_2.document import Document
-from ymmsl.v0_2.implementation import Implementation
 from ymmsl.v0_2.program import Program
 from ymmsl.v0_2.model import Component, Model
 
@@ -245,29 +244,25 @@ class Configuration(Document):
 
         Returns a list of errors, or an empty list if all is okay.
         """
-        def check_ports(cmp: Component, impl: Implementation, op: str) -> List[str]:
-            """Check two sets of ports, return errors"""
-            cmp_ports = set(getattr(cmp.ports, op))
-            impl_ports = set(getattr(impl.ports, op))
-            missing_ports = cmp_ports - impl_ports
-            if missing_ports:
-                return [
-                        f'Component {cmp.name} declares {op} ports'
-                        f' ({", ".join(map(str, missing_ports))}) that its'
-                        f' implementation {impl.name} does not have.']
-
-            return []
-
         errors = list()
 
         if component.implementation is not None:
             if component.implementation in self.programs:
                 impl = self.programs[component.implementation]
-                if list(impl.ports.all_ports()):
-                    errors += check_ports(component, impl, 'f_init')
-                    errors += check_ports(component, impl, 'o_i')
-                    errors += check_ports(component, impl, 's')
-                    errors += check_ports(component, impl, 'o_f')
+                if len(impl.ports) > 0:
+                    for port_name in component.ports:
+                        if port_name not in impl.ports:
+                            errors.append(
+                                    f'Component "{component.name}" declares port'
+                                    f' "{port_name}" that its implementation'
+                                    f' "{impl.name}" does not have')
+                        else:
+                            if component.ports[port_name] != impl.ports[port_name]:
+                                errors.append(
+                                        f'Component "{component.name}" declares port'
+                                        f' "{port_name}" that its implementation'
+                                        f' "{impl.name}" has, but with a different'
+                                        ' operator or timeline.')
 
         return errors
 

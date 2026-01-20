@@ -175,13 +175,12 @@ class SupportedSettings(MutableMapping):
         # This is patched up by the SettingType savorization, so it'll work
         node.require_mapping()
 
-    @staticmethod
     def _yatiml_init(
-            supported_settings: Optional[Mapping[str, SettingType]] = None
-            ) -> 'SettingType':
+            self, supported_settings: Optional[Mapping[str, SettingType]] = None
+            ) -> None:
         # This overrides __init__ for yatiml, to avoid the ambiguity between str and
         # SettingType.
-        return SettingType(supported_settings)
+        SupportedSettings.__init__(self, supported_settings)
 
     def _yatiml_attributes(self) -> Dict:
         return self._store

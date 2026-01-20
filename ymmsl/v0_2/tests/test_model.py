@@ -1,6 +1,7 @@
 from ymmsl.v0_2.identity import Identifier
 from ymmsl.v0_2.model import (
         Component, Conduit, Implementation, Model, MulticastConduit, Ports, Reference)
+from ymmsl.v0_2.ports import Operator, Port, Timeline
 
 import yatiml
 
@@ -54,8 +55,8 @@ def test_load_model() -> None:
 
     assert m.name == 'test_model'
     assert m.ports is not None
-    assert m.ports.f_init == ['in']
-    assert m.ports.o_f == ['out']
+    assert m.ports['in'] == Port(Identifier('in'), Operator.F_INIT, Timeline(''))
+    assert m.ports['out'] == Port(Identifier('out'), Operator.O_F, Timeline(''))
     assert m.description == 'Description of what this does'
     assert m.components[0].name == Reference('macro1')
     assert m.components[1].name == Reference('micro1')

@@ -31,13 +31,13 @@ def convert_v0_1_to_v0_2(config: v0_1.PartialConfiguration) -> v0_2.Configuratio
 
 def convert_component(component: v0_1.Component) -> v0_2.Component:
     """Convert a v0.1 Component object to a v0.2 Component."""
-    ports = component.ports if component.ports else v0_2.Ports()
+    ports = component.ports if component.ports else v0_1.Ports()
     implementation: Optional[str] = None
     if component.implementation is not None:
         implementation = str(component.implementation)
 
     return v0_2.Component(
-            str(component.name), ports, '', False, implementation,
+            str(component.name), convert_ports(ports), '', False, implementation,
             component.multiplicity)
 
 
@@ -97,3 +97,19 @@ def convert_implementation(impl: v0_1.Implementation) -> v0_2.Program:
                 str(impl.name), None, '', None, base_env, impl.modules,
                 impl.virtual_env, env, execution_model, impl.executable, impl.args,
                 impl.script, impl.can_share_resources, impl.keeps_state_for_next_use)
+
+
+def convert_ports(ports: v0_1.Ports) -> v0_2.Ports:
+    """Convert a v0.1 Ports object to a v0.2 Ports.
+
+    Args:
+        ports: A Ports to convert
+
+    Returns:
+        The corresponding ports expressed in yMMSL v0.2.
+    """
+    return v0_2.Ports(
+            list(map(str, ports.f_init)),
+            list(map(str, ports.o_i)),
+            list(map(str, ports.s)),
+            list(map(str, ports.o_f)))
