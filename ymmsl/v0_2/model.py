@@ -23,9 +23,7 @@ class Conduit:
     Attributes:
         sender: The sending port that this conduit is connected to.
         receiver: The receiving port that this conduit is connected to.
-
     """
-
     def __init__(self, sender: str, receiver: str) -> None:
         """Create a Conduit.
 

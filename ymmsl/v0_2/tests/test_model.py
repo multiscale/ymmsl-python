@@ -7,6 +7,49 @@ import pytest
 import yatiml
 
 
+def test_conduit_access() -> None:
+    conduit = Conduit('macro.out', 'micro.in')
+
+    assert str(conduit) == 'Conduit(macro.out -> micro.in)'
+    assert conduit == Conduit('macro.out', 'micro.in')
+    assert conduit != Conduit('micro.in', 'macro.out')
+
+    assert conduit.sending_component() == 'macro'
+    assert conduit.sending_port() == 'out'
+    assert conduit.receiving_component() == 'micro'
+    assert conduit.receiving_port() == 'in'
+
+    conduit = Conduit('out', 'in')
+    assert conduit.sending_component() == Reference([])
+    assert conduit.receiving_component() == Reference([])
+
+
+def test_load_plain_conduit() -> None:
+    load = yatiml.load_function(Conduit)
+
+    text = (
+            'sender: macro.out\n'
+            'receiver: micro.in\n'
+            )
+
+    conduit = load(text)
+    assert conduit.sender == 'macro.out'
+    assert conduit.receiver == 'micro.in'
+
+
+def test_load_model_conduit() -> None:
+    load = yatiml.load_function(Conduit)
+
+    text = (
+            'sender: out\n'
+            'receiver: in\n'
+            )
+
+    conduit = load(text)
+    assert conduit.sender == 'out'
+    assert conduit.receiver == 'in'
+
+
 def test_multicast_conduits() -> None:
     c1 = Conduit('macro.out', 'micro.init')
     mc1 = MulticastConduit('micro.final', ['macro.in', 'micro2.init'])
