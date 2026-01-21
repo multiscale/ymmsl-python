@@ -3,34 +3,93 @@ from pathlib import Path
 import pytest
 
 from ymmsl.v0_2 import (
-        BaseEnv, Component, Configuration, CheckpointRangeRule, CheckpointAtRule,
-        Checkpoints, KeepsStateForNextUse, ExecutionModel, Model, MPICoresResReq,
-        MPINodesResReq, Ports, Program, Reference, Settings, SupportedSettings,
-        ThreadedResReq)
+        BaseEnv, Component, Conduit, Configuration, CheckpointRangeRule,
+        CheckpointAtRule, Checkpoints, KeepsStateForNextUse, ExecutionModel, Model,
+        MPICoresResReq, MPINodesResReq, Ports, Program, Reference, Settings,
+        SupportedSettings, ThreadedResReq)
 
 
 Ref = Reference
 
 
-'''
 @pytest.fixture
-def test_config2() -> PartialConfiguration:
-    model = Model(
+def test_model() -> Model:
+    return Model(
             'test_model',
+            Ports('in', o_f='out'),
+            'Test model for loading/dumping',
+            SupportedSettings({'eta': 'float'}),
             [
-                Component('ic', 'isr2d.initial_conditions'),
-                Component('smc', 'isr2d.smc'),
-                Component('bf', 'isr2d.blood_flow'),
-                Component('smc2bf', 'isr2d.smc2bf'),
-                Component('bf2smc', 'isr2d.bf2smc')],
+                Component(
+                    'ic', Ports(o_f='out'), 'Creates initial state', False,
+                    'initial_conditions'),
+                Component(
+                    'smc', Ports('initial_state', 'cell_positions', 'wss_in'),
+                    'Simulates smooth muscle cells', False, 'smc'),
+                Component(
+                    'bf', Ports('initial_domain', o_f='wss_out'),
+                    'Simulates blood flow', False, 'blood_flow'),
+                Component(
+                    'smc2bf', Ports('in', o_f='out'), 'Grids domain', False, 'smc2bf'),
+                Component(
+                    'bf2smc', Ports('in', o_f='out'), 'Interpolates wss', False,
+                    'bf2smc')],
             [
                 Conduit('ic.out', 'smc.initial_state'),
                 Conduit('smc.cell_positions', 'smc2bf.in'),
                 Conduit('smc2bf.out', 'bf.initial_domain'),
                 Conduit('bf.wss_out', 'bf2smc.in'),
                 Conduit('bf2smc.out', 'smc.wss_in')])
-    return PartialConfiguration(model)
-'''
+
+
+@pytest.fixture
+def test_model_text() -> str:
+    return (
+            'name: test_model\n'
+            'ports:\n'
+            '  f_init: in\n'
+            '  o_f: out\n'
+            'description: Test model for loading/dumping\n'
+            'supported_settings:\n'
+            '  eta: float\n'
+            'components:\n'
+            '  ic:\n'
+            '    ports:\n'
+            '      o_f: out\n'
+            '    description: Creates initial state\n'
+            '    implementation: initial_conditions\n'
+            '  smc:\n'
+            '    ports:\n'
+            '      f_init: initial_state\n'
+            '      o_i: cell_positions\n'
+            '      s: wss_in\n'
+            '    description: Simulates smooth muscle cells\n'
+            '    implementation: smc\n'
+            '  bf:\n'
+            '    ports:\n'
+            '      f_init: initial_domain\n'
+            '      o_f: wss_out\n'
+            '    description: Simulates blood flow\n'
+            '    implementation: blood_flow\n'
+            '  smc2bf:\n'
+            '    ports:\n'
+            '      f_init: in\n'
+            '      o_f: out\n'
+            '    description: Grids domain\n'
+            '    implementation: smc2bf\n'
+            '  bf2smc:\n'
+            '    ports:\n'
+            '      f_init: in\n'
+            '      o_f: out\n'
+            '    description: Interpolates wss\n'
+            '    implementation: bf2smc\n'
+            'conduits:\n'
+            '  ic.out: smc.initial_state\n'
+            '  smc.cell_positions: smc2bf.in\n'
+            '  smc2bf.out: bf.initial_domain\n'
+            '  bf.wss_out: bf2smc.in\n'
+            '  bf2smc.out: smc.wss_in\n'
+            )
 
 
 @pytest.fixture

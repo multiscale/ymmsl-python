@@ -1,7 +1,8 @@
 from ymmsl.v0_2.identity import Identifier
 from ymmsl.v0_2.model import (
-        Component, Conduit, Implementation, Model, MulticastConduit, Ports, Reference)
+        Component, Conduit, Model, MulticastConduit, Ports, Reference)
 from ymmsl.v0_2.ports import Operator, Port, Timeline
+from ymmsl.v0_2.supported_settings import SettingType, SupportedSettings
 
 import pytest
 import yatiml
@@ -62,52 +63,39 @@ def test_multicast_conduits() -> None:
     assert m.conduits[2].receiver == 'micro2.init'
 
 
-def test_load_model() -> None:
+def test_load_model(test_model_text: str) -> None:
     load_model = yatiml.load_function(
-            Model, Component, Conduit, Identifier, Implementation,
-            MulticastConduit, Ports, Reference)
+            Model, Component, Conduit, Identifier, MulticastConduit, Ports, Reference,
+            SettingType, SupportedSettings)
 
-    text = (
-            'name: test_model\n'
-            'ports:\n'
-            '  f_init: in\n'
-            '  o_f: out\n'
-            'description: Description of what this does\n'
-            'components:\n'
-            '  macro1:\n'
-            '    ports:\n'
-            '      f_init: init\n'
-            '      o_i: out\n'
-            '      s: in\n'
-            '      o_f: final\n'
-            '    description: description\n'
-            '    implementation: macro\n'
-            '  micro1:\n'
-            '    ports:\n'
-            '      f_init: init\n'
-            '      o_f: final\n'
-            '    description: description\n'
-            '    implementation: micro\n'
-            'conduits:\n'
-            '  in: macro1.init\n'
-            '  macro1.out: micro1.init\n'
-            '  micro1.final: macro1.in\n'
-            '  macro1.final: out\n'
-            )
-
-    m = load_model(text)
+    m = load_model(test_model_text)
 
     assert m.name == 'test_model'
     assert m.ports is not None
     assert m.ports['in'] == Port(Identifier('in'), Operator.F_INIT, Timeline(''))
     assert m.ports['out'] == Port(Identifier('out'), Operator.O_F, Timeline(''))
-    assert m.description == 'Description of what this does'
-    assert m.components[0].name == Reference('macro1')
-    assert m.components[1].name == Reference('micro1')
-    assert m.conduits[0].sender == Reference('in')
-    assert m.conduits[1].sender == Reference('macro1.out')
-    assert m.conduits[2].receiver == Reference('macro1.in')
-    assert m.conduits[3].sender == Reference('macro1.final')
+    assert m.description == 'Test model for loading/dumping'
+    assert m.supported_settings is not None
+    assert m.supported_settings['eta'] == SettingType.FLOAT
+    assert m.components[0].name == Reference('ic')
+    assert m.components[1].name == Reference('smc')
+    assert m.components[2].name == Reference('bf')
+    assert m.components[3].name == Reference('smc2bf')
+    assert m.components[4].name == Reference('bf2smc')
+    assert m.conduits[0].sender == Reference('ic.out')
+    assert m.conduits[1].sender == Reference('smc.cell_positions')
+    assert m.conduits[2].receiver == Reference('bf.initial_domain')
+    assert m.conduits[3].receiver == Reference('bf2smc.in')
+    assert m.conduits[4].sender == Reference('bf2smc.out')
+
+
+def test_dump_model(test_model: Model, test_model_text: str) -> None:
+    dumps_model = yatiml.dumps_function(
+            Model, Component, Conduit, Identifier, MulticastConduit, Ports, Reference,
+            SettingType, SupportedSettings)
+
+    text = dumps_model(test_model)
+    assert text == test_model_text
 
 
 def test_consistent() -> None:

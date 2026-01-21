@@ -136,3 +136,5 @@ class Component:
         ports_node = node.get_attribute('ports').yaml_node
         if ports_node.tag == 'tag:yaml.org,2002:null':
             node.remove_attribute('ports')
+
+        node.remove_attributes_with_default_values(cls)

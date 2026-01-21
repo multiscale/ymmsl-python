@@ -313,6 +313,8 @@ class Model(Implementation):
         return OrderedDict([
             ('name', self.name),
             ('ports', self.ports),
+            ('description', self.description),
+            ('supported_settings', self.supported_settings),
             ('components', self.components),
             ('conduits', self._conduits_for_export())])
 
