@@ -3,6 +3,7 @@ from ymmsl.v0_2.model import (
         Component, Conduit, Implementation, Model, MulticastConduit, Ports, Reference)
 from ymmsl.v0_2.ports import Operator, Port, Timeline
 
+import pytest
 import yatiml
 
 
@@ -85,3 +86,29 @@ def test_consistent() -> None:
             'with_conduits', model_ports, 'description', None, [macro, micro], conduits)
 
     model.check_consistent()
+
+
+def test_conduits_inconsistent() -> None:
+    model_ports = Ports(f_init=['model_init'], o_f=['model_final'])
+
+    macro_ports = Ports(f_init=['Minit'], o_i=['Mout'], s=['Min'], o_f=['Mfinal'])
+    macro = Component('macro', macro_ports, 'macro_impl')
+
+    micro_ports = Ports(f_init=['minit'], o_f=['mfinal'])
+    micro = Component('micro', micro_ports, 'micro_impl')
+
+    conduits = [
+            Conduit('modelinit', 'macro.Minit'),
+            Conduit('macro.Mout', 'micro.m_init'),
+            Conduit('macro.Mout', 'miicro.minit'),
+            Conduit('macroo.Mout', 'micro.minit'),
+            Conduit('micro.m_final', 'macro.Min'),
+            Conduit('macro.Mfinal', 'modelfinal')]
+
+    model = Model(
+            'bad_conduits', model_ports, 'description', None, [macro, micro], conduits)
+
+    with pytest.raises(RuntimeError) as e:
+        model.check_consistent()
+
+    assert len(str(e.value).split('\n')) == 7

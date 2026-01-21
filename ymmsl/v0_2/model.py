@@ -205,7 +205,7 @@ class Model(Implementation):
         if errors:
             raise RuntimeError(
                     f'One or more errors were found in model {self.name}:\n-'
-                    ' {"\n- ".join(errors)}')
+                    ' {}'.format('\n- '.join(errors)))
 
     def _check_component_name_conflicts(self) -> List[str]:
         """Check that no two components have the same name.
@@ -252,7 +252,7 @@ class Model(Implementation):
                         errors.append(
                                 f'Conduit {conduit} refers to a sending port named'
                                 f' {conduit.sending_port()}, which is not present'
-                                f' on sending component {snd_cmp[0].name}, or not'
+                                f' on sending component {snd_cmp[0].name}, or is not'
                                 ' an O_I or O_F port.')
         return errors
 
@@ -287,8 +287,8 @@ class Model(Implementation):
                         errors.append(
                                 f'Conduit {conduit} refers to a receiving port named'
                                 f' {conduit.receiving_port()}, which is not present'
-                                f' on receiving component {rcvng_cmp[0].name}, or not'
-                                ' an F_INIT or S port.')
+                                f' on receiving component {rcvng_cmp[0].name}, or is'
+                                ' not an F_INIT or S port.')
         return errors
 
     def _conduits_for_export(self) -> List[AnyConduit]:
