@@ -93,6 +93,92 @@ def test_model_text() -> str:
 
 
 @pytest.fixture
+def test_model2() -> Model:
+    return Model(
+            'test_model_conduit_filters',
+            Ports(),
+            'Test model for loading/dumping conduit filters',
+            SupportedSettings(),
+            [
+                Component(
+                    'init', Ports(o_f='macro_out micro_out'), 'Creates initial states',
+                    False, 'init'),
+                Component(
+                    'macro1', Ports('init', 'bc_out', 'bc_in', 'final'),
+                    'First macro model', False, 'macro1'),
+                Component(
+                    'micro1', Ports('init_state init_bc', o_f='final_bc final_state'),
+                    'First micro model', False, 'micro1'),
+                Component(
+                    'macro2', Ports('init_state', 'bc_out', 'bc_in'),
+                    'Second macro model', False, 'macro2'),
+                Component(
+                    'micro2', Ports('init_state init_bc', o_f='final_bc'),
+                    'Second micro model', False, 'micro2'),
+            ],
+            [
+                Conduit('init.macro_out', 'macro1.init'),
+                Conduit('init.micro_out', 'micro1.init_state', 'pad'),
+                Conduit('macro1.bc_out', 'micro1.init_bc'),
+                Conduit('micro1.final_bc', 'macro1.bc_in'),
+                Conduit('macro1.final', 'macro2.init_state'),
+                Conduit('micro1.final_state', 'micro2.init_state', 'last pad'),
+                Conduit('macro2.bc_out', 'micro2.init_bc'),
+                Conduit('micro2.final_bc', 'macro2.bc_in'),
+            ])
+
+
+@pytest.fixture
+def test_model2_text() -> str:
+    return (
+            'name: test_model_conduit_filters\n'
+            'description: Test model for loading/dumping conduit filters\n'
+            'components:\n'
+            '  init:\n'
+            '    ports:\n'
+            '      o_f: macro_out micro_out\n'
+            '    description: Creates initial states\n'
+            '    implementation: init\n'
+            '  macro1:\n'
+            '    ports:\n'
+            '      f_init: init\n'
+            '      o_i: bc_out\n'
+            '      s: bc_in\n'
+            '      o_f: final\n'
+            '    description: First macro model\n'
+            '    implementation: macro1\n'
+            '  micro1:\n'
+            '    ports:\n'
+            '      f_init: init_state init_bc\n'
+            '      o_f: final_bc final_state\n'
+            '    description: First micro model\n'
+            '    implementation: micro1\n'
+            '  macro2:\n'
+            '    ports:\n'
+            '      f_init: init_state\n'
+            '      o_i: bc_out\n'
+            '      s: bc_in\n'
+            '    description: Second macro model\n'
+            '    implementation: macro2\n'
+            '  micro2:\n'
+            '    ports:\n'
+            '      f_init: init_state init_bc\n'
+            '      o_f: final_bc\n'
+            '    description: Second micro model\n'
+            '    implementation: micro2\n'
+            'conduits:\n'
+            '  init.macro_out: macro1.init\n'
+            '  init.micro_out: pad micro1.init_state\n'
+            '  macro1.bc_out: micro1.init_bc\n'
+            '  micro1.final_bc: macro1.bc_in\n'
+            '  macro1.final: macro2.init_state\n'
+            '  micro1.final_state: last pad micro2.init_state\n'
+            '  macro2.bc_out: micro2.init_bc\n'
+            '  micro2.final_bc: macro2.bc_in\n'
+            )
+
+
+@pytest.fixture
 def test_config3() -> Configuration:
     model1 = Model(
             'supported_settings_test',
