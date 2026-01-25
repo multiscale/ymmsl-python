@@ -3,34 +3,179 @@ from pathlib import Path
 import pytest
 
 from ymmsl.v0_2 import (
-        BaseEnv, Component, Configuration, CheckpointRangeRule, CheckpointAtRule,
-        Checkpoints, KeepsStateForNextUse, ExecutionModel, Model, MPICoresResReq,
-        MPINodesResReq, Ports, Program, Reference, Settings, SupportedSettings,
-        ThreadedResReq)
+        BaseEnv, Component, Conduit, Configuration, CheckpointRangeRule,
+        CheckpointAtRule, Checkpoints, KeepsStateForNextUse, ExecutionModel, Model,
+        MPICoresResReq, MPINodesResReq, Ports, Program, Reference, Settings,
+        SupportedSettings, ThreadedResReq)
 
 
 Ref = Reference
 
 
-'''
 @pytest.fixture
-def test_config2() -> PartialConfiguration:
-    model = Model(
+def test_model() -> Model:
+    return Model(
             'test_model',
+            Ports('in', o_f='out'),
+            'Test model for loading/dumping',
+            SupportedSettings({'eta': 'float'}),
             [
-                Component('ic', 'isr2d.initial_conditions'),
-                Component('smc', 'isr2d.smc'),
-                Component('bf', 'isr2d.blood_flow'),
-                Component('smc2bf', 'isr2d.smc2bf'),
-                Component('bf2smc', 'isr2d.bf2smc')],
+                Component(
+                    'ic', Ports(o_f='out'), 'Creates initial state', False,
+                    'initial_conditions'),
+                Component(
+                    'smc', Ports('initial_state', 'cell_positions', 'wss_in'),
+                    'Simulates smooth muscle cells', False, 'smc'),
+                Component(
+                    'bf', Ports('initial_domain', o_f='wss_out'),
+                    'Simulates blood flow', False, 'blood_flow'),
+                Component(
+                    'smc2bf', Ports('in', o_f='out'), 'Grids domain', False, 'smc2bf'),
+                Component(
+                    'bf2smc', Ports('in', o_f='out'), 'Interpolates wss', False,
+                    'bf2smc')],
             [
                 Conduit('ic.out', 'smc.initial_state'),
                 Conduit('smc.cell_positions', 'smc2bf.in'),
                 Conduit('smc2bf.out', 'bf.initial_domain'),
                 Conduit('bf.wss_out', 'bf2smc.in'),
                 Conduit('bf2smc.out', 'smc.wss_in')])
-    return PartialConfiguration(model)
-'''
+
+
+@pytest.fixture
+def test_model_text() -> str:
+    return (
+            'name: test_model\n'
+            'ports:\n'
+            '  f_init: in\n'
+            '  o_f: out\n'
+            'description: Test model for loading/dumping\n'
+            'supported_settings:\n'
+            '  eta: float\n'
+            'components:\n'
+            '  ic:\n'
+            '    ports:\n'
+            '      o_f: out\n'
+            '    description: Creates initial state\n'
+            '    implementation: initial_conditions\n'
+            '  smc:\n'
+            '    ports:\n'
+            '      f_init: initial_state\n'
+            '      o_i: cell_positions\n'
+            '      s: wss_in\n'
+            '    description: Simulates smooth muscle cells\n'
+            '    implementation: smc\n'
+            '  bf:\n'
+            '    ports:\n'
+            '      f_init: initial_domain\n'
+            '      o_f: wss_out\n'
+            '    description: Simulates blood flow\n'
+            '    implementation: blood_flow\n'
+            '  smc2bf:\n'
+            '    ports:\n'
+            '      f_init: in\n'
+            '      o_f: out\n'
+            '    description: Grids domain\n'
+            '    implementation: smc2bf\n'
+            '  bf2smc:\n'
+            '    ports:\n'
+            '      f_init: in\n'
+            '      o_f: out\n'
+            '    description: Interpolates wss\n'
+            '    implementation: bf2smc\n'
+            'conduits:\n'
+            '  ic.out: smc.initial_state\n'
+            '  smc.cell_positions: smc2bf.in\n'
+            '  smc2bf.out: bf.initial_domain\n'
+            '  bf.wss_out: bf2smc.in\n'
+            '  bf2smc.out: smc.wss_in\n'
+            )
+
+
+@pytest.fixture
+def test_model2() -> Model:
+    return Model(
+            'test_model_conduit_filters',
+            Ports(),
+            'Test model for loading/dumping conduit filters',
+            SupportedSettings(),
+            [
+                Component(
+                    'init', Ports(o_f='macro_out micro_out'), 'Creates initial states',
+                    False, 'init'),
+                Component(
+                    'macro1', Ports('init', 'bc_out', 'bc_in', 'final'),
+                    'First macro model', False, 'macro1'),
+                Component(
+                    'micro1', Ports('init_state init_bc', o_f='final_bc final_state'),
+                    'First micro model', False, 'micro1'),
+                Component(
+                    'macro2', Ports('init_state', 'bc_out', 'bc_in'),
+                    'Second macro model', False, 'macro2'),
+                Component(
+                    'micro2', Ports('init_state init_bc', o_f='final_bc'),
+                    'Second micro model', False, 'micro2'),
+            ],
+            [
+                Conduit('init.macro_out', 'macro1.init'),
+                Conduit('init.micro_out', 'micro1.init_state', 'pad'),
+                Conduit('macro1.bc_out', 'micro1.init_bc'),
+                Conduit('micro1.final_bc', 'macro1.bc_in'),
+                Conduit('macro1.final', 'macro2.init_state'),
+                Conduit('micro1.final_state', 'micro2.init_state', 'last pad'),
+                Conduit('macro2.bc_out', 'micro2.init_bc'),
+                Conduit('micro2.final_bc', 'macro2.bc_in'),
+            ])
+
+
+@pytest.fixture
+def test_model2_text() -> str:
+    return (
+            'name: test_model_conduit_filters\n'
+            'description: Test model for loading/dumping conduit filters\n'
+            'components:\n'
+            '  init:\n'
+            '    ports:\n'
+            '      o_f: macro_out micro_out\n'
+            '    description: Creates initial states\n'
+            '    implementation: init\n'
+            '  macro1:\n'
+            '    ports:\n'
+            '      f_init: init\n'
+            '      o_i: bc_out\n'
+            '      s: bc_in\n'
+            '      o_f: final\n'
+            '    description: First macro model\n'
+            '    implementation: macro1\n'
+            '  micro1:\n'
+            '    ports:\n'
+            '      f_init: init_state init_bc\n'
+            '      o_f: final_bc final_state\n'
+            '    description: First micro model\n'
+            '    implementation: micro1\n'
+            '  macro2:\n'
+            '    ports:\n'
+            '      f_init: init_state\n'
+            '      o_i: bc_out\n'
+            '      s: bc_in\n'
+            '    description: Second macro model\n'
+            '    implementation: macro2\n'
+            '  micro2:\n'
+            '    ports:\n'
+            '      f_init: init_state init_bc\n'
+            '      o_f: final_bc\n'
+            '    description: Second micro model\n'
+            '    implementation: micro2\n'
+            'conduits:\n'
+            '  init.macro_out: macro1.init\n'
+            '  init.micro_out: pad micro1.init_state\n'
+            '  macro1.bc_out: micro1.init_bc\n'
+            '  micro1.final_bc: macro1.bc_in\n'
+            '  macro1.final: macro2.init_state\n'
+            '  micro1.final_state: last pad micro2.init_state\n'
+            '  macro2.bc_out: micro2.init_bc\n'
+            '  micro2.final_bc: macro2.bc_in\n'
+            )
 
 
 @pytest.fixture

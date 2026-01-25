@@ -1,9 +1,99 @@
 from ymmsl.v0_2.identity import Identifier
 from ymmsl.v0_2.model import (
-        Component, Conduit, Implementation, Model, MulticastConduit, Ports, Reference)
+        Component, Conduit, ConduitFilter, Model, MulticastConduit, Ports, Reference)
 from ymmsl.v0_2.ports import Operator, Port, Timeline
+from ymmsl.v0_2.supported_settings import SettingType, SupportedSettings
 
+import pytest
 import yatiml
+
+
+def test_conduit_filter() -> None:
+    assert ConduitFilter.LAST.is_reducer()
+    assert ConduitFilter.REPEAT.is_repeater()
+    assert ConduitFilter.PAD.is_repeater()
+
+
+def test_conduit_access() -> None:
+    conduit = Conduit('macro.out', 'micro.in')
+
+    assert str(conduit) == 'Conduit(macro.out -> micro.in)'
+    assert conduit == Conduit('macro.out', 'micro.in')
+    assert conduit != Conduit('micro.in', 'macro.out')
+
+    assert conduit.sending_component() == 'macro'
+    assert conduit.sending_port() == 'out'
+    assert conduit.receiving_component() == 'micro'
+    assert conduit.receiving_port() == 'in'
+
+    conduit = Conduit('out', 'in')
+    assert conduit.sending_component() == Reference([])
+    assert conduit.receiving_component() == Reference([])
+
+
+def test_load_plain_conduit() -> None:
+    load = yatiml.load_function(Conduit, ConduitFilter)
+
+    text = (
+            'sender: macro.out\n'
+            'receiver: micro.in\n'
+            )
+
+    conduit = load(text)
+    assert conduit.sender == 'macro.out'
+    assert conduit.receiver == 'micro.in'
+
+
+def test_load_model_conduit() -> None:
+    load = yatiml.load_function(Conduit, ConduitFilter)
+
+    text = (
+            'sender: out\n'
+            'receiver: in\n'
+            )
+
+    conduit = load(text)
+    assert conduit.sender == 'out'
+    assert conduit.receiver == 'in'
+
+
+def test_load_filtered_conduit() -> None:
+    load = yatiml.load_function(Conduit, ConduitFilter)
+
+    text = (
+            'sender: micro1.final\n'
+            'receiver: micro2.init\n'
+            'filters: last pad\n'
+            )
+
+    conduit = load(text)
+    assert conduit.sender == 'micro1.final'
+    assert conduit.receiver == 'micro2.init'
+    assert conduit.filters == [ConduitFilter.LAST, ConduitFilter.PAD]
+
+
+def test_load_invalid_filter() -> None:
+    load = yatiml.load_function(Conduit, ConduitFilter)
+
+    text = (
+            'sender: micro1.final\n'
+            'receiver: micro2.init\n'
+            'filters: convert-data-format\n'
+            )
+
+    with pytest.raises(yatiml.RecognitionError):
+        load(text)
+
+
+def test_dump_conduit() -> None:
+    dumps = yatiml.dumps_function(Conduit, ConduitFilter, Reference)
+    conduit = Conduit('c1.out', 'c2.in', [ConduitFilter.LAST, ConduitFilter.REPEAT])
+    text = dumps(conduit)
+
+    assert text == (
+            'sender: c1.out\n'
+            'receiver: c2.in\n'
+            'filters: last repeat\n')
 
 
 def test_multicast_conduits() -> None:
@@ -18,52 +108,141 @@ def test_multicast_conduits() -> None:
     assert m.conduits[2].receiver == 'micro2.init'
 
 
-def test_load_model() -> None:
-    load_model = yatiml.load_function(
-            Model, Component, Conduit, Identifier, Implementation,
-            MulticastConduit, Ports, Reference)
+def test_load_multicast_conduits() -> None:
+    load = yatiml.load_function(MulticastConduit)
 
     text = (
-            'name: test_model\n'
-            'ports:\n'
-            '  f_init: in\n'
-            '  o_f: out\n'
-            'description: Description of what this does\n'
-            'components:\n'
-            '  macro1:\n'
-            '    ports:\n'
-            '      f_init: init\n'
-            '      o_i: out\n'
-            '      s: in\n'
-            '      o_f: final\n'
-            '    description: description\n'
-            '    implementation: macro\n'
-            '  micro1:\n'
-            '    ports:\n'
-            '      f_init: init\n'
-            '      o_f: final\n'
-            '    description: description\n'
-            '    implementation: micro\n'
-            'conduits:\n'
-            '  in: macro1.init\n'
-            '  macro1.out: micro1.init\n'
-            '  micro1.final: macro1.in\n'
-            '  macro1.final: out\n'
+            'sender: init.out\n'
+            'receiver:\n'
+            '- c1.in\n'
+            '- repeat pad c2.in\n'
             )
 
-    m = load_model(text)
+    conduit = load(text)
+
+    assert conduit.sender == 'init.out'
+    assert conduit.receiver == ['c1.in', 'repeat pad c2.in']
+    assert conduit.as_conduits() == [
+            Conduit('init.out', 'c1.in'),
+            Conduit('init.out', 'c2.in', [ConduitFilter.REPEAT, ConduitFilter.PAD])]
+
+
+def test_load_multicast_invalid_filter() -> None:
+    load = yatiml.load_function(MulticastConduit)
+
+    text = (
+            'sender: init.out\n'
+            'receiver:\n'
+            '- c1.in\n'
+            '- convert_data_format c2.in\n'
+            )
+
+    with pytest.raises(yatiml.RecognitionError):
+        load(text)
+
+
+def test_dump_multicast_conduits() -> None:
+    dump = yatiml.dumps_function(MulticastConduit)
+
+    conduit = MulticastConduit(
+            'init.out', [
+                ('c1.in', []), ('c2.in', [ConduitFilter.REPEAT, ConduitFilter.PAD])])
+    text = dump(conduit)
+
+    assert text == (
+            'sender: init.out\n'
+            'receiver:\n'
+            '- c1.in\n'
+            '- repeat pad c2.in\n')
+
+
+def test_load_model(test_model_text: str) -> None:
+    load_model = yatiml.load_function(
+            Model, Component, Conduit, ConduitFilter, Identifier, MulticastConduit,
+            Ports, Reference, SettingType, SupportedSettings)
+
+    m = load_model(test_model_text)
 
     assert m.name == 'test_model'
     assert m.ports is not None
     assert m.ports['in'] == Port(Identifier('in'), Operator.F_INIT, Timeline(''))
     assert m.ports['out'] == Port(Identifier('out'), Operator.O_F, Timeline(''))
-    assert m.description == 'Description of what this does'
-    assert m.components[0].name == Reference('macro1')
-    assert m.components[1].name == Reference('micro1')
-    assert m.conduits[0].sender == Reference('in')
-    assert m.conduits[1].sender == Reference('macro1.out')
-    assert m.conduits[2].receiver == Reference('macro1.in')
-    assert m.conduits[3].sender == Reference('macro1.final')
+    assert m.description == 'Test model for loading/dumping'
+    assert m.supported_settings is not None
+    assert m.supported_settings['eta'] == SettingType.FLOAT
+    assert m.components[0].name == Reference('ic')
+    assert m.components[1].name == Reference('smc')
+    assert m.components[2].name == Reference('bf')
+    assert m.components[3].name == Reference('smc2bf')
+    assert m.components[4].name == Reference('bf2smc')
+    assert m.conduits[0].sender == Reference('ic.out')
+    assert m.conduits[1].sender == Reference('smc.cell_positions')
+    assert m.conduits[2].receiver == Reference('bf.initial_domain')
+    assert m.conduits[3].receiver == Reference('bf2smc.in')
+    assert m.conduits[4].sender == Reference('bf2smc.out')
+
+
+def test_load_model_with_filters(test_model2_text: str) -> None:
+    load_model = yatiml.load_function(
+            Model, Component, Conduit, ConduitFilter, Identifier, MulticastConduit,
+            Ports, Reference, SettingType, SupportedSettings)
+
+    m = load_model(test_model2_text)
+
+    assert m.name == 'test_model_conduit_filters'
+    assert m.ports is not None
+    assert len(m.ports) == 0
+    assert m.description == 'Test model for loading/dumping conduit filters'
+    assert m.supported_settings is None
+    assert m.components[0].name == Reference('init')
+    assert m.components[1].name == Reference('macro1')
+    assert m.components[2].name == Reference('micro1')
+    assert m.components[3].name == Reference('macro2')
+    assert m.components[4].name == Reference('micro2')
+
+    assert m.conduits[0].sender == Reference('init.macro_out')
+    assert m.conduits[0].receiver == Reference('macro1.init')
+    assert m.conduits[0].filters == []
+    assert m.conduits[1].sender == Reference('init.micro_out')
+    assert m.conduits[1].receiver == Reference('micro1.init_state')
+    assert m.conduits[1].filters == [ConduitFilter.PAD]
+    assert m.conduits[5].sender == Reference('micro1.final_state')
+    assert m.conduits[5].receiver == Reference('micro2.init_state')
+    assert m.conduits[5].filters == [ConduitFilter.LAST, ConduitFilter.PAD]
+
+
+def test_load_model_with_invalid_filters() -> None:
+    load_model = yatiml.load_function(
+            Model, Component, Conduit, ConduitFilter, Identifier, MulticastConduit,
+            Ports, Reference, SettingType, SupportedSettings)
+
+    text = (
+            'name: test_model_with_invalid_filters\n'
+            'description: Testing invalid filters\n'
+            'conduits:\n'
+            '  init.micro_out: invalid-filter micro1.init_state\n'
+            )
+
+    with pytest.raises(yatiml.RecognitionError):
+        load_model(text)
+
+
+def test_dump_model(test_model: Model, test_model_text: str) -> None:
+    dumps_model = yatiml.dumps_function(
+            Model, Component, Conduit, Identifier, MulticastConduit, Ports, Reference,
+            SettingType, SupportedSettings)
+
+    text = dumps_model(test_model)
+    assert text == test_model_text
+
+
+def test_dump_model_with_filters(test_model2: Model, test_model2_text: str) -> None:
+    dumps_model = yatiml.dumps_function(
+            Model, Component, Conduit, ConduitFilter, Identifier, MulticastConduit,
+            Ports, Reference, SettingType, SupportedSettings)
+
+    text = dumps_model(test_model2)
+    assert text == test_model2_text
 
 
 def test_consistent() -> None:
@@ -85,3 +264,29 @@ def test_consistent() -> None:
             'with_conduits', model_ports, 'description', None, [macro, micro], conduits)
 
     model.check_consistent()
+
+
+def test_conduits_inconsistent() -> None:
+    model_ports = Ports(f_init=['model_init'], o_f=['model_final'])
+
+    macro_ports = Ports(f_init=['Minit'], o_i=['Mout'], s=['Min'], o_f=['Mfinal'])
+    macro = Component('macro', macro_ports, 'macro_impl')
+
+    micro_ports = Ports(f_init=['minit'], o_f=['mfinal'])
+    micro = Component('micro', micro_ports, 'micro_impl')
+
+    conduits = [
+            Conduit('modelinit', 'macro.Minit'),
+            Conduit('macro.Mout', 'micro.m_init'),
+            Conduit('macro.Mout', 'miicro.minit'),
+            Conduit('macroo.Mout', 'micro.minit'),
+            Conduit('micro.m_final', 'macro.Min'),
+            Conduit('macro.Mfinal', 'modelfinal')]
+
+    model = Model(
+            'bad_conduits', model_ports, 'description', None, [macro, micro], conduits)
+
+    with pytest.raises(RuntimeError) as e:
+        model.check_consistent()
+
+    assert len(str(e.value).split('\n')) == 7
