@@ -353,24 +353,26 @@ def test_configuration_update_resources_add() -> None:
     assert base.resources[Ref('my.micro')] == resources2
 
 
-def test_check_consistent_resources(test_config6: Configuration) -> None:
-    test_config6.check_consistent()
-
-
-def test_check_inconsistent_resources(test_config7: Configuration) -> None:
-    with pytest.raises(RuntimeError):
-        test_config7.check_consistent()
-
-
-def test_check_consistent_implementations(test_config8: Configuration) -> None:
+def test_check_consistent_implementation_ports(test_config8: Configuration) -> None:
     test_config8.check_consistent()
 
 
-def test_check_inconsistent_implementations(test_config9: Configuration) -> None:
+def test_check_inconsistent_implementation_ports(test_config9: Configuration) -> None:
     with pytest.raises(RuntimeError) as e:
         test_config9.check_consistent()
 
     assert len(str(e.value).split('\n')) == 5
+
+
+def test_check_consistent_custom_implementations(test_config11: Configuration) -> None:
+    test_config11.check_consistent()
+
+
+def test_check_inconsistent_custom_impls(test_config12: Configuration) -> None:
+    with pytest.raises(RuntimeError) as e:
+        test_config12.check_consistent()
+
+    assert len(str(e.value).split('\n')) == 2
 
 
 def test_check_consistent_settings(test_config3: Configuration) -> None:
@@ -389,3 +391,12 @@ def test_check_consistent_settings(test_config3: Configuration) -> None:
         test_config3.check_consistent()
 
     assert len(str(e.value).split('\n')) == 2
+
+
+def test_check_consistent_resources(test_config6: Configuration) -> None:
+    test_config6.check_consistent()
+
+
+def test_check_inconsistent_resources(test_config7: Configuration) -> None:
+    with pytest.raises(RuntimeError):
+        test_config7.check_consistent()

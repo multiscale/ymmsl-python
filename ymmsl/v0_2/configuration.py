@@ -126,48 +126,6 @@ class Configuration(Document):
         else:
             self.resume = resume
 
-    def check_consistent(self) -> None:
-        """Checks that the configuration is internally consistent.
-
-        This checks:
-
-            - Whether all conduits are connected to existing components or to a model
-              port
-            - Whether ports on components are consistent with their implementations
-            - Whether settings are consistent with supported_settings, if specified
-            - That resources have been requested for each component that has an
-              implementation
-
-        If any of these requirements is false, this function will raise a RuntimeError
-        with an explanation of the problem.
-        """
-        errors = list()
-
-        program_component_paths = self._program_component_paths()
-        for model in self.models.values():
-            model.check_consistent()
-            for component in model.components:
-                if component in program_component_paths:
-                    path = program_component_paths[component]
-
-                    if path not in self.resources:
-                        errors.append(
-                                f'Component {path} is missing a resource request')
-
-                errors.extend(self._check_consistent_ports(component))
-
-                # TODO: check that resources and implementation both do or don't MPI
-
-        errors.extend(self._check_consistent_settings(program_component_paths))
-
-        # TODO: no two implementations (programs or models) with the same name
-
-        if errors:
-            raise RuntimeError(
-                    'The configuration is internally inconsistent. The following'
-                    ' problems were found:\n- '
-                    + '\n- '.join(errors))
-
     def update(self, overlay: 'Configuration') -> None:
         """Update this configuration with the given overlay.
 
@@ -208,6 +166,41 @@ class Configuration(Document):
         self.checkpoints.update(overlay.checkpoints)
         self.resume.update(overlay.resume)
 
+    def check_consistent(self) -> None:
+        """Checks that the configuration is internally consistent.
+
+        This checks:
+
+            - Whether all models are consistent, via Model.check_consistent()
+            - Whether ports on components are consistent with their implementations
+            - Whether custom implementations have a component they apply to
+            - Whether settings are consistent with supported_settings, if specified
+            - That resources have been requested for each component that has an
+              implementation
+
+        If any of these requirements is false, this function will raise a RuntimeError
+        with an explanation of the problem.
+        """
+        errors = list()
+
+        for model in self.models.values():
+            model.check_consistent()
+
+        leaf_component_paths = self._leaf_component_paths()
+        errors.extend(self._check_consistent_ports(leaf_component_paths))
+        errors.extend(self._check_custom_implementations(leaf_component_paths))
+        errors.extend(self._check_consistent_settings(leaf_component_paths))
+        errors.extend(self._check_resources(leaf_component_paths))
+
+        # TODO: check that resources and implementation both do or don't MPI
+        # TODO: no two implementations (programs or models) with the same name
+
+        if errors:
+            raise RuntimeError(
+                    'The configuration is internally inconsistent. The following'
+                    ' problems were found:\n- '
+                    + '\n- '.join(errors))
+
     def _top_models(self) -> List[Model]:
         """Models in this configuration that are not used as implementations."""
         top_models = copy(self.models)
@@ -218,18 +211,26 @@ class Configuration(Document):
                     if component.implementation in top_models:
                         del top_models[component.implementation]
 
+        for impl in self.custom_implementations.values():
+            if impl in top_models:
+                del top_models[impl]
+
         return list(top_models.values())
 
-    def _program_component_paths(self) -> Dict[Component, Reference]:
-        """Return component paths for program-implemented components.
+    def _leaf_component_paths(self) -> Dict[Reference, Component]:
+        """Return component paths for leaf components.
+
+        A leaf component is one that either has no implementation, or has an
+        implementation that is a program. Components that are implemented by a model
+        are not leaf components, because there are components inside them.
 
         Component paths are of the form component1.component2, where component1 is a
         component inside the top-level model that has an implementation which is a
         submodel, and component2 is a component inside that submodel.
 
-        The returned dict contains only components that have a program for their
-        implementation; components with no implementation or whose implementation is a
-        model are not included.
+        The returned dict maps all paths in the configuration that map to a leaf
+        component to the corresponding component. Note that there may be multiple paths
+        mapping to the same component object, if a submodel is used multiple times.
         """
         result = dict()
         queue = [(m, Reference([])) for m in self._top_models()]
@@ -237,17 +238,18 @@ class Configuration(Document):
         while queue:
             model, prefix = queue.pop(0)
             for component in model.components:
-                if component.implementation:
-                    if component.implementation in self.models:
-                        queue.append((
-                            self.models[component.implementation],
-                            prefix + component.name))
-                    elif component.implementation is not None:
-                        result[component] = prefix + component.name
+                path = prefix + component.name
+                impl = self.custom_implementations.get(path, component.implementation)
+                if impl is not None:
+                    if impl in self.models:
+                        queue.append((self.models[impl], path))
+                    else:
+                        result[path] = component
 
         return result
 
-    def _check_consistent_ports(self, component: Component) -> List[str]:
+    def _check_consistent_ports(
+            self, component_paths: Dict[Reference, Component]) -> List[str]:
         """Check that components have implementations with compatible ports.
 
         This checks that each component declares ports that its implementation also
@@ -258,45 +260,58 @@ class Configuration(Document):
         """
         errors = list()
 
-        if component.implementation is not None:
-            if component.implementation in self.programs:
-                impl = self.programs[component.implementation]
-                if len(impl.ports) > 0:
+        for path, component in component_paths.items():
+            impl = self.custom_implementations.get(path, component.implementation)
+            if impl is not None and impl in self.programs:
+                program = self.programs[impl]
+                if len(program.ports) > 0:
                     for port_name in component.ports:
-                        if port_name not in impl.ports:
+                        if port_name not in program.ports:
                             errors.append(
                                     f'Component "{component.name}" declares port'
                                     f' "{port_name}" that its implementation'
-                                    f' "{impl.name}" does not have')
+                                    f' "{program.name}" does not have')
                         else:
-                            if component.ports[port_name] != impl.ports[port_name]:
+                            if component.ports[port_name] != program.ports[port_name]:
                                 errors.append(
                                         f'Component "{component.name}" declares port'
                                         f' "{port_name}" that its implementation'
-                                        f' "{impl.name}" has, but with a different'
+                                        f' "{program.name}" has, but with a different'
                                         ' operator or timeline.')
 
         return errors
 
+    def _check_custom_implementations(
+            self, component_paths: Dict[Reference, Component]) -> List[str]:
+        """Check that all custom implementations refer to a correct path."""
+        errors = list()
+        for path in self.custom_implementations:
+            if path not in component_paths:
+                errors.append(
+                        f'A custom implementation is specified for component "{path}",'
+                        ' but no such component is present in the model.')
+        return errors
+
     def _check_consistent_settings(
-            self, component_paths: Dict[Component, Reference]) -> List[str]:
+            self, component_paths: Dict[Reference, Component]) -> List[str]:
         """Check that setting names and types match supported settings.
 
         This checks that every implementation with a supported_settings declaration will
         find a setting of the given type.
 
         Args:
-            component_paths: The output of _program_component_paths above.
+            component_paths: The output of _leaf_component_paths above.
 
         Returns a list of errors, or an empty list if all is okay.
         """
         errors = list()
-        for component, path in component_paths.items():
-            if component.implementation is None:
+        for path, component in component_paths.items():
+            impl = self.custom_implementations.get(path, component.implementation)
+            if impl is None:
                 continue
 
-            if component.implementation in self.programs:
-                program = self.programs[component.implementation]
+            if impl in self.programs:
+                program = self.programs[impl]
                 if program.supported_settings:
                     for name, typ in program.supported_settings:
                         errors.extend(
@@ -361,6 +376,19 @@ class Configuration(Document):
                 if len(value[0]) == 0 or isinstance(value[0][0], float):
                     return typ == SettingType.LIST_LIST_FLOAT
         return False
+
+    def _check_resources(
+            self, leaf_component_paths: Dict[Reference, Component]) -> List[str]:
+        """Check that each component path has a corresponding resource request.
+
+        Returns a list of errors, empty if all is ok.
+        """
+        errors = list()
+        for path, component in leaf_component_paths.items():
+            impl = self.custom_implementations.get(path, component.implementation)
+            if impl is not None and path not in self.resources:
+                errors.append(f'Component {path} is missing a resource request')
+        return errors
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
