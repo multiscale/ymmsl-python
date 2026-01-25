@@ -268,6 +268,22 @@ def test_configuration_update_imports() -> None:
     assert base.imports[3].name == 't'
 
 
+def test_configuration_update_custom_implementations() -> None:
+    base = Configuration(
+            'Configuration for testing', custom_implementations={
+                Reference('c1'): Reference('impl1')})
+
+    overlay1 = Configuration(
+            'Extra and override', custom_implementations={
+                Reference('c1'): Reference('impl2'),
+                Reference('c2.a'): Reference('impl1')})
+
+    base.update(overlay1)
+
+    assert base.custom_implementations[Reference('c1')] == 'impl2'
+    assert base.custom_implementations[Reference('c2.a')] == 'impl1'
+
+
 def test_configuration_update_programs() -> None:
     base = Configuration(
             'Configuration for testing',

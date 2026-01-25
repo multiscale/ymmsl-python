@@ -151,6 +151,8 @@ class Configuration(Document):
                     'Multiple ymmsl files containing models specified. Please'
                     ' use the import functionality instead.')
 
+        self.custom_implementations.update(overlay.custom_implementations)
+
         self.settings.update(overlay.settings)
 
         overlap = [p for p in self.programs if p in overlay.programs]
@@ -159,10 +161,9 @@ class Configuration(Document):
                     'Multiple programs with the same name were found. Please ensure'
                     ' that all programs have a unique name. The duplicate names were:'
                     f' {", ".join(map(str, overlap))}.')
+
         self.programs.update(overlay.programs)
-
         self.resources.update(overlay.resources)
-
         self.checkpoints.update(overlay.checkpoints)
         self.resume.update(overlay.resume)
 
