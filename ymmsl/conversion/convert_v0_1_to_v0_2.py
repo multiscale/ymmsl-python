@@ -25,7 +25,7 @@ def convert_v0_1_to_v0_2(config: v0_1.PartialConfiguration) -> v0_2.Configuratio
     resume = deepcopy(config.resume)
 
     return v0_2.Configuration(
-            description, None, models, settings, programs, resources, checkpoints,
+            description, None, models, None, settings, programs, resources, checkpoints,
             resume)
 
 

@@ -84,6 +84,22 @@ def test_load_nil_settings() -> None:
     assert len(configuration.resources) == 0
 
 
+def test_load_custom_implementations(test_config10_text: str) -> None:
+    configuration = load(test_config10_text)
+
+    assert isinstance(configuration, Configuration)
+    assert configuration.custom_implementations == {
+            Reference('c1'): Reference('program1'),
+            Reference('c2.init_model'): Reference('initer2')
+            }
+
+
+def test_dump_custom_implementations(
+        test_config10: Configuration, test_config10_text: str) -> None:
+    text = dump(test_config10)
+    assert text == test_config10_text
+
+
 def test_load_no_settings() -> None:
     text = (
             'ymmsl_version: v0.2\n'
@@ -132,7 +148,7 @@ def test_load_programs(test_config5_text: str) -> None:
     assert prog.keeps_state_for_next_use == KeepsStateForNextUse.HELPFUL
 
 
-def test_dump_configuration(
+def test_dump_programs(
         test_config5: Configuration, test_config5_text: str) -> None:
     text = dump(test_config5)
     assert text == test_config5_text

@@ -31,6 +31,8 @@ class Configuration(Document):
         imports: A list of import statements
         models: Model (with submodels) to run. Dictionary mapping model names (as
             References) to Model objects.
+        custom_implementations: Non-default implementations for model components that
+            fill in or override what those components specify.
         settings: Settings to run the models with
         programs: Programs to use to run the model. Dictionary mapping program names (as
             References) to Program objects.
@@ -44,6 +46,8 @@ class Configuration(Document):
             imports: Optional[Sequence[ImportStatement]] = None,
             models: Optional[Union[
                 Sequence[Model], MutableMapping[Reference, Model]]] = None,
+            custom_implementations: Optional[
+                MutableMapping[Reference, Reference]] = None,
             settings: Optional[Settings] = None,
             programs: Optional[Union[
                 Sequence[Program], MutableMapping[Reference, Program]]] = None,
@@ -63,9 +67,10 @@ class Configuration(Document):
             description: Human-readable description
             imports: A list of import statements
             models: Model (possibly with submodels) to run
+            custom_implementations: Non-default implementation for model components
             settings: Settings to run the model with.
             programs: Programs to use when running the model
-            resources: Resources to allocate for the model components.
+            resources: Resources to allocate for the model components
             checkpoints: When each component should create a snapshot
             resume: What snapshot each component should resume from
         """
@@ -84,6 +89,13 @@ class Configuration(Document):
             self.models = {models.name: models}
         else:
             self.models = models
+
+        _CIType = MutableMapping[Reference, Reference]  # noqa: F841
+
+        if custom_implementations is None:
+            self.custom_implementations = {}   # type: _CIType
+        else:
+            self.custom_implementations = custom_implementations
 
         if settings is None:
             self.settings = Settings()
@@ -380,6 +392,11 @@ class Configuration(Document):
         models = node.get_attribute('models')
         if (models.is_scalar(type(None)) or models.is_mapping() and models.is_empty()):
             node.remove_attribute('models')
+
+        if node.get_attribute('custom_implementations').is_scalar(type(None)):
+            node.remove_attribute('custom_implementations')
+        if len(node.get_attribute('custom_implementations').yaml_node.value) == 0:
+            node.remove_attribute('custom_implementations')
 
         if node.get_attribute('settings').is_scalar(type(None)):
             node.remove_attribute('settings')
