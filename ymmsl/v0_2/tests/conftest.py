@@ -230,7 +230,7 @@ def test_config3() -> Configuration:
             MPICoresResReq(Reference('submodel.c2'), 4, 4)]
 
     return Configuration(
-            'config3', None, [model1, model2], settings, programs, resources)
+            'config3', None, [model1, model2], None, settings, programs, resources)
 
 
 @pytest.fixture
@@ -268,7 +268,7 @@ def test_config4() -> Configuration:
               Ref('bf2smc'): Path('/path/to/snapshots/bf2smc.pack')}
 
     return Configuration(
-            description, None, None, None, None, resources, checkpoints, resume)
+            description, None, None, None, None, None, resources, checkpoints, resume)
 
 
 @pytest.fixture
@@ -360,7 +360,7 @@ def test_config6() -> Configuration:
             MPINodesResReq(Reference('submodel.mpi_nodes1'), 10, 16),
             MPINodesResReq(Reference('submodel.mpi_nodes2'), 10, 4, 4)]
 
-    return Configuration('config6', None, [model1, model2], None, None, resources)
+    return Configuration('config6', None, [model1, model2], None, None, None, resources)
 
 
 @pytest.fixture
@@ -373,7 +373,8 @@ def test_config7() -> Configuration:
             [Component('singlethreaded', Ports(), 'description', False, 'b')])
     resources = [ThreadedResReq(Ref('got_resources.singlethreaded'), 1)]
 
-    return Configuration('test_config7', None, [model1, model2], None, None, resources)
+    return Configuration(
+            'test_config7', None, [model1, model2], None, None, None, resources)
 
 
 @pytest.fixture
@@ -416,7 +417,8 @@ def test_config8() -> Configuration:
             MPICoresResReq(Reference('impl_with_ports'), 4, 4),
             ]
 
-    return Configuration('config8', None, [model1, model2], None, programs, resources)
+    return Configuration(
+            'config8', None, [model1, model2], None, None, programs, resources)
 
 
 @pytest.fixture
@@ -466,4 +468,72 @@ def test_config9() -> Configuration:
             ThreadedResReq(Reference('impl_extra_ports'), 1),
             ]
 
-    return Configuration('config9', None, [model1, model2], None, programs, resources)
+    return Configuration(
+            'config9', None, [model1, model2], None, None, programs, resources)
+
+
+@pytest.fixture
+def test_config10() -> Configuration:
+    return Configuration(
+            'testing io of custom implementations', None, None, {
+                Reference('c1'): Reference('program1'),
+                Reference('c2.init_model'): Reference('initer2')})
+
+
+@pytest.fixture
+def test_config10_text() -> str:
+    return (
+            'ymmsl_version: v0.2\n'
+            'description: testing io of custom implementations\n'
+            'custom_implementations:\n'
+            '  c1: program1\n'
+            '  c2.init_model: initer2\n'
+            )
+
+
+@pytest.fixture
+def test_config11() -> Configuration:
+    model1 = Model(
+            'test_model', None, 'description', None,
+            [
+                Component('c1', Ports(), 'description', False, None),
+                Component('c2', Ports(), 'description', False, 'submodel')])
+
+    model2 = Model(
+            'submodel', None, 'description', None,
+            [Component('init_model', Ports(), 'description', False, 'initer1')])
+
+    resources = [
+            ThreadedResReq(Reference('c1'), 1),
+            ThreadedResReq(Reference('c2.init_model'), 1),
+            ]
+
+    return Configuration(
+            'testing consistency of custom implementations', None, [model1, model2], {
+                Reference('c1'): Reference('program1'),
+                Reference('c2.init_model'): Reference('initer2')},
+            None, None, resources)
+
+
+@pytest.fixture
+def test_config12() -> Configuration:
+    model1 = Model(
+            'test_model', None, 'description', None,
+            [
+                Component('c1', Ports(), 'description', False, None),
+                Component('c2', Ports(), 'description', False, 'submodel')])
+
+    model2 = Model(
+            'submodel', None, 'description', None,
+            [Component('init_model', Ports(), 'description', False, 'initer1')])
+
+    resources = [
+            ThreadedResReq(Reference('c1'), 1),
+            ThreadedResReq(Reference('c2.init_model'), 1),
+            ]
+
+    return Configuration(
+            'testing consistency of custom implementations', None, [model1, model2], {
+                Reference('cl'): Reference('program1'),
+                Reference('c2.init_model'): Reference('initer2')},
+            None, None, resources)

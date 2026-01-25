@@ -84,6 +84,22 @@ def test_load_nil_settings() -> None:
     assert len(configuration.resources) == 0
 
 
+def test_load_custom_implementations(test_config10_text: str) -> None:
+    configuration = load(test_config10_text)
+
+    assert isinstance(configuration, Configuration)
+    assert configuration.custom_implementations == {
+            Reference('c1'): Reference('program1'),
+            Reference('c2.init_model'): Reference('initer2')
+            }
+
+
+def test_dump_custom_implementations(
+        test_config10: Configuration, test_config10_text: str) -> None:
+    text = dump(test_config10)
+    assert text == test_config10_text
+
+
 def test_load_no_settings() -> None:
     text = (
             'ymmsl_version: v0.2\n'
@@ -132,7 +148,7 @@ def test_load_programs(test_config5_text: str) -> None:
     assert prog.keeps_state_for_next_use == KeepsStateForNextUse.HELPFUL
 
 
-def test_dump_configuration(
+def test_dump_programs(
         test_config5: Configuration, test_config5_text: str) -> None:
     text = dump(test_config5)
     assert text == test_config5_text
@@ -252,6 +268,22 @@ def test_configuration_update_imports() -> None:
     assert base.imports[3].name == 't'
 
 
+def test_configuration_update_custom_implementations() -> None:
+    base = Configuration(
+            'Configuration for testing', custom_implementations={
+                Reference('c1'): Reference('impl1')})
+
+    overlay1 = Configuration(
+            'Extra and override', custom_implementations={
+                Reference('c1'): Reference('impl2'),
+                Reference('c2.a'): Reference('impl1')})
+
+    base.update(overlay1)
+
+    assert base.custom_implementations[Reference('c1')] == 'impl2'
+    assert base.custom_implementations[Reference('c2.a')] == 'impl1'
+
+
 def test_configuration_update_programs() -> None:
     base = Configuration(
             'Configuration for testing',
@@ -337,24 +369,26 @@ def test_configuration_update_resources_add() -> None:
     assert base.resources[Ref('my.micro')] == resources2
 
 
-def test_check_consistent_resources(test_config6: Configuration) -> None:
-    test_config6.check_consistent()
-
-
-def test_check_inconsistent_resources(test_config7: Configuration) -> None:
-    with pytest.raises(RuntimeError):
-        test_config7.check_consistent()
-
-
-def test_check_consistent_implementations(test_config8: Configuration) -> None:
+def test_check_consistent_implementation_ports(test_config8: Configuration) -> None:
     test_config8.check_consistent()
 
 
-def test_check_inconsistent_implementations(test_config9: Configuration) -> None:
+def test_check_inconsistent_implementation_ports(test_config9: Configuration) -> None:
     with pytest.raises(RuntimeError) as e:
         test_config9.check_consistent()
 
     assert len(str(e.value).split('\n')) == 5
+
+
+def test_check_consistent_custom_implementations(test_config11: Configuration) -> None:
+    test_config11.check_consistent()
+
+
+def test_check_inconsistent_custom_impls(test_config12: Configuration) -> None:
+    with pytest.raises(RuntimeError) as e:
+        test_config12.check_consistent()
+
+    assert len(str(e.value).split('\n')) == 2
 
 
 def test_check_consistent_settings(test_config3: Configuration) -> None:
@@ -373,3 +407,12 @@ def test_check_consistent_settings(test_config3: Configuration) -> None:
         test_config3.check_consistent()
 
     assert len(str(e.value).split('\n')) == 2
+
+
+def test_check_consistent_resources(test_config6: Configuration) -> None:
+    test_config6.check_consistent()
+
+
+def test_check_inconsistent_resources(test_config7: Configuration) -> None:
+    with pytest.raises(RuntimeError):
+        test_config7.check_consistent()
