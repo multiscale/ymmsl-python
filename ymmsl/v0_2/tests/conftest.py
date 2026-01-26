@@ -196,7 +196,7 @@ def test_config3() -> Configuration:
             'supported_settings_test2',
             None,
             'description',
-            None,
+            SupportedSettings({'delta': 'bool'}),
             [
                 Component('c1', Ports(), 'description', False, 'b'),
                 Component('c2', Ports(), 'description', False, 'c', 10)],
@@ -352,6 +352,13 @@ def test_config6() -> Configuration:
                 Component('mpi_nodes2', Ports(), 'description', False, 'd')],
             [])
 
+    em = {
+            'a': ExecutionModel.DIRECT,
+            'b': ExecutionModel.DIRECT,
+            'c': ExecutionModel.OPENMPI,
+            'd': ExecutionModel.OPENMPI}
+    programs = [Program(x, script='script', execution_model=em[x]) for x in 'abcd']
+
     resources = [
             ThreadedResReq(Reference('singlethreaded'), 1),
             ThreadedResReq(Reference('multithreaded'), 8),
@@ -360,21 +367,35 @@ def test_config6() -> Configuration:
             MPINodesResReq(Reference('submodel.mpi_nodes1'), 10, 16),
             MPINodesResReq(Reference('submodel.mpi_nodes2'), 10, 4, 4)]
 
-    return Configuration('config6', None, [model1, model2], None, None, None, resources)
+    return Configuration(
+            'config6', None, [model1, model2], None, None, programs, resources)
 
 
 @pytest.fixture
 def test_config7() -> Configuration:
     model1 = Model(
             'got_resources', None, 'description', None,
-            [Component('singlethreaded', Ports(), 'description', False, 'a')])
+            [
+                Component('singlethreaded', Ports(), 'description', False, 'a'),
+                Component('with_mpi', Ports(), 'description', False, 'b'),
+                Component('without_mpi', Ports(), 'description', False, 'a'),
+            ])
+
     model2 = Model(
             'missing_resources', None, 'description', None,
-            [Component('singlethreaded', Ports(), 'description', False, 'b')])
-    resources = [ThreadedResReq(Ref('got_resources.singlethreaded'), 1)]
+            [Component('singlethreaded2', Ports(), 'description', False, 'a')])
+
+    programs = [
+            Program('a', script='a', execution_model=ExecutionModel.DIRECT),
+            Program('b', script='b', execution_model=ExecutionModel.INTELMPI)]
+
+    resources = [
+            ThreadedResReq(Ref('singlethreaded'), 1),
+            ThreadedResReq(Ref('with_mpi'), 2),
+            MPICoresResReq(Ref('without_mpi'), 10)]
 
     return Configuration(
-            'test_config7', None, [model1, model2], None, None, None, resources)
+            'test_config7', None, [model1, model2], None, None, programs, resources)
 
 
 @pytest.fixture
@@ -431,13 +452,20 @@ def test_config9() -> Configuration:
                     'no_implementation', Ports(o_i=['out'], s=['in']), 'description',
                     False, None),
                 Component(
+                    'missing_implementation', Ports(), 'description', False,
+                    'implementation_does_not_exist'),
+                Component(
                     'impl_ports_mismatch', Ports(f_init=['in'], o_f=['out']),
                     'description', False, 'ports1'),
+                Component(
+                    'model_as_impl', Ports(f_init=['inm'], o_f=['outm', 'out']),
+                    'description', False, 'implementations_test2'),
             ])
 
     model2 = Model(
             'implementations_test2',
-            None, 'description', None,
+            Ports(f_init=['inm1'], o_i=['outm'], o_f=['out']),
+            'description', None,
             [
                 Component(
                     'impl_also_wrong', Ports(o_i=['out'], s=['in']), 'description',
@@ -463,9 +491,10 @@ def test_config9() -> Configuration:
              ]
 
     resources = [
+            ThreadedResReq(Reference('missing_implementation'), 1),
             ThreadedResReq(Reference('impl_ports_mismatch'), 1),
-            MPICoresResReq(Reference('impl_also_wrong'), 4, 4),
-            ThreadedResReq(Reference('impl_extra_ports'), 1),
+            MPICoresResReq(Reference('model_as_impl.impl_also_wrong'), 4, 4),
+            ThreadedResReq(Reference('model_as_impl.impl_extra_ports'), 1),
             ]
 
     return Configuration(
@@ -503,6 +532,10 @@ def test_config11() -> Configuration:
             'submodel', None, 'description', None,
             [Component('init_model', Ports(), 'description', False, 'initer1')])
 
+    programs = [
+            Program('program1', executable=Path('program1')),
+            Program('initer2', executable=Path('initer2'))]
+
     resources = [
             ThreadedResReq(Reference('c1'), 1),
             ThreadedResReq(Reference('c2.init_model'), 1),
@@ -512,7 +545,7 @@ def test_config11() -> Configuration:
             'testing consistency of custom implementations', None, [model1, model2], {
                 Reference('c1'): Reference('program1'),
                 Reference('c2.init_model'): Reference('initer2')},
-            None, None, resources)
+            None, programs, resources)
 
 
 @pytest.fixture
@@ -537,3 +570,15 @@ def test_config12() -> Configuration:
                 Reference('cl'): Reference('program1'),
                 Reference('c2.init_model'): Reference('initer2')},
             None, None, resources)
+
+
+@pytest.fixture
+def test_config13() -> Configuration:
+    model1 = Model('impl1', None, 'description')
+    model2 = Model('impl2', None, 'description')
+    program1 = Program('impl2', script='impl2')
+    program2 = Program('impl3', script='impl3')
+
+    return Configuration(
+            'testing duplicate implementation names', None,
+            [model1, model2], None, None, [program1, program2])

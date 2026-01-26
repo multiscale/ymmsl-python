@@ -10,8 +10,10 @@ import yatiml
 import yaml
 
 from ymmsl.v0_2.checkpoint import Checkpoints
-from ymmsl.v0_2.resources import ResourceRequirements
+from ymmsl.v0_2.execution import ExecutionModel
+from ymmsl.v0_2.resources import MPICoresResReq, MPINodesResReq, ResourceRequirements
 from ymmsl.v0_2.identity import Reference
+from ymmsl.v0_2.implementation import Implementation    # noqa: F401
 from ymmsl.v0_2.imports import ImportStatement
 from ymmsl.v0_2.settings import Settings, SettingValue
 from ymmsl.v0_2.supported_settings import SettingType
@@ -74,6 +76,14 @@ class Configuration(Document):
             checkpoints: When each component should create a snapshot
             resume: What snapshot each component should resume from
         """
+        def check_duplicate_impl_names(
+                typs: str, impls: abc.Sequence[Implementation]) -> None:
+            for i, impl in enumerate(impls):
+                for j in range(i):
+                    if impls[j].name == impl.name:
+                        raise ValueError(
+                                f'Found two {typs} that are both named "{impl.name}"')
+
         self.description = description
 
         if imports is None:
@@ -84,6 +94,7 @@ class Configuration(Document):
         if models is None:
             self.models: MutableMapping[Reference, Model] = dict()
         elif isinstance(models, abc.Sequence):
+            check_duplicate_impl_names('models', models)
             self.models = {model.name: model for model in models}
         elif isinstance(models, Model):
             self.models = {models.name: models}
@@ -105,6 +116,7 @@ class Configuration(Document):
         if programs is None:
             self.programs: MutableMapping[Reference, Program] = dict()
         elif isinstance(programs, abc.Sequence):
+            check_duplicate_impl_names('programs', programs)
             self.programs = {prog.name: prog for prog in programs}
         else:
             self.programs = programs
@@ -173,9 +185,10 @@ class Configuration(Document):
         This checks:
 
             - Whether all models are consistent, via Model.check_consistent()
-            - Whether ports on components are consistent with their implementations
-            - Whether custom implementations have a component they apply to
-            - Whether settings are consistent with supported_settings, if specified
+            - Whether all given component implementations exist
+            - Whether all ports on components are consistent with their implementations
+            - Whether all custom implementations have a component they apply to
+            - Whether all settings are consistent with supported_settings, if specified
             - That resources have been requested for each component that has an
               implementation
 
@@ -185,15 +198,18 @@ class Configuration(Document):
         errors = list()
 
         for model in self.models.values():
-            model.check_consistent()
+            model_errors = model.check_consistent()
+            errors.extend([f'In model {model.name}: {e}' for e in model_errors])
 
-        leaf_component_paths = self._leaf_component_paths()
-        errors.extend(self._check_consistent_ports(leaf_component_paths))
-        errors.extend(self._check_custom_implementations(leaf_component_paths))
-        errors.extend(self._check_consistent_settings(leaf_component_paths))
-        errors.extend(self._check_resources(leaf_component_paths))
+        errors.extend(self._check_duplicate_implementations())
 
-        # TODO: check that resources and implementation both do or don't MPI
+        component_paths = self._component_paths()
+        errors.extend(self._check_implementations_exist(component_paths))
+        errors.extend(self._check_consistent_ports(component_paths))
+        errors.extend(self._check_custom_implementations(component_paths))
+        errors.extend(self._check_consistent_settings(component_paths))
+        errors.extend(self._check_resources(component_paths))
+
         # TODO: no two implementations (programs or models) with the same name
 
         if errors:
@@ -218,20 +234,16 @@ class Configuration(Document):
 
         return list(top_models.values())
 
-    def _leaf_component_paths(self) -> Dict[Reference, Component]:
-        """Return component paths for leaf components.
-
-        A leaf component is one that either has no implementation, or has an
-        implementation that is a program. Components that are implemented by a model
-        are not leaf components, because there are components inside them.
+    def _component_paths(self) -> Dict[Reference, Component]:
+        """Return component paths for components.
 
         Component paths are of the form component1.component2, where component1 is a
         component inside the top-level model that has an implementation which is a
         submodel, and component2 is a component inside that submodel.
 
-        The returned dict maps all paths in the configuration that map to a leaf
-        component to the corresponding component. Note that there may be multiple paths
-        mapping to the same component object, if a submodel is used multiple times.
+        The returned dict maps all paths in the configuration that map to a component
+        with an implementation. Note that there may be multiple paths mapping to the
+        same component object, if a submodel is used multiple times.
         """
         result = dict()
         queue = [(m, Reference([])) for m in self._top_models()]
@@ -244,10 +256,26 @@ class Configuration(Document):
                 if impl is not None:
                     if impl in self.models:
                         queue.append((self.models[impl], path))
-                    else:
-                        result[path] = component
+                    result[path] = component
 
         return result
+
+    def _check_duplicate_implementations(self) -> List[str]:
+        """Check that each implementation has a unique name.
+
+        Duplicates within programs and models are already checked in __init__(), so all
+        we need to look for here is conflicts between them.
+
+        Returns a list of errors, or an empty list if all is okay.
+        """
+        errors = list()
+        for program_name in self.programs:
+            for model_name in self.models:
+                if program_name == model_name:
+                    errors.append(
+                            f'There is a program named "{program_name}" and also a'
+                            f' model named "{model_name}", which is not allowed')
+        return errors
 
     def _check_consistent_ports(
             self, component_paths: Dict[Reference, Component]) -> List[str]:
@@ -262,29 +290,65 @@ class Configuration(Document):
         errors = list()
 
         for path, component in component_paths.items():
-            impl = self.custom_implementations.get(path, component.implementation)
-            if impl is not None and impl in self.programs:
-                program = self.programs[impl]
-                if len(program.ports) > 0:
-                    for port_name in component.ports:
-                        if port_name not in program.ports:
+            impl_ref = self.custom_implementations.get(path, component.implementation)
+            if impl_ref is None:
+                continue
+
+            if impl_ref in self.programs:
+                impl = self.programs[impl_ref]  # type: Implementation
+            elif impl_ref in self.models:
+                impl = self.models[impl_ref]
+            else:
+                continue
+
+            if len(impl.ports) > 0:
+                for port_name in component.ports:
+                    if port_name not in impl.ports:
+                        errors.append(
+                                f'Component "{component.name}" declares port'
+                                f' "{port_name}" that its implementation'
+                                f' "{impl.name}" does not have')
+                    else:
+                        if component.ports[port_name] != impl.ports[port_name]:
                             errors.append(
                                     f'Component "{component.name}" declares port'
                                     f' "{port_name}" that its implementation'
-                                    f' "{program.name}" does not have')
-                        else:
-                            if component.ports[port_name] != program.ports[port_name]:
-                                errors.append(
-                                        f'Component "{component.name}" declares port'
-                                        f' "{port_name}" that its implementation'
-                                        f' "{program.name}" has, but with a different'
-                                        ' operator or timeline.')
+                                    f' "{impl.name}" has, but with a different'
+                                    ' operator or timeline.')
 
+        return errors
+
+    def _check_implementations_exist(
+            self, component_paths: Dict[Reference, Component]) -> List[str]:
+        """Check that all components with an implementation have a valid one.
+
+        Components with implementation None are not considered broken.
+
+        Args:
+            component_paths: The output of _component_paths above.
+
+        Returns a list of errors, or an empty list if all is okay.
+        """
+        errors = list()
+        for path, component in component_paths.items():
+            impl = self.custom_implementations.get(path, component.implementation)
+            if impl is not None:
+                if impl not in self.models and impl not in self.programs:
+                    errors.append(
+                            f'Component "{path}" has implementation "{impl}", but no'
+                            ' program or model with that name was given. Did you forget'
+                            ' to import it?')
         return errors
 
     def _check_custom_implementations(
             self, component_paths: Dict[Reference, Component]) -> List[str]:
-        """Check that all custom implementations refer to a correct path."""
+        """Check that all custom implementations refer to a correct path.
+
+        Args:
+            component_paths: The output of _component_paths above.
+
+        Returns a list of errors, or an empty list if all is okay.
+        """
         errors = list()
         for path in self.custom_implementations:
             if path not in component_paths:
@@ -298,32 +362,48 @@ class Configuration(Document):
         """Check that setting names and types match supported settings.
 
         This checks that every implementation with a supported_settings declaration will
-        find a setting of the given type.
+        find a setting of the given type, if one has been set.
 
         Args:
-            component_paths: The output of _leaf_component_paths above.
+            component_paths: The output of _component_paths above.
 
         Returns a list of errors, or an empty list if all is okay.
         """
         errors = list()
+
         for path, component in component_paths.items():
-            impl = self.custom_implementations.get(path, component.implementation)
-            if impl is None:
+            impl_ref = self.custom_implementations.get(path, component.implementation)
+            if impl_ref is None:
                 continue
 
-            if impl in self.programs:
-                program = self.programs[impl]
-                if program.supported_settings:
-                    for name, typ in program.supported_settings:
-                        errors.extend(
-                                self._check_supported_setting(
-                                    component, path, name, typ, program))
+            errs = list()
+            if impl_ref in self.programs:
+                impl = self.programs[impl_ref]   # type: Implementation
+            elif impl_ref in self.models:
+                impl = self.models[impl_ref]
+            else:
+                continue
+
+            if impl.supported_settings:
+                for name, typ in impl.supported_settings:
+                    errs.extend(
+                            self._check_supported_setting(
+                                component, path, name, typ, impl))
+
+            if len(errs) > 7:
+                errs = errs[:6]
+                n = len(errs) - 6
+                errs.append(
+                        f'Another {n} inconsistent settings were found. Is "{impl}"'
+                        ' the correct implementation for component "{component.name}"?')
+
+            errors.extend(errs)
 
         return errors
 
     def _check_supported_setting(
             self, component: Component, component_path: Reference, name: Reference,
-            typ: SettingType, program: Program) -> List[str]:
+            typ: SettingType, impl: Implementation) -> List[str]:
         """Check that the value of the given setting matches the given type.
 
         This implements the standard setting lookup, then checks any found setting value
@@ -347,10 +427,10 @@ class Configuration(Document):
                             val_str = f'"{val}"'
                         errors.append(
                                 f'Instance "{instance_path}" of component'
-                                f' "{component_path}" with implementation program'
-                                f' "{program.name}" has a supported setting "{name}"'
-                                f' with type {typ.value}, but setting "{found_setting}"'
-                                f' has value {val_str}, which does not match that type')
+                                f' "{component_path}" with implementation "{impl.name}"'
+                                f' has a supported setting "{name}" with type'
+                                f' {typ.value}, but setting "{found_setting}" has value'
+                                f' {val_str}, which does not match that type')
                     break
 
         return errors
@@ -379,16 +459,41 @@ class Configuration(Document):
         return False
 
     def _check_resources(
-            self, leaf_component_paths: Dict[Reference, Component]) -> List[str]:
+            self, component_paths: Dict[Reference, Component]) -> List[str]:
         """Check that each component path has a corresponding resource request.
 
         Returns a list of errors, empty if all is ok.
         """
         errors = list()
-        for path, component in leaf_component_paths.items():
-            impl = self.custom_implementations.get(path, component.implementation)
-            if impl is not None and path not in self.resources:
-                errors.append(f'Component {path} is missing a resource request')
+        for path, component in component_paths.items():
+            impl_ref = self.custom_implementations.get(path, component.implementation)
+            if impl_ref is None or impl_ref not in self.programs:
+                continue
+
+            if path not in self.resources:
+                errors.append(f'Component "{path}" is missing a resource request')
+            else:
+                impl = self.programs[impl_ref]
+                em_mpi = impl.execution_model in (
+                        ExecutionModel.OPENMPI, ExecutionModel.INTELMPI,
+                        ExecutionModel.SRUNMPI)
+
+                em_nompi = impl.execution_model is ExecutionModel.DIRECT
+
+                res_mpi = isinstance(
+                        self.resources[path], (MPICoresResReq, MPINodesResReq))
+
+                if em_mpi and not res_mpi:
+                    errors.append(
+                            f'Component "{path}" has implementation "{impl_ref}",'
+                            ' which has an MPI execution model, but the resources'
+                            ' requested for it do not ask for MPI processes.')
+                elif res_mpi and em_nompi:
+                    errors.append(
+                            f'Component "{path}" has implementation "{impl_ref}",'
+                            ' which has a non-MPI execution model, but the resources'
+                            ' requested for it ask for MPI processes.')
+
         return errors
 
     @classmethod

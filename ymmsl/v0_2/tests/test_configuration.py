@@ -7,7 +7,7 @@ from ymmsl.io import load, dump
 from ymmsl.v0_2 import (
         BaseEnv, Configuration, Checkpoints, Component, Conduit, ExecutionModel,
         Identifier, ImportStatement, KeepsStateForNextUse, Model, Operator, Port, Ports,
-        Program, Reference, Settings, ThreadedResReq, Timeline)
+        Program, Reference, Settings, SettingType, ThreadedResReq, Timeline)
 from ymmsl.v0_2 import SettingValue
 
 
@@ -29,6 +29,17 @@ def test_configuration() -> None:
 
     assert isinstance(config.settings, Settings)
     assert len(config.settings) == 0
+
+
+def test_create_duplicate_models() -> None:
+    with pytest.raises(ValueError):
+        Configuration('desc', models=[Model('a'), Model('a')])
+
+
+def test_create_duplicate_programs() -> None:
+    with pytest.raises(ValueError):
+        Configuration(
+                'desc', programs=[Program('p', script='p'), Program('p', script='q')])
 
 
 def test_load_models() -> None:
@@ -369,6 +380,13 @@ def test_configuration_update_resources_add() -> None:
     assert base.resources[Ref('my.micro')] == resources2
 
 
+def test_check_duplicate_implementations(test_config13: Configuration) -> None:
+    with pytest.raises(RuntimeError) as e:
+        test_config13.check_consistent()
+
+    assert len(str(e.value).split('\n')) == 2
+
+
 def test_check_consistent_implementation_ports(test_config8: Configuration) -> None:
     test_config8.check_consistent()
 
@@ -377,7 +395,7 @@ def test_check_inconsistent_implementation_ports(test_config9: Configuration) ->
     with pytest.raises(RuntimeError) as e:
         test_config9.check_consistent()
 
-    assert len(str(e.value).split('\n')) == 5
+    assert len(str(e.value).split('\n')) == 8
 
 
 def test_check_consistent_custom_implementations(test_config11: Configuration) -> None:
@@ -388,7 +406,7 @@ def test_check_inconsistent_custom_impls(test_config12: Configuration) -> None:
     with pytest.raises(RuntimeError) as e:
         test_config12.check_consistent()
 
-    assert len(str(e.value).split('\n')) == 2
+    assert len(str(e.value).split('\n')) == 3
 
 
 def test_check_consistent_settings(test_config3: Configuration) -> None:
@@ -401,7 +419,18 @@ def test_check_consistent_settings(test_config3: Configuration) -> None:
     assert len(str(e.value).split('\n')) == 2
 
     del test_config3.settings['submodel.c2[3].delta']
-    test_config3.settings['alpha'] = [[1.2,  3.4], [5.6, 7.8]]
+    test_config3.settings['alpha'] = [[1.2, 3.4], [5.6, 7.8]]
+
+    with pytest.raises(RuntimeError) as e:
+        test_config3.check_consistent()
+
+    assert len(str(e.value).split('\n')) == 2
+
+    test_config3.settings['alpha'] = 3.2
+
+    model2 = test_config3.models[Reference('supported_settings_test2')]
+    assert model2.supported_settings is not None
+    model2.supported_settings['delta'] = SettingType.INT
 
     with pytest.raises(RuntimeError) as e:
         test_config3.check_consistent()
@@ -414,5 +443,7 @@ def test_check_consistent_resources(test_config6: Configuration) -> None:
 
 
 def test_check_inconsistent_resources(test_config7: Configuration) -> None:
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError) as e:
         test_config7.check_consistent()
+
+    assert len(str(e.value).split('\n')) == 4
