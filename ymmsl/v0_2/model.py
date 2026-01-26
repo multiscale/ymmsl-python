@@ -285,7 +285,7 @@ class Model(Implementation):
                 if isinstance(conduit, MulticastConduit):
                     self.conduits.extend(conduit.as_conduits())
 
-    def check_consistent(self) -> None:
+    def check_consistent(self) -> List[str]:
         """Check that the model is internally consistent.
 
         This checks:
@@ -293,8 +293,7 @@ class Model(Implementation):
             - that every conduit is connected to two existing ports on existing
               components, or on the model itself.
 
-        Raises:
-            RuntimeError: If an inconsistency was found
+        Returns a list of errors, or an empty list if none were found.
         """
         errors: List[str] = list()
 
@@ -307,10 +306,7 @@ class Model(Implementation):
             errors.extend(self._check_sending_side(conduit, model_receiving_ports))
             errors.extend(self._check_receiving_side(conduit, model_sending_ports))
 
-        if errors:
-            raise RuntimeError(
-                    f'One or more errors were found in model {self.name}:\n-'
-                    ' {}'.format('\n- '.join(errors)))
+        return errors
 
     def _check_component_name_conflicts(self) -> List[str]:
         """Check that no two components have the same name.
@@ -325,7 +321,8 @@ class Model(Implementation):
                 if c1.name == self.components[i2].name:
                     num_conflicts += 1
             if num_conflicts > 0:
-                errors.append(f'There are {num_conflicts + 1} models named {c1.name}.')
+                errors.append(
+                        f'There are {num_conflicts + 1} components named {c1.name}.')
 
         return errors
 

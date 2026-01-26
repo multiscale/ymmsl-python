@@ -263,7 +263,8 @@ def test_consistent() -> None:
     model = Model(
             'with_conduits', model_ports, 'description', None, [macro, micro], conduits)
 
-    model.check_consistent()
+    errors = model.check_consistent()
+    assert not errors
 
 
 def test_conduits_inconsistent() -> None:
@@ -286,7 +287,5 @@ def test_conduits_inconsistent() -> None:
     model = Model(
             'bad_conduits', model_ports, 'description', None, [macro, micro], conduits)
 
-    with pytest.raises(RuntimeError) as e:
-        model.check_consistent()
-
-    assert len(str(e.value).split('\n')) == 7
+    errors = model.check_consistent()
+    assert len(errors) == 6

@@ -198,7 +198,8 @@ class Configuration(Document):
         errors = list()
 
         for model in self.models.values():
-            model.check_consistent()
+            model_errors = model.check_consistent()
+            errors.extend([f'In model {model.name}: {e}' for e in model_errors])
 
         errors.extend(self._check_duplicate_implementations())
 
