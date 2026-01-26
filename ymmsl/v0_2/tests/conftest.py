@@ -179,6 +179,46 @@ def test_model2_text() -> str:
 
 
 @pytest.fixture
+def test_program() -> Program:
+    return Program(
+            'macro', Ports(['init'], ['out1', 'out2'], ['in1', 'in2'], ['final']),
+            'description', SupportedSettings({'alpha': 'float'}), BaseEnv.LOGIN,
+            ['gcc/13.3.0', 'FFTW/3.2.1'], Path('/home/user/.venv'),
+            {'SETTING': 'something', 'VARIABLE': '42'}, ExecutionModel.INTELMPI,
+            Path('python3'), ['/home/user/script.py'], None, False,
+            KeepsStateForNextUse.HELPFUL)
+
+
+@pytest.fixture
+def test_program_text() -> str:
+    return (
+            'name: macro\n'
+            'ports:\n'
+            '  f_init: init\n'
+            '  o_i: out1 out2\n'
+            '  s: in1 in2\n'
+            '  o_f: final\n'
+            'description: description\n'
+            'supported_settings:\n'
+            '  alpha: float\n'
+            'base_env: login\n'
+            'modules:\n'
+            '- gcc/13.3.0\n'
+            '- FFTW/3.2.1\n'
+            'virtual_env: /home/user/.venv\n'
+            'env:\n'
+            '  SETTING: something\n'
+            '  VARIABLE: \'42\'\n'
+            'execution_model: intelmpi\n'
+            'executable: python3\n'
+            'args:\n'
+            '- /home/user/script.py\n'
+            'can_share_resources: false\n'
+            'keeps_state_for_next_use: helpful\n'
+            )
+
+
+@pytest.fixture
 def test_config3() -> Configuration:
     model1 = Model(
             'supported_settings_test',

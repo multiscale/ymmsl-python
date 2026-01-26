@@ -5,10 +5,9 @@ import pytest
 
 from ymmsl.io import load, dump
 from ymmsl.v0_2 import (
-        BaseEnv, Configuration, Checkpoints, Component, Conduit, ExecutionModel,
-        Identifier, ImportStatement, KeepsStateForNextUse, Model, Operator, Port, Ports,
-        Program, Reference, Settings, SettingType, ThreadedResReq, Timeline)
-from ymmsl.v0_2 import SettingValue
+        Configuration, Checkpoints, Component, Conduit, Identifier, ImportStatement,
+        Model, Operator, Port, Ports, Program, Reference, Settings, SettingType,
+        SettingValue, ThreadedResReq, Timeline)
 
 
 Ref = Reference
@@ -132,37 +131,6 @@ def test_dump_empty_settings() -> None:
     assert text == (
             'ymmsl_version: v0.2\n'
             'description: \'\'\n')
-
-
-def test_load_programs(test_config5_text: str) -> None:
-    configuration = load(test_config5_text)
-
-    assert isinstance(configuration, Configuration)
-    assert len(configuration.programs) == 1
-    prog = configuration.programs[Reference('macro')]
-    assert prog.name == 'macro'
-    assert prog.ports.sending_port_names() == ['final', 'out1', 'out2']
-    assert prog.ports.receiving_port_names() == ['init', 'in1', 'in2']
-    assert prog.base_env == BaseEnv.LOGIN
-    assert prog.modules is not None
-    assert len(prog.modules) == 2
-    assert prog.modules[0] == 'gcc/13.3.0'
-    assert prog.modules[1] == 'FFTW/3.2.1'
-    assert prog.virtual_env == Path('/home/user/.venv')
-    assert len(prog.env) == 2
-    assert prog.env['SETTING'] == 'something'
-    assert prog.env['VARIABLE'] == '42'
-    assert prog.execution_model == ExecutionModel.INTELMPI
-    assert prog.executable == Path('python3')
-    assert prog.args == ['/home/user/script.py']
-    assert prog.can_share_resources is False
-    assert prog.keeps_state_for_next_use == KeepsStateForNextUse.HELPFUL
-
-
-def test_dump_programs(
-        test_config5: Configuration, test_config5_text: str) -> None:
-    text = dump(test_config5)
-    assert text == test_config5_text
 
 
 def test_load_resources() -> None:
