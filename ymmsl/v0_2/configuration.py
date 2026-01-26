@@ -362,7 +362,7 @@ class Configuration(Document):
         """Check that setting names and types match supported settings.
 
         This checks that every implementation with a supported_settings declaration will
-        find a setting of the given type.
+        find a setting of the given type, if one has been set.
 
         Args:
             component_paths: The output of _component_paths above.
@@ -372,18 +372,23 @@ class Configuration(Document):
         errors = list()
 
         for path, component in component_paths.items():
-            impl = self.custom_implementations.get(path, component.implementation)
-            if impl is None:
+            impl_ref = self.custom_implementations.get(path, component.implementation)
+            if impl_ref is None:
                 continue
 
             errs = list()
-            if impl in self.programs:
-                program = self.programs[impl]
-                if program.supported_settings:
-                    for name, typ in program.supported_settings:
-                        errs.extend(
-                                self._check_supported_setting(
-                                    component, path, name, typ, program))
+            if impl_ref in self.programs:
+                impl = self.programs[impl_ref]   # type: Implementation
+            elif impl_ref in self.models:
+                impl = self.models[impl_ref]
+            else:
+                continue
+
+            if impl.supported_settings:
+                for name, typ in impl.supported_settings:
+                    errs.extend(
+                            self._check_supported_setting(
+                                component, path, name, typ, impl))
 
             if len(errs) > 7:
                 errs = errs[:6]
@@ -398,7 +403,7 @@ class Configuration(Document):
 
     def _check_supported_setting(
             self, component: Component, component_path: Reference, name: Reference,
-            typ: SettingType, program: Program) -> List[str]:
+            typ: SettingType, impl: Implementation) -> List[str]:
         """Check that the value of the given setting matches the given type.
 
         This implements the standard setting lookup, then checks any found setting value
@@ -422,10 +427,10 @@ class Configuration(Document):
                             val_str = f'"{val}"'
                         errors.append(
                                 f'Instance "{instance_path}" of component'
-                                f' "{component_path}" with implementation program'
-                                f' "{program.name}" has a supported setting "{name}"'
-                                f' with type {typ.value}, but setting "{found_setting}"'
-                                f' has value {val_str}, which does not match that type')
+                                f' "{component_path}" with implementation "{impl.name}"'
+                                f' has a supported setting "{name}" with type'
+                                f' {typ.value}, but setting "{found_setting}" has value'
+                                f' {val_str}, which does not match that type')
                     break
 
         return errors

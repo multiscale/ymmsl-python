@@ -7,7 +7,7 @@ from ymmsl.io import load, dump
 from ymmsl.v0_2 import (
         BaseEnv, Configuration, Checkpoints, Component, Conduit, ExecutionModel,
         Identifier, ImportStatement, KeepsStateForNextUse, Model, Operator, Port, Ports,
-        Program, Reference, Settings, ThreadedResReq, Timeline)
+        Program, Reference, Settings, SettingType, ThreadedResReq, Timeline)
 from ymmsl.v0_2 import SettingValue
 
 
@@ -420,6 +420,17 @@ def test_check_consistent_settings(test_config3: Configuration) -> None:
 
     del test_config3.settings['submodel.c2[3].delta']
     test_config3.settings['alpha'] = [[1.2, 3.4], [5.6, 7.8]]
+
+    with pytest.raises(RuntimeError) as e:
+        test_config3.check_consistent()
+
+    assert len(str(e.value).split('\n')) == 2
+
+    test_config3.settings['alpha'] = 3.2
+
+    model2 = test_config3.models[Reference('supported_settings_test2')]
+    assert model2.supported_settings is not None
+    model2.supported_settings['delta'] = SettingType.INT
 
     with pytest.raises(RuntimeError) as e:
         test_config3.check_consistent()

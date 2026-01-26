@@ -196,7 +196,7 @@ def test_config3() -> Configuration:
             'supported_settings_test2',
             None,
             'description',
-            None,
+            SupportedSettings({'delta': 'bool'}),
             [
                 Component('c1', Ports(), 'description', False, 'b'),
                 Component('c2', Ports(), 'description', False, 'c', 10)],
