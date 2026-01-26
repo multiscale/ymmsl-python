@@ -156,12 +156,12 @@ def test_dump_multicast_conduits() -> None:
             '- repeat pad c2.in\n')
 
 
-def test_load_model(test_model_text: str) -> None:
+def test_load_model(model_text: str) -> None:
     load_model = yatiml.load_function(
             Model, Component, Conduit, ConduitFilter, Identifier, MulticastConduit,
             Ports, Reference, SettingType, SupportedSettings)
 
-    m = load_model(test_model_text)
+    m = load_model(model_text)
 
     assert m.name == 'test_model'
     assert m.ports is not None
@@ -182,12 +182,12 @@ def test_load_model(test_model_text: str) -> None:
     assert m.conduits[4].sender == Reference('bf2smc.out')
 
 
-def test_load_model_with_filters(test_model2_text: str) -> None:
+def test_load_model_with_filters(model_with_filters_text: str) -> None:
     load_model = yatiml.load_function(
             Model, Component, Conduit, ConduitFilter, Identifier, MulticastConduit,
             Ports, Reference, SettingType, SupportedSettings)
 
-    m = load_model(test_model2_text)
+    m = load_model(model_with_filters_text)
 
     assert m.name == 'test_model_conduit_filters'
     assert m.ports is not None
@@ -227,22 +227,23 @@ def test_load_model_with_invalid_filters() -> None:
         load_model(text)
 
 
-def test_dump_model(test_model: Model, test_model_text: str) -> None:
+def test_dump_model(model: Model, model_text: str) -> None:
     dumps_model = yatiml.dumps_function(
             Model, Component, Conduit, Identifier, MulticastConduit, Ports, Reference,
             SettingType, SupportedSettings)
 
-    text = dumps_model(test_model)
-    assert text == test_model_text
+    text = dumps_model(model)
+    assert text == model_text
 
 
-def test_dump_model_with_filters(test_model2: Model, test_model2_text: str) -> None:
+def test_dump_model_with_filters(
+        model_with_filters: Model, model_with_filters_text: str) -> None:
     dumps_model = yatiml.dumps_function(
             Model, Component, Conduit, ConduitFilter, Identifier, MulticastConduit,
             Ports, Reference, SettingType, SupportedSettings)
 
-    text = dumps_model(test_model2)
-    assert text == test_model2_text
+    text = dumps_model(model_with_filters)
+    assert text == model_with_filters_text
 
 
 def test_consistent() -> None:
