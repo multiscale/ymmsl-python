@@ -12,6 +12,7 @@ import yaml
 from ymmsl.v0_2.checkpoint import Checkpoints
 from ymmsl.v0_2.resources import ResourceRequirements
 from ymmsl.v0_2.identity import Reference
+from ymmsl.v0_2.implementation import Implementation    # noqa: F401
 from ymmsl.v0_2.imports import ImportStatement
 from ymmsl.v0_2.settings import Settings, SettingValue
 from ymmsl.v0_2.supported_settings import SettingType
@@ -188,12 +189,12 @@ class Configuration(Document):
         for model in self.models.values():
             model.check_consistent()
 
-        leaf_component_paths = self._leaf_component_paths()
-        errors.extend(self._check_consistent_ports(leaf_component_paths))
-        errors.extend(self._check_implementations_exist(leaf_component_paths))
-        errors.extend(self._check_custom_implementations(leaf_component_paths))
-        errors.extend(self._check_consistent_settings(leaf_component_paths))
-        errors.extend(self._check_resources(leaf_component_paths))
+        component_paths = self._component_paths()
+        errors.extend(self._check_implementations_exist(component_paths))
+        errors.extend(self._check_consistent_ports(component_paths))
+        errors.extend(self._check_custom_implementations(component_paths))
+        errors.extend(self._check_consistent_settings(component_paths))
+        errors.extend(self._check_resources(component_paths))
 
         # TODO: check that resources and implementation both do or don't MPI
         # TODO: no two implementations (programs or models) with the same name
@@ -220,20 +221,16 @@ class Configuration(Document):
 
         return list(top_models.values())
 
-    def _leaf_component_paths(self) -> Dict[Reference, Component]:
-        """Return component paths for leaf components.
-
-        A leaf component is one that either has no implementation, or has an
-        implementation that is a program. Components that are implemented by a model
-        are not leaf components, because there are components inside them.
+    def _component_paths(self) -> Dict[Reference, Component]:
+        """Return component paths for components.
 
         Component paths are of the form component1.component2, where component1 is a
         component inside the top-level model that has an implementation which is a
         submodel, and component2 is a component inside that submodel.
 
-        The returned dict maps all paths in the configuration that map to a leaf
-        component to the corresponding component. Note that there may be multiple paths
-        mapping to the same component object, if a submodel is used multiple times.
+        The returned dict maps all paths in the configuration that map to a component
+        with an implementation. Note that there may be multiple paths mapping to the
+        same component object, if a submodel is used multiple times.
         """
         result = dict()
         queue = [(m, Reference([])) for m in self._top_models()]
@@ -246,8 +243,7 @@ class Configuration(Document):
                 if impl is not None:
                     if impl in self.models:
                         queue.append((self.models[impl], path))
-                    else:
-                        result[path] = component
+                    result[path] = component
 
         return result
 
@@ -264,23 +260,31 @@ class Configuration(Document):
         errors = list()
 
         for path, component in component_paths.items():
-            impl = self.custom_implementations.get(path, component.implementation)
-            if impl is not None and impl in self.programs:
-                program = self.programs[impl]
-                if len(program.ports) > 0:
-                    for port_name in component.ports:
-                        if port_name not in program.ports:
+            impl_ref = self.custom_implementations.get(path, component.implementation)
+            if impl_ref is None:
+                continue
+
+            if impl_ref in self.programs:
+                impl = self.programs[impl_ref]  # type: Implementation
+            elif impl_ref in self.models:
+                impl = self.models[impl_ref]
+            else:
+                continue
+
+            if len(impl.ports) > 0:
+                for port_name in component.ports:
+                    if port_name not in impl.ports:
+                        errors.append(
+                                f'Component "{component.name}" declares port'
+                                f' "{port_name}" that its implementation'
+                                f' "{impl.name}" does not have')
+                    else:
+                        if component.ports[port_name] != impl.ports[port_name]:
                             errors.append(
                                     f'Component "{component.name}" declares port'
                                     f' "{port_name}" that its implementation'
-                                    f' "{program.name}" does not have')
-                        else:
-                            if component.ports[port_name] != program.ports[port_name]:
-                                errors.append(
-                                        f'Component "{component.name}" declares port'
-                                        f' "{port_name}" that its implementation'
-                                        f' "{program.name}" has, but with a different'
-                                        ' operator or timeline.')
+                                    f' "{impl.name}" has, but with a different'
+                                    ' operator or timeline.')
 
         return errors
 
@@ -291,7 +295,7 @@ class Configuration(Document):
         Components with implementation None are not considered broken.
 
         Args:
-            component_paths: The output of _leaf_component_paths above.
+            component_paths: The output of _component_paths above.
 
         Returns a list of errors, or an empty list if all is okay.
         """
@@ -311,7 +315,7 @@ class Configuration(Document):
         """Check that all custom implementations refer to a correct path.
 
         Args:
-            component_paths: The output of _leaf_component_paths above.
+            component_paths: The output of _component_paths above.
 
         Returns a list of errors, or an empty list if all is okay.
         """
@@ -331,7 +335,7 @@ class Configuration(Document):
         find a setting of the given type.
 
         Args:
-            component_paths: The output of _leaf_component_paths above.
+            component_paths: The output of _component_paths above.
 
         Returns a list of errors, or an empty list if all is okay.
         """
@@ -409,16 +413,20 @@ class Configuration(Document):
         return False
 
     def _check_resources(
-            self, leaf_component_paths: Dict[Reference, Component]) -> List[str]:
+            self, component_paths: Dict[Reference, Component]) -> List[str]:
         """Check that each component path has a corresponding resource request.
 
         Returns a list of errors, empty if all is ok.
         """
         errors = list()
-        for path, component in leaf_component_paths.items():
-            impl = self.custom_implementations.get(path, component.implementation)
-            if impl is not None and path not in self.resources:
+        for path, component in component_paths.items():
+            impl_ref = self.custom_implementations.get(path, component.implementation)
+            if impl_ref is None or impl_ref not in self.programs:
+                continue
+
+            if path not in self.resources:
                 errors.append(f'Component {path} is missing a resource request')
+
         return errors
 
     @classmethod

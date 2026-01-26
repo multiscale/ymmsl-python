@@ -439,11 +439,15 @@ def test_config9() -> Configuration:
                 Component(
                     'impl_ports_mismatch', Ports(f_init=['in'], o_f=['out']),
                     'description', False, 'ports1'),
+                Component(
+                    'model_as_impl', Ports(f_init=['inm'], o_f=['outm', 'out']),
+                    'description', False, 'implementations_test2'),
             ])
 
     model2 = Model(
             'implementations_test2',
-            None, 'description', None,
+            Ports(f_init=['inm1'], o_i=['outm'], o_f=['out']),
+            'description', None,
             [
                 Component(
                     'impl_also_wrong', Ports(o_i=['out'], s=['in']), 'description',
@@ -471,8 +475,8 @@ def test_config9() -> Configuration:
     resources = [
             ThreadedResReq(Reference('missing_implementation'), 1),
             ThreadedResReq(Reference('impl_ports_mismatch'), 1),
-            MPICoresResReq(Reference('impl_also_wrong'), 4, 4),
-            ThreadedResReq(Reference('impl_extra_ports'), 1),
+            MPICoresResReq(Reference('model_as_impl.impl_also_wrong'), 4, 4),
+            ThreadedResReq(Reference('model_as_impl.impl_extra_ports'), 1),
             ]
 
     return Configuration(
