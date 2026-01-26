@@ -5,10 +5,9 @@ import pytest
 
 from ymmsl.io import load, dump
 from ymmsl.v0_2 import (
-        BaseEnv, Configuration, Checkpoints, Component, Conduit, ExecutionModel,
-        Identifier, ImportStatement, KeepsStateForNextUse, Model, Operator, Port, Ports,
-        Program, Reference, Settings, SettingType, ThreadedResReq, Timeline)
-from ymmsl.v0_2 import SettingValue
+        Configuration, Checkpoints, Component, Conduit, Identifier, ImportStatement,
+        Model, Operator, Port, Ports, Program, Reference, Settings, SettingType,
+        SettingValue, ThreadedResReq, Timeline)
 
 
 Ref = Reference
@@ -95,8 +94,8 @@ def test_load_nil_settings() -> None:
     assert len(configuration.resources) == 0
 
 
-def test_load_custom_implementations(test_config10_text: str) -> None:
-    configuration = load(test_config10_text)
+def test_load_custom_implementations(config_custom_implementations_text: str) -> None:
+    configuration = load(config_custom_implementations_text)
 
     assert isinstance(configuration, Configuration)
     assert configuration.custom_implementations == {
@@ -106,9 +105,10 @@ def test_load_custom_implementations(test_config10_text: str) -> None:
 
 
 def test_dump_custom_implementations(
-        test_config10: Configuration, test_config10_text: str) -> None:
-    text = dump(test_config10)
-    assert text == test_config10_text
+        config_custom_implementations: Configuration,
+        config_custom_implementations_text: str) -> None:
+    text = dump(config_custom_implementations)
+    assert text == config_custom_implementations_text
 
 
 def test_load_no_settings() -> None:
@@ -132,37 +132,6 @@ def test_dump_empty_settings() -> None:
     assert text == (
             'ymmsl_version: v0.2\n'
             'description: \'\'\n')
-
-
-def test_load_programs(test_config5_text: str) -> None:
-    configuration = load(test_config5_text)
-
-    assert isinstance(configuration, Configuration)
-    assert len(configuration.programs) == 1
-    prog = configuration.programs[Reference('macro')]
-    assert prog.name == 'macro'
-    assert prog.ports.sending_port_names() == ['final', 'out1', 'out2']
-    assert prog.ports.receiving_port_names() == ['init', 'in1', 'in2']
-    assert prog.base_env == BaseEnv.LOGIN
-    assert prog.modules is not None
-    assert len(prog.modules) == 2
-    assert prog.modules[0] == 'gcc/13.3.0'
-    assert prog.modules[1] == 'FFTW/3.2.1'
-    assert prog.virtual_env == Path('/home/user/.venv')
-    assert len(prog.env) == 2
-    assert prog.env['SETTING'] == 'something'
-    assert prog.env['VARIABLE'] == '42'
-    assert prog.execution_model == ExecutionModel.INTELMPI
-    assert prog.executable == Path('python3')
-    assert prog.args == ['/home/user/script.py']
-    assert prog.can_share_resources is False
-    assert prog.keeps_state_for_next_use == KeepsStateForNextUse.HELPFUL
-
-
-def test_dump_programs(
-        test_config5: Configuration, test_config5_text: str) -> None:
-    text = dump(test_config5)
-    assert text == test_config5_text
 
 
 def test_load_resources() -> None:
@@ -332,12 +301,13 @@ def test_configuration_update_resources_override() -> None:
     assert base.resources[Ref('my.micro')] == resources3
 
 
-def test_configuration_update_checkpoint(test_config4: Configuration) -> None:
+def test_configuration_update_checkpoint(
+        config_update_checkpoint: Configuration) -> None:
     # Note: test_checkpoint.py tests merging of checkpoint definitions
     base = Configuration('', checkpoints=Checkpoints(
-            wallclock_time=test_config4.checkpoints.wallclock_time))
+            wallclock_time=config_update_checkpoint.checkpoints.wallclock_time))
     overlay = Configuration('', checkpoints=Checkpoints(
-            simulation_time=test_config4.checkpoints.simulation_time))
+            simulation_time=config_update_checkpoint.checkpoints.simulation_time))
 
     assert base.checkpoints.simulation_time == []
     assert overlay.checkpoints.wallclock_time == []
@@ -380,70 +350,76 @@ def test_configuration_update_resources_add() -> None:
     assert base.resources[Ref('my.micro')] == resources2
 
 
-def test_check_duplicate_implementations(test_config13: Configuration) -> None:
+def test_check_duplicate_implementations(
+        config_duplicate_implementations: Configuration) -> None:
     with pytest.raises(RuntimeError) as e:
-        test_config13.check_consistent()
+        config_duplicate_implementations.check_consistent()
 
     assert len(str(e.value).split('\n')) == 2
 
 
-def test_check_consistent_implementation_ports(test_config8: Configuration) -> None:
-    test_config8.check_consistent()
+def test_check_consistent_implementation_ports(
+        config_consistent_impl_ports: Configuration) -> None:
+    config_consistent_impl_ports.check_consistent()
 
 
-def test_check_inconsistent_implementation_ports(test_config9: Configuration) -> None:
+def test_check_inconsistent_implementation_ports(
+        config_inconsistent_impl_ports: Configuration) -> None:
     with pytest.raises(RuntimeError) as e:
-        test_config9.check_consistent()
+        config_inconsistent_impl_ports.check_consistent()
 
     assert len(str(e.value).split('\n')) == 8
 
 
-def test_check_consistent_custom_implementations(test_config11: Configuration) -> None:
-    test_config11.check_consistent()
+def test_check_consistent_custom_implementations(
+        config_consistent_custom_impls: Configuration) -> None:
+    config_consistent_custom_impls.check_consistent()
 
 
-def test_check_inconsistent_custom_impls(test_config12: Configuration) -> None:
+def test_check_inconsistent_custom_impls(
+        config_inconsistent_custom_impls: Configuration) -> None:
     with pytest.raises(RuntimeError) as e:
-        test_config12.check_consistent()
+        config_inconsistent_custom_impls.check_consistent()
 
     assert len(str(e.value).split('\n')) == 3
 
 
-def test_check_consistent_settings(test_config3: Configuration) -> None:
-    test_config3.check_consistent()
+def test_check_consistent_settings(config_consistent_settings: Configuration) -> None:
+    config_consistent_settings.check_consistent()
 
-    test_config3.settings['submodel.c2[3].delta'] = 10
+    config_consistent_settings.settings['submodel.c2[3].delta'] = 10
     with pytest.raises(RuntimeError) as e:
-        test_config3.check_consistent()
+        config_consistent_settings.check_consistent()
 
     assert len(str(e.value).split('\n')) == 2
 
-    del test_config3.settings['submodel.c2[3].delta']
-    test_config3.settings['alpha'] = [[1.2, 3.4], [5.6, 7.8]]
+    del config_consistent_settings.settings['submodel.c2[3].delta']
+    config_consistent_settings.settings['alpha'] = [[1.2, 3.4], [5.6, 7.8]]
 
     with pytest.raises(RuntimeError) as e:
-        test_config3.check_consistent()
+        config_consistent_settings.check_consistent()
 
     assert len(str(e.value).split('\n')) == 2
 
-    test_config3.settings['alpha'] = 3.2
+    config_consistent_settings.settings['alpha'] = 3.2
 
-    model2 = test_config3.models[Reference('supported_settings_test2')]
+    model2 = config_consistent_settings.models[Reference('supported_settings_test2')]
     assert model2.supported_settings is not None
     model2.supported_settings['delta'] = SettingType.INT
 
     with pytest.raises(RuntimeError) as e:
-        test_config3.check_consistent()
+        config_consistent_settings.check_consistent()
 
     assert len(str(e.value).split('\n')) == 2
 
 
-def test_check_consistent_resources(test_config6: Configuration) -> None:
-    test_config6.check_consistent()
+def test_check_consistent_resources(config_consistent_resources: Configuration) -> None:
+    config_consistent_resources.check_consistent()
 
 
-def test_check_inconsistent_resources(test_config7: Configuration) -> None:
+def test_check_inconsistent_resources(
+        config_inconsistent_resources: Configuration) -> None:
     with pytest.raises(RuntimeError) as e:
-        test_config7.check_consistent()
+        config_inconsistent_resources.check_consistent()
 
     assert len(str(e.value).split('\n')) == 4

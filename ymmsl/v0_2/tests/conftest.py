@@ -13,7 +13,7 @@ Ref = Reference
 
 
 @pytest.fixture
-def test_model() -> Model:
+def model() -> Model:
     return Model(
             'test_model',
             Ports('in', o_f='out'),
@@ -43,7 +43,7 @@ def test_model() -> Model:
 
 
 @pytest.fixture
-def test_model_text() -> str:
+def model_text() -> str:
     return (
             'name: test_model\n'
             'ports:\n'
@@ -93,7 +93,7 @@ def test_model_text() -> str:
 
 
 @pytest.fixture
-def test_model2() -> Model:
+def model_with_filters() -> Model:
     return Model(
             'test_model_conduit_filters',
             Ports(),
@@ -129,7 +129,7 @@ def test_model2() -> Model:
 
 
 @pytest.fixture
-def test_model2_text() -> str:
+def model_with_filters_text() -> str:
     return (
             'name: test_model_conduit_filters\n'
             'description: Test model for loading/dumping conduit filters\n'
@@ -179,76 +179,67 @@ def test_model2_text() -> str:
 
 
 @pytest.fixture
-def test_config3() -> Configuration:
-    model1 = Model(
-            'supported_settings_test',
-            None,
-            'description',
-            None,
-            [
-                Component('c1', Ports(), 'description', False, 'a'),
-                Component(
-                    'submodel', Ports(), 'description', False,
-                    'supported_settings_test2'),
-            ])
-
-    model2 = Model(
-            'supported_settings_test2',
-            None,
-            'description',
-            SupportedSettings({'delta': 'bool'}),
-            [
-                Component('c1', Ports(), 'description', False, 'b'),
-                Component('c2', Ports(), 'description', False, 'c', 10)],
-            [])
-
-    settings = Settings({
-        'alpha': 3.2,
-        'beta': 10,
-        'gamma': 'text',
-        'delta': 'text',
-        'submodel.delta': False,
-        'epsilon': [10, 11]})
-
-    program_a = Program(
-            'a', Ports(), 'a', SupportedSettings({'alpha': 'float', 'beta': 'int'}),
-            execution_model=ExecutionModel.DIRECT, executable=Path('a'))
-
-    program_b = Program(
-            'b', Ports(), 'b', SupportedSettings({'gamma': 'str'}),
-            execution_model=ExecutionModel.INTELMPI, executable=Path('b'))
-
-    program_c = Program(
-            'c', Ports(), 'c', SupportedSettings({'delta': 'bool'}),
-            execution_model=ExecutionModel.OPENMPI, executable=Path('c'))
-
-    programs = [program_a, program_b, program_c]
-
-    resources = [
-            ThreadedResReq(Reference('c1'), 1),
-            MPICoresResReq(Reference('submodel.c1'), 16),
-            MPICoresResReq(Reference('submodel.c2'), 4, 4)]
-
-    return Configuration(
-            'config3', None, [model1, model2], None, settings, programs, resources)
+def test_program() -> Program:
+    return Program(
+            'macro', Ports(['init'], ['out1', 'out2'], ['in1', 'in2'], ['final']),
+            'description', SupportedSettings({'alpha': 'float'}), BaseEnv.LOGIN,
+            ['gcc/13.3.0', 'FFTW/3.2.1'], Path('/home/user/.venv'),
+            {'SETTING': 'something', 'VARIABLE': '42'}, ExecutionModel.INTELMPI,
+            Path('python3'), ['/home/user/script.py'], None, False,
+            KeepsStateForNextUse.HELPFUL)
 
 
 @pytest.fixture
-def test_config4() -> Configuration:
+def test_program_text() -> str:
+    return (
+            'name: macro\n'
+            'ports:\n'
+            '  f_init: init\n'
+            '  o_i: out1 out2\n'
+            '  s: in1 in2\n'
+            '  o_f: final\n'
+            'description: description\n'
+            'supported_settings:\n'
+            '  alpha: float\n'
+            'base_env: login\n'
+            'modules:\n'
+            '- gcc/13.3.0\n'
+            '- FFTW/3.2.1\n'
+            'virtual_env: /home/user/.venv\n'
+            'env:\n'
+            '  SETTING: something\n'
+            '  VARIABLE: \'42\'\n'
+            'execution_model: intelmpi\n'
+            'executable: python3\n'
+            'args:\n'
+            '- /home/user/script.py\n'
+            'can_share_resources: false\n'
+            'keeps_state_for_next_use: helpful\n'
+            )
+
+
+@pytest.fixture
+def config_custom_implementations() -> Configuration:
+    return Configuration(
+            'testing io of custom implementations', None, None, {
+                Reference('c1'): Reference('program1'),
+                Reference('c2.init_model'): Reference('initer2')})
+
+
+@pytest.fixture
+def config_custom_implementations_text() -> str:
+    return (
+            'ymmsl_version: v0.2\n'
+            'description: testing io of custom implementations\n'
+            'custom_implementations:\n'
+            '  c1: program1\n'
+            '  c2.init_model: initer2\n'
+            )
+
+
+@pytest.fixture
+def config_update_checkpoint() -> Configuration:
     description = "Multiline description for\nthis workflow"
-    '''
-    implementations = [
-            Implementation(
-                Reference('isr2d.initial_conditions'), script='isr2d/bin/ic'),
-            Implementation(
-                Reference('isr2d.smc'), script='isr2d/bin/smc'),
-            Implementation(
-                Reference('isr2d.blood_flow'), script='isr2d/bin/bf'),
-            Implementation(
-                Reference('isr2d.smc2bf'), script='isr2d/bin/smc2bf.py'),
-            Implementation(
-                Reference('isr2d.bf2smc'), script='isr2d/bin/bf2smc.py')]
-    '''
     resources = [
             ThreadedResReq(Reference('ic'), 4),
             ThreadedResReq(Reference('smc'), 4),
@@ -272,134 +263,19 @@ def test_config4() -> Configuration:
 
 
 @pytest.fixture
-def test_config5() -> Configuration:
-    config = Configuration('Testing loading of programs')
-    config.programs = {
-            Reference('macro'): Program(
-                'macro', Ports(
-                    f_init='init', o_i=['out1', 'out2'], s=['in1', 'in2'],
-                    o_f=['final']),
-                'description',
-                SupportedSettings({'alpha': 'float'}),
-                BaseEnv.LOGIN,
-                ['gcc/13.3.0', 'FFTW/3.2.1'],
-                Path('/home/user/.venv'),
-                {'SETTING': 'something', 'VARIABLE': '42'},
-                ExecutionModel.INTELMPI,
-                Path('python3'),
-                ['/home/user/script.py'],
-                None,
-                False,
-                KeepsStateForNextUse.HELPFUL)}
-
-    return config
-
-
-@pytest.fixture
-def test_config5_text() -> str:
-    return (
-            'ymmsl_version: v0.2\n'
-            'description: Testing loading of programs\n'
-            'programs:\n'
-            '  macro:\n'
-            '    ports:\n'
-            '      f_init: init\n'
-            '      o_i: out1 out2\n'
-            '      s: in1 in2\n'
-            '      o_f: final\n'
-            '    description: description\n'
-            '    supported_settings:\n'
-            '      alpha: float\n'
-            '    base_env: login\n'
-            '    modules:\n'
-            '    - gcc/13.3.0\n'
-            '    - FFTW/3.2.1\n'
-            '    virtual_env: /home/user/.venv\n'
-            '    env:\n'
-            '      SETTING: something\n'
-            '      VARIABLE: \'42\'\n'
-            '    execution_model: intelmpi\n'
-            '    executable: python3\n'
-            '    args:\n'
-            '    - /home/user/script.py\n'
-            '    can_share_resources: false\n'
-            '    keeps_state_for_next_use: helpful\n'
-            )
-
-
-@pytest.fixture
-def test_config6() -> Configuration:
-    model1 = Model(
-            'resources_test',
-            None,
-            'description',
-            None,
-            [
-                Component('singlethreaded', Ports(), 'description', False, 'a'),
-                Component('multithreaded', Ports(), 'description', False, 'b'),
-                Component('submodel', Ports(), 'description', False, 'resources_test2'),
-            ])
-
-    model2 = Model(
-            'resources_test2',
-            None,
-            'description',
-            None,
-            [
-                Component('mpi_cores1', Ports(), 'description', False, 'c'),
-                Component('mpi_cores2', Ports(), 'description', False, 'd'),
-                Component('mpi_nodes1', Ports(), 'description', False, 'c'),
-                Component('mpi_nodes2', Ports(), 'description', False, 'd')],
-            [])
-
-    em = {
-            'a': ExecutionModel.DIRECT,
-            'b': ExecutionModel.DIRECT,
-            'c': ExecutionModel.OPENMPI,
-            'd': ExecutionModel.OPENMPI}
-    programs = [Program(x, script='script', execution_model=em[x]) for x in 'abcd']
-
-    resources = [
-            ThreadedResReq(Reference('singlethreaded'), 1),
-            ThreadedResReq(Reference('multithreaded'), 8),
-            MPICoresResReq(Reference('submodel.mpi_cores1'), 16),
-            MPICoresResReq(Reference('submodel.mpi_cores2'), 4, 4),
-            MPINodesResReq(Reference('submodel.mpi_nodes1'), 10, 16),
-            MPINodesResReq(Reference('submodel.mpi_nodes2'), 10, 4, 4)]
+def config_duplicate_implementations() -> Configuration:
+    model1 = Model('impl1', None, 'description')
+    model2 = Model('impl2', None, 'description')
+    program1 = Program('impl2', script='impl2')
+    program2 = Program('impl3', script='impl3')
 
     return Configuration(
-            'config6', None, [model1, model2], None, None, programs, resources)
+            'testing duplicate implementation names', None,
+            [model1, model2], None, None, [program1, program2])
 
 
 @pytest.fixture
-def test_config7() -> Configuration:
-    model1 = Model(
-            'got_resources', None, 'description', None,
-            [
-                Component('singlethreaded', Ports(), 'description', False, 'a'),
-                Component('with_mpi', Ports(), 'description', False, 'b'),
-                Component('without_mpi', Ports(), 'description', False, 'a'),
-            ])
-
-    model2 = Model(
-            'missing_resources', None, 'description', None,
-            [Component('singlethreaded2', Ports(), 'description', False, 'a')])
-
-    programs = [
-            Program('a', script='a', execution_model=ExecutionModel.DIRECT),
-            Program('b', script='b', execution_model=ExecutionModel.INTELMPI)]
-
-    resources = [
-            ThreadedResReq(Ref('singlethreaded'), 1),
-            ThreadedResReq(Ref('with_mpi'), 2),
-            MPICoresResReq(Ref('without_mpi'), 10)]
-
-    return Configuration(
-            'test_config7', None, [model1, model2], None, None, programs, resources)
-
-
-@pytest.fixture
-def test_config8() -> Configuration:
+def config_consistent_impl_ports() -> Configuration:
     model1 = Model(
             'implementations_test',
             None, 'description', None,
@@ -439,11 +315,11 @@ def test_config8() -> Configuration:
             ]
 
     return Configuration(
-            'config8', None, [model1, model2], None, None, programs, resources)
+            'impl_ports', None, [model1, model2], None, None, programs, resources)
 
 
 @pytest.fixture
-def test_config9() -> Configuration:
+def config_inconsistent_impl_ports() -> Configuration:
     model1 = Model(
             'implementations_test_broken',
             None, 'description', None,
@@ -498,30 +374,11 @@ def test_config9() -> Configuration:
             ]
 
     return Configuration(
-            'config9', None, [model1, model2], None, None, programs, resources)
+            'impl_ports', None, [model1, model2], None, None, programs, resources)
 
 
 @pytest.fixture
-def test_config10() -> Configuration:
-    return Configuration(
-            'testing io of custom implementations', None, None, {
-                Reference('c1'): Reference('program1'),
-                Reference('c2.init_model'): Reference('initer2')})
-
-
-@pytest.fixture
-def test_config10_text() -> str:
-    return (
-            'ymmsl_version: v0.2\n'
-            'description: testing io of custom implementations\n'
-            'custom_implementations:\n'
-            '  c1: program1\n'
-            '  c2.init_model: initer2\n'
-            )
-
-
-@pytest.fixture
-def test_config11() -> Configuration:
+def config_consistent_custom_impls() -> Configuration:
     model1 = Model(
             'test_model', None, 'description', None,
             [
@@ -549,7 +406,7 @@ def test_config11() -> Configuration:
 
 
 @pytest.fixture
-def test_config12() -> Configuration:
+def config_inconsistent_custom_impls() -> Configuration:
     model1 = Model(
             'test_model', None, 'description', None,
             [
@@ -573,12 +430,127 @@ def test_config12() -> Configuration:
 
 
 @pytest.fixture
-def test_config13() -> Configuration:
-    model1 = Model('impl1', None, 'description')
-    model2 = Model('impl2', None, 'description')
-    program1 = Program('impl2', script='impl2')
-    program2 = Program('impl3', script='impl3')
+def config_consistent_settings() -> Configuration:
+    model1 = Model(
+            'supported_settings_test',
+            None,
+            'description',
+            None,
+            [
+                Component('c1', Ports(), 'description', False, 'a'),
+                Component(
+                    'submodel', Ports(), 'description', False,
+                    'supported_settings_test2'),
+            ])
+
+    model2 = Model(
+            'supported_settings_test2',
+            None,
+            'description',
+            SupportedSettings({'delta': 'bool'}),
+            [
+                Component('c1', Ports(), 'description', False, 'b'),
+                Component('c2', Ports(), 'description', False, 'c', 10)],
+            [])
+
+    settings = Settings({
+        'alpha': 3.2,
+        'beta': 10,
+        'gamma': 'text',
+        'delta': 'text',
+        'submodel.delta': False,
+        'epsilon': [10, 11]})
+
+    program_a = Program(
+            'a', Ports(), 'a', SupportedSettings({'alpha': 'float', 'beta': 'int'}),
+            execution_model=ExecutionModel.DIRECT, executable=Path('a'))
+
+    program_b = Program(
+            'b', Ports(), 'b', SupportedSettings({'gamma': 'str'}),
+            execution_model=ExecutionModel.INTELMPI, executable=Path('b'))
+
+    program_c = Program(
+            'c', Ports(), 'c', SupportedSettings({'delta': 'bool'}),
+            execution_model=ExecutionModel.OPENMPI, executable=Path('c'))
+
+    programs = [program_a, program_b, program_c]
+
+    resources = [
+            ThreadedResReq(Reference('c1'), 1),
+            MPICoresResReq(Reference('submodel.c1'), 16),
+            MPICoresResReq(Reference('submodel.c2'), 4, 4)]
 
     return Configuration(
-            'testing duplicate implementation names', None,
-            [model1, model2], None, None, [program1, program2])
+            'config3', None, [model1, model2], None, settings, programs, resources)
+
+
+@pytest.fixture
+def config_consistent_resources() -> Configuration:
+    model1 = Model(
+            'resources_test',
+            None,
+            'description',
+            None,
+            [
+                Component('singlethreaded', Ports(), 'description', False, 'a'),
+                Component('multithreaded', Ports(), 'description', False, 'b'),
+                Component('submodel', Ports(), 'description', False, 'resources_test2'),
+            ])
+
+    model2 = Model(
+            'resources_test2',
+            None,
+            'description',
+            None,
+            [
+                Component('mpi_cores1', Ports(), 'description', False, 'c'),
+                Component('mpi_cores2', Ports(), 'description', False, 'd'),
+                Component('mpi_nodes1', Ports(), 'description', False, 'c'),
+                Component('mpi_nodes2', Ports(), 'description', False, 'd')],
+            [])
+
+    em = {
+            'a': ExecutionModel.DIRECT,
+            'b': ExecutionModel.DIRECT,
+            'c': ExecutionModel.OPENMPI,
+            'd': ExecutionModel.OPENMPI}
+    programs = [Program(x, script='script', execution_model=em[x]) for x in 'abcd']
+
+    resources = [
+            ThreadedResReq(Reference('singlethreaded'), 1),
+            ThreadedResReq(Reference('multithreaded'), 8),
+            MPICoresResReq(Reference('submodel.mpi_cores1'), 16),
+            MPICoresResReq(Reference('submodel.mpi_cores2'), 4, 4),
+            MPINodesResReq(Reference('submodel.mpi_nodes1'), 10, 16),
+            MPINodesResReq(Reference('submodel.mpi_nodes2'), 10, 4, 4)]
+
+    return Configuration(
+            'consistent_resources', None, [model1, model2], None, None, programs,
+            resources)
+
+
+@pytest.fixture
+def config_inconsistent_resources() -> Configuration:
+    model1 = Model(
+            'got_resources', None, 'description', None,
+            [
+                Component('singlethreaded', Ports(), 'description', False, 'a'),
+                Component('with_mpi', Ports(), 'description', False, 'b'),
+                Component('without_mpi', Ports(), 'description', False, 'a'),
+            ])
+
+    model2 = Model(
+            'missing_resources', None, 'description', None,
+            [Component('singlethreaded2', Ports(), 'description', False, 'a')])
+
+    programs = [
+            Program('a', script='a', execution_model=ExecutionModel.DIRECT),
+            Program('b', script='b', execution_model=ExecutionModel.INTELMPI)]
+
+    resources = [
+            ThreadedResReq(Ref('singlethreaded'), 1),
+            ThreadedResReq(Ref('with_mpi'), 2),
+            MPICoresResReq(Ref('without_mpi'), 10)]
+
+    return Configuration(
+            'test_config', None, [model1, model2], None, None, programs, resources)
