@@ -377,7 +377,7 @@ def test_check_inconsistent_implementation_ports(test_config9: Configuration) ->
     with pytest.raises(RuntimeError) as e:
         test_config9.check_consistent()
 
-    assert len(str(e.value).split('\n')) == 5
+    assert len(str(e.value).split('\n')) == 6
 
 
 def test_check_consistent_custom_implementations(test_config11: Configuration) -> None:
@@ -388,7 +388,7 @@ def test_check_inconsistent_custom_impls(test_config12: Configuration) -> None:
     with pytest.raises(RuntimeError) as e:
         test_config12.check_consistent()
 
-    assert len(str(e.value).split('\n')) == 2
+    assert len(str(e.value).split('\n')) == 3
 
 
 def test_check_consistent_settings(test_config3: Configuration) -> None:

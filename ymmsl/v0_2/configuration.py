@@ -173,9 +173,10 @@ class Configuration(Document):
         This checks:
 
             - Whether all models are consistent, via Model.check_consistent()
-            - Whether ports on components are consistent with their implementations
-            - Whether custom implementations have a component they apply to
-            - Whether settings are consistent with supported_settings, if specified
+            - Whether all given component implementations exist
+            - Whether all ports on components are consistent with their implementations
+            - Whether all custom implementations have a component they apply to
+            - Whether all settings are consistent with supported_settings, if specified
             - That resources have been requested for each component that has an
               implementation
 
@@ -189,6 +190,7 @@ class Configuration(Document):
 
         leaf_component_paths = self._leaf_component_paths()
         errors.extend(self._check_consistent_ports(leaf_component_paths))
+        errors.extend(self._check_implementations_exist(leaf_component_paths))
         errors.extend(self._check_custom_implementations(leaf_component_paths))
         errors.extend(self._check_consistent_settings(leaf_component_paths))
         errors.extend(self._check_resources(leaf_component_paths))
@@ -282,9 +284,37 @@ class Configuration(Document):
 
         return errors
 
+    def _check_implementations_exist(
+            self, component_paths: Dict[Reference, Component]) -> List[str]:
+        """Check that all components with an implementation have a valid one.
+
+        Components with implementation None are not considered broken.
+
+        Args:
+            component_paths: The output of _leaf_component_paths above.
+
+        Returns a list of errors, or an empty list if all is okay.
+        """
+        errors = list()
+        for path, component in component_paths.items():
+            impl = self.custom_implementations.get(path, component.implementation)
+            if impl is not None:
+                if impl not in self.models and impl not in self.programs:
+                    errors.append(
+                            f'Component "{path}" has implementation "{impl}", but no'
+                            ' program or model with that name was given. Did you forget'
+                            ' to import it?')
+        return errors
+
     def _check_custom_implementations(
             self, component_paths: Dict[Reference, Component]) -> List[str]:
-        """Check that all custom implementations refer to a correct path."""
+        """Check that all custom implementations refer to a correct path.
+
+        Args:
+            component_paths: The output of _leaf_component_paths above.
+
+        Returns a list of errors, or an empty list if all is okay.
+        """
         errors = list()
         for path in self.custom_implementations:
             if path not in component_paths:
