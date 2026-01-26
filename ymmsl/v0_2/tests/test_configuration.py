@@ -414,5 +414,7 @@ def test_check_consistent_resources(test_config6: Configuration) -> None:
 
 
 def test_check_inconsistent_resources(test_config7: Configuration) -> None:
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError) as e:
         test_config7.check_consistent()
+
+    assert len(str(e.value).split('\n')) == 4

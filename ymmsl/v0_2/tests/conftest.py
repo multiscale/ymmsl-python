@@ -352,7 +352,12 @@ def test_config6() -> Configuration:
                 Component('mpi_nodes2', Ports(), 'description', False, 'd')],
             [])
 
-    programs = [Program(x, script='script') for x in 'abcd']
+    em = {
+            'a': ExecutionModel.DIRECT,
+            'b': ExecutionModel.DIRECT,
+            'c': ExecutionModel.OPENMPI,
+            'd': ExecutionModel.OPENMPI}
+    programs = [Program(x, script='script', execution_model=em[x]) for x in 'abcd']
 
     resources = [
             ThreadedResReq(Reference('singlethreaded'), 1),
@@ -370,14 +375,27 @@ def test_config6() -> Configuration:
 def test_config7() -> Configuration:
     model1 = Model(
             'got_resources', None, 'description', None,
-            [Component('singlethreaded', Ports(), 'description', False, 'a')])
+            [
+                Component('singlethreaded', Ports(), 'description', False, 'a'),
+                Component('with_mpi', Ports(), 'description', False, 'b'),
+                Component('without_mpi', Ports(), 'description', False, 'a'),
+            ])
+
     model2 = Model(
             'missing_resources', None, 'description', None,
-            [Component('singlethreaded', Ports(), 'description', False, 'b')])
-    resources = [ThreadedResReq(Ref('got_resources.singlethreaded'), 1)]
+            [Component('singlethreaded2', Ports(), 'description', False, 'a')])
+
+    programs = [
+            Program('a', script='a', execution_model=ExecutionModel.DIRECT),
+            Program('b', script='b', execution_model=ExecutionModel.INTELMPI)]
+
+    resources = [
+            ThreadedResReq(Ref('singlethreaded'), 1),
+            ThreadedResReq(Ref('with_mpi'), 2),
+            MPICoresResReq(Ref('without_mpi'), 10)]
 
     return Configuration(
-            'test_config7', None, [model1, model2], None, None, None, resources)
+            'test_config7', None, [model1, model2], None, None, programs, resources)
 
 
 @pytest.fixture

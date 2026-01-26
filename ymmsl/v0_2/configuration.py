@@ -10,7 +10,8 @@ import yatiml
 import yaml
 
 from ymmsl.v0_2.checkpoint import Checkpoints
-from ymmsl.v0_2.resources import ResourceRequirements
+from ymmsl.v0_2.execution import ExecutionModel
+from ymmsl.v0_2.resources import MPICoresResReq, MPINodesResReq, ResourceRequirements
 from ymmsl.v0_2.identity import Reference
 from ymmsl.v0_2.implementation import Implementation    # noqa: F401
 from ymmsl.v0_2.imports import ImportStatement
@@ -196,7 +197,6 @@ class Configuration(Document):
         errors.extend(self._check_consistent_settings(component_paths))
         errors.extend(self._check_resources(component_paths))
 
-        # TODO: check that resources and implementation both do or don't MPI
         # TODO: no two implementations (programs or models) with the same name
 
         if errors:
@@ -425,7 +425,28 @@ class Configuration(Document):
                 continue
 
             if path not in self.resources:
-                errors.append(f'Component {path} is missing a resource request')
+                errors.append(f'Component "{path}" is missing a resource request')
+            else:
+                impl = self.programs[impl_ref]
+                em_mpi = impl.execution_model in (
+                        ExecutionModel.OPENMPI, ExecutionModel.INTELMPI,
+                        ExecutionModel.SRUNMPI)
+
+                em_nompi = impl.execution_model is ExecutionModel.DIRECT
+
+                res_mpi = isinstance(
+                        self.resources[path], (MPICoresResReq, MPINodesResReq))
+
+                if em_mpi and not res_mpi:
+                    errors.append(
+                            f'Component "{path}" has implementation "{impl_ref}",'
+                            ' which has an MPI execution model, but the resources'
+                            ' requested for it do not ask for MPI processes.')
+                elif res_mpi and em_nompi:
+                    errors.append(
+                            f'Component "{path}" has implementation "{impl_ref}",'
+                            ' which has a non-MPI execution model, but the resources'
+                            ' requested for it ask for MPI processes.')
 
         return errors
 
