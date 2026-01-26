@@ -31,6 +31,17 @@ def test_configuration() -> None:
     assert len(config.settings) == 0
 
 
+def test_create_duplicate_models() -> None:
+    with pytest.raises(ValueError):
+        Configuration('desc', models=[Model('a'), Model('a')])
+
+
+def test_create_duplicate_programs() -> None:
+    with pytest.raises(ValueError):
+        Configuration(
+                'desc', programs=[Program('p', script='p'), Program('p', script='q')])
+
+
 def test_load_models() -> None:
     text = (
             'ymmsl_version: v0.2\n'
@@ -367,6 +378,13 @@ def test_configuration_update_resources_add() -> None:
     assert len(base.resources) == 2
     assert base.resources[Ref('my.macro')] == resources1
     assert base.resources[Ref('my.micro')] == resources2
+
+
+def test_check_duplicate_implementations(test_config13: Configuration) -> None:
+    with pytest.raises(RuntimeError) as e:
+        test_config13.check_consistent()
+
+    assert len(str(e.value).split('\n')) == 2
 
 
 def test_check_consistent_implementation_ports(test_config8: Configuration) -> None:

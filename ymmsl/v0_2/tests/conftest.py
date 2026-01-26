@@ -570,3 +570,15 @@ def test_config12() -> Configuration:
                 Reference('cl'): Reference('program1'),
                 Reference('c2.init_model'): Reference('initer2')},
             None, None, resources)
+
+
+@pytest.fixture
+def test_config13() -> Configuration:
+    model1 = Model('impl1', None, 'description')
+    model2 = Model('impl2', None, 'description')
+    program1 = Program('impl2', script='impl2')
+    program2 = Program('impl3', script='impl3')
+
+    return Configuration(
+            'testing duplicate implementation names', None,
+            [model1, model2], None, None, [program1, program2])

@@ -76,6 +76,14 @@ class Configuration(Document):
             checkpoints: When each component should create a snapshot
             resume: What snapshot each component should resume from
         """
+        def check_duplicate_impl_names(
+                typs: str, impls: abc.Sequence[Implementation]) -> None:
+            for i, impl in enumerate(impls):
+                for j in range(i):
+                    if impls[j].name == impl.name:
+                        raise ValueError(
+                                f'Found two {typs} that are both named "{impl.name}"')
+
         self.description = description
 
         if imports is None:
@@ -86,6 +94,7 @@ class Configuration(Document):
         if models is None:
             self.models: MutableMapping[Reference, Model] = dict()
         elif isinstance(models, abc.Sequence):
+            check_duplicate_impl_names('models', models)
             self.models = {model.name: model for model in models}
         elif isinstance(models, Model):
             self.models = {models.name: models}
@@ -107,6 +116,7 @@ class Configuration(Document):
         if programs is None:
             self.programs: MutableMapping[Reference, Program] = dict()
         elif isinstance(programs, abc.Sequence):
+            check_duplicate_impl_names('programs', programs)
             self.programs = {prog.name: prog for prog in programs}
         else:
             self.programs = programs
@@ -190,6 +200,8 @@ class Configuration(Document):
         for model in self.models.values():
             model.check_consistent()
 
+        errors.extend(self._check_duplicate_implementations())
+
         component_paths = self._component_paths()
         errors.extend(self._check_implementations_exist(component_paths))
         errors.extend(self._check_consistent_ports(component_paths))
@@ -246,6 +258,23 @@ class Configuration(Document):
                     result[path] = component
 
         return result
+
+    def _check_duplicate_implementations(self) -> List[str]:
+        """Check that each implementation has a unique name.
+
+        Duplicates within programs and models are already checked in __init__(), so all
+        we need to look for here is conflicts between them.
+
+        Returns a list of errors, or an empty list if all is okay.
+        """
+        errors = list()
+        for program_name in self.programs:
+            for model_name in self.models:
+                if program_name == model_name:
+                    errors.append(
+                            f'There is a program named "{program_name}" and also a'
+                            f' model named "{model_name}", which is not allowed')
+        return errors
 
     def _check_consistent_ports(
             self, component_paths: Dict[Reference, Component]) -> List[str]:
