@@ -370,18 +370,29 @@ class Configuration(Document):
         Returns a list of errors, or an empty list if all is okay.
         """
         errors = list()
+
         for path, component in component_paths.items():
             impl = self.custom_implementations.get(path, component.implementation)
             if impl is None:
                 continue
 
+            errs = list()
             if impl in self.programs:
                 program = self.programs[impl]
                 if program.supported_settings:
                     for name, typ in program.supported_settings:
-                        errors.extend(
+                        errs.extend(
                                 self._check_supported_setting(
                                     component, path, name, typ, program))
+
+            if len(errs) > 7:
+                errs = errs[:6]
+                n = len(errs) - 6
+                errs.append(
+                        f'Another {n} inconsistent settings were found. Is "{impl}"'
+                        ' the correct implementation for component "{component.name}"?')
+
+            errors.extend(errs)
 
         return errors
 
