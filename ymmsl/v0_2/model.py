@@ -1,9 +1,7 @@
 from collections import OrderedDict
 from enum import Enum
-from itertools import starmap
-from typing import Any, cast, List, Optional, Sequence, Tuple, Union
+from typing import Any, cast, List, Optional, Sequence, Union
 
-import yaml
 import yatiml
 
 from ymmsl.v0_2.component import Component
@@ -73,6 +71,11 @@ class Conduit:
     - component.port
     - namespace.component.port (or several namespace prefixes)
 
+    As a special feature, the receiver may be a whitespace-separated list of words, in
+    which case the last of these words is the receiver, and the words before that will
+    be interpreted as filters, using the (lowercase) values from ConduitFilter. In this
+    case, the filters argument must be absent or empty.
+
     Attributes:
         sender: The sending port that this conduit is connected to.
         receiver: The receiving port that this conduit is connected to.
@@ -85,11 +88,22 @@ class Conduit:
 
         Args:
             sender: The sending component and port, as a Reference.
-            receiver: The receiving component and port, as a Reference.
+            receiver: The receiving component and port, as a Reference, possibly
+                preceded by filters.
             filters: A list of conduit filters to apply
         """
         self.sender = Reference(sender)
-        self.receiver = Reference(receiver)
+
+        recv_pieces = receiver.rsplit(maxsplit=1)
+        if len(recv_pieces) < 2:
+            self.receiver = Reference(receiver)
+        else:
+            if filters:
+                raise ValueError(
+                        'Cannot specify filters both in receiver and in filters')
+
+            filters = recv_pieces[0]
+            self.receiver = Reference(recv_pieces[1])
 
         if isinstance(filters, list):
             self.filters = filters
@@ -161,11 +175,29 @@ class Conduit:
         """Returns the identity of the receiving port."""
         return cast(Identifier, self.receiver[-1])
 
+    def _filters_receiver(self) -> str:
+        """Return the filters + receiver string for YAML.
+
+        Beware! This gets called by Model._conduits_for_export, despite the underscore.
+        """
+        result = str(self.receiver)
+
+        filter_strs = [f.value for f in self.filters]
+        if filter_strs:
+            result = ' '.join(filter_strs) + ' ' + result
+        return result
+
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         filters = node.get_attribute('filters')
         filter_strs = [v.value for v in filters.yaml_node.value]
-        node.set_attribute('filters', ' '.join(filter_strs))
+
+        if filter_strs:
+            recv_str = cast(str, node.get_attribute('receiver').get_value())
+            node.set_attribute(
+                    'receiver', ' '.join(filter_strs) + ' ' + recv_str)
+
+        node.remove_attribute('filters')
 
 
 class MulticastConduit:
@@ -183,46 +215,19 @@ class MulticastConduit:
     Once parsed and populated in :class:`Model`, a multicast is identified by
     two or more conduits with the same :attr:`Conduit.sender`.
     """
-    def __init__(
-            self, sender: str,
-            receiver: Union[List[str], List[Tuple[str, List[ConduitFilter]]]]) -> None:
+    def __init__(self, sender: str, receiver: List[str]) -> None:
         """Create a Multicast Conduit.
 
         Args:
             sender: The sending component and port, as a Reference.
-            receiver: The receiving components and ports, as a list of
-                    References, or as a list of tuples of receiver Reference and conduit
-                    filters.
+            receiver: The receiving components and ports, as a list of strings
+                containing (optionally) filters and the receiver.
         """
         self.sender = sender
         # note: attribute must be called receiver to transparently work with
         # seq_attribute_to_map and map_attribute_to_seq in
         # Model._yatiml_savorize and Model._yatiml_sweeten
-
-        def as_recv_string(cmp_port: str, filters: List[ConduitFilter]) -> str:
-            result = ' '.join((f.value for f in filters))
-            if result:
-                result += ' '
-            return result + cmp_port
-
-        def as_recv_filters(recv: str) -> Tuple[str, List[ConduitFilter]]:
-            parts = recv.split()
-            return parts[-1], [ConduitFilter(p) for p in parts[:-1]]
-
-        if isinstance(receiver[0], str):
-            self.receiver: List[str] = cast(List[str], receiver)
-            self._conduits = [
-                    Conduit(self.sender, *as_recv_filters(recv))
-                    for recv in self.receiver]
-        else:
-            recv_list = cast(List[Tuple[str, List[ConduitFilter]]], receiver)
-            self.receiver = list(starmap(as_recv_string, recv_list))
-            self._conduits = [
-                    Conduit(self.sender, cmp_port, filters)
-                    for cmp_port, filters in recv_list]
-
-    def _yatiml_init(self, sender: str, receiver: List[str]) -> None:
-        MulticastConduit.__init__(self, sender, receiver)
+        self.receiver = receiver
 
     def as_conduits(self) -> List[Conduit]:
         """Retrieve the conduits that are part of this multicast conduit.
@@ -230,7 +235,7 @@ class MulticastConduit:
         Returns:
             A list of conduits, one conduit for each receiver.
         """
-        return self._conduits
+        return [Conduit(self.sender, recv_str) for recv_str in self.receiver]
 
 
 AnyConduit = Union[Conduit, MulticastConduit]
@@ -410,7 +415,7 @@ class Model(Implementation):
             else:
                 conduit_list.append(MulticastConduit(
                         str(sender),
-                        [str(conduit.receiver) for conduit in conduits]))
+                        [str(conduit._filters_receiver()) for conduit in conduits]))
         return conduit_list
 
     def _yatiml_attributes(self) -> OrderedDict:
@@ -430,64 +435,13 @@ class Model(Implementation):
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         node.map_attribute_to_seq('components', 'name')
-
-        if node.has_attribute('conduits'):
-            node.map_attribute_to_seq('conduits', 'sender', 'receiver')
-            # receiver now includes any filters
-            conduits = node.get_attribute('conduits')
-            for conduit_mapping in conduits.yaml_node.value:
-                # get this conduit's mapping into a dict for easier working
-                entries = {
-                        key.value: value.value for key, value in conduit_mapping.value}
-
-                if 'filters' not in entries and 'receiver' in entries:
-                    filters, _, receiver = entries['receiver'].rpartition(' ')
-                    entries['filters'] = filters
-                    entries['receiver'] = receiver
-
-                    # update the list-of-tuples with new receiver value
-                    for i, (key_node, value_node) in enumerate(conduit_mapping.value):
-                        if key_node.value in entries:
-                            value_node.value = entries[key_node.value]
-
-                        # save the location of the filters/receiver text
-                        if key_node.value == 'receiver':
-                            start_mark = value_node.start_mark
-                            end_mark = value_node.end_mark
-
-                    # add new filters key-value pair, pointing to approximately the
-                    # right location in the input file in case of error
-                    conduit_mapping.value.append((
-                        yaml.ScalarNode(
-                            'tag:yaml.org,2002:str', 'filters', start_mark, end_mark),
-                        yaml.ScalarNode(
-                            'tag:yaml.org,2002:str', filters, start_mark, end_mark)))
+        node.map_attribute_to_seq('conduits', 'sender', 'receiver')
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        if len(node.get_attribute('supported_settings').yaml_node.value) == 0:
-            node.remove_attribute('supported_settings')
-
         node.seq_attribute_to_map('components', 'name',)
 
         if len(node.get_attribute('conduits').seq_items()) == 0:
             node.remove_attribute('conduits')
-
-        # fold conduit filters into the receiver line
-        conduits = node.get_attribute('conduits')
-        for conduit_node in conduits.yaml_node.value:
-            # make key/value dict for easier manipulation
-            entries = {
-                    key_node.value: val_node.value
-                    for key_node, val_node in conduit_node.value}
-
-            if entries['filters'] != '':
-                entries['receiver'] = f'{entries["filters"]} {entries["receiver"]}'
-
-            # update the sequence with new values and delete filters
-            for key_node, value_node in conduit_node.value:
-                value_node.value = entries[key_node.value]
-
-            del conduit_node.value[-1]      # filters is the last attribute
 
         node.seq_attribute_to_map('conduits', 'sender', 'receiver')

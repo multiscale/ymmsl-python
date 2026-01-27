@@ -58,3 +58,8 @@ class Implementation:
             ynode.style = '|'
             if not ynode.value.endswith('\n'):
                 ynode.value += '\n'
+
+        if len(node.get_attribute('supported_settings').yaml_node.value) == 0:
+            node.remove_attribute('supported_settings')
+
+        node.remove_attributes_with_default_values(cls)

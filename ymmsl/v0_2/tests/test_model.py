@@ -93,8 +93,7 @@ def test_dump_conduit() -> None:
 
     assert text == (
             'sender: c1.out\n'
-            'receiver: c2.in\n'
-            'filters: last repeat\n')
+            'receiver: last repeat c2.in\n')
 
 
 def test_multicast_conduits() -> None:
@@ -138,16 +137,15 @@ def test_load_multicast_invalid_filter() -> None:
             '- convert_data_format c2.in\n'
             )
 
-    with pytest.raises(yatiml.RecognitionError):
-        load(text)
+    mc_conduit = load(text)
+    with pytest.raises(RuntimeError):
+        mc_conduit.as_conduits()
 
 
 def test_dump_multicast_conduits() -> None:
     dump = yatiml.dumps_function(MulticastConduit)
 
-    conduit = MulticastConduit(
-            'init.out', [
-                ('c1.in', []), ('c2.in', [ConduitFilter.REPEAT, ConduitFilter.PAD])])
+    conduit = MulticastConduit('init.out', ['c1.in', 'repeat pad c2.in'])
     text = dump(conduit)
 
     assert text == (
@@ -181,6 +179,20 @@ def test_load_model(model_text: str) -> None:
     assert m.conduits[2].receiver == Reference('bf.initial_domain')
     assert m.conduits[3].receiver == Reference('bf2smc.in')
     assert m.conduits[4].sender == Reference('bf2smc.out')
+
+
+def test_load_model_with_multicast_conduits(model_multicast_text: str) -> None:
+
+    load_model = yatiml.load_function(
+            Model, Component, Conduit, ConduitFilter, Identifier, MulticastConduit,
+            Ports, Reference, SettingType, SupportedSettings)
+
+    m = load_model(model_multicast_text)
+
+    assert m.conduits[0].sender == 'a.out'
+    assert m.conduits[0].receiver == 'b.in'
+    assert m.conduits[1].sender == 'a.out'
+    assert m.conduits[1].receiver == 'c.in'
 
 
 def test_load_model_with_filters(model_with_filters_text: str) -> None:
@@ -235,6 +247,17 @@ def test_dump_model(model: Model, model_text: str) -> None:
 
     text = dumps_model(model)
     assert text == model_text
+
+
+def test_dump_model_with_multicast_conduits(
+        model_multicast: Model, model_multicast_text: str) -> None:
+
+    dumps_model = yatiml.dumps_function(
+            Model, Component, Conduit, Identifier, Implementation, MulticastConduit,
+            Ports, Reference, SettingType, SupportedSettings)
+
+    text = dumps_model(model_multicast)
+    assert text == model_multicast_text
 
 
 def test_dump_model_with_filters(
