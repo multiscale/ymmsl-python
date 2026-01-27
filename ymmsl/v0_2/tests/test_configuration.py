@@ -126,12 +126,13 @@ def test_load_no_settings() -> None:
 
 
 def test_dump_empty_settings() -> None:
-    configuration = Configuration('', None, None, Settings())
+    configuration = Configuration('empty settings!', None, None, Settings())
     text = dump(configuration)
 
     assert text == (
             'ymmsl_version: v0.2\n'
-            'description: \'\'\n')
+            'description: |\n'
+            '  empty settings!\n')
 
 
 def test_load_resources() -> None:
@@ -159,12 +160,13 @@ def test_dump_resources() -> None:
             ThreadedResReq(Ref('macro'), 10),
             ThreadedResReq(Ref('micro'), 1)]
 
-    configuration = Configuration('', resources=resources)
+    configuration = Configuration('dumping resources', resources=resources)
 
     text = dump(configuration)
     assert text == (
             'ymmsl_version: v0.2\n'
-            'description: \'\'\n'
+            'description: |\n'
+            '  dumping resources\n'
             'resources:\n'
             '  macro:\n'
             '    threads: 10\n'
@@ -174,9 +176,9 @@ def test_dump_resources() -> None:
 
 
 def test_configuration_update_description() -> None:
-    description1 = ''
-    description2 = 'single line description'
-    description3 = 'multiline\ndescription'
+    description1 = '\n'
+    description2 = 'single line description\n'
+    description3 = 'multiline\ndescription\n'
 
     overlay1 = Configuration(description=description1)
     overlay2 = Configuration(description=description2)
@@ -185,16 +187,16 @@ def test_configuration_update_description() -> None:
     base = Configuration(description=description1)
 
     base.update(overlay1)
-    assert base.description == ''
+    assert base.description == '\n'
 
     base.update(overlay2)
     assert base.description == description2
 
     base.update(overlay3)
-    assert base.description == description2 + '\n\n' + description3
+    assert base.description == description2 + '\n' + description3
 
     base.update(overlay1)
-    assert base.description == description2 + '\n\n' + description3
+    assert base.description == description2 + '\n' + description3
 
 
 def test_configuration_update_model_error() -> None:

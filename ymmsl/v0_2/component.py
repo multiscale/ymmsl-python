@@ -1,5 +1,6 @@
-from typing import List, Optional, Union
+from typing import cast, List, Optional, Union
 
+import yaml
 import yatiml
 
 from ymmsl.v0_2.ports import Ports
@@ -48,7 +49,6 @@ class Component:
         self.name = Identifier(name)
         self.ports = ports
         self.description = description
-
         self.optional = optional
 
         if implementation is not None:
@@ -126,15 +126,23 @@ class Component:
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        ports_node = node.get_attribute('ports').yaml_node
+        if ports_node.tag == 'tag:yaml.org,2002:null':
+            node.remove_attribute('ports')
+
+        descr = node.get_attribute('description')
+        if descr.is_scalar(str):
+            # output in block style
+            ynode = cast(yaml.ScalarNode, descr.yaml_node)
+            ynode.style = '|'
+            if not ynode.value.endswith('\n'):
+                ynode.value += '\n'
+
         multiplicity = node.get_attribute('multiplicity')
         items = multiplicity.seq_items()
         if len(items) == 0:
             node.remove_attribute('multiplicity')
         elif len(items) == 1:
             node.set_attribute('multiplicity', items[0].get_value())
-
-        ports_node = node.get_attribute('ports').yaml_node
-        if ports_node.tag == 'tag:yaml.org,2002:null':
-            node.remove_attribute('ports')
 
         node.remove_attributes_with_default_values(cls)

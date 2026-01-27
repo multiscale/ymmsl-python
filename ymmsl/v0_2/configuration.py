@@ -147,10 +147,12 @@ class Configuration(Document):
         Args:
             overlay: A configuration to overlay onto this one.
         """
-        if not self.description:
+        if not self.description.strip():
             self.description = overlay.description
-        elif overlay.description:
-            self.description += '\n\n' + overlay.description
+        elif overlay.description.strip():
+            if not self.description.endswith('\n'):
+                self.description += '\n'
+            self.description += '\n' + overlay.description
 
         if not self.imports:
             self.imports = overlay.imports
@@ -515,9 +517,12 @@ class Configuration(Document):
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         descr = node.get_attribute('description')
-        if descr.is_scalar(str) and '\n' in cast(str, descr.get_value()):
-            # output multi-line string in literal mode
-            cast(yaml.ScalarNode, descr.yaml_node).style = '|'
+        if descr.is_scalar(str):
+            # output in block style
+            ynode = cast(yaml.ScalarNode, descr.yaml_node)
+            ynode.style = '|'
+            if not ynode.value.endswith('\n'):
+                ynode.value += '\n'
 
         imports = node.get_attribute('imports')
         if imports.is_sequence() and imports.is_empty():

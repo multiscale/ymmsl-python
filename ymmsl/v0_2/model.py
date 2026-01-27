@@ -465,13 +465,10 @@ class Model(Implementation):
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        node.seq_attribute_to_map('components', 'name',)
-
-        if len(node.get_attribute('ports').yaml_node.value) == 0:
-            node.remove_attribute('ports')
-
         if len(node.get_attribute('supported_settings').yaml_node.value) == 0:
             node.remove_attribute('supported_settings')
+
+        node.seq_attribute_to_map('components', 'name',)
 
         if len(node.get_attribute('conduits').seq_items()) == 0:
             node.remove_attribute('conduits')

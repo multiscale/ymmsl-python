@@ -1,4 +1,5 @@
 from ymmsl.v0_2.identity import Identifier
+from ymmsl.v0_2.implementation import Implementation
 from ymmsl.v0_2.model import (
         Component, Conduit, ConduitFilter, Model, MulticastConduit, Ports, Reference)
 from ymmsl.v0_2.ports import Operator, Port, Timeline
@@ -167,7 +168,7 @@ def test_load_model(model_text: str) -> None:
     assert m.ports is not None
     assert m.ports['in'] == Port(Identifier('in'), Operator.F_INIT, Timeline(''))
     assert m.ports['out'] == Port(Identifier('out'), Operator.O_F, Timeline(''))
-    assert m.description == 'Test model for loading/dumping'
+    assert m.description == 'Test model for loading/dumping\n'
     assert m.supported_settings is not None
     assert m.supported_settings['eta'] == SettingType.FLOAT
     assert m.components[0].name == Reference('ic')
@@ -192,7 +193,7 @@ def test_load_model_with_filters(model_with_filters_text: str) -> None:
     assert m.name == 'test_model_conduit_filters'
     assert m.ports is not None
     assert len(m.ports) == 0
-    assert m.description == 'Test model for loading/dumping conduit filters'
+    assert m.description == 'Test model for loading/dumping conduit filters\n'
     assert m.supported_settings is None
     assert m.components[0].name == Reference('init')
     assert m.components[1].name == Reference('macro1')
@@ -229,8 +230,8 @@ def test_load_model_with_invalid_filters() -> None:
 
 def test_dump_model(model: Model, model_text: str) -> None:
     dumps_model = yatiml.dumps_function(
-            Model, Component, Conduit, Identifier, MulticastConduit, Ports, Reference,
-            SettingType, SupportedSettings)
+            Model, Component, Conduit, Identifier, Implementation, MulticastConduit,
+            Ports, Reference, SettingType, SupportedSettings)
 
     text = dumps_model(model)
     assert text == model_text
@@ -239,8 +240,8 @@ def test_dump_model(model: Model, model_text: str) -> None:
 def test_dump_model_with_filters(
         model_with_filters: Model, model_with_filters_text: str) -> None:
     dumps_model = yatiml.dumps_function(
-            Model, Component, Conduit, ConduitFilter, Identifier, MulticastConduit,
-            Ports, Reference, SettingType, SupportedSettings)
+            Model, Component, Conduit, ConduitFilter, Identifier, Implementation,
+            MulticastConduit, Ports, Reference, SettingType, SupportedSettings)
 
     text = dumps_model(model_with_filters)
     assert text == model_with_filters_text

@@ -1,4 +1,7 @@
-from typing import Optional
+from typing import cast, Optional
+
+import yaml
+import yatiml
 
 from ymmsl.v0_2.identity import Reference
 from ymmsl.v0_2.ports import Ports
@@ -40,4 +43,18 @@ class Implementation:
             self.ports = ports
 
         self.description = description
+
         self.supported_settings = supported_settings
+
+    @classmethod
+    def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
+        if len(node.get_attribute('ports').yaml_node.value) == 0:
+            node.remove_attribute('ports')
+
+        descr = node.get_attribute('description')
+        if descr.is_scalar(str):
+            # output in block style
+            ynode = cast(yaml.ScalarNode, descr.yaml_node)
+            ynode.style = '|'
+            if not ynode.value.endswith('\n'):
+                ynode.value += '\n'
