@@ -220,7 +220,7 @@ class Configuration(Document):
                     ' problems were found:\n- '
                     + '\n- '.join(errors))
 
-    def _top_models(self) -> List[Model]:
+    def top_models(self) -> List[Model]:
         """Models in this configuration that are not used as implementations."""
         top_models = copy(self.models)
 
@@ -248,7 +248,7 @@ class Configuration(Document):
         same component object, if a submodel is used multiple times.
         """
         result = dict()
-        queue = [(m, Reference([])) for m in self._top_models()]
+        queue = [(m, Reference([])) for m in self.top_models()]
 
         while queue:
             model, prefix = queue.pop(0)
