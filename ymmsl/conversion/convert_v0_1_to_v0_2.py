@@ -33,6 +33,11 @@ def convert_v0_1_to_v0_2(config: v0_1.PartialConfiguration) -> v0_2.Configuratio
 
 def convert_component(component: v0_1.Component) -> v0_2.Component:
     """Convert a v0.1 Component object to a v0.2 Component."""
+    if not component.ports:
+        warnings.warn(
+                'In yMMSL v0.2 components are required to declare their ports.'
+                f' Component "{component.name}" does not have a ports declaration, so'
+                ' you\'ll have to add one by hand.')
     ports = component.ports if component.ports else v0_1.Ports()
     description = 'Please add a description'
     implementation: Optional[str] = None
