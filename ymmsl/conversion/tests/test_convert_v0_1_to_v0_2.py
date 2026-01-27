@@ -16,7 +16,7 @@ Ref2 = v0_2.Reference
 
 def test_convert_simple_config(empty_config: v0_1.PartialConfiguration) -> None:
     v2 = convert_v0_1_to_v0_2(empty_config)
-    assert v2.description == ''
+    assert v2.description == 'Please add a description'
     assert isinstance(v2.settings, v0_2.Settings)
     assert len(v2.settings) == 0
     assert v2.resources == {}
