@@ -95,7 +95,7 @@ class Configuration(Document):
             self.models: MutableMapping[Reference, Model] = dict()
         elif isinstance(models, abc.Sequence):
             check_duplicate_impl_names('models', models)
-            self.models = {Reference(model.name): model for model in models}
+            self.models = {copy(model.name): model for model in models}
         elif isinstance(models, Model):
             self.models = {models.name: models}
         else:
