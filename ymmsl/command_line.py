@@ -31,7 +31,6 @@ def ymmsl() -> None:
     pass
 
 
-
 _version_tag_to_type = {
         'v0.1': v0_1.PartialConfiguration,
         'v0.2': v0_2.Configuration,
