@@ -3,7 +3,8 @@ from ymmsl.v0_2.implementation import Implementation
 from ymmsl.v0_2.model import (
         Component, Conduit, ConduitFilter, Model, MulticastConduit, Ports, Reference)
 from ymmsl.v0_2.ports import Operator, Port, Timeline
-from ymmsl.v0_2.supported_settings import SettingType, SupportedSettings
+from ymmsl.v0_2.supported_settings import (
+        SettingType, SupportedSetting, SupportedSettings)
 
 import pytest
 import yatiml
@@ -158,7 +159,7 @@ def test_dump_multicast_conduits() -> None:
 def test_load_model(model_text: str) -> None:
     load_model = yatiml.load_function(
             Model, Component, Conduit, ConduitFilter, Identifier, MulticastConduit,
-            Ports, Reference, SettingType, SupportedSettings)
+            Ports, Reference, SettingType, SupportedSetting, SupportedSettings)
 
     m = load_model(model_text)
 
@@ -168,7 +169,7 @@ def test_load_model(model_text: str) -> None:
     assert m.ports['out'] == Port(Identifier('out'), Operator.O_F, Timeline(''))
     assert m.description == 'Test model for loading/dumping\n'
     assert m.supported_settings is not None
-    assert m.supported_settings['eta'] == SettingType.FLOAT
+    assert m.supported_settings['eta'].typ == SettingType.FLOAT
     assert m.components[0].name == Reference('ic')
     assert m.components[1].name == Reference('smc')
     assert m.components[2].name == Reference('bf')
@@ -243,7 +244,7 @@ def test_load_model_with_invalid_filters() -> None:
 def test_dump_model(model: Model, model_text: str) -> None:
     dumps_model = yatiml.dumps_function(
             Model, Component, Conduit, Identifier, Implementation, MulticastConduit,
-            Ports, Reference, SettingType, SupportedSettings)
+            Ports, Reference, SettingType, SupportedSetting, SupportedSettings)
 
     text = dumps_model(model)
     assert text == model_text

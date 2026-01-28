@@ -8,7 +8,8 @@ from ymmsl.v0_2.execution import BaseEnv, ExecutionModel, KeepsStateForNextUse
 from ymmsl.v0_2.identity import Reference
 from ymmsl.v0_2.implementation import Implementation
 from ymmsl.v0_2.program import Program
-from ymmsl.v0_2.supported_settings import SettingType, SupportedSettings
+from ymmsl.v0_2.supported_settings import (
+        SettingType, SupportedSetting, SupportedSettings)
 
 
 def test_program_script_list() -> None:
@@ -51,8 +52,8 @@ def test_program_executable() -> None:
     assert prog.ports['in'].operator == Operator.S
     assert prog.description == 'Description of the program'
     assert prog.supported_settings is not None
-    assert prog.supported_settings['a'] == SettingType.LIST_INT
-    assert prog.supported_settings['b'] == SettingType.STR
+    assert prog.supported_settings['a'].typ == SettingType.LIST_INT
+    assert prog.supported_settings['b'].typ == SettingType.STR
     assert prog.base_env == BaseEnv.MANAGER
     assert prog.modules == ['python/3.10.0', 'gcc/13.3.0']
     assert prog.virtual_env == Path('/home/user/envs/venv')
@@ -102,7 +103,7 @@ def test_program_script_invalid_args() -> None:
 def test_load_program(test_program_text: str) -> None:
     load = yatiml.load_function(
             Program, BaseEnv, ExecutionModel, Implementation, KeepsStateForNextUse,
-            Ports, Reference, SettingType, SupportedSettings)
+            Ports, Reference, SettingType, SupportedSetting, SupportedSettings)
 
     prog = load(test_program_text)
 
@@ -128,7 +129,7 @@ def test_load_program(test_program_text: str) -> None:
 def test_dump_programs(test_program: Program, test_program_text: str) -> None:
     dump = yatiml.dumps_function(
             Program, BaseEnv, ExecutionModel, Implementation, KeepsStateForNextUse,
-            Ports, Reference, SettingType, SupportedSettings)
+            Ports, Reference, SettingType, SupportedSetting, SupportedSettings)
 
     text = dump(test_program)
     assert text == test_program_text
