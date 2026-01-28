@@ -132,7 +132,9 @@ class Program(Implementation):
                         ' they are supposed to be inside the script if there is one.'
                         ' Please use either a script or the arguments listed above.')
 
-        if executable is None and script is None:
+        if (
+                executable is None and script is None and
+                execution_model != ExecutionModel.MANUAL):
             raise RuntimeError(
                     f'In {name}, neither a script nor an executable was given. Please'
                     ' specify either a script, or the other parameters.')
