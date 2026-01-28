@@ -387,10 +387,10 @@ class Configuration(Document):
                 continue
 
             if impl.supported_settings:
-                for name, typ in impl.supported_settings:
+                for name, sup_set in impl.supported_settings:
                     errs.extend(
                             self._check_supported_setting(
-                                component, path, name, typ, impl))
+                                component, path, name, sup_set.typ, impl))
 
             if len(errs) > 7:
                 errs = errs[:6]

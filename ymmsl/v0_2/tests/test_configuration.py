@@ -407,7 +407,7 @@ def test_check_consistent_settings(config_consistent_settings: Configuration) ->
 
     model2 = config_consistent_settings.models[Reference('supported_settings_test2')]
     assert model2.supported_settings is not None
-    model2.supported_settings['delta'] = SettingType.INT
+    model2.supported_settings['delta'].typ = SettingType.INT
 
     with pytest.raises(RuntimeError) as e:
         config_consistent_settings.check_consistent()
