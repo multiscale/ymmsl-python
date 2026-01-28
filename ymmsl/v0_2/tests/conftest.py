@@ -99,6 +99,57 @@ def model_text() -> str:
 
 
 @pytest.fixture
+def model_multicast() -> Model:
+    return Model(
+            'test_model', None, 'Test model for multicast conduits', None,
+            [
+                Component(
+                    'a', Ports(o_f='out'), 'Creates data', False, 'a'),
+                Component(
+                    'b', Ports('in'), 'Receives data', False, 'b'),
+                Component(
+                    'c', Ports('in'), 'Receives data', False, 'b'),
+                ],
+            [
+                Conduit('a.out', 'b.in'),
+                Conduit('a.out', 'c.in'),
+                ]
+            )
+
+
+@pytest.fixture
+def model_multicast_text() -> str:
+    return (
+            'name: test_model\n'
+            'description: |\n'
+            '  Test model for multicast conduits\n'
+            'components:\n'
+            '  a:\n'
+            '    ports:\n'
+            '      o_f: out\n'
+            '    description: |\n'
+            '      Creates data\n'
+            '    implementation: a\n'
+            '  b:\n'
+            '    ports:\n'
+            '      f_init: in\n'
+            '    description: |\n'
+            '      Receives data\n'
+            '    implementation: b\n'
+            '  c:\n'
+            '    ports:\n'
+            '      f_init: in\n'
+            '    description: |\n'
+            '      Receives data\n'
+            '    implementation: b\n'
+            'conduits:\n'
+            '  a.out:\n'
+            '  - b.in\n'
+            '  - c.in\n'
+            )
+
+
+@pytest.fixture
 def model_with_filters() -> Model:
     return Model(
             'test_model_conduit_filters',

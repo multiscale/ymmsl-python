@@ -1,7 +1,8 @@
 import click
 import os
 from shutil import copyfile
-from typing import Optional
+from typing import Optional, TextIO, Type, Union
+import warnings
 
 from ymmsl.conversion.converter import DowngradeError
 from ymmsl.document import Document
@@ -10,10 +11,13 @@ import ymmsl.v0_1 as v0_1
 import ymmsl.v0_2 as v0_2
 
 
-_version_tag_to_type = {
-        'v0.1': v0_1.PartialConfiguration,
-        'v0.2': v0_2.Configuration,
-        }
+def showwarning(
+        message: Union[Warning, str], category: Type[Warning], filename: str,
+        lineno: int, file: Optional[TextIO] = None, line: Optional[str] = None) -> None:
+    print(f'WARNING: {message}', file=file)
+
+
+warnings.showwarning = showwarning
 
 
 @click.group()
@@ -25,6 +29,12 @@ def ymmsl() -> None:
     Use ymmsl <command> --help for help with individual commands.
     """
     pass
+
+
+_version_tag_to_type = {
+        'v0.1': v0_1.PartialConfiguration,
+        'v0.2': v0_2.Configuration,
+        }
 
 
 @ymmsl.command(short_help='Convert a yMMSL file to a newer version')
@@ -87,6 +97,9 @@ def convert(
     won't work, because the shell will open the file to do the redirect, empty it, and
     then run ymmsl convert, which then fails because the input is empty.
     """
+    if input_file != '-':
+        print(f'Converting {input_file}')
+
     if output_file is None:
         output_file = input_file
 
@@ -113,7 +126,11 @@ def convert(
     if output_file != '-' and os.path.exists(output_file):
         backup_file = output_file + '.bak'
         if not os.path.exists(backup_file):
-            copyfile(output_file, output_file + '.bak')
+            copyfile(output_file, backup_file)
+            print(f'Wrote backup file {backup_file}')
 
     with click.open_file(output_file, 'w') as output_stream:
         save(document, output_stream)
+
+    if input_file != '-':
+        print('Conversion complete')
