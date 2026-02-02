@@ -14,6 +14,7 @@ def test_convert_to_no_change(full_config: v0_1.PartialConfiguration) -> None:
 
 
 @pytest.mark.filterwarnings('ignore:.*specify the ports.*')
+@pytest.mark.filterwarnings('ignore:Comments.*')
 def test_convert_to(full_config: v0_1.PartialConfiguration) -> None:
     new_config = convert_to(v0_2.Configuration, full_config)
     assert isinstance(new_config, v0_2.Configuration)

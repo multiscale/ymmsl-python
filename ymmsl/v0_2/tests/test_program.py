@@ -5,7 +5,7 @@ import yatiml
 
 from ymmsl.v0_2.ports import Operator, Ports
 from ymmsl.v0_2.execution import BaseEnv, ExecutionModel, KeepsStateForNextUse
-from ymmsl.v0_2.identity import Reference
+from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.implementation import Implementation
 from ymmsl.v0_2.program import Program
 from ymmsl.v0_2.supported_settings import (
@@ -102,8 +102,9 @@ def test_program_script_invalid_args() -> None:
 
 def test_load_program(test_program_text: str) -> None:
     load = yatiml.load_function(
-            Program, BaseEnv, ExecutionModel, Implementation, KeepsStateForNextUse,
-            Ports, Reference, SettingType, SupportedSetting, SupportedSettings)
+            Program, BaseEnv, ExecutionModel, Identifier, Implementation,
+            KeepsStateForNextUse, Ports, Reference, SettingType, SupportedSetting,
+            SupportedSettings)
 
     prog = load(test_program_text)
 
@@ -128,8 +129,9 @@ def test_load_program(test_program_text: str) -> None:
 
 def test_dump_programs(test_program: Program, test_program_text: str) -> None:
     dump = yatiml.dumps_function(
-            Program, BaseEnv, ExecutionModel, Implementation, KeepsStateForNextUse,
-            Ports, Reference, SettingType, SupportedSetting, SupportedSettings)
+            Program, BaseEnv, ExecutionModel, Identifier, Implementation,
+            KeepsStateForNextUse, Ports, Reference, SettingType, SupportedSetting,
+            SupportedSettings)
 
     text = dump(test_program)
     assert text == test_program_text

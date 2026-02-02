@@ -4,7 +4,7 @@ import yaml
 import yatiml
 
 from ymmsl.v0_2.ports import Ports
-from ymmsl.v0_2.identity import Identifier, Reference
+from ymmsl.v0_2.identity import Reference
 
 
 class Component:
@@ -46,7 +46,7 @@ class Component:
             multiplicity: The shape of the set of instances, or a number describing the
                 size of a 1D set of them, or None to have a single instance.
         """
-        self.name = Identifier(name)
+        self.name = Reference(name)
         self.ports = ports
         self.description = description
         self.optional = optional
@@ -113,10 +113,10 @@ class Component:
         result = list()     # type: List[Reference]
 
         if len(self.multiplicity) == 0:
-            result.append(Reference([self.name]))
+            result.append(self.name)
         else:
             for index in generate_indices(self.multiplicity):
-                result.append(Reference([self.name]) + index)
+                result.append(self.name + index)
 
         return result
 

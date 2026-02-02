@@ -1,13 +1,16 @@
+from ymmsl.v0_2.component import Component
 from ymmsl.v0_2.identity import Identifier
-from ymmsl.v0_2.implementation import Implementation
-from ymmsl.v0_2.model import (
-        Component, Conduit, ConduitFilter, Model, MulticastConduit, Ports, Reference)
-from ymmsl.v0_2.ports import Operator, Port, Timeline
+from ymmsl.v0_2.implementation import Implementation, Reference
+from ymmsl.v0_2.model import Conduit, ConduitFilter, Model, MulticastConduit
+from ymmsl.v0_2.ports import Operator, Port, Ports, Timeline
 from ymmsl.v0_2.supported_settings import (
         SettingType, SupportedSetting, SupportedSettings)
 
 import pytest
 import yatiml
+
+
+Ref = Reference
 
 
 def test_conduit_filter() -> None:
@@ -170,11 +173,11 @@ def test_load_model(model_text: str) -> None:
     assert m.description == 'Test model for loading/dumping\n'
     assert m.supported_settings is not None
     assert m.supported_settings['eta'].typ == SettingType.FLOAT
-    assert m.components[0].name == Reference('ic')
-    assert m.components[1].name == Reference('smc')
-    assert m.components[2].name == Reference('bf')
-    assert m.components[3].name == Reference('smc2bf')
-    assert m.components[4].name == Reference('bf2smc')
+    assert m.components[Ref('ic')].name == Reference('ic')
+    assert m.components[Ref('smc')].name == Reference('smc')
+    assert m.components[Ref('bf')].name == Reference('bf')
+    assert m.components[Ref('smc2bf')].name == Reference('smc2bf')
+    assert m.components[Ref('bf2smc')].name == Reference('bf2smc')
     assert m.conduits[0].sender == Reference('ic.out')
     assert m.conduits[1].sender == Reference('smc.cell_positions')
     assert m.conduits[2].receiver == Reference('bf.initial_domain')
@@ -208,11 +211,11 @@ def test_load_model_with_filters(model_with_filters_text: str) -> None:
     assert len(m.ports) == 0
     assert m.description == 'Test model for loading/dumping conduit filters\n'
     assert m.supported_settings is None
-    assert m.components[0].name == Reference('init')
-    assert m.components[1].name == Reference('macro1')
-    assert m.components[2].name == Reference('micro1')
-    assert m.components[3].name == Reference('macro2')
-    assert m.components[4].name == Reference('micro2')
+    assert m.components[Ref('init')].name == Reference('init')
+    assert m.components[Ref('macro1')].name == Reference('macro1')
+    assert m.components[Ref('micro1')].name == Reference('micro1')
+    assert m.components[Ref('macro2')].name == Reference('macro2')
+    assert m.components[Ref('micro2')].name == Reference('micro2')
 
     assert m.conduits[0].sender == Reference('init.macro_out')
     assert m.conduits[0].receiver == Reference('macro1.init')

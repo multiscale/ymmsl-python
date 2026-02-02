@@ -38,6 +38,7 @@ def test_resolve_imports(env_ymmsl_path: None) -> None:
 
     resolve(Reference('test_resolve_imports'), config)
 
+    assert len(config.imports) == 0
     assert len(config.models) == 1
     assert config.models[Reference('a.d.test_importing')].name == 'a.d.test_importing'
     assert len(config.programs) == 2
@@ -60,6 +61,7 @@ def test_resolve_imports_module_not_found(env_ymmsl_path: None) -> None:
         resolve(Reference('test_module_not_found'), config)
 
     assert 'Failed to find a file' in str(e.value)
+    assert len(config.imports) == 1
 
 
 def test_resolve_imports_broken_module(env_ymmsl_path: None) -> None:
@@ -77,6 +79,7 @@ def test_resolve_imports_broken_module(env_ymmsl_path: None) -> None:
         resolve(Reference('test_broken_module'), config)
 
     assert 'model' in str(e.value) and 'models' in str(e.value)
+    assert len(config.imports) == 1
 
 
 def test_resolve_imports_implementation_not_found(env_ymmsl_path: None) -> None:
@@ -94,6 +97,7 @@ def test_resolve_imports_implementation_not_found(env_ymmsl_path: None) -> None:
         resolve(Reference('test_implementation_not_found'), config)
 
     assert 'Implementation mucro not found' in str(e.value)
+    assert len(config.imports) == 1
 
 
 def test_resolve_imports_no_shadowing(env_ymmsl_path: None) -> None:
@@ -115,3 +119,4 @@ def test_resolve_imports_no_shadowing(env_ymmsl_path: None) -> None:
         resolve(Reference('test_no_shadowing'), config)
 
     assert 'both defined and imported' in str(e.value)
+    assert len(config.imports) == 1

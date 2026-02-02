@@ -114,11 +114,13 @@ def do_resolve(
 def resolve_impls(
         module: Reference, config: Configuration, ctx: ResolutionContext) -> None:
     """Resolve any imports of implementations."""
+    # translation table from old to new implementation name
     ylocals: Dict[Reference, Reference] = dict()
     rename_local_impls(config.programs, module, ylocals)
     rename_local_impls(config.models, module, ylocals)
     resolve_impl_imports(config, ylocals, ctx)
     update_local_implementations(config, ylocals)
+    config.imports = [i for i in config.imports if i.kind != ImportKind.IMPLEMENTATION]
 
 
 T = TypeVar('T', bound='Implementation')
@@ -187,7 +189,7 @@ def update_local_implementations(
         config: Configuration, ylocals: Dict[Reference, Reference]) -> None:
     """Updates names of local implementations to their full names."""
     for model in config.models.values():
-        for cmp in model.components:
+        for cmp in model.components.values():
             if cmp.implementation:
                 if cmp.implementation in ylocals:
                     cmp.implementation = ylocals[cmp.implementation]
@@ -207,7 +209,7 @@ def find_impls(
     while impls:
         impl = impls.pop(0)
         if isinstance(impl, Model):
-            for cmp in impl.components:
+            for cmp in impl.components.values():
                 if cmp.implementation:
                     impls.append(find_impl(config, cmp.implementation, ctx))
 

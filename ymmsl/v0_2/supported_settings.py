@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterator, List, Mapping, Optional, Tuple, Union, c
 import yaml
 import yatiml
 
-from ymmsl.v0_2.identity import Reference
+from ymmsl.v0_2.identity import Identifier
 
 
 class SettingType(Enum):
@@ -87,17 +87,17 @@ class SupportedSetting:
     description: Description of what this sets, allowed values, etc.
     """
     def __init__(
-            self, name: Union[str, Reference], typ: Union[str, SettingType],
+            self, name: Union[str, Identifier], typ: Union[str, SettingType],
             description: str) -> None:
         """Create a SupportedSetting.
 
         Args:
-            name: Name of the setting, must be a valid Reference
+            name: Name of the setting, must be a valid Identifier
             typ: Type of the setting's value
             description: Description of the setting
         """
         if isinstance(name, str):
-            name = Reference(name)
+            name = Identifier(name)
         self.name = name
 
         if isinstance(typ, str):
@@ -133,7 +133,7 @@ class SupportedSetting:
                 node.rename_attribute('type', 'typ')
 
     def _yatiml_init(
-            self, name: Reference, typ: Optional[SettingType] = None,
+            self, name: Identifier, typ: Optional[SettingType] = None,
             description: Optional[Union[str, List[str], List[List[str]]]] = None
             ) -> None:
         """
@@ -303,7 +303,7 @@ class SupportedSettings(MutableMapping):
         Args:
             supported_settings: Description of the supported settings.
         """
-        self._store: Dict[Reference, SupportedSetting] = dict()
+        self._store: Dict[Identifier, SupportedSetting] = dict()
 
         if supported_settings is not None:
             if isinstance(supported_settings, list):
@@ -311,7 +311,7 @@ class SupportedSettings(MutableMapping):
                     self._store[setting.name] = setting
             else:
                 for name, arg in supported_settings.items():
-                    name_ref = Reference(name)
+                    name_ref = Identifier(name)
                     self._store[name_ref] = self._to_supported_setting(name_ref, arg)
 
     def __eq__(self, other: Any) -> bool:
@@ -327,29 +327,29 @@ class SupportedSettings(MutableMapping):
         """Represent as a string, omitting the descriptions."""
         return ', '.join([f'{s.name}: {s.typ}' for s in self._store.values()])
 
-    def __getitem__(self, key: Union[str, Reference]) -> SupportedSetting:
+    def __getitem__(self, key: Union[str, Identifier]) -> SupportedSetting:
         """Returns a supported setting, implements supported_settings[name]."""
         if isinstance(key, str):
-            key = Reference(key)
+            key = Identifier(key)
         return self._store[key]
 
     def __setitem__(
-            self, key: Union[str, Reference], value: Union[str, SupportedSetting]
+            self, key: Union[str, Identifier], value: Union[str, SupportedSetting]
             ) -> None:
         """Sets a value, implements supported_settings[name] = typ, desc."""
         if isinstance(key, str):
-            key = Reference(key)
+            key = Identifier(key)
         if isinstance(value, str):
             value = self._to_supported_setting(key, value)
         self._store[key] = value
 
-    def __delitem__(self, key: Union[str, Reference]) -> None:
+    def __delitem__(self, key: Union[str, Identifier]) -> None:
         """Deletes a value, implements del(supported_settings[name])."""
         if isinstance(key, str):
-            key = Reference(key)
+            key = Identifier(key)
         del self._store[key]
 
-    def __iter__(self) -> Iterator[Tuple[Reference, SupportedSetting]]:
+    def __iter__(self) -> Iterator[Tuple[Identifier, SupportedSetting]]:
         """Iterate through the settings' key, supported_setting pairs."""
         for key, value in self._store.items():
             yield key, value
@@ -364,7 +364,7 @@ class SupportedSettings(MutableMapping):
         new_settings._store = self._store.copy()
         return new_settings
 
-    def _to_supported_setting(self, name: Reference, arg: str) -> SupportedSetting:
+    def _to_supported_setting(self, name: Identifier, arg: str) -> SupportedSetting:
         """Parse a string into a SupportedSetting."""
         pieces = arg.split(maxsplit=1)
         if len(pieces) == 0:

@@ -73,10 +73,10 @@ def test_load_models() -> None:
     assert isinstance(configuration, Configuration)
     assert len(configuration.models) == 2
     mm = configuration.models[Ref('macro_micro')]
-    assert mm.components[0].ports['out'] == Port(
+    assert mm.components[Ref('macro')].ports['out'] == Port(
             Identifier('out'), Operator.O_I, Timeline(''))
     dn = configuration.models[Ref('do_nothing')]
-    assert len(dn.components[0].ports) == 0
+    assert len(dn.components[Ref('nil')].ports) == 0
 
 
 def test_load_nil_settings() -> None:
@@ -99,8 +99,8 @@ def test_load_custom_implementations(config_custom_implementations_text: str) ->
 
     assert isinstance(configuration, Configuration)
     assert configuration.custom_implementations == {
-            Reference('c1'): Reference('program1'),
-            Reference('c2.init_model'): Reference('initer2')
+            Ref('c1'): Ref('program1'),
+            Ref('c2.init_model'): Ref('initer2')
             }
 
 
@@ -253,17 +253,17 @@ def test_configuration_update_imports() -> None:
 def test_configuration_update_custom_implementations() -> None:
     base = Configuration(
             'Configuration for testing', custom_implementations={
-                Reference('c1'): Reference('impl1')})
+                Ref('c1'): Ref('impl1')})
 
     overlay1 = Configuration(
             'Extra and override', custom_implementations={
-                Reference('c1'): Reference('impl2'),
-                Reference('c2.a'): Reference('impl1')})
+                Ref('c1'): Ref('impl2'),
+                Ref('c2.a'): Ref('impl1')})
 
     base.update(overlay1)
 
-    assert base.custom_implementations[Reference('c1')] == 'impl2'
-    assert base.custom_implementations[Reference('c2.a')] == 'impl1'
+    assert base.custom_implementations[Ref('c1')] == 'impl2'
+    assert base.custom_implementations[Ref('c2.a')] == 'impl1'
 
 
 def test_configuration_update_programs() -> None:
@@ -277,8 +277,8 @@ def test_configuration_update_programs() -> None:
 
     base.update(overlay1)
 
-    assert base.programs[Reference('impl1')].name == 'impl1'
-    assert base.programs[Reference('impl2')].name == 'impl2'
+    assert base.programs[Ref('impl1')].name == 'impl1'
+    assert base.programs[Ref('impl2')].name == 'impl2'
 
     overlay2 = Configuration(
             'Conflicting program',
@@ -405,7 +405,7 @@ def test_check_consistent_settings(config_consistent_settings: Configuration) ->
 
     config_consistent_settings.settings['alpha'] = 3.2
 
-    model2 = config_consistent_settings.models[Reference('supported_settings_test2')]
+    model2 = config_consistent_settings.models[Ref('supported_settings_test2')]
     assert model2.supported_settings is not None
     model2.supported_settings['delta'].typ = SettingType.INT
 
