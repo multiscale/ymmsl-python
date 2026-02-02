@@ -14,8 +14,10 @@ Ref1 = v0_1.Reference
 Ref2 = v0_2.Reference
 
 
+@pytest.mark.filterwarnings('ignore:Comments.*')
 def test_convert_simple_config(empty_config: v0_1.PartialConfiguration) -> None:
     v2 = convert_v0_1_to_v0_2(empty_config)
+
     assert v2.description == 'Please add a description'
     assert isinstance(v2.settings, v0_2.Settings)
     assert len(v2.settings) == 0
@@ -27,9 +29,10 @@ def test_convert_simple_config(empty_config: v0_1.PartialConfiguration) -> None:
     assert v2.resume == {}
 
 
+@pytest.mark.filterwarnings('ignore:Comments.*')
+@pytest.mark.filterwarnings('ignore:.*implementations have become programs.*')
 def test_convert_full_config(full_config: v0_1.Configuration) -> None:
-    with pytest.warns(UserWarning):
-        v2 = convert_v0_1_to_v0_2(full_config)
+    v2 = convert_v0_1_to_v0_2(full_config)
     assert v2.description == 'Testing a full configuration'
 
     assert v2.settings is not full_config.settings
