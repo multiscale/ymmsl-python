@@ -12,7 +12,7 @@ import yaml
 from ymmsl.v0_2.checkpoint import Checkpoints
 from ymmsl.v0_2.execution import ExecutionModel
 from ymmsl.v0_2.resources import MPICoresResReq, MPINodesResReq, ResourceRequirements
-from ymmsl.v0_2.identity import Reference
+from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.implementation import Implementation    # noqa: F401
 from ymmsl.v0_2.imports import ImportStatement
 from ymmsl.v0_2.settings import Settings, SettingValue
@@ -403,7 +403,7 @@ class Configuration(Document):
         return errors
 
     def _check_supported_setting(
-            self, component: Component, component_path: Reference, name: Reference,
+            self, component: Component, component_path: Reference, name: Identifier,
             typ: SettingType, impl: Implementation) -> List[str]:
         """Check that the value of the given setting matches the given type.
 
