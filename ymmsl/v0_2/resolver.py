@@ -114,11 +114,13 @@ def do_resolve(
 def resolve_impls(
         module: Reference, config: Configuration, ctx: ResolutionContext) -> None:
     """Resolve any imports of implementations."""
+    # translation table from old to new implementation name
     ylocals: Dict[Reference, Reference] = dict()
     rename_local_impls(config.programs, module, ylocals)
     rename_local_impls(config.models, module, ylocals)
     resolve_impl_imports(config, ylocals, ctx)
     update_local_implementations(config, ylocals)
+    config.imports = [i for i in config.imports if i.kind != ImportKind.IMPLEMENTATION]
 
 
 T = TypeVar('T', bound='Implementation')
