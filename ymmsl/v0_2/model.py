@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from copy import copy
 from enum import Enum
 from typing import Any, cast, List, Optional, Sequence, Union
 
@@ -263,7 +264,7 @@ class Model(Implementation):
             self, name: str, ports: Optional[Ports] = None,
             description: str = '',
             supported_settings: Optional[SupportedSettings] = None,
-            components: Optional[List[Component]] = None,
+            components: Optional[Sequence[Component]] = None,
             conduits: Optional[Sequence[AnyConduit]] = None) -> None:
         """Create a Model.
 
@@ -278,9 +279,19 @@ class Model(Implementation):
         super().__init__(name, ports, description, supported_settings)
 
         if components is None:
-            self.components = []
+            self.components = {}
         else:
-            self.components = components
+            for i1, c1 in enumerate(components):
+                num_conflicts = 0
+                for i2 in range(i1-1):
+                    if c1.name == components[i2].name:
+                        num_conflicts += 1
+                if num_conflicts > 0:
+                    raise ValueError(
+                            f'There are {num_conflicts + 1} components named'
+                            f' {c1.name}.')
+
+            self.components = {copy(c.name): c for c in components}
 
         self.conduits = list()      # type: List[Conduit]
         if conduits:
@@ -294,7 +305,6 @@ class Model(Implementation):
         """Check that the model is internally consistent.
 
         This checks:
-            - that no two components have the same name
             - that every conduit is connected to two existing ports on existing
               components, or on the model itself.
 
@@ -302,32 +312,12 @@ class Model(Implementation):
         """
         errors: List[str] = list()
 
-        errors.extend(self._check_component_name_conflicts())
-
         model_receiving_ports = self.ports.receiving_port_names()
         model_sending_ports = self.ports.sending_port_names()
 
         for conduit in self.conduits:
             errors.extend(self._check_sending_side(conduit, model_receiving_ports))
             errors.extend(self._check_receiving_side(conduit, model_sending_ports))
-
-        return errors
-
-    def _check_component_name_conflicts(self) -> List[str]:
-        """Check that no two components have the same name.
-
-        Returns a list of errors.
-        """
-        errors = list()
-
-        for i1, c1 in enumerate(self.components):
-            num_conflicts = 0
-            for i2 in range(i1-1):
-                if c1.name == self.components[i2].name:
-                    num_conflicts += 1
-            if num_conflicts > 0:
-                errors.append(
-                        f'There are {num_conflicts + 1} components named {c1.name}.')
 
         return errors
 
@@ -344,23 +334,20 @@ class Model(Implementation):
                     f' {conduit.sending_port()} that does not exist.')
         else:
             # from component
-            snd_cmp = [
-                    c for c in self.components
-                    if c.name == conduit.sending_component()]
-            if not snd_cmp:
+            if conduit.sending_component() not in self.components:
                 errors.append(
                         f'Conduit {conduit} refers to a component named'
                         f' {conduit.sending_component()}, which is not present in'
                         ' the model.')
             else:
-                if len(snd_cmp) == 1:
-                    cmp_sending_ports = snd_cmp[0].ports.sending_port_names()
-                    if conduit.sending_port() not in cmp_sending_ports:
-                        errors.append(
-                                f'Conduit {conduit} refers to a sending port named'
-                                f' {conduit.sending_port()}, which is not present'
-                                f' on sending component {snd_cmp[0].name}, or is not'
-                                ' an O_I or O_F port.')
+                snd_cmp = self.components[conduit.sending_component()]
+                cmp_sending_ports = snd_cmp.ports.sending_port_names()
+                if conduit.sending_port() not in cmp_sending_ports:
+                    errors.append(
+                            f'Conduit {conduit} refers to a sending port named'
+                            f' {conduit.sending_port()}, which is not present on'
+                            f' sending component {snd_cmp.name}, or is not an O_I or'
+                            ' O_F port.')
         return errors
 
     def _check_receiving_side(
@@ -376,26 +363,23 @@ class Model(Implementation):
                     f' {conduit.receiving_port()} that does not exist.')
         else:
             # to component
-            rcvng_cmp = [
-                    c for c in self.components
-                    if c.name == conduit.receiving_component()]
-            if not rcvng_cmp:
+            if conduit.receiving_component() not in self.components:
                 errors.append(
                         f'Conduit {conduit} refers to a component named'
                         f' {conduit.receiving_component()}, which is not present in'
                         ' the model.')
             else:
-                if len(rcvng_cmp) == 1:
-                    rcvr_recv_ports = (
-                            rcvng_cmp[0].ports.receiving_port_names() +
-                            ['muscle_settings_in'])
+                rcvng_cmp = self.components[conduit.receiving_component()]
+                rcvr_recv_ports = (
+                        rcvng_cmp.ports.receiving_port_names() +
+                        ['muscle_settings_in'])
 
-                    if conduit.receiving_port() not in rcvr_recv_ports:
-                        errors.append(
-                                f'Conduit {conduit} refers to a receiving port named'
-                                f' {conduit.receiving_port()}, which is not present'
-                                f' on receiving component {rcvng_cmp[0].name}, or is'
-                                ' not an F_INIT or S port.')
+                if conduit.receiving_port() not in rcvr_recv_ports:
+                    errors.append(
+                            f'Conduit {conduit} refers to a receiving port named'
+                            f' {conduit.receiving_port()}, which is not present on'
+                            f' receiving component {rcvng_cmp.name}, or is not an'
+                            ' F_INIT or S port.')
         return errors
 
     def _conduits_for_export(self) -> List[AnyConduit]:
@@ -439,7 +423,7 @@ class Model(Implementation):
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        node.seq_attribute_to_map('components', 'name',)
+        node.index_attribute_to_map('components', 'name')
 
         if len(node.get_attribute('conduits').seq_items()) == 0:
             node.remove_attribute('conduits')

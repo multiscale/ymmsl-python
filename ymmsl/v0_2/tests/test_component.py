@@ -5,7 +5,7 @@ import pytest
 
 def test_component_declaration() -> None:
     test_decl = Component('test', Ports(), 'description', False, 'ns.model')
-    assert isinstance(test_decl.name, Identifier)
+    assert isinstance(test_decl.name, Reference)
     assert str(test_decl.name) == 'test'
 
     assert len(test_decl.ports) == 0
@@ -23,13 +23,13 @@ def test_component_declaration() -> None:
 
 def test_component_multiplicity() -> None:
     test_decl = Component('test', Ports(), 'description', False, 'ns.model', 10)
-    assert isinstance(test_decl.name, Identifier)
+    assert isinstance(test_decl.name, Reference)
     assert str(test_decl.name) == 'test'
     assert test_decl.multiplicity == [10]
     assert str(test_decl) == 'test[0:10]'
 
     test_decl = Component('test', Ports(), 'description', False, 'ns2.model2', [1, 2])
-    assert isinstance(test_decl.name, Identifier)
+    assert isinstance(test_decl.name, Reference)
     assert str(test_decl.name) == 'test'
     assert str(test_decl.implementation) == 'ns2.model2'
     assert test_decl.multiplicity == [1, 2]

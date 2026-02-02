@@ -187,7 +187,7 @@ def update_local_implementations(
         config: Configuration, ylocals: Dict[Reference, Reference]) -> None:
     """Updates names of local implementations to their full names."""
     for model in config.models.values():
-        for cmp in model.components:
+        for cmp in model.components.values():
             if cmp.implementation:
                 if cmp.implementation in ylocals:
                     cmp.implementation = ylocals[cmp.implementation]
@@ -207,7 +207,7 @@ def find_impls(
     while impls:
         impl = impls.pop(0)
         if isinstance(impl, Model):
-            for cmp in impl.components:
+            for cmp in impl.components.values():
                 if cmp.implementation:
                     impls.append(find_impl(config, cmp.implementation, ctx))
 

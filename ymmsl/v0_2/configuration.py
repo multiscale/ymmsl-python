@@ -224,7 +224,7 @@ class Configuration(Document):
         top_models = copy(self.models)
 
         for model in self.models.values():
-            for component in model.components:
+            for component in model.components.values():
                 if component.implementation:
                     if component.implementation in top_models:
                         del top_models[component.implementation]
@@ -251,7 +251,7 @@ class Configuration(Document):
 
         while queue:
             model, prefix = queue.pop(0)
-            for component in model.components:
+            for component in model.components.values():
                 path = prefix + component.name
                 impl = self.custom_implementations.get(path, component.implementation)
                 if impl is not None:
