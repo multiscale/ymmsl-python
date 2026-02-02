@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Any, cast, Iterator, List, overload, Sequence, Union
+from typing import Any, cast, Iterator, List, Optional, overload, Sequence, Union
 
 from ymmsl.v0_1.component import Operator   # also the v0.2 version, import from here
 from ymmsl.v0_2.identity import Identifier, Reference
@@ -124,19 +124,23 @@ class Port:
     Attributes:
         name: The name of the port
         operator: The MMSL operator in which this port is used
-        timeline: The timeline this port is on, relative to its component
+        timeline: The timeline this port is on, relative to its component.
     """
     def __init__(
-            self, name: Identifier, operator: Operator, timeline: Timeline) -> None:
+            self, name: Identifier, operator: Operator,
+            timeline: Optional[Timeline] = None) -> None:
         """Create a Port.
 
         Args:
             name: The name of the port
             operator: The MMSL Operator in which this port is used
-            timeline: The Timeline this port is on
+            timeline: The Timeline this port is on. If None or omitted, an empty
+                timeline will be set.
         """
         self.name = name
         self.operator = operator
+        if timeline is None:
+            timeline = Timeline('')
         self.timeline = timeline
 
     def __eq__(self, other: Any) -> bool:

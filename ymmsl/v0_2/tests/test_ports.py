@@ -147,8 +147,8 @@ def test_create_ports_from_list() -> None:
     t2 = Timeline('timeline2')
 
     p = Ports([
-            Port(Identifier('a'), Operator.F_INIT, Timeline('')),
-            Port(Identifier('b'), Operator.O_F, Timeline('')),
+            Port(Identifier('a'), Operator.F_INIT),
+            Port(Identifier('b'), Operator.O_F),
             Port(Identifier('c'), Operator.O_I, t1),
             Port(Identifier('d'), Operator.S, t1),
             Port(Identifier('e'), Operator.O_I, t2),
@@ -156,8 +156,8 @@ def test_create_ports_from_list() -> None:
             ])
 
     assert p._ports == {
-            'a': Port(Identifier('a'), Operator.F_INIT, Timeline('')),
-            'b': Port(Identifier('b'), Operator.O_F, Timeline('')),
+            'a': Port(Identifier('a'), Operator.F_INIT),
+            'b': Port(Identifier('b'), Operator.O_F),
             'c': Port(Identifier('c'), Operator.O_I, t1),
             'd': Port(Identifier('d'), Operator.S, t1),
             'e': Port(Identifier('e'), Operator.O_I, t2),
@@ -173,11 +173,11 @@ def test_ports_access() -> None:
     assert 'z' not in p
     assert Identifier('q') not in p
 
-    assert p['a'] == Port(Identifier('a'), Operator.F_INIT, Timeline(''))
-    assert p['b'] == Port(Identifier('b'), Operator.S, Timeline(''))
-    assert p[Identifier('c')] == Port(Identifier('c'), Operator.S, Timeline(''))
-    assert p['d'] == Port(Identifier('d'), Operator.O_F, Timeline(''))
-    assert p[Identifier('e')] == Port(Identifier('e'), Operator.O_F, Timeline(''))
+    assert p['a'] == Port(Identifier('a'), Operator.F_INIT)
+    assert p['b'] == Port(Identifier('b'), Operator.S)
+    assert p[Identifier('c')] == Port(Identifier('c'), Operator.S)
+    assert p['d'] == Port(Identifier('d'), Operator.O_F)
+    assert p[Identifier('e')] == Port(Identifier('e'), Operator.O_F)
 
 
 def test_ports_iteration() -> None:
@@ -202,11 +202,11 @@ def test_load_ports_simple() -> None:
     p = load(text)
 
     assert p._ports == {
-            'a': Port(Identifier('a'), Operator.F_INIT, Timeline('')),
-            'b': Port(Identifier('b'), Operator.F_INIT, Timeline('')),
-            'c': Port(Identifier('c'), Operator.O_I, Timeline('')),
-            'd': Port(Identifier('d'), Operator.O_F, Timeline('')),
-            'e': Port(Identifier('e'), Operator.O_F, Timeline(''))
+            'a': Port(Identifier('a'), Operator.F_INIT),
+            'b': Port(Identifier('b'), Operator.F_INIT),
+            'c': Port(Identifier('c'), Operator.O_I),
+            'd': Port(Identifier('d'), Operator.O_F),
+            'e': Port(Identifier('e'), Operator.O_F)
             }
 
 
@@ -226,9 +226,9 @@ def test_load_ports_with_timelines() -> None:
     p = load(text)
 
     assert p._ports == {
-            'a': Port(Identifier('a'), Operator.F_INIT, Timeline('')),
-            'b': Port(Identifier('b'), Operator.F_INIT, Timeline('')),
-            'c': Port(Identifier('c'), Operator.O_F, Timeline('')),
+            'a': Port(Identifier('a'), Operator.F_INIT),
+            'b': Port(Identifier('b'), Operator.F_INIT),
+            'c': Port(Identifier('c'), Operator.O_F),
             'd': Port(Identifier('d'), Operator.O_I, Timeline('timeline1')),
             'e': Port(Identifier('e'), Operator.S, Timeline('timeline1')),
             'f': Port(Identifier('f'), Operator.S, Timeline('timeline1')),
@@ -327,12 +327,12 @@ def test_dump_ports_with_timelines() -> None:
     dumps = yatiml.dumps_function(Ports, Port, Operator, Timeline)
 
     p = Ports([
-        Port(Identifier('init'), Operator.F_INIT, Timeline('')),
+        Port(Identifier('init'), Operator.F_INIT),
         Port(Identifier('out1'), Operator.O_I, Timeline('timeline1')),
         Port(Identifier('out2'), Operator.O_I, Timeline('timeline2')),
         Port(Identifier('in1'), Operator.S, Timeline('timeline1')),
         Port(Identifier('in2'), Operator.S, Timeline('timeline2')),
-        Port(Identifier('final'), Operator.O_F, Timeline(''))
+        Port(Identifier('final'), Operator.O_F)
         ])
 
     text = dumps(p)
