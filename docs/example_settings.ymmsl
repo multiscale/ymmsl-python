@@ -1,0 +1,17 @@
+ymmsl_version: v0.2
+
+description: |
+  # Example yMMSL file containing settings
+
+  Settings configure the coupled model for a particular scenario. See the
+  supported_settings of the model for what settings are available.
+
+settings:
+  domain_grain: 0.01
+  domain_extent: 1.0
+  macro.timestep: 10.0
+  macro.total_time: 1000.0
+  micro.timestep: 0.01
+  micro.total_time: 1.0
+  k: 1.0
+  micro.d: 2.3

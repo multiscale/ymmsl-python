@@ -1,0 +1,43 @@
+ymmsl_version: v0.2
+description: |
+  Example configuration
+models:
+  my_model:
+    description: |
+      Example model created in Python
+    components:
+      macro:
+        ports:
+          o_i: out
+          s: in
+        description: |
+          Macro model
+        implementation: macro_model
+      micro:
+        ports:
+          f_init: in
+          o_f: out
+        description: |
+          Micro model
+        implementation: micro_model
+    conduits:
+      macro.out: micro.in
+      micro.out: macro.in
+programs:
+  macro_model:
+    description: |
+      Program implementing the macro model
+    executable: /home/user/model
+  micro_model:
+    description: |
+      Micro model program
+    modules:
+    - GCC/14.1.0
+    - OpenMPI/5.0.3
+    execution_model: openmpi
+    executable: /home/user/model2
+resources:
+  macro:
+    threads: 1
+  micro:
+    mpi_processes: 8

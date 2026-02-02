@@ -1,0 +1,68 @@
+ymmsl_version: v0.2
+
+description: |
+  # Example yMMSL file containing a model
+
+  Note that many of these are optional, but they're all used here to show what the
+  format is capable of.
+
+models:
+  macro_micro_model:
+    description: |
+      # A basic macro-micro (time-scale separation) reaction-diffusion model
+
+      This model has two submodels, named macro and micro, that simulate the slow and
+      fast dynamics respectively.
+
+    supported_settings:
+      domain_grain: float   Spatial distance between grid cells (m)
+      domain_extent: float  Size of the domain (m)
+      timestep: float       Step to take while integrating time (s)
+      total_time: float     Total time to simulate for (s)
+      k: float              Reaction coefficient
+      d: float              Diffusion coefficient
+
+    components:
+      macro:
+        ports:
+          o_i: state_out
+          s: update_in
+
+        description: |
+          # Macro (sub)model
+
+          The macro (slow) model calls the micro model at each timestep
+
+          ## Ports
+
+          - state_out: 1D array of float
+            Outputs the state at every time step
+
+          - update_in: 1D array of float
+            Receives a state update at every time step
+
+        implementation: macro_model_program
+
+      micro:
+        ports:
+          f_init: init_in
+          o_f: final_out
+
+        description: |
+          # Micro model
+
+          The micro (fast) (sub)model runs repeatedly
+
+          ## Ports
+
+          - init_in: 1D array of float
+            Receives the system state on every run
+
+          - final_out: 1D array of float
+            Outputs a state update on every run
+
+        implementation: micro_model_program
+
+    conduits:
+      macro.state_out: micro.init_in
+      micro.final_out: macro.update_in

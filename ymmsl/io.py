@@ -46,8 +46,9 @@ def load(source: Union[str, Path, IO[Any]]) -> Document:
                 object containing from which yMMSL data can be read.
 
     Returns:
-        A PartialConfiguration object corresponding to the input data.
-
+        A Document object corresponding to the input data. This is either a
+        :class:`ymmsl.v0_1.PartialConfiguration` or a :class:`ymmsl.v0_2.Configuration`
+        depending on the version of the input file.
     """
     # This wrapper is just here to render the documentation.
     return _load(source)

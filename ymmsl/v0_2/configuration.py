@@ -187,6 +187,7 @@ class Configuration(Document):
         This checks:
 
             - Whether all models are consistent, via Model.check_consistent()
+            - That all implementations (programs and models) have a unique name
             - Whether all given component implementations exist
             - Whether all ports on components are consistent with their implementations
             - Whether all custom implementations have a component they apply to
@@ -211,8 +212,6 @@ class Configuration(Document):
         errors.extend(self._check_custom_implementations(component_paths))
         errors.extend(self._check_consistent_settings(component_paths))
         errors.extend(self._check_resources(component_paths))
-
-        # TODO: no two implementations (programs or models) with the same name
 
         if errors:
             raise RuntimeError(
