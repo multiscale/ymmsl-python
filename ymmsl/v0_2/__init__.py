@@ -12,6 +12,7 @@ from ymmsl.v0_2.ports import Operator, Port, Ports, Timeline
 from ymmsl.v0_2.program import Program
 from ymmsl.v0_2.resources import (
         MPICoresResReq, MPINodesResReq, ResourceRequirements, ThreadedResReq)
+from ymmsl.v0_2.resolver import resolve
 from ymmsl.v0_2.settings import Settings, SettingValue
 from ymmsl.v0_2.supported_settings import (
         SettingType, SupportedSetting, SupportedSettings)
@@ -23,6 +24,6 @@ __all__ = [
         'ExecutionModel', 'Identifier', 'Implementation', 'ImportKind',
         'ImportStatement', 'KeepsStateForNextUse', 'Model', 'MPICoresResReq',
         'MPINodesResReq', 'Operator', 'Port', 'Ports', 'Program', 'Reference',
-        'ReferencePart', 'ResourceRequirements', 'Settings', 'SettingType',
+        'ReferencePart', 'resolve', 'ResourceRequirements', 'Settings', 'SettingType',
         'SettingValue', 'SupportedSetting', 'SupportedSettings', 'ThreadedResReq',
         'Timeline']
