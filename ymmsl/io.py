@@ -31,7 +31,7 @@ _classes = (
         v0_2.KeepsStateForNextUse, v0_2.Model, v0_2.MPICoresResReq, v0_2.MPINodesResReq,
         v0_2_MulticastConduit, v0_2.Ports, v0_2.Program, v0_2.Reference,
         v0_2.ResourceRequirements, v0_2.SettingType, v0_2.Settings,
-        v0_2.SupportedSettings, v0_2.ThreadedResReq)
+        v0_2.SupportedSetting, v0_2.SupportedSettings, v0_2.ThreadedResReq)
 
 
 _load = yatiml.load_function(*_classes)
@@ -46,8 +46,9 @@ def load(source: Union[str, Path, IO[Any]]) -> Document:
                 object containing from which yMMSL data can be read.
 
     Returns:
-        A PartialConfiguration object corresponding to the input data.
-
+        A Document object corresponding to the input data. This is either a
+        :class:`ymmsl.v0_1.PartialConfiguration` or a :class:`ymmsl.v0_2.Configuration`
+        depending on the version of the input file.
     """
     # This wrapper is just here to render the documentation.
     return _load(source)

@@ -1,0 +1,62 @@
+ymmsl_version: v0.2
+
+description: |
+  # Example yMMSL file containing programs
+
+  To actually run a simulation, we need some programs that do the computations. This
+  shows how to describe these programs and how to run them. Note that there are more
+  options than are shown here, see the API documentation for :class:`Model`.
+
+programs:
+  macro_model_program:
+    ports:
+      o_i: state_out
+      s: update_in
+
+    description: |
+      # A program implementing the slow dynamics
+
+      ## Ports
+
+      - state_out: (1D array of float)
+        Outputs the state at every time step
+
+      - update_in: (1D array of float)
+        Receives a state update at every time step
+
+    supported_settings:
+      domain_grain: float   Spatial distance between grid cells (m)
+      domain_extent: float  Size of the domain (m)
+      timestep: float       Step to take while integrating time (s)
+      total_time: float     Total time to simulate for (s)
+      k: float              Reaction coefficient
+
+    virtual_env: /home/user/venv
+    executable: /home/user/codes/reaction.py
+
+  micro_model_program:
+    ports:
+      f_init: init_in
+      o_f: final_out
+
+    description: |
+      # A program implementing the fast dynamics
+
+      ## Ports
+
+      - init_in: (1D array of float) Receives the system state on every run
+      - final_out: (1D array of float) Outputs a state update on every run
+
+    supported_settings:
+      domain_grain: float   Spatial distance between grid cells (m)
+      domain_extent: float  Size of the domain (m)
+      timestep: float       Step to take while integrating time (s)
+      total_time: float     Total time to simulate for (s)
+      d: float              Diffusion coefficient
+
+    modules:
+    - gcc
+    - openmpi
+    execution_model: openmpi
+    executable: /home/user/diffusion
+    args: -v
