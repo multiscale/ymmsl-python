@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -14,10 +14,7 @@ setup(
     author="Lourens Veen",
     author_email='l.veen@esciencecenter.nl',
     url='https://github.com/multiscale/ymmsl-python',
-    packages=[
-        'ymmsl',
-    ],
-    package_dir={'ymmsl': 'ymmsl'},
+    packages=find_packages(include=['ymmsl.*']),
     include_package_data=True,
     license="Apache Software License 2.0",
     zip_safe=False,
