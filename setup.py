@@ -14,7 +14,7 @@ setup(
     author="Lourens Veen",
     author_email='l.veen@esciencecenter.nl',
     url='https://github.com/multiscale/ymmsl-python',
-    packages=find_packages(include=['ymmsl.*']),
+    packages=find_packages(include=['ymmsl', 'ymmsl.*']),
     include_package_data=True,
     license="Apache Software License 2.0",
     zip_safe=False,
