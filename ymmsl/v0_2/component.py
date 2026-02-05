@@ -26,14 +26,14 @@ class Component:
         name: The name of this component
         ports: The ports by which this component can be connected to others
         description: A human-readable description of this component
-        optional: Whether this component is optional
         implementation: A Model or Program implementing this component
+        optional: Whether this component is optional
         multiplicity: The shape of the set of instances
     """
     def __init__(
             self, name: str, ports: Ports,
-            description: str, optional: bool = False,
-            implementation: Optional[str] = None,
+            description: str, implementation: Optional[str] = None,
+            optional: bool = False,
             multiplicity: Union[None, int, List[int]] = None) -> None:
         """Create a Component
 
@@ -41,8 +41,8 @@ class Component:
             name: The name of the component, must be a valid Identifier
             ports: Ports on this component that can be used to connect it
             description: Human-readable description of this component
-            optional: Whether this component is optional.
             implementation: The name of the implementation, must be a valid Reference
+            optional: Whether this component is optional.
             multiplicity: The shape of the set of instances, or a number describing the
                 size of a 1D set of them, or None to have a single instance.
         """

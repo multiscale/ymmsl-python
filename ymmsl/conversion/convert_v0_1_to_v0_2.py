@@ -52,8 +52,8 @@ def convert_component(component: v0_1.Component) -> v0_2.Component:
         implementation = str(component.implementation)
 
     return v0_2.Component(
-            str(component.name), convert_ports(ports), description, False,
-            implementation, component.multiplicity)
+            str(component.name), convert_ports(ports), description, implementation,
+            False, component.multiplicity)
 
 
 def convert_conduit(conduit: v0_1.Conduit) -> v0_2.Conduit:

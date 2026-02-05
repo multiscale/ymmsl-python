@@ -21,19 +21,18 @@ def model() -> Model:
             SupportedSettings({'eta': 'float'}),
             [
                 Component(
-                    'ic', Ports(o_f='out'), 'Creates initial state', False,
+                    'ic', Ports(o_f='out'), 'Creates initial state',
                     'initial_conditions'),
                 Component(
                     'smc', Ports('initial_state', 'cell_positions', 'wss_in'),
-                    'Simulates smooth muscle cells', False, 'smc'),
+                    'Simulates smooth muscle cells', 'smc'),
                 Component(
                     'bf', Ports('initial_domain', o_f='wss_out'),
-                    'Simulates blood flow', False, 'blood_flow'),
+                    'Simulates blood flow', 'blood_flow'),
                 Component(
-                    'smc2bf', Ports('in', o_f='out'), 'Grids domain', False, 'smc2bf'),
+                    'smc2bf', Ports('in', o_f='out'), 'Grids domain', 'smc2bf'),
                 Component(
-                    'bf2smc', Ports('in', o_f='out'), 'Interpolates wss', False,
-                    'bf2smc')],
+                    'bf2smc', Ports('in', o_f='out'), 'Interpolates wss', 'bf2smc')],
             [
                 Conduit('ic.out', 'smc.initial_state'),
                 Conduit('smc.cell_positions', 'smc2bf.in'),
@@ -103,12 +102,9 @@ def model_multicast() -> Model:
     return Model(
             'test_model', None, 'Test model for multicast conduits', None,
             [
-                Component(
-                    'a', Ports(o_f='out'), 'Creates data', False, 'a'),
-                Component(
-                    'b', Ports('in'), 'Receives data', False, 'b'),
-                Component(
-                    'c', Ports('in'), 'Receives data', False, 'b'),
+                Component('a', Ports(o_f='out'), 'Creates data', 'a'),
+                Component('b', Ports('in'), 'Receives data', 'b'),
+                Component('c', Ports('in'), 'Receives data', 'b'),
                 ],
             [
                 Conduit('a.out', 'b.in'),
@@ -159,19 +155,19 @@ def model_with_filters() -> Model:
             [
                 Component(
                     'init', Ports(o_f='macro_out micro_out'), 'Creates initial states',
-                    False, 'init'),
+                    'init'),
                 Component(
                     'macro1', Ports('init', 'bc_out', 'bc_in', 'final'),
-                    'First macro model', False, 'macro1'),
+                    'First macro model', 'macro1'),
                 Component(
                     'micro1', Ports('init_state init_bc', o_f='final_bc final_state'),
-                    'First micro model', False, 'micro1'),
+                    'First micro model', 'micro1'),
                 Component(
                     'macro2', Ports('init_state', 'bc_out', 'bc_in'),
-                    'Second macro model', False, 'macro2'),
+                    'Second macro model', 'macro2'),
                 Component(
                     'micro2', Ports('init_state init_bc', o_f='final_bc'),
-                    'Second micro model', False, 'micro2'),
+                    'Second micro model', 'micro2'),
             ],
             [
                 Conduit('init.macro_out', 'macro1.init'),
@@ -347,10 +343,10 @@ def config_consistent_impl_ports() -> Configuration:
             [
                 Component(
                     'no_implementation', Ports(o_i=['out'], s=['in']), 'description',
-                    False, None),
+                    None),
                 Component(
                     'impl_no_ports', Ports(f_init=['in'], o_f=['out']), 'description',
-                    False, 'no_ports'),
+                    'no_ports'),
             ])
 
     model2 = Model(
@@ -359,7 +355,7 @@ def config_consistent_impl_ports() -> Configuration:
             [
                 Component(
                     'impl_with_ports', Ports(f_init=['in'], o_f=['out']), 'description',
-                    False, 'with_ports'),
+                    'with_ports'),
             ])
 
     programs = [
@@ -391,16 +387,16 @@ def config_inconsistent_impl_ports() -> Configuration:
             [
                 Component(
                     'no_implementation', Ports(o_i=['out'], s=['in']), 'description',
-                    False, None),
+                    None),
                 Component(
-                    'missing_implementation', Ports(), 'description', False,
+                    'missing_implementation', Ports(), 'description',
                     'implementation_does_not_exist'),
                 Component(
                     'impl_ports_mismatch', Ports(f_init=['in'], o_f=['out']),
-                    'description', False, 'ports1'),
+                    'description', 'ports1'),
                 Component(
                     'model_as_impl', Ports(f_init=['inm'], o_f=['outm', 'out']),
-                    'description', False, 'implementations_test2'),
+                    'description', 'implementations_test2'),
             ])
 
     model2 = Model(
@@ -410,10 +406,9 @@ def config_inconsistent_impl_ports() -> Configuration:
             [
                 Component(
                     'impl_also_wrong', Ports(o_i=['out'], s=['in']), 'description',
-                    False, 'ports2'),
+                    'ports2'),
                 Component(
-                    'impl_extra_ports', Ports(f_init=['in']), 'description', False,
-                    'ports3'),
+                    'impl_extra_ports', Ports(f_init=['in']), 'description', 'ports3'),
             ])
 
     programs = [
@@ -447,12 +442,12 @@ def config_consistent_custom_impls() -> Configuration:
     model1 = Model(
             'test_model', None, 'description', None,
             [
-                Component('c1', Ports(), 'description', False, None),
-                Component('c2', Ports(), 'description', False, 'submodel')])
+                Component('c1', Ports(), 'description', None),
+                Component('c2', Ports(), 'description', 'submodel')])
 
     model2 = Model(
             'submodel', None, 'description', None,
-            [Component('init_model', Ports(), 'description', False, 'initer1')])
+            [Component('init_model', Ports(), 'description', 'initer1')])
 
     programs = [
             Program('program1', executable=Path('program1')),
@@ -475,12 +470,12 @@ def config_inconsistent_custom_impls() -> Configuration:
     model1 = Model(
             'test_model', None, 'description', None,
             [
-                Component('c1', Ports(), 'description', False, None),
-                Component('c2', Ports(), 'description', False, 'submodel')])
+                Component('c1', Ports(), 'description', None),
+                Component('c2', Ports(), 'description', 'submodel')])
 
     model2 = Model(
             'submodel', None, 'description', None,
-            [Component('init_model', Ports(), 'description', False, 'initer1')])
+            [Component('init_model', Ports(), 'description', 'initer1')])
 
     resources = [
             ThreadedResReq(Reference('c1'), 1),
@@ -502,10 +497,9 @@ def config_consistent_settings() -> Configuration:
             'description',
             None,
             [
-                Component('c1', Ports(), 'description', False, 'a'),
+                Component('c1', Ports(), 'description', 'a'),
                 Component(
-                    'submodel', Ports(), 'description', False,
-                    'supported_settings_test2'),
+                    'submodel', Ports(), 'description', 'supported_settings_test2'),
             ])
 
     model2 = Model(
@@ -514,8 +508,8 @@ def config_consistent_settings() -> Configuration:
             'description',
             SupportedSettings({'delta': 'bool'}),
             [
-                Component('c1', Ports(), 'description', False, 'b'),
-                Component('c2', Ports(), 'description', False, 'c', 10)],
+                Component('c1', Ports(), 'description', 'b'),
+                Component('c2', Ports(), 'description', 'c', False, 10)],
             [])
 
     settings = Settings({
@@ -557,9 +551,9 @@ def config_consistent_resources() -> Configuration:
             'description',
             None,
             [
-                Component('singlethreaded', Ports(), 'description', False, 'a'),
-                Component('multithreaded', Ports(), 'description', False, 'b'),
-                Component('submodel', Ports(), 'description', False, 'resources_test2'),
+                Component('singlethreaded', Ports(), 'description', 'a'),
+                Component('multithreaded', Ports(), 'description', 'b'),
+                Component('submodel', Ports(), 'description', 'resources_test2'),
             ])
 
     model2 = Model(
@@ -568,10 +562,10 @@ def config_consistent_resources() -> Configuration:
             'description',
             None,
             [
-                Component('mpi_cores1', Ports(), 'description', False, 'c'),
-                Component('mpi_cores2', Ports(), 'description', False, 'd'),
-                Component('mpi_nodes1', Ports(), 'description', False, 'c'),
-                Component('mpi_nodes2', Ports(), 'description', False, 'd')],
+                Component('mpi_cores1', Ports(), 'description', 'c'),
+                Component('mpi_cores2', Ports(), 'description', 'd'),
+                Component('mpi_nodes1', Ports(), 'description', 'c'),
+                Component('mpi_nodes2', Ports(), 'description', 'd')],
             [])
 
     em = {
@@ -599,14 +593,14 @@ def config_inconsistent_resources() -> Configuration:
     model1 = Model(
             'got_resources', None, 'description', None,
             [
-                Component('singlethreaded', Ports(), 'description', False, 'a'),
-                Component('with_mpi', Ports(), 'description', False, 'b'),
-                Component('without_mpi', Ports(), 'description', False, 'a'),
+                Component('singlethreaded', Ports(), 'description', 'a'),
+                Component('with_mpi', Ports(), 'description', 'b'),
+                Component('without_mpi', Ports(), 'description', 'a'),
             ])
 
     model2 = Model(
             'missing_resources', None, 'description', None,
-            [Component('singlethreaded2', Ports(), 'description', False, 'a')])
+            [Component('singlethreaded2', Ports(), 'description', 'a')])
 
     programs = [
             Program('a', script='a', execution_model=ExecutionModel.DIRECT),
