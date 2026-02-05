@@ -372,6 +372,11 @@ def test_check_inconsistent_implementation_ports(
 
     assert len(str(e.value).split('\n')) == 8
 
+    with pytest.raises(RuntimeError) as e:
+        config_inconsistent_impl_ports.check_consistent(False)
+
+    assert len(str(e.value).split('\n')) == 7
+
 
 def test_check_consistent_custom_implementations(
         config_consistent_custom_impls: Configuration) -> None:
@@ -425,3 +430,5 @@ def test_check_inconsistent_resources(
         config_inconsistent_resources.check_consistent()
 
     assert len(str(e.value).split('\n')) == 4
+
+    config_inconsistent_resources.check_consistent(False)
