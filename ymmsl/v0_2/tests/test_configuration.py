@@ -431,4 +431,4 @@ def test_check_inconsistent_resources(
 
     assert len(str(e.value).split('\n')) == 4
 
-    config_inconsistent_resources.check_consistent(False)
+    config_inconsistent_resources.check_consistent(True, False)
