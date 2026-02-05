@@ -225,21 +225,65 @@ class Configuration(Document):
                     ' problems were found:\n- '
                     + '\n- '.join(errors))
 
-    def top_models(self) -> List[Model]:
+    def root_model(self, selected_model: Optional[Reference] = None) -> Model:
+        """Return the root model of this configuration.
+
+        If there are multiple models that are not used as an implementation in any
+        component (root models), and selected_model is given and names one of them, then
+        that model is returned, otherwise an exception is raised.
+
+        If there is only a single root model, then it is returned, unless selected_model
+        is given and does not match, in which case an exception is raised.
+
+        If there are no models, an exception is raised.
+
+        Args:
+            selected_model: Name of the model to return, in case of multiple options
+
+        Returns:
+            The sole or selected model that is not used as an implementation in any
+            component in the configuration.
+
+        Raises:
+            RuntimeError if an error occurs, as described above.
+        """
+        root_models = self._root_models()
+        if not root_models:
+            raise RuntimeError('No model was found in this configuration.')
+
+        if selected_model:
+            match = [m for m in root_models if m.name == selected_model]
+            if match:
+                return match[0]
+
+            models = '\n- '.join([str(m.name) for m in root_models])
+            raise RuntimeError(
+                    f'The selected model "{selected_model}" could not be found in this'
+                    ' configuration. The following models are present:\n- {models}')
+
+        if len(root_models) == 1:
+            return root_models[0]
+
+        models = '\n- '.join([str(m.name) for m in root_models])
+        raise RuntimeError(
+                'Multiple models were found in this configuration that are not used'
+                f' as implementations:\n\n- {models}')
+
+    def _root_models(self) -> List[Model]:
         """Models in this configuration that are not used as implementations."""
-        top_models = copy(self.models)
+        root_models = copy(self.models)
 
         for model in self.models.values():
             for component in model.components.values():
                 if component.implementation:
-                    if component.implementation in top_models:
-                        del top_models[component.implementation]
+                    if component.implementation in root_models:
+                        del root_models[component.implementation]
 
         for impl in self.custom_implementations.values():
-            if impl in top_models:
-                del top_models[impl]
+            if impl in root_models:
+                del root_models[impl]
 
-        return list(top_models.values())
+        return list(root_models.values())
 
     def _component_paths(self) -> Dict[Reference, Component]:
         """Return component paths for components.
@@ -253,7 +297,7 @@ class Configuration(Document):
         same component object, if a submodel is used multiple times.
         """
         result = dict()
-        queue = [(m, Reference([])) for m in self.top_models()]
+        queue = [(m, Reference([])) for m in self._root_models()]
 
         while queue:
             model, prefix = queue.pop(0)
