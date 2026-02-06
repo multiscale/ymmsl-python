@@ -165,6 +165,8 @@ class Configuration(Document):
                     'Multiple ymmsl files containing models specified. Please'
                     ' use the import functionality instead.')
 
+        self.models.update(overlay.models)
+
         self.custom_implementations.update(overlay.custom_implementations)
 
         self.settings.update(overlay.settings)
