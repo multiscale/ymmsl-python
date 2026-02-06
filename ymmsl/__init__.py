@@ -7,6 +7,9 @@ from ymmsl.conversion.converter import convert_to, DowngradeError
 from ymmsl.document import Document
 from ymmsl.io import dump, load, load_as, save
 
+# For backwards compatibility of programs
+from ymmsl.v0_2 import Operator, Settings
+
 
 __version__ = '0.14.1-dev'
 __author__ = 'Lourens Veen'
@@ -14,4 +17,5 @@ __email__ = 'l.veen@esciencecenter.nl'
 
 
 __all__ = [
-        'convert_to', 'Document', 'dump', 'DowngradeError', 'load', 'load_as', 'save']
+        'convert_to', 'Document', 'dump', 'DowngradeError', 'load', 'load_as',
+        'Operator', 'save', 'Settings']
