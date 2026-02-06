@@ -183,9 +183,7 @@ class Configuration(Document):
         self.checkpoints.update(overlay.checkpoints)
         self.resume.update(overlay.resume)
 
-    def check_consistent(
-            self, require_implementations: bool = True,
-            require_resources: bool = True) -> None:
+    def check_consistent(self, check_runnable: bool = True) -> None:
         """Checks that the configuration is internally consistent.
 
         This checks:
@@ -203,10 +201,8 @@ class Configuration(Document):
         with an explanation of the problem.
 
         Args:
-            require_implementations: if False, skip the check for whether component
-                implementations exist.
-            require_resources: if False, skip the check for whether resources have been
-                requested.
+            check_runnable: if False, skip the checks for whether component
+                implementations exist and whether resources have been requested.
         """
         errors = list()
 
@@ -217,12 +213,12 @@ class Configuration(Document):
         errors.extend(self._check_duplicate_implementations())
 
         component_paths = self._component_paths()
-        if require_implementations:
+        if check_runnable:
             errors.extend(self._check_implementations_exist(component_paths))
         errors.extend(self._check_consistent_ports(component_paths))
         errors.extend(self._check_custom_implementations(component_paths))
         errors.extend(self._check_consistent_settings(component_paths))
-        if require_resources:
+        if check_runnable:
             errors.extend(self._check_resources(component_paths))
 
         if errors:
