@@ -613,3 +613,69 @@ def config_inconsistent_resources() -> Configuration:
 
     return Configuration(
             'test_config', None, [model1, model2], None, None, programs, resources)
+
+
+@pytest.fixture
+def config_component_loop() -> Configuration:
+    main = Model(
+            'main',
+            Ports(),
+            'Test model with a nested model loop',
+            None,
+            [
+                Component(
+                    'init', Ports(o_f='final'),
+                    'Calculates initial conditions', 'submodel1'),
+                Component(
+                    'macro', Ports(f_init='init', o_i='out', s='in'), 'Macro model',
+                    'submodel1'),
+                Component(
+                    'micro', Ports('init', o_f='final'),
+                    'Micro model', 'micro'),
+            ], [
+                Conduit('init.final', 'macro.init'),
+                Conduit('macro.out', 'micro.init'),
+                Conduit('micro.out', 'macro.init'),
+            ])
+
+    submodel1 = Model(
+            'submodel1',
+            Ports(f_init='init', o_i='out', s='in'),
+            'Implements the macro model',
+            None,
+            [
+                Component(
+                    'first', Ports(f_init='init', o_f='final'), 'First model',
+                    'submodel2'),
+                Component(
+                    'second', Ports(f_init='init', o_i='out', s='in'), 'Second model',
+                    'second')
+            ], [
+                Conduit('init', 'first.init'),
+                Conduit('first.final', 'second.init'),
+                Conduit('second.out', 'out'),
+                Conduit('second.in', 'in')
+            ])
+
+    submodel2 = Model(
+            'submodel2',
+            Ports(f_init='init', o_f='final'),
+            'Processes the input a bit',
+            None,
+            [Component('micro', Ports('init', o_f='final'), 'Ooops...', 'submodel1')],
+            [
+                Conduit('init', 'micro.init'),
+                Conduit('micro.final', 'final')
+            ])
+
+    programs = [
+            Program('micro', script='micro', execution_model=ExecutionModel.DIRECT),
+            Program('second', script='second', execution_model=ExecutionModel.INTELMPI)]
+
+    resources = [
+            ThreadedResReq(Ref('micro'), 1),
+            ThreadedResReq(Ref('second'), 2),]
+
+    return Configuration(
+            'config_Component_loop', None, [main, submodel1, submodel2], None, None,
+            programs, resources)

@@ -4,7 +4,7 @@ import itertools
 import logging
 from pathlib import Path
 from typing import (
-        Dict, List, MutableMapping, Optional, Sequence, Union, cast)
+        Dict, List, MutableMapping, Optional, Sequence, Tuple, Union, cast)
 
 import yatiml
 import yaml
@@ -213,6 +213,7 @@ class Configuration(Document):
         errors.extend(self._check_duplicate_implementations())
 
         component_paths = self._component_paths()
+
         if check_runnable:
             errors.extend(self._check_implementations_exist(component_paths))
         errors.extend(self._check_consistent_ports(component_paths))
@@ -297,18 +298,31 @@ class Configuration(Document):
         The returned dict maps all paths in the configuration that map to a component
         with an implementation. Note that there may be multiple paths mapping to the
         same component object, if a submodel is used multiple times.
+
+        Raises:
+            RuntimeError: if a loop is detected
         """
         result = dict()
-        queue = [(m, Reference([])) for m in self._root_models()]
+        queue: List[Tuple[Model, Reference, List[Tuple[Reference, Reference]]]] = \
+            [(m, Reference([]), []) for m in self._root_models()]
 
         while queue:
-            model, prefix = queue.pop(0)
+            model, prefix, seen = queue.pop(0)
             for component in model.components.values():
                 path = prefix + component.name
                 impl = self.custom_implementations.get(path, component.implementation)
                 if impl is not None:
                     if impl in self.models:
-                        queue.append((self.models[impl], path))
+                        if [m for _, m in seen if m == impl]:
+                            msg = 'A loop of components and models was detected:\n'
+                            for p, m in seen:
+                                msg += f'- component {p} is implemented using {m}\n'
+                            msg += (
+                                    f'- component {path} is implemented using'
+                                    f' {impl}\n')
+                            raise RuntimeError(msg)
+                        queue.append((
+                            self.models[impl], path, seen + [(path, impl)]))
                     result[path] = component
 
         return result

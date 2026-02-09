@@ -360,6 +360,14 @@ def test_check_duplicate_implementations(
     assert len(str(e.value).split('\n')) == 2
 
 
+def test_check_component_loop(
+        config_component_loop: Configuration) -> None:
+    with pytest.raises(RuntimeError) as e:
+        config_component_loop.check_consistent()
+
+    assert 'loop of components and models' in str(e)
+
+
 def test_check_consistent_implementation_ports(
         config_consistent_impl_ports: Configuration) -> None:
     config_consistent_impl_ports.check_consistent()
