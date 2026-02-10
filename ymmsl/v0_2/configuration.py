@@ -44,7 +44,7 @@ class Configuration(Document):
         resume: Defines what snapshot each model component should resume from
     """
     def __init__(
-            self, description: str,
+            self, description: str = '',
             imports: Optional[Sequence[ImportStatement]] = None,
             models: Optional[Union[
                 Sequence[Model], MutableMapping[Reference, Model]]] = None,
@@ -589,11 +589,14 @@ class Configuration(Document):
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         descr = node.get_attribute('description')
         if descr.is_scalar(str):
-            # output in block style
-            ynode = cast(yaml.ScalarNode, descr.yaml_node)
-            ynode.style = '|'
-            if not ynode.value.endswith('\n'):
-                ynode.value += '\n'
+            if descr.get_value() == '':
+                node.remove_attribute('description')
+            else:
+                # output in block style
+                ynode = cast(yaml.ScalarNode, descr.yaml_node)
+                ynode.style = '|'
+                if not ynode.value.endswith('\n'):
+                    ynode.value += '\n'
 
         imports = node.get_attribute('imports')
         if imports.is_sequence() and imports.is_empty():
