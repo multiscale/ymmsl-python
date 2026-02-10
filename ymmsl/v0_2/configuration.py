@@ -262,7 +262,7 @@ class Configuration(Document):
             models = '\n- '.join([str(m.name) for m in root_models])
             raise RuntimeError(
                     f'The selected model "{selected_model}" could not be found in this'
-                    ' configuration. The following models are present:\n- {models}')
+                    f' configuration. The following models are present:\n- {models}')
 
         if len(root_models) == 1:
             return root_models[0]
