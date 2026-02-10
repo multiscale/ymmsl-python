@@ -440,14 +440,17 @@ def config_inconsistent_impl_ports() -> Configuration:
 @pytest.fixture
 def config_consistent_custom_impls() -> Configuration:
     model1 = Model(
-            'test_model', None, 'description', None,
+            'test_model', None, 'Testing consistent (custom) implementations', None,
             [
                 Component('c1', Ports(), 'description', None),
                 Component('c2', Ports(), 'description', 'submodel')])
 
     model2 = Model(
             'submodel', None, 'description', None,
-            [Component('init_model', Ports(), 'description', 'initer1')])
+            [
+                Component('init_model', Ports(), 'description', 'initer1'),
+                Component('optional', Ports(), 'description', None, True),
+                Component('optional2', Ports(), 'description', 'program1', True)])
 
     programs = [
             Program('program1', executable=Path('program1')),
@@ -456,6 +459,7 @@ def config_consistent_custom_impls() -> Configuration:
     resources = [
             ThreadedResReq(Reference('c1'), 1),
             ThreadedResReq(Reference('c2.init_model'), 1),
+            ThreadedResReq(Reference('c2.optional2'), 1),
             ]
 
     return Configuration(

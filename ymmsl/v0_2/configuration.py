@@ -389,7 +389,8 @@ class Configuration(Document):
             self, component_paths: Dict[Reference, Component]) -> List[str]:
         """Check that all components with an implementation have a valid one.
 
-        Components with implementation None are not considered broken.
+        Components with implementation None are not considered broken if marked as
+        optional.
 
         Args:
             component_paths: The output of _component_paths above.
@@ -399,7 +400,12 @@ class Configuration(Document):
         errors = list()
         for path, component in component_paths.items():
             impl = self.custom_implementations.get(path, component.implementation)
-            if impl is not None:
+            if impl is None:
+                if not component.optional:
+                    errors.append(
+                            f'Component "{path}" is not marked optional, and does not'
+                            ' have an implementation.')
+            else:
                 if impl not in self.models and impl not in self.programs:
                     errors.append(
                             f'Component "{path}" has implementation "{impl}", but no'
