@@ -6,9 +6,8 @@ from ymmsl.document import Document as DocumentBase
 class Document(DocumentBase):
     """Represents a yMMSL document.
 
-    This gets mixed in with a top-level content class, and takes
-    care of a special ymmsl_version attribute in the root of the
-    YAML file.
+    This gets specialised by a top-level content class, and takes care of a special
+    ymmsl_version attribute in the root of the YAML file.
     """
 
     @classmethod
