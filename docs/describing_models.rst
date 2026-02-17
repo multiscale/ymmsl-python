@@ -287,7 +287,7 @@ like this:
 
     imports:
       - from utils.uq import implementation uq_driver
-      - from models.macro_micro implementation macro_micro
+      - from models.macro_micro import implementation macro_micro
 
 The first import statement would look for a file named ``uq.ymmsl`` in the ``utils/``
 directory, and load a model program named ``uq_driver`` from it. The second one would
