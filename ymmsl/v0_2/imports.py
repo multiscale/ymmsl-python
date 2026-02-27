@@ -105,13 +105,13 @@ class ImportStatement:
 
     @classmethod
     def _parse_string_representation(cls, text: str) -> Tuple[str, str, str]:
-        help_text = 'Import statements should look like "from a.b.c import d"'
+        help_text = 'Import statements should look like "from a.b.c import <kind> d"'
 
         parts = text.split()
 
         if len(parts) > 0 and parts[0] != 'from':
             raise RuntimeError(
-                    'Import statement "{text}" does not start with "from".\n' +
+                    f'Import statement "{text}" does not start with "from".\n' +
                     help_text)
 
         if len(parts) > 1:
@@ -119,23 +119,26 @@ class ImportStatement:
 
         if len(parts) > 2 and parts[2] != 'import':
             raise RuntimeError(
-                    'Import statement "{text}" does not have "import" part.\n' +
+                    f'Import statement "{text}" does not have "import" part.\n' +
                     help_text)
 
         if len(parts) > 3:
-            try:
-                kind = parts[3]
-            except KeyError:
-                raise RuntimeError(
-                        f'Tried to import an invalid kind of object "{parts[3]}" in' +
-                        f' import statement "{text}".\n' + help_text)
+            kind = parts[3]
+        else:
+            raise RuntimeError(
+                    f'Import statement "{text}" does not specify which kind of thing'
+                    ' to import.\n' + help_text)
 
         if len(parts) > 4:
             name = parts[4]
+        else:
+            raise RuntimeError(
+                    f'Import statement "{text}" does not specify the name of the thing'
+                    ' to import.\n' + help_text)
 
         if len(parts) > 5:
             raise RuntimeError(
-                    'Extra text found at end of import statement "{text}".\n' +
+                    f'Extra text found at end of import statement "{text}".\n' +
                     help_text)
 
         return module, kind, name
