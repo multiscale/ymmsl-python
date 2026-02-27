@@ -1,4 +1,5 @@
-from ymmsl.v0_2 import Component, Conduit, Model, Operator, Port, Reference, Timeline
+from ymmsl.v0_2 import Component, Conduit, Model, Operator, Port, Reference, Timeline, \
+    Identifier
 
 
 class TimelineTree:
@@ -22,6 +23,13 @@ class TimelineTree:
             for port_name, port in component.ports.items()
         }
         """Map of Port objects by their full reference"""
+
+        # Ports may only have relative timeline annotations of size 1
+        for port in self.all_ports.values():
+            if port.timeline.absolute or len(port.timeline) > 1:
+                # FIXME?
+                raise ValueError(
+                    f"Invalid timeline annotation for {port.name}: {port.timeline}")
 
         # Assign components to timelines
         for component in self.model.components.values():
@@ -107,7 +115,13 @@ class TimelineTree:
         component = port_name[:-1]
         if len(component) == 0:
             # Connected to a model port
-            return self.root  # TODO: check that this is an F_INIT model port?
+            model_port = port_name[-1]
+            assert isinstance(model_port, Identifier)
+            port = self.model.ports[model_port]
+            if port.operator is Operator.F_INIT:
+                return self.root
+            else:
+                raise NotImplementedError()  # FIXME?
         timeline = self.component_timeline[component]
         port = self.all_ports[port_name]
         if port.operator is Operator.O_F:
