@@ -116,6 +116,15 @@ class Conduit:
                         self.filters.append(ConduitFilter(f))
                     except ValueError:
                         raise RuntimeError(f'Invalid conduit filter "{f}"')
+        
+        # Repeaters must come after reducers
+        is_repeating = False
+        for filter in self.filters:
+            if filter.is_reducer() and is_repeating:
+                raise ValueError(
+                        f"Invalid conduit filters {self.filters}: reducer filters "
+                        "must come before repeater filters.")
+            is_repeating = filter.is_repeater()
 
         self.__check_reference(self.sender)
         self.__check_reference(self.receiver)
