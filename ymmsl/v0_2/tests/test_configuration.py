@@ -352,12 +352,39 @@ def test_configuration_update_resources_add() -> None:
     assert base.resources[Ref('my.micro')] == resources2
 
 
+def test_configuration_load_default() -> None:
+    config = load('ymmsl_version: v0.2')
+    assert isinstance(config, Configuration)
+    assert config.description == ''
+    assert config.imports == []
+    assert config.models == {}
+    assert config.custom_implementations == {}
+    assert len(config.settings) == 0
+    assert config.programs == {}
+    assert config.resources == {}
+    assert not config.checkpoints
+    assert config.resume == {}
+
+
+def test_configuration_dump_default() -> None:
+    text = dump(Configuration())
+    assert text == 'ymmsl_version: v0.2\n'
+
+
 def test_check_duplicate_implementations(
         config_duplicate_implementations: Configuration) -> None:
     with pytest.raises(RuntimeError) as e:
         config_duplicate_implementations.check_consistent()
 
     assert len(str(e.value).split('\n')) == 2
+
+
+def test_check_component_loop(
+        config_component_loop: Configuration) -> None:
+    with pytest.raises(RuntimeError) as e:
+        config_component_loop.check_consistent()
+
+    assert 'loop of components and models' in str(e)
 
 
 def test_check_consistent_implementation_ports(

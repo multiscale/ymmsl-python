@@ -125,7 +125,7 @@ class Conduit:
         if not self.filters:
             filter_clause = ''
         else:
-            filter_clause = ' ->' + ' '.join([f.value for f in self.filters])
+            filter_clause = ' -> ' + ' '.join([f.value for f in self.filters])
         return f'Conduit({self.sender}{filter_clause} -> {self.receiver})'
 
     def __eq__(self, other: Any) -> bool:

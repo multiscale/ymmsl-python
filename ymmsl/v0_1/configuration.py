@@ -341,6 +341,7 @@ class Configuration(PartialConfiguration):
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
+        Document._yatiml_recognize(node)
         node.require_attribute('model', Model)
         node.require_attribute('implementations')
         node.require_attribute('resources')

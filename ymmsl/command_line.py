@@ -1,7 +1,7 @@
 import click
 import os
 from shutil import copyfile
-from typing import Optional, TextIO, Type, Union
+from typing import Dict, Optional, TextIO, Type, Union
 import warnings
 
 from ymmsl.conversion.converter import DowngradeError
@@ -31,7 +31,7 @@ def ymmsl() -> None:
     pass
 
 
-_version_tag_to_type = {
+_version_tag_to_type: Dict[str, Type] = {
         'v0.1': v0_1.PartialConfiguration,
         'v0.2': v0_2.Configuration,
         }

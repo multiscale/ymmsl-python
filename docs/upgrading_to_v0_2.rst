@@ -94,11 +94,16 @@ check the result carefully and fix it where needed.
 Upgrading Python code
 `````````````````````
 
-If you have Python code that uses the ``ymmsl`` package, then the upgrade from version
-0.14.0 to 0.15.0 will break your code. Unfortunately, this was necessary to support
-multiple versions without causing confusion. Fortunately, yMMSL v0.1 is still supported
-and a quick fix is available for the near term. Eventually, you'll want to upgrade to
-the new version however, which is a bit more work.
+MUSCLE3 models written in Python use two classes from the ``ymmsl`` package
+(``Operator`` and optionally ``Settings``), neither of which have changed and both of
+which remain available via a backwards compatibility definition. You can change your
+code to import them from ``ymmsl.v0_2`` instead, but it's not necessary.
+
+If you have other Python code that uses the ``ymmsl`` package, then the upgrade from
+version 0.14.0 to 0.15.0 will break your code. Unfortunately, this was necessary to
+support multiple versions without causing confusion. Fortunately, yMMSL v0.1 is still
+supported and a quick fix is available for the near term. Eventually, you'll want to
+upgrade to the new version however, which is a bit more work.
 
 Quick fix
 ^^^^^^^^^
@@ -110,6 +115,23 @@ contents of a v0.1 yMMSL file are now imported from ``ymmsl.v0_1``. If you updat
 import statements accordingly, then your code will work with newer versions of the
 library (but not anymore with older ones, so set a version constraint accordingly). Of
 course, you'll only be able to read and write v0.1 yMMSL files.
+
+If you use Python type annotations, then you'll note that the return type of
+:func:`ymmsl.load` has changed from ``ymmsl.PartialConfiguration`` (now
+:class:`ymmsl.v0_1.PartialConfiguration`) to :class:`ymmsl.Document`. This is a parent
+class to both :class:`ymmsl.v0_1.PartialConfiguration` and
+:class:`ymmsl.v0_2.Configuration`, and the function will return either depending on the
+version of the input file.
+
+Since your code does not support v0.2 yet, you may want to use
+
+.. code-block:: python
+
+    ymmsl.load_as(ymmsl.v0_1.PartialConfiguration, infile)
+
+instead. This always returns a :class:`ymmsl.v0_1.PartialConfiguration`, and raises a
+:class:`ymmsl.DowngradeError` if it is asked to load a newer file.
+
 
 Supporting v0.2
 ^^^^^^^^^^^^^^^

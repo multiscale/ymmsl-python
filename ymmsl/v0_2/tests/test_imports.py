@@ -71,6 +71,16 @@ def test_load_invalid_import6(load_import: LoadImport) -> None:
         load_import('from nlesc.examples[1] import implementation example')
 
 
+def test_load_invalid_import7(load_import: LoadImport) -> None:
+    with pytest.raises(RuntimeError):
+        load_import('from a.b import example')
+
+
+def test_load_invalid_import8(load_import: LoadImport) -> None:
+    with pytest.raises(RuntimeError):
+        load_import('from a.b import implementation')
+
+
 def test_module_path() -> None:
     imp = ImportStatement('nlesc.examples', 'implementation', 'test')
     assert imp.module_path() == Path('nlesc/examples.ymmsl')

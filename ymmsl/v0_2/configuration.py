@@ -4,7 +4,7 @@ import itertools
 import logging
 from pathlib import Path
 from typing import (
-        Dict, List, MutableMapping, Optional, Sequence, Union, cast)
+        Dict, List, MutableMapping, Optional, Sequence, Tuple, Union, cast)
 
 import yatiml
 import yaml
@@ -44,7 +44,7 @@ class Configuration(Document):
         resume: Defines what snapshot each model component should resume from
     """
     def __init__(
-            self, description: str,
+            self, description: str = '',
             imports: Optional[Sequence[ImportStatement]] = None,
             models: Optional[Union[
                 Sequence[Model], MutableMapping[Reference, Model]]] = None,
@@ -165,6 +165,8 @@ class Configuration(Document):
                     'Multiple ymmsl files containing models specified. Please'
                     ' use the import functionality instead.')
 
+        self.models.update(overlay.models)
+
         self.custom_implementations.update(overlay.custom_implementations)
 
         self.settings.update(overlay.settings)
@@ -211,6 +213,7 @@ class Configuration(Document):
         errors.extend(self._check_duplicate_implementations())
 
         component_paths = self._component_paths()
+
         if check_runnable:
             errors.extend(self._check_implementations_exist(component_paths))
         errors.extend(self._check_consistent_ports(component_paths))
@@ -225,21 +228,65 @@ class Configuration(Document):
                     ' problems were found:\n- '
                     + '\n- '.join(errors))
 
-    def top_models(self) -> List[Model]:
+    def root_model(self, selected_model: Optional[Reference] = None) -> Model:
+        """Return the root model of this configuration.
+
+        If there are multiple models that are not used as an implementation in any
+        component (root models), and selected_model is given and names one of them, then
+        that model is returned, otherwise an exception is raised.
+
+        If there is only a single root model, then it is returned, unless selected_model
+        is given and does not match, in which case an exception is raised.
+
+        If there are no models, an exception is raised.
+
+        Args:
+            selected_model: Name of the model to return, in case of multiple options
+
+        Returns:
+            The sole or selected model that is not used as an implementation in any
+            component in the configuration.
+
+        Raises:
+            RuntimeError if an error occurs, as described above.
+        """
+        root_models = self._root_models()
+        if not root_models:
+            raise RuntimeError('No model was found in this configuration.')
+
+        if selected_model:
+            match = [m for m in root_models if m.name == selected_model]
+            if match:
+                return match[0]
+
+            models = '\n- '.join([str(m.name) for m in root_models])
+            raise RuntimeError(
+                    f'The selected model "{selected_model}" could not be found in this'
+                    f' configuration. The following models are present:\n- {models}')
+
+        if len(root_models) == 1:
+            return root_models[0]
+
+        models = '\n- '.join([str(m.name) for m in root_models])
+        raise RuntimeError(
+                'Multiple models were found in this configuration that are not used'
+                f' as implementations:\n\n- {models}')
+
+    def _root_models(self) -> List[Model]:
         """Models in this configuration that are not used as implementations."""
-        top_models = copy(self.models)
+        root_models = copy(self.models)
 
         for model in self.models.values():
             for component in model.components.values():
                 if component.implementation:
-                    if component.implementation in top_models:
-                        del top_models[component.implementation]
+                    if component.implementation in root_models:
+                        del root_models[component.implementation]
 
         for impl in self.custom_implementations.values():
-            if impl in top_models:
-                del top_models[impl]
+            if impl in root_models:
+                del root_models[impl]
 
-        return list(top_models.values())
+        return list(root_models.values())
 
     def _component_paths(self) -> Dict[Reference, Component]:
         """Return component paths for components.
@@ -251,18 +298,31 @@ class Configuration(Document):
         The returned dict maps all paths in the configuration that map to a component
         with an implementation. Note that there may be multiple paths mapping to the
         same component object, if a submodel is used multiple times.
+
+        Raises:
+            RuntimeError: if a loop is detected
         """
         result = dict()
-        queue = [(m, Reference([])) for m in self.top_models()]
+        queue: List[Tuple[Model, Reference, List[Tuple[Reference, Reference]]]] = \
+            [(m, Reference([]), []) for m in self._root_models()]
 
         while queue:
-            model, prefix = queue.pop(0)
+            model, prefix, seen = queue.pop(0)
             for component in model.components.values():
                 path = prefix + component.name
                 impl = self.custom_implementations.get(path, component.implementation)
                 if impl is not None:
                     if impl in self.models:
-                        queue.append((self.models[impl], path))
+                        if [m for _, m in seen if m == impl]:
+                            msg = 'A loop of components and models was detected:\n'
+                            for p, m in seen:
+                                msg += f'- component {p} is implemented using {m}\n'
+                            msg += (
+                                    f'- component {path} is implemented using'
+                                    f' {impl}\n')
+                            raise RuntimeError(msg)
+                        queue.append((
+                            self.models[impl], path, seen + [(path, impl)]))
                     result[path] = component
 
         return result
@@ -329,7 +389,8 @@ class Configuration(Document):
             self, component_paths: Dict[Reference, Component]) -> List[str]:
         """Check that all components with an implementation have a valid one.
 
-        Components with implementation None are not considered broken.
+        Components with implementation None are not considered broken if marked as
+        optional.
 
         Args:
             component_paths: The output of _component_paths above.
@@ -339,7 +400,12 @@ class Configuration(Document):
         errors = list()
         for path, component in component_paths.items():
             impl = self.custom_implementations.get(path, component.implementation)
-            if impl is not None:
+            if impl is None:
+                if not component.optional:
+                    errors.append(
+                            f'Component "{path}" is not marked optional, and does not'
+                            ' have an implementation.')
+            else:
                 if impl not in self.models and impl not in self.programs:
                     errors.append(
                             f'Component "{path}" has implementation "{impl}", but no'
@@ -523,11 +589,14 @@ class Configuration(Document):
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         descr = node.get_attribute('description')
         if descr.is_scalar(str):
-            # output in block style
-            ynode = cast(yaml.ScalarNode, descr.yaml_node)
-            ynode.style = '|'
-            if not ynode.value.endswith('\n'):
-                ynode.value += '\n'
+            if descr.get_value() == '':
+                node.remove_attribute('description')
+            else:
+                # output in block style
+                ynode = cast(yaml.ScalarNode, descr.yaml_node)
+                ynode.style = '|'
+                if not ynode.value.endswith('\n'):
+                    ynode.value += '\n'
 
         imports = node.get_attribute('imports')
         if imports.is_sequence() and imports.is_empty():
