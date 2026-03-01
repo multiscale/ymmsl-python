@@ -63,9 +63,9 @@ example. This also shows that you can pass the arguments as a list, if that make
 easier to read.
 
 .. code-block:: yaml
-    :caption: MPI and HPC implementations
+    :caption: MPI and HPC programs
 
-    implementations:
+    programs:
       mpi_implementation:
         executable: /home/user/models/my_model
         execution_model: openmpi
@@ -97,12 +97,12 @@ the MPI implementation and HPC machine you're using. When executing with MUSCLE3
 MUSCLE Manager will then start the component on its designated subset of the resources
 as required.
 
-The ``on_hpc_cluster`` implementation demonstrates loading environment modules, as
+The ``on_hpc_cluster`` program demonstrates loading environment modules, as
 commonly needed on HPC machines. They're all in one line here, but if the modules have
 long names, then like with the arguments you can make a list to keep things readable.
 
 Finally, if you need to do something complicated, you can write an inline script
-to start the implementation. This currently only works for non-MPI programs
+to start the program. This currently only works for non-MPI programs
 however.
 
 Programs are represented by :class:`.ymmsl.v0_2.Program` in Python.
