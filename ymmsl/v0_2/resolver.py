@@ -1,9 +1,10 @@
 from collections.abc import MutableMapping
 from difflib import get_close_matches
+from importlib.metadata import entry_points
 import os
 from pathlib import Path
 from textwrap import indent
-from typing import Dict, List, Tuple, TypeVar
+from typing import Dict, List, Tuple, TypeVar, Optional
 
 from yatiml import RecognitionError
 import ymmsl
@@ -246,6 +247,32 @@ def find_impl(
 ymmsl_cache: Dict[Path, Tuple[Configuration, Path]] = dict()
 
 
+def _load_from_entrypoints(module_path) -> Optional[Tuple[Configuration, Path]]:
+    ep = entry_points(group="ymmsl.path", name=str(module_path))
+    if not ep:
+        return None
+    if len(ep) > 1:
+        msg = f"Found multiple entry points for {module_path}: {ep}"
+        raise RuntimeError(msg)
+    # Load entry point
+    ymmsl_txt = ep[str(module_path)].load()
+    # TODO: check if ymmsl_txt is a string?
+    config = ymmsl.load_as(Configuration, ymmsl_txt)
+    loaded_file = Path("<ENTRYPOINT>") / module_path
+    return config, loaded_file
+
+
+def _load_from_ymmsl_path(module_path, ymmsl_path) -> Optional[Tuple[Configuration, Path]]:
+    for yp in ymmsl_path:
+        try:
+            loaded_file = yp / module_path
+            config = ymmsl.load_as(Configuration, loaded_file)
+            return config, loaded_file
+        except FileNotFoundError:
+            pass
+
+
+
 def load_resolve_file(
         module: Reference, module_path: Path, ctx: ResolutionContext
         ) -> Tuple[Configuration, Path]:
@@ -262,21 +289,22 @@ def load_resolve_file(
     if module_path not in ymmsl_cache:
         # TODO: relative to working directory?
         try:
-            for yp in ctx.ymmsl_path:
-                try:
-                    loaded_file = yp / module_path
-                    config = ymmsl.load_as(Configuration, loaded_file)
-                    break
-                except FileNotFoundError:
-                    pass
-            else:
+            config_and_loaded_file = (
+                _load_from_entrypoints(module_path)
+                or _load_from_ymmsl_path(module_path, ctx.ymmsl_path)
+            )
+            if config_and_loaded_file is None:
                 msg = ctx.trace()
                 msg += f'    Failed to find a file {module_path} for module {module}.\n'
-                msg += '    Based on the YMMSL_PATH environment variable, I\'ve'
-                msg += ' searched at:\n'
+                msg += '    Based on the YMMSL_PATH environment variable and Python'
+                msg += ' entry points. I\'ve searched at:\n'
                 msg += ctx.search_paths(module_path, 8)
+                msg += '\n    and in entry points:\n'
+                msg += '\n'.join(
+                    8*' ' + ep.name for ep in entry_points(group="ymmsl.path"))
                 raise RuntimeError(msg)
 
+            config, loaded_file = config_and_loaded_file
             do_resolve(loaded_file, module, config, ctx)
             ymmsl_cache[module_path] = config, loaded_file
 
