@@ -247,7 +247,7 @@ def find_impl(
 ymmsl_cache: Dict[Path, Tuple[Configuration, Path]] = dict()
 
 
-def _load_from_entrypoints(module_path) -> Optional[Tuple[Configuration, Path]]:
+def _load_from_entrypoints(module_path: Path) -> Optional[Tuple[Configuration, Path]]:
     ep = entry_points(group="ymmsl.path", name=str(module_path))
     if not ep:
         return None
@@ -262,7 +262,9 @@ def _load_from_entrypoints(module_path) -> Optional[Tuple[Configuration, Path]]:
     return config, loaded_file
 
 
-def _load_from_ymmsl_path(module_path, ymmsl_path) -> Optional[Tuple[Configuration, Path]]:
+def _load_from_ymmsl_path(
+        module_path: Path, ymmsl_path: list[Path]
+        ) -> Optional[Tuple[Configuration, Path]]:
     for yp in ymmsl_path:
         try:
             loaded_file = yp / module_path
@@ -270,7 +272,7 @@ def _load_from_ymmsl_path(module_path, ymmsl_path) -> Optional[Tuple[Configurati
             return config, loaded_file
         except FileNotFoundError:
             pass
-
+    return None
 
 
 def load_resolve_file(
