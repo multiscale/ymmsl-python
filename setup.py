@@ -36,6 +36,7 @@ setup(
     test_suite='tests',
     install_requires=[
         'click>=6.5',
+        'importlib-metadata; python_version < "3.10"',
         # 'yatiml>=0.11.1,<0.12.0',
         'yatiml @ git+https://github.com/yatiml/yatiml@develop#egg=yatiml'
     ],

@@ -1,19 +1,32 @@
+import logging
+import os
+import sys
 from collections.abc import MutableMapping
 from difflib import get_close_matches
-from importlib.metadata import entry_points
-import os
 from pathlib import Path
 from textwrap import indent
-from typing import Dict, List, Tuple, TypeVar, Optional
+from typing import Dict, List, Optional, Tuple, TypeAlias, TypeVar, Union
 
 from yatiml import RecognitionError
+
 import ymmsl
 from ymmsl.v0_2.configuration import Configuration
 from ymmsl.v0_2.identity import Reference
-from ymmsl.v0_2.imports import ImportKind, ImportStatement
 from ymmsl.v0_2.implementation import Implementation
+from ymmsl.v0_2.imports import ImportKind, ImportStatement
 from ymmsl.v0_2.model import Model
 from ymmsl.v0_2.program import Program
+
+if sys.version_info < (3, 10):
+    from importlib_metadata import EntryPoint, entry_points
+else:
+    from importlib.metadata import EntryPoint, entry_points
+
+_logger = logging.getLogger(__name__)
+
+
+ModuleSource: TypeAlias = Union[Path, EntryPoint]
+"""Source file (Path) or EntryPoint for a yMMSL module"""
 
 
 class ResolutionContext:
@@ -31,16 +44,16 @@ class ResolutionContext:
             self.ymmsl_path = list()
 
         # _files is a list of (file_path, module_name)]
-        self._files: List[Tuple[Path, Reference]] = list()
+        self._modules: List[Tuple[ModuleSource, Reference]] = list()
         self._imports: List[ImportStatement] = list()
 
-    def push_file(self, file: Path, module: Reference) -> None:
+    def push_module(self, file: ModuleSource, module: Reference) -> None:
         """Push a file/module onto the stack."""
-        self._files.append((file, module))
+        self._modules.append((file, module))
 
-    def pop_file(self) -> None:
+    def pop_module(self) -> None:
         """Pop the topmost file/module off of the stack."""
-        self._files.pop()
+        self._modules.pop()
 
     def push_import(self, imp_st: ImportStatement) -> None:
         """Push an import statement onto the stack."""
@@ -57,7 +70,7 @@ class ResolutionContext:
 
         result: List[str] = list()
 
-        for i, (file_path, _) in enumerate(self._files):
+        for i, (file_path, _) in enumerate(self._modules):
             if i < len(self._imports):
                 imp_mod = self._imports[i].module
                 imp_name = self._imports[i].name
@@ -94,7 +107,8 @@ def resolve(module: Reference, config: Configuration) -> None:
 
 
 def do_resolve(
-        file: Path, module: Reference, config: Configuration, ctx: ResolutionContext
+        file: ModuleSource, module: Reference, config: Configuration,
+        ctx: ResolutionContext
         ) -> None:
     """Implementation of resolve().
 
@@ -107,9 +121,9 @@ def do_resolve(
         module: The module corresponding to this configuration
         config: The configuration to resolve
     """
-    ctx.push_file(file, module)
+    ctx.push_module(file, module)
     resolve_impls(module, config, ctx)
-    ctx.pop_file()
+    ctx.pop_module()
 
 
 def resolve_impls(
@@ -160,10 +174,10 @@ def resolve_impl_imports(
     for imp_st in config.imports:
         ctx.push_import(imp_st)
         if imp_st.kind == ImportKind.IMPLEMENTATION:
-            imp_cfg, loaded_file = load_resolve_file(
+            imp_cfg, loaded_file = load_resolve_module(
                     imp_st.module, imp_st.module_path(), ctx)
 
-            ctx.push_file(loaded_file, imp_st.module)
+            ctx.push_module(loaded_file, imp_st.module)
 
             impls = find_impls(imp_cfg, imp_st.full_name(), ctx)
             for impl in impls:
@@ -181,7 +195,7 @@ def resolve_impl_imports(
 
             ylocals[Reference([imp_st.name])] = imp_st.full_name()
 
-            ctx.pop_file()
+            ctx.pop_module()
 
         ctx.pop_import()
 
@@ -244,22 +258,40 @@ def find_impl(
         raise RuntimeError(msg)
 
 
-ymmsl_cache: Dict[Path, Tuple[Configuration, Path]] = dict()
+ymmsl_cache: Dict[Path, Tuple[Configuration, ModuleSource]] = dict()
 
 
-def _load_from_entrypoints(module_path: Path) -> Optional[Tuple[Configuration, Path]]:
-    ep = entry_points(group="ymmsl.path", name=str(module_path))
-    if not ep:
+def _load_from_entrypoints(
+        module: Reference) -> Optional[Tuple[Configuration, EntryPoint]]:
+    # Find entry point
+    entrypoints = entry_points(group="ymmsl.path", name=str(module))
+    if not entrypoints:
         return None
-    if len(ep) > 1:
-        msg = f"Found multiple entry points for {module_path}: {ep}"
-        raise RuntimeError(msg)
+    if len(entrypoints) > 1:
+        _logger.warning(
+            "Multiple entry points found for yMMSL import module '%s'. "
+            "Taking the first of %s",
+            module,
+            ", ".join(
+                f"'{ep.value}' (from {ep.dist.name if ep.dist else '<unknown>'})"
+                for ep in entrypoints
+            )
+        )
+    entrypoint = next(iter(entrypoints))
+
     # Load entry point
-    ymmsl_txt = ep[str(module_path)].load()
-    # TODO: check if ymmsl_txt is a string?
+    try:
+        ymmsl_txt = entrypoint.load()
+    except Exception as exc:
+        raise RuntimeError(
+            f"Error while loading the entrypoint '{entrypoint.value}' "
+            f"(from {entrypoint.dist.name if entrypoint.dist else '<unknown>'})"
+        ) from exc
+    if not isinstance(ymmsl_txt, str):
+        raise TypeError(f"Entrypoint {entrypoint.value} is not a string")
+
     config = ymmsl.load_as(Configuration, ymmsl_txt)
-    loaded_file = Path("<ENTRYPOINT>") / module_path
-    return config, loaded_file
+    return config, entrypoint
 
 
 def _load_from_ymmsl_path(
@@ -275,9 +307,9 @@ def _load_from_ymmsl_path(
     return None
 
 
-def load_resolve_file(
+def load_resolve_module(
         module: Reference, module_path: Path, ctx: ResolutionContext
-        ) -> Tuple[Configuration, Path]:
+        ) -> Tuple[Configuration, ModuleSource]:
     """Load and resolve an imported ymmsl file.
 
     Caches the result, without functools.lru_cache because ctx shouldn't hash.
@@ -292,7 +324,7 @@ def load_resolve_file(
         # TODO: relative to working directory?
         try:
             config_and_loaded_file = (
-                _load_from_entrypoints(module_path)
+                _load_from_entrypoints(module)
                 or _load_from_ymmsl_path(module_path, ctx.ymmsl_path)
             )
             if config_and_loaded_file is None:
