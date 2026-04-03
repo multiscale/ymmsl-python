@@ -145,6 +145,9 @@ def mock_entry_points() -> Generator[Mock]:
     testmod = "ymmsl.v0_2.tests.test_resolver"
     # N.B. these entry points don't have a dist attribute set
     test_entrypoints = [
+        # We should ignore any entrypoints not in the ymmsl.path group
+        EntryPoint("test.ymmsl1", "does.not.exist:NONE", "something"),
+        # Valid entry point
         EntryPoint("test.ymmsl1", f"{testmod}:TEST_YMMSL_1", "ymmsl.path"),
         # This one doesn't exist:
         EntryPoint("test.ymmsl2", f"{testmod}:TEST_YMMSL_2", "ymmsl.path"),
