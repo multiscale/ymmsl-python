@@ -43,7 +43,7 @@ class ResolutionContext:
         else:
             self.ymmsl_path = list()
 
-        # _files is a list of (file_path, module_name)]
+        # _modules is a list of (file_path or entry_point, module_name)
         self._modules: List[Tuple[ModuleSource, Reference]] = list()
         self._imports: List[ImportStatement] = list()
 

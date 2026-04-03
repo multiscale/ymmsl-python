@@ -143,7 +143,7 @@ programs:
 @pytest.fixture()
 def mock_entry_points() -> Generator[Mock]:
     testmod = "ymmsl.v0_2.tests.test_resolver"
-    # N.B. these entry points don't havea dist attribute set
+    # N.B. these entry points don't have a dist attribute set
     test_entrypoints = [
         EntryPoint("test.ymmsl1", f"{testmod}:TEST_YMMSL_1", "ymmsl.path"),
         # This one doesn't exist:
