@@ -37,8 +37,8 @@ setup(
     install_requires=[
         'click>=6.5',
         'importlib-metadata; python_version < "3.10"',
-        # 'yatiml>=0.11.1,<0.12.0',
-        'yatiml @ git+https://github.com/yatiml/yatiml@develop#egg=yatiml'
+        'yatiml>=0.12.0,<0.13.0',
+        # 'yatiml @ git+https://github.com/yatiml/yatiml@develop#egg=yatiml'
     ],
     entry_points={
         'console_scripts': ['ymmsl=ymmsl.command_line:ymmsl']
