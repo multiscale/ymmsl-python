@@ -5,7 +5,7 @@ from collections.abc import MutableMapping
 from difflib import get_close_matches
 from pathlib import Path
 from textwrap import indent
-from typing import Dict, List, Optional, Tuple, TypeAlias, TypeVar, Union
+from typing import Dict, List, Optional, Tuple, TypeVar, Union
 
 from yatiml import RecognitionError
 
@@ -25,7 +25,7 @@ else:
 _logger = logging.getLogger(__name__)
 
 
-ModuleSource: TypeAlias = Union[Path, EntryPoint]
+ModuleSource = Union[Path, EntryPoint]
 """Source file (Path) or EntryPoint for a yMMSL module"""
 
 
