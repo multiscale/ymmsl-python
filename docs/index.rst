@@ -15,13 +15,25 @@ yMMSL files, and manipulate them using a Python object representation of their
 contents. This documentation gives an overview of the format, and a description
 of the Python API.
 
+This documentation describes the latest version of the ``ymmsl`` package, which supports
+yMMSL version 0.2. There is `documentation for the old version 0.1`_ as well, or click
+the downward arrow in the blue box at the top left, and select ``release-0.14.0``.
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   overview
-   ymmsl_python
+   basic_usage
+   data_model_overview
+   describing_models
+   describing_scenarios
+   describing_programs
+   describing_runs
+   creating_from_python
+   functionality
+   upgrading_to_v0_2
+
 
 API Reference
 =============
@@ -38,3 +50,6 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+.. _documentation for the old version 0.1: https://ymmsl-python.readthedocs.io/en/release-0.14.0/

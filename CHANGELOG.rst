@@ -5,6 +5,36 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.15.0
+******
+
+Added
+-----
+
+- yMMSL v0.2
+- Support for nested models
+- Import statements
+- Supported settings
+- Entries for documentation
+- Timeline declarations on ports
+- Conduit filter declarations
+- Custom implementations
+- yMMSL file converter
+- Automatic conversion on load
+
+- Support for Python 3.13 and 3.14
+
+Changed
+-------
+
+- Moved yMMSL v0.1 declarations into ymmsl.v0_1
+
+Removed
+-------
+
+- Support for Python 3.8
+
+
 0.14.0
 ******
 

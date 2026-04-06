@@ -1,0 +1,19 @@
+ymmsl_version: v0.2
+
+description: |
+  # Example yMMSL file containing run configuration
+
+  To run the coupled model, additional information can be specified, like how many
+  resources to use for each submodel and when to write a snapshot, if the programs used
+  support it.
+
+resources:
+  macro:
+    threads: 1
+  micro:
+    mpi_processes: 8
+
+checkpoints:
+  at_end: true
+  simulation_time:
+  - every: 50

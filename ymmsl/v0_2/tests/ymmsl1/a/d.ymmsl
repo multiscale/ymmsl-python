@@ -1,0 +1,43 @@
+ymmsl_version: v0.2
+
+description: A model to be imported
+
+imports:
+- from a.b.c import implementation macro
+
+models:
+  test_importing:
+    ports:
+      f_init: in
+      o_f: out
+
+    components:
+      macro1:
+        ports:
+          f_init: init
+          o_i: out1
+          s: in1
+          o_f: final
+        description: The macro1 component
+        implementation: macro
+      micro1:
+        ports:
+          f_init: init
+          o_f: final
+        description: The micro1 component
+        implementation: micro
+
+    conduits:
+      in: macro1.init
+      macro1.out1: micro1.init
+      micro1.final: macro1.in1
+      macro1.final: out
+
+programs:
+  micro:
+    ports:
+      f_init: init
+      o_f: final
+    description: The micro program
+    executable: python3
+    args: /home/user/script.py

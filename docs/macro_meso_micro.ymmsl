@@ -1,0 +1,34 @@
+ymmsl_version: v0.2
+
+description: |
+  # Example yMMSL file containing a model
+
+  An example with three components described in different ways
+
+models:
+  macro_meso_micro_model:
+    description: |
+      # A model with three timescale-nested components
+
+      This omits the conduits, so this model won't work, but it shows the syntax.
+
+    components:
+      macro:
+        ports: {}
+        description: ''
+      meso:
+        ports:
+          f_init: boundary_in
+          o_i: state_out
+          s: state_in
+          o_f: boundary_out
+        description: This model has ports and an implementation
+        implementation: meso_model
+      micro:
+        ports: {}
+        description: |
+          A longer, multiline description can be given like this.
+          It is a good idea to describe the ports here, including what kind of data they
+          will send and expect to receive, as well as what the component does.
+        implementation: micro_model
+        multiplicity: 5
