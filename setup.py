@@ -32,7 +32,7 @@ setup(
         'Programming Language :: Python :: 3.13',
         'Programming Language :: Python :: 3.14',
     ],
-    python_requires='>=3.7, <4',
+    python_requires='>=3.9, <4',
     test_suite='tests',
     install_requires=[
         'click>=6.5',
