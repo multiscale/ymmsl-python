@@ -11,7 +11,7 @@ from ymmsl.io import dump, load, load_as, save
 from ymmsl.v0_2 import Operator, Settings
 
 
-__version__ = '0.14.1-dev'
+__version__ = '0.15.1-dev'
 __author__ = 'Lourens Veen'
 __email__ = 'l.veen@esciencecenter.nl'
 
