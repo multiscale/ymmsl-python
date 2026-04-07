@@ -299,7 +299,7 @@ To find files, ymmsl-python will look in two places:
 
 1. Installed Python packages can provide "Entry Points" to provide importable yMMSL
    components.
-2. The ``YMMSLPATH`` environment variable can contain directories with importable yMMSL
+2. The ``YMMSL_PATH`` environment variable can contain directories with importable yMMSL
    files.
 
 These mechanisms are described in more detail below.
@@ -308,12 +308,12 @@ These mechanisms are described in more detail below.
 YMMSL Path
 ^^^^^^^^^^
 
-Ymmsl-python will inspect the ``YMMSLPATH`` environment variable for
+Ymmsl-python will inspect the ``YMMSL_PATH`` environment variable for
 directories to search. This should contain one or more colon-separated paths pointing to
 directories with yMMSL files, in the same way that ``PATH`` points to directories with
 executables and ``PYTHONPATH`` to directories with Python files to be imported.
 
-For example, if ``YMMSLPATH`` equals ``/home/user/ymmsl:/home/user/my_project`` then the
+For example, if ``YMMSL_PATH`` equals ``/home/user/ymmsl:/home/user/my_project`` then the
 first import statement would first look for ``/home/user/ymmsl/utils/uq.ymmsl`` and then
 for ``/home/user/my_project/utils/uq.ymmsl`` if that did not exist.
 
