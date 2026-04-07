@@ -1,5 +1,13 @@
-from ymmsl.v0_2 import Component, Conduit, Model, Operator, Port, Reference, Timeline, \
-    Identifier
+from ymmsl.v0_2 import (
+    Component,
+    Conduit,
+    Model,
+    Operator,
+    Port,
+    Reference,
+    Timeline,
+    Identifier,
+)
 
 
 class TimelineTree:
@@ -29,7 +37,8 @@ class TimelineTree:
             if port.timeline.absolute or len(port.timeline) > 1:
                 # FIXME?
                 raise ValueError(
-                    f"Invalid timeline annotation for {port.name}: {port.timeline}")
+                    f"Invalid timeline annotation for {port.name}: {port.timeline}"
+                )
 
         # Assign components to timelines
         for component in self.model.components.values():
@@ -52,8 +61,8 @@ class TimelineTree:
         if component in seen:
             # TODO: better error message
             idx = seen.index(component)
-            cycle = seen[idx:] + [component]
-            cycle = " -> ".join(str(component.name) for component in cycle)
+            cycle_list = seen[idx:] + [component]
+            cycle = " -> ".join(str(component.name) for component in cycle_list)
             raise RuntimeError(f"Cycle detected in model '{self.model.name}': {cycle}")
         f_init_conduits = self._f_init_conduits_for_component(component)
 

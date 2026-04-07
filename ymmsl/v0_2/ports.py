@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from collections.abc import ItemsView, KeysView, ValuesView
-from typing import Any, cast, Iterator, List, Optional, overload, Sequence, Union, Tuple
+from typing import Any, cast, Iterator, List, Optional, overload, Sequence, Union
 
 from ymmsl.v0_1.component import Operator   # also the v0.2 version, import from here
 from ymmsl.v0_2.identity import Identifier, Reference
@@ -275,11 +275,11 @@ class Ports:
             yield port_name
 
     def items(self) -> ItemsView[Identifier, Port]:
-        return self._ports.items()   
+        return self._ports.items()
 
     def keys(self) -> KeysView[Identifier]:
         return self._ports.keys()
-    
+
     def values(self) -> ValuesView[Port]:
         return self._ports.values()
 
