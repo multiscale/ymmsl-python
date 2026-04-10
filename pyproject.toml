@@ -3,9 +3,16 @@ build-backend = "setuptools.build_meta"
 requires = ["setuptools>=64"]
 
 [project]
+name = "ymmsl"
+version = "0.15.1-dev"
+description = "Python bindings for the YAML version of the Multiscale Modeling and Simulation Language"
+readme = "README.rst"
 authors = [
   {name = "Lourens Veen", email = "l.veen@esciencecenter.nl"},
 ]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+keywords = ["yMMSL", "multiscale", "modeling", "simulation", "YAML"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
@@ -18,23 +25,16 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
 ]
+requires-python = ">=3.9, <4"
 dependencies = [
   "click>=6.5",
   "yatiml>=0.12.0,<0.13.0",
   # "yatiml @ git+https://github.com/yatiml/yatiml@develop#egg=yatiml",
 ]
-description = "Python bindings for the YAML version of the Multiscale Modeling and Simulation Language"
-keywords = ["yMMSL", "multiscale", "modeling", "simulation", "YAML"]
-license = "Apache-2.0"
-license-files = ["LICENSE"]
-name = "ymmsl"
-readme = "README.rst"
-requires-python = ">=3.9, <4"
-version = "0.15.1-dev"
 
 [project.urls]
-documentation = "https://ymmsl-python.readthedocs.io/"
 homepage = "https://github.com/multiscale/ymmsl-python"
+documentation = "https://ymmsl-python.readthedocs.io/"
 
 [tool.setuptools]
 include-package-data = true
