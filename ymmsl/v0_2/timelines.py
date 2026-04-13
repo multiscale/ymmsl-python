@@ -1,3 +1,4 @@
+from typing import Optional
 from ymmsl.v0_2 import (
     Component,
     Conduit,
@@ -160,7 +161,7 @@ class TimelineNode:
 
         self.name: Timeline = timeline
         """Name of this timeline."""
-        self._parent: TimelineNode | None = parent
+        self._parent: Optional[TimelineNode] = parent
         """Parent node of this node."""
         self._children: dict[Reference, TimelineNode] = {}
         """Child timeline nodes."""

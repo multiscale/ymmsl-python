@@ -7,9 +7,12 @@ import pytest
 
 ROOT_TIMELINE = Timeline(":")
 
+
 @pytest.fixture()
 def timelines_configuration() -> Configuration:
-    return ymmsl.load_as(Configuration, Path(__file__).parent / "ymmsl1/timelines.ymmsl")
+    return ymmsl.load_as(
+        Configuration, Path(__file__).parent / "ymmsl1/timelines.ymmsl"
+    )
 
 
 def test_consistent_configuration(timelines_configuration: Configuration) -> None:
