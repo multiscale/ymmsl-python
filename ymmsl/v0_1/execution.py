@@ -256,14 +256,14 @@ class Implementation:
         self.name = name
 
         if isinstance(script, list):
-            self.script = '\n'.join(script) + '\n'  # type: Optional[str]
+            self.script: Optional[str] = '\n'.join(script) + '\n'
         else:
             self.script = script
 
         self.base_env = base_env if base_env else BaseEnv.MANAGER
 
         if isinstance(modules, str):
-            self.modules = modules.split(' ')   # type: Optional[List[str]]
+            self.modules: Optional[list[str]] = modules.split(' ')
         else:
             self.modules = modules
         self.virtual_env = virtual_env
@@ -274,7 +274,7 @@ class Implementation:
         self.executable = executable
 
         if isinstance(args, str):
-            self.args = [args]  # type: Optional[List[str]]
+            self.args: Optional[list[str]] = [args]
         else:
             self.args = args
 

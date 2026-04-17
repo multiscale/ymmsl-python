@@ -104,7 +104,7 @@ class Configuration(Document):
         _CIType = MutableMapping[Reference, Reference]  # noqa: F841
 
         if custom_implementations is None:
-            self.custom_implementations = {}   # type: _CIType
+            self.custom_implementations: _CIType = {}
         else:
             self.custom_implementations = custom_implementations
 
@@ -134,7 +134,7 @@ class Configuration(Document):
             self.checkpoints = checkpoints
 
         if resume is None:
-            self.resume = dict()    # type: Dict[Reference, Path]
+            self.resume: dict[Reference, Path] = dict()
         else:
             self.resume = resume
 
@@ -362,7 +362,7 @@ class Configuration(Document):
                 continue
 
             if impl_ref in self.programs:
-                impl = self.programs[impl_ref]  # type: Implementation
+                impl: Implementation = self.programs[impl_ref]
             elif impl_ref in self.models:
                 impl = self.models[impl_ref]
             else:
@@ -451,7 +451,7 @@ class Configuration(Document):
 
             errs = list()
             if impl_ref in self.programs:
-                impl = self.programs[impl_ref]   # type: Implementation
+                impl: Implementation = self.programs[impl_ref]
             elif impl_ref in self.models:
                 impl = self.models[impl_ref]
             else:

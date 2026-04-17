@@ -18,14 +18,14 @@ def test_create_settings(settings: Settings) -> None:
 
 
 def test_create_settings2() -> None:
-    setting_values = OrderedDict([
+    setting_values: OrderedDict[str, SettingValue] = OrderedDict([
         ('submodel._muscle_grain', [0.01, 0.01]),
         ('submodel._muscle_extent', [10.0, 3.0]),
         ('submodel._muscle_timestep', 0.001),
         ('submodel._muscle_total_time', 0.1),
         ('bf.velocity', 0.48),
         ('init.max_depth', 0.11)
-    ])  # type: OrderedDict[str, SettingValue]
+    ])
     settings = Settings(setting_values)
     assert list(settings.ordered_items()[0][0]) == [
         'submodel', '_muscle_grain'

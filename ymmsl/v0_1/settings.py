@@ -37,7 +37,7 @@ class Settings(MutableMapping):
             settings: Setting values to initialise a model with.
 
         """
-        self._store = OrderedDict()  # type: Dict[Reference, SettingValue]
+        self._store: dict[Reference, SettingValue] = OrderedDict()
 
         if settings is not None:
             for key, value in settings.items():
@@ -129,7 +129,7 @@ class Settings(MutableMapping):
         Returns: A dictionary that uses only built-in types, containing
             the configuration.
         """
-        odict = OrderedDict()     # type: OrderedDict[str, SettingValue]
+        odict: OrderedDict[str, SettingValue] = OrderedDict()
         for key, value in self._store.items():
             odict[str(key)] = value
         return odict
