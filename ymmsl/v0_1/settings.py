@@ -83,9 +83,9 @@ class Settings(MutableMapping):
             key = Reference(key)
         del self._store[key]
 
-    def __iter__(self) -> Iterator[Tuple[Reference, SettingValue]]:
-        """Iterate through the settings' key, value pairs."""
-        return iter(self._store)  # type: ignore
+    def __iter__(self) -> Iterator[Reference]:
+        """Iterate through the settings' keys."""
+        return iter(self._store)
 
     def __len__(self) -> int:
         """Returns the number of settings."""
