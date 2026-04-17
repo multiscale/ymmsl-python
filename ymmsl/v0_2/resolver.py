@@ -264,7 +264,7 @@ ymmsl_cache: Dict[Path, Tuple[Configuration, ModuleSource]] = dict()
 def _load_from_entrypoints(
         module: Reference) -> Optional[Tuple[Configuration, EntryPoint]]:
     # Find entry point
-    entrypoints = entry_points(group="ymmsl.path", name=str(module))
+    entrypoints = entry_points(group="ymmsl.module", name=str(module))
     if not entrypoints:
         return None
     if len(entrypoints) > 1:
@@ -335,7 +335,7 @@ def load_resolve_module(
                 msg += ctx.search_paths(module_path, 8)
                 msg += '\n    and in entry points:\n'
                 msg += '\n'.join(
-                    8*' ' + ep.name for ep in entry_points(group="ymmsl.path"))
+                    8*' ' + ep.name for ep in entry_points(group="ymmsl.module"))
                 raise RuntimeError(msg)
 
             config, loaded_file = config_and_loaded_file
