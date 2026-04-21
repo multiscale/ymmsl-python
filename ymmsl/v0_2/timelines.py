@@ -76,7 +76,7 @@ class TimelineTree:
             if any(filter.is_repeater() for filter in conduit.filters):
                 repeater_conduits.append(conduit)
                 continue
-            timeline = self._timeline_for_sending_port(conduit.sender)
+            timeline = self._timeline_for_port(conduit.sender)
             for filter in conduit.filters:
                 assert filter.is_reducer()
                 if timeline.parent is None:
@@ -92,37 +92,21 @@ class TimelineTree:
             # TODO: better error message
             raise ValueError(f"Inconsistent timelines {incoming_timelines}")
 
-        # Check consistency of conduits with repeaters
-        for conduit in repeater_conduits:
-            timeline1 = self._timeline_for_sending_port(conduit.sender)
-            timeline2 = determined_timeline
-            for filter in conduit.filters:
-                if timeline1 is determined_timeline:
-                    # TODO: better error message
-                    raise ValueError(
-                        "repeater after reducer cannot be in same timeline"
-                    )
-                if filter.is_reducer():
-                    if timeline1.parent is None:
-                        # TODO: better error message
-                        raise ValueError("Too many reducer filters")
-                    timeline1 = timeline1.parent
-                if filter.is_repeater():
-                    if timeline2.parent is None:
-                        # TODO: better error message
-                        raise ValueError("Too many repeater filters")
-                    timeline2 = timeline2.parent
-            if timeline1 is not timeline2:
-                # TODO: better error message
-                raise ValueError("Inconsistent timelines")
-
         # Done: register timeline for component
         self._component_timeline[component.name] = determined_timeline
-        determined_timeline.add(component)
+        determined_timeline._add(component)
+        self._assign_subtimelines(component)
 
-    def _timeline_for_sending_port(self, port_name: Reference) -> "TimelineNode":
-        """Determine the resulting timeline for a component that connects (with f_init)
-        to the provided port name."""
+    def _assign_subtimelines(self, component: Component) -> None:
+        """Assign subtimelines to this component (and create them as necessary)."""
+        for port in component.ports.values():
+            if port.operator in (Operator.O_I, Operator.S):
+                subtimeline = self._timeline_for_port(component.name + port.name)
+                subtimeline._add_parent(component)
+
+    def _timeline_for_port(self, port_name: Reference) -> "TimelineNode":
+        """Determine the timeline for messages sent or received on the provided port
+        name."""
         component = port_name[:-1]
         if len(component) == 0:
             # Connected to a model port
@@ -135,18 +119,55 @@ class TimelineTree:
                 raise NotImplementedError()  # FIXME?
         timeline = self._component_timeline[component]
         port = self._all_ports[port_name]
-        if port.operator is Operator.O_F:
+        if port.operator in (Operator.O_F, Operator.F_INIT):
             return timeline
-        assert port.operator is Operator.O_I
         subtimeline = port.timeline
         if len(port.timeline) == 0:
             # No explicit label attached to the timeline, so we take the component name
             subtimeline = Timeline(str(component))
-        return timeline.get(subtimeline)
+        return timeline._get(subtimeline)
 
     def component_timeline(self, component: Reference) -> Timeline:
         """Get the determined timeline for a component in the model"""
         return self._component_timeline[component].name
+
+    def check_consistent(self) -> None:
+        """Check if the timelines are consistent.
+
+        N.B. Certain inconsistencies prevent creating a TimelineTree at all. This method
+        performs additional checks.
+        """
+        # Check that all conduits connect consistently
+        for conduit in self._model.conduits:
+            timeline1 = self._timeline_for_port(conduit.sender).name
+            timeline2 = self._timeline_for_port(conduit.receiver).name
+
+            num_reducers = sum(filter.is_reducer() for filter in conduit.filters)
+            num_repeaters = sum(filter.is_repeater() for filter in conduit.filters)
+            num_filters = len(conduit.filters)
+            assert num_reducers + num_repeaters == num_filters
+
+            # Apply reducers
+            if len(timeline1) < num_reducers:
+                # TODO: better error message
+                raise ValueError("Too many reducer filters")
+            if len(timeline1) - num_reducers + num_repeaters != len(timeline2):
+                # TODO: better error message
+                raise ValueError("Inconsistent conduit filters")
+
+            # Check consistency
+            common_idx = len(timeline1) - num_reducers
+            for idx, (part1, part2) in enumerate(zip(timeline1, timeline2)):
+                if idx < common_idx:
+                    if part1 != part2:
+                        # TODO: better error message
+                        raise ValueError("Inconsistent timelines")
+                else:
+                    if part1 == part2:
+                        # TODO: better error message
+                        raise ValueError(
+                            "repeater after reducer cannot be in same timeline"
+                        )
 
 
 class TimelineNode:
@@ -163,6 +184,9 @@ class TimelineNode:
         """Name of this timeline."""
         self._parent: Optional[TimelineNode] = parent
         """Parent node of this node."""
+        self._parent_components: list[Component] = []
+        """Parent components, i.e. components with O_I or S ports that send messages in
+        this timeline."""
         self._children: dict[Reference, TimelineNode] = {}
         """Child timeline nodes."""
         self._components: list[Component] = []
@@ -173,7 +197,23 @@ class TimelineNode:
         """Parent timeline node, or None if this is the root timeline."""
         return self._parent
 
-    def get(self, subtimeline: Timeline) -> "TimelineNode":
+    @property
+    def parent_components(self) -> list[Component]:
+        """List of all components that have an O_I or S port sending or receiving
+        messages in this subtimeline."""
+        return self._parent_components.copy()
+
+    @property
+    def children(self) -> list["TimelineNode"]:
+        """List of all sub-timelines of this one."""
+        return list(self._children.values())
+
+    @property
+    def components(self) -> list[Component]:
+        """List of all components that are part of this timeline."""
+        return self._components.copy()
+
+    def _get(self, subtimeline: Timeline) -> "TimelineNode":
         """Get a sub-timeline of this timeline, creating a new one if required."""
         assert not subtimeline.absolute
         assert len(subtimeline) == 1
@@ -183,9 +223,14 @@ class TimelineNode:
             self._children[subtimeline[0]] = child
         return child
 
-    def add(self, component: Component) -> None:
+    def _add(self, component: Component) -> None:
         """Add component to this timeline."""
         self._components.append(component)
+
+    def _add_parent(self, component: Component) -> None:
+        """Add parent component to this timeline."""
+        if component not in self._parent_components:
+            self._parent_components.append(component)
 
     def __repr__(self) -> str:
         return f"TimelineNode({self.name})"

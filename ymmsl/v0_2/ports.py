@@ -73,7 +73,7 @@ class Timeline:
 
             self._parts = list(map(make_new_reference, parts))
 
-        elif isinstance(timeline, list):
+        elif isinstance(timeline, Sequence):
             self.absolute = absolute
             self._parts = list(map(make_new_reference, timeline))
 
@@ -105,6 +105,10 @@ class Timeline:
     def __getitem__(self, index: int) -> Reference:
         """Return the index'th item in the timeline."""
         return self._parts[index]
+
+    def __iter__(self) -> Iterator[Reference]:
+        """Return an iterator of the items in the timeline."""
+        return iter(self._parts)
 
     def __add__(self, other: Any) -> 'Timeline':
         """Concatenate this timeline with another (relative!) Timeline."""

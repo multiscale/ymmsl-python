@@ -171,3 +171,19 @@ models:
       - micro1.init
       - micro2.init1
       micro1.final: last pad micro2.init2
+
+  inconsistent_interact:
+    components:
+      A:
+        description: A
+        ports:
+          o_i: out
+          s: in
+      B:
+        description: A
+        ports:
+          o_i: out
+          s: in
+    conduits:
+      A.out: B.in
+      B.out: A.in
