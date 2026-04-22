@@ -74,7 +74,7 @@ class TimelineTree:
         for conduit in f_init_conduits:
             if any(filter.is_repeater() for filter in conduit.filters):
                 continue  # We cannot use repeater filters to determine the timeline
-            timeline = self._timeline_for_port(conduit.sender)
+            timeline = self.timeline_for_port(conduit.sender)
             for filter in conduit.filters:
                 assert filter.is_reducer()
                 if timeline.parent is None:
@@ -99,10 +99,10 @@ class TimelineTree:
         """Assign subtimelines to this component (and create them as necessary)."""
         for port in component.ports.values():
             if port.operator in (Operator.O_I, Operator.S):
-                subtimeline = self._timeline_for_port(component.name + port.name)
+                subtimeline = self.timeline_for_port(component.name + port.name)
                 subtimeline._add_parent(component)
 
-    def _timeline_for_port(self, port_name: Reference) -> "TimelineNode":
+    def timeline_for_port(self, port_name: Reference) -> "TimelineNode":
         """Determine the timeline for messages sent or received on the provided port
         name."""
         component = port_name[:-1]
@@ -137,8 +137,8 @@ class TimelineTree:
         """
         # Check that all conduits connect consistently
         for conduit in self._model.conduits:
-            timeline1 = self._timeline_for_port(conduit.sender).name
-            timeline2 = self._timeline_for_port(conduit.receiver).name
+            timeline1 = self.timeline_for_port(conduit.sender).name
+            timeline2 = self.timeline_for_port(conduit.receiver).name
 
             num_reducers = sum(filter.is_reducer() for filter in conduit.filters)
             num_repeaters = sum(filter.is_repeater() for filter in conduit.filters)
