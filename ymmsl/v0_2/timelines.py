@@ -70,12 +70,10 @@ class TimelineTree:
         seen.pop()
 
         # Now we can determine our timeline
-        repeater_conduits: list[Conduit] = []
         incoming_timelines: list[TimelineNode] = []
         for conduit in f_init_conduits:
             if any(filter.is_repeater() for filter in conduit.filters):
-                repeater_conduits.append(conduit)
-                continue
+                continue  # We cannot use repeater filters to determine the timeline
             timeline = self._timeline_for_port(conduit.sender)
             for filter in conduit.filters:
                 assert filter.is_reducer()
