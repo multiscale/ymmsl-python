@@ -295,12 +295,79 @@ look in ``models/`` for a file named ``macro_micro.ymmsl`` and load a program or
 named ``macro_micro`` from it. Once imported, ``uq_driver`` and ``macro_micro`` can then
 be used as implementation of a component.
 
-To find files, ymmsl-python will inspect the ``YMMSLPATH`` environment variable for
+To find files, ymmsl-python will look in two places:
+
+1. Installed Python packages can provide "Entry Points" to provide importable yMMSL
+   components.
+2. The ``YMMSL_PATH`` environment variable can contain directories with importable yMMSL
+   files.
+
+These mechanisms are described in more detail below.
+
+
+YMMSL Path
+^^^^^^^^^^
+
+Ymmsl-python will inspect the ``YMMSL_PATH`` environment variable for
 directories to search. This should contain one or more colon-separated paths pointing to
 directories with yMMSL files, in the same way that ``PATH`` points to directories with
 executables and ``PYTHONPATH`` to directories with Python files to be imported.
 
-For example, if ``YMMSLPATH`` equals ``/home/user/ymmsl:/home/user/my_project`` then the
+For example, if ``YMMSL_PATH`` equals ``/home/user/ymmsl:/home/user/my_project`` then the
 first import statement would first look for ``/home/user/ymmsl/utils/uq.ymmsl`` and then
 for ``/home/user/my_project/utils/uq.ymmsl`` if that did not exist.
 
+
+Python Entry Points
+^^^^^^^^^^^^^^^^^^^
+
+Installed Python packages can provide entry points for ymmsl-python to advertise that
+they provide importable yMMSL components.
+For example, the first import statement above would look for an entry point named
+``utils.uq`` and try to load that configuration.
+
+If you are a developer of a Python package and want to use the entry point mechanism so
+users can import your component, you will need to:
+
+1. Configure the entry point in your ``pyproject.toml`` (or ``setup.py``) file.
+2. Provide the yMMSL configuration as a string inside your python distribution.
+
+Below code listings provide an example how to do this.
+
+.. code-block:: toml
+    :caption: Entry point configuration in ``pyproject.toml``
+
+    # Indicate you want to provide an entry point for "ymmsl.module":
+    [project.entry-points."ymmsl.module"]
+    # Provide one or more "name = value" entries, pointing to a valid yMMSL
+    # configuration string (see next code listing). For more details, see
+    # https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-syntax
+    "utils.uq" = "my_package.utils.uq:YMMSL_CONFIG"
+
+.. code-block:: python
+    :caption: yMMSL configuration string in ``my_package/utils/uq.py``
+
+    import sys
+
+    YMMSL_CONFIG = f"""
+    ymmsl_version: v0.2
+    description: Uncertainty Quantification utilities from my_package
+    programs:
+      uq_driver:
+        description: |
+          This component creates a sample of initial states for the simulation, then
+          sends them on initial_state-out to the model to be run. It then collects the
+          final state for analysis on final_state_in.
+        executable: {sys.executable}
+        args: -m my_package.utils.uq
+        ports:
+          o_i: initial_state_out
+          s: final_state_in
+    """
+
+
+.. seealso::
+  - User guide on Entry Points from setuptools:
+    https://setuptools.pypa.io/en/latest/userguide/entry_point.html
+  - The Entry Points specification:
+    https://packaging.python.org/en/latest/specifications/entry-points/

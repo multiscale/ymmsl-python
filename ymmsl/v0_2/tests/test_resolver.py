@@ -1,6 +1,9 @@
+import logging
+import sys
 from collections.abc import Generator
 import os
 from pathlib import Path
+from unittest.mock import patch, Mock
 
 import pytest
 
@@ -8,6 +11,11 @@ from ymmsl.io import load
 from ymmsl.v0_2.configuration import Configuration
 from ymmsl.v0_2.identity import Reference
 from ymmsl.v0_2.resolver import resolve
+
+if sys.version_info < (3, 10):
+    from importlib_metadata import EntryPoints, EntryPoint
+else:
+    from importlib.metadata import EntryPoints, EntryPoint
 
 
 @pytest.fixture
@@ -120,3 +128,86 @@ def test_resolve_imports_no_shadowing(env_ymmsl_path: None) -> None:
 
     assert 'both defined and imported' in str(e.value)
     assert len(config.imports) == 1
+
+
+TEST_YMMSL_1 = """
+ymmsl_version: v0.2
+description: Testing resolving imports
+programs:
+  test_importing:
+    executable: python3
+    args: test_program.py
+"""
+
+
+@pytest.fixture()
+def mock_entry_points() -> Generator[Mock]:
+    testmod = "ymmsl.v0_2.tests.test_resolver"
+    # N.B. these entry points don't have a dist attribute set
+    test_entrypoints = [
+        # We should ignore any entrypoints not in the ymmsl.module group
+        EntryPoint("test.ymmsl1", "does.not.exist:NONE", "something"),
+        # Valid entry point
+        EntryPoint("test.ymmsl1", f"{testmod}:TEST_YMMSL_1", "ymmsl.module"),
+        # This one doesn't exist:
+        EntryPoint("test.ymmsl2", f"{testmod}:TEST_YMMSL_2", "ymmsl.module"),
+        # Two entrypoints with the same name
+        EntryPoint("test.xyz", f"{testmod}:TEST_YMMSL_1", "ymmsl.module"),
+        EntryPoint("test.xyz", f"{testmod}:TEST_YMMSL_2", "ymmsl.module"),
+    ]
+    with patch("ymmsl.v0_2.resolver.entry_points") as mock_entry_points:
+        mock_entry_points.side_effect = EntryPoints(test_entrypoints).select
+        yield mock_entry_points
+
+
+def test_resolve_entrypoints(mock_entry_points: Mock) -> None:
+    config = load("""
+        ymmsl_version: v0.2
+        description: Test
+        imports:
+        - from test.ymmsl1 import implementation test_importing
+    """)
+    assert isinstance(config, Configuration)
+    resolve(Reference("test_importing"), config)
+
+    test_importing = Reference("test.ymmsl1.test_importing")
+    assert test_importing in config.programs
+    assert config.programs[test_importing].executable == Path("python3")
+    assert config.programs[test_importing].args == ["test_program.py"]
+
+
+def test_resolve_entrypoints_duplicate_name(
+        mock_entry_points: Mock, caplog: pytest.LogCaptureFixture) -> None:
+    config = load("""
+        ymmsl_version: v0.2
+        description: Test
+        imports:
+        - from test.xyz import implementation test_importing
+    """)
+    assert isinstance(config, Configuration)
+    with caplog.at_level(logging.WARNING):
+        resolve(Reference("test_importing"), config)
+    assert len(caplog.record_tuples) == 1  # Expect one warning log message
+    module, level, text = caplog.record_tuples[0]
+    assert module == "ymmsl.v0_2.resolver"
+    assert level == logging.WARNING
+    assert "Multiple entry points" in text
+    assert "ymmsl.v0_2.tests.test_resolver:TEST_YMMSL_1" in text
+    assert "ymmsl.v0_2.tests.test_resolver:TEST_YMMSL_2" in text
+
+    test_importing = Reference("test.xyz.test_importing")
+    assert test_importing in config.programs
+    assert config.programs[test_importing].executable == Path("python3")
+    assert config.programs[test_importing].args == ["test_program.py"]
+
+
+def test_resolve_entrypoints_loading_error(mock_entry_points: Mock) -> None:
+    config = load("""
+        ymmsl_version: v0.2
+        description: Test
+        imports:
+        - from test.ymmsl2 import implementation test_importing
+    """)
+    assert isinstance(config, Configuration)
+    with pytest.raises(RuntimeError, match="Error while loading the entrypoint"):
+        resolve(Reference("test_importing"), config)
