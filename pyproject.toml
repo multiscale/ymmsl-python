@@ -1,0 +1,93 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=64"]
+
+[project]
+name = "ymmsl"
+version = "0.15.1-dev"
+description = "Python bindings for the YAML version of the Multiscale Modeling and Simulation Language"
+readme = "README.rst"
+authors = [
+  {name = "Lourens Veen", email = "l.veen@esciencecenter.nl"},
+]
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+keywords = ["yMMSL", "multiscale", "modeling", "simulation", "YAML"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+requires-python = ">=3.9, <4"
+dependencies = [
+  "click>=6.5",
+  "importlib-metadata; python_version<'3.10'",
+  "yatiml>=0.12.0,<0.13.0",
+  # "yatiml @ git+https://github.com/yatiml/yatiml@develop#egg=yatiml",
+]
+
+[project.urls]
+homepage = "https://github.com/multiscale/ymmsl-python"
+documentation = "https://ymmsl-python.readthedocs.io/"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["ymmsl", "ymmsl.*"]
+
+[project.scripts]
+ymmsl = "ymmsl.command_line:ymmsl"
+
+[tool.coverage.run]
+branch = true
+source = ["ymmsl"]
+
+[tool.coverage.xml]
+output = "cobertura.xml"
+
+[tool.pytest]
+addopts = [
+    "--cov", "--cov-report", "xml", "--cov-report", "term-missing", "-vv",
+]
+testpaths = ["ymmsl"]
+
+[tool.mypy]
+files = "ymmsl/**/*.py"
+# mypy_path = ymmsl
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+
+[tool.ruff]
+exclude = [
+  "docs",
+  ".git",
+]
+include = ["pyproject.toml", "ymmsl/**/*.py"]
+# Same as Black
+indent-width = 4
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+  # pycodestyle
+  "E",
+  # Pyflakes
+  "F",
+  # TODO: enable these at some point?
+  # pyupgrade
+  # "UP",
+  # flake8-bugbear
+  #"B",
+  # flake8-simplify
+  #"SIM",
+  # isort
+  # "I",
+]
