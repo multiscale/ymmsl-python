@@ -26,8 +26,7 @@ class Identifier(UserString):
 
         """
         super().__init__(seq)
-        if not re.fullmatch(
-                r'[a-zA-Z_]\w*', self.data, flags=re.ASCII):    # type: ignore
+        if not re.fullmatch(r'[a-zA-Z_]\w*', self.data, flags=re.ASCII):
             raise ValueError('Identifiers must consist only of'
                              ' lower- and uppercase letters, digits and'
                              ' underscores, must start with a letter or'
@@ -287,7 +286,7 @@ class Reference(yatiml.String):
 
         end = len(text)
         cur_op = find_next_op(text, 0)
-        parts = [Identifier(text[0:cur_op])]  # type: List[ReferencePart]
+        parts: list[ReferencePart] = [Identifier(text[0:cur_op])]
         while cur_op < end:
             if text[cur_op] == '.':
                 next_op = find_next_op(text, cur_op + 1)

@@ -14,7 +14,7 @@ Ref = Reference
 
 
 def test_configuration() -> None:
-    setting_values = OrderedDict()    # type: OrderedDict[str, SettingValue]
+    setting_values: OrderedDict[str, SettingValue] = OrderedDict()
     settings = Settings(setting_values)
     config = PartialConfiguration(None, settings)
     assert isinstance(config.settings, Settings)

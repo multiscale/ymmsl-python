@@ -119,7 +119,7 @@ class Conduit:
         reference. If the reference does not end in an int, returns
         an empty list.
         """
-        result = list()     # type: List[int]
+        result: list[int] = list()
         i = len(reference) - 1
         while isinstance(reference[i], int):
             result.insert(0, cast(int, reference[i]))
@@ -135,7 +135,7 @@ class Conduit:
         i = len(reference)
         while isinstance(reference[i-1], int):
             i -= 1
-        return reference[:i]    # type: ignore
+        return reference[:i]
 
 
 class MulticastConduit:
@@ -230,7 +230,7 @@ class Model(ModelReference):
         super().__init__(name)
         self.components = components
 
-        self.conduits = list()      # type: List[Conduit]
+        self.conduits: list[Conduit] = list()
         if conduits:
             for conduit in conduits:
                 if isinstance(conduit, Conduit):
@@ -357,10 +357,10 @@ class Model(ModelReference):
         Returns:
             A list of Conduits and MulticastConduits.
         """
-        cond_dct = OrderedDict()  # type: OrderedDict[Reference, List[Conduit]]
+        cond_dct: OrderedDict[Reference, list[Conduit]] = OrderedDict()
         for conduit in self.conduits:
             cond_dct.setdefault(conduit.sender, []).append(conduit)
-        conduit_list = []   # type: List[AnyConduit]
+        conduit_list: list[AnyConduit] = []
         for sender, conduits in cond_dct.items():
             if len(conduits) == 1:
                 conduit_list.append(conduits[0])

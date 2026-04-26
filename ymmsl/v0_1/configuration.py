@@ -82,7 +82,7 @@ class PartialConfiguration(Document):
             self.settings = settings
 
         if implementations is None:
-            self.implementations = dict()   # type: _ImplType
+            self.implementations: _ImplType = dict()
         elif isinstance(implementations, list):
             self.implementations = OrderedDict([
                 (impl.name, impl) for impl in implementations])
@@ -90,7 +90,7 @@ class PartialConfiguration(Document):
             self.implementations = implementations
 
         if resources is None:
-            self.resources = dict()     # type: _ResType
+            self.resources: _ResType = dict()
         elif isinstance(resources, abc.Sequence):
             self.resources = OrderedDict([
                 (res.name, res) for res in resources])
@@ -108,7 +108,7 @@ class PartialConfiguration(Document):
             self.checkpoints = checkpoints
 
         if resume is None:
-            self.resume = dict()    # type: Dict[Reference, Path]
+            self.resume: dict[Reference, Path] = dict()
         else:
             self.resume = resume
 

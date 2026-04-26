@@ -55,8 +55,8 @@ class Port:
             name: The name of the port.
             operator: The MMSL Operator in which this port is used.
         """
-        self.name = name  # type: Identifier
-        self.operator = operator  # type: Operator
+        self.name: Identifier = name
+        self.operator: Operator = operator
 
 
 class Ports:
@@ -155,11 +155,11 @@ class Ports:
 
         raise KeyError('No port named "{}" was found'.format(port_name))
 
-    _yatiml_defaults = {
+    _yatiml_defaults: dict[str, Optional[list[str]]] = {
             'f_init': [],
             'o_i': [],
             's': [],
-            'o_f': []}  # type: Dict[str, Optional[List[str]]]
+            'o_f': []}
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
@@ -204,7 +204,7 @@ class Component:
         """
         self.name = Reference(name)
         if implementation is None:
-            self.implementation = None      # type: Optional[Reference]
+            self.implementation: Optional[Reference] = None
         else:
             self.implementation = Reference(implementation)
             for part in self.implementation:
@@ -254,7 +254,7 @@ class Component:
 
         def generate_indices(multiplicity: List[int]) -> List[List[int]]:
             # n-dimensional counter
-            indices = list()    # type: List[List[int]]
+            indices: list[list[int]] = list()
 
             index = [0] * len(multiplicity)
             indices.append(index.copy())
@@ -264,7 +264,7 @@ class Component:
                 increment(index, multiplicity)
             return indices
 
-        result = list()     # type: List[Reference]
+        result: list[Reference] = list()
 
         if len(self.multiplicity) == 0:
             result.append(self.name)
