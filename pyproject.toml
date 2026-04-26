@@ -11,7 +11,7 @@ authors = [
   {name = "Lourens Veen", email = "l.veen@esciencecenter.nl"},
 ]
 license = "Apache-2.0"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "NOTICE"]
 keywords = ["yMMSL", "multiscale", "modeling", "simulation", "YAML"]
 classifiers = [
   "Development Status :: 4 - Beta",
