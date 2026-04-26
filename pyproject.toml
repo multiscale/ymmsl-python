@@ -28,6 +28,7 @@ classifiers = [
 requires-python = ">=3.9, <4"
 dependencies = [
   "click>=6.5",
+  "importlib-metadata; python_version<'3.10'",
   "yatiml>=0.12.0,<0.13.0",
   # "yatiml @ git+https://github.com/yatiml/yatiml@develop#egg=yatiml",
 ]
