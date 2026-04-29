@@ -111,10 +111,7 @@ class TimelineTree:
             model_port = port_name[-1]
             assert isinstance(model_port, Identifier)
             port = self._model.ports[model_port]
-            if port.operator is Operator.F_INIT:
-                return self.root
-            else:
-                raise NotImplementedError()  # FIXME?
+            return self.root._get(port.timeline)
         timeline = self._component_timeline[component]
         port = self._all_ports[port_name]
         if port.operator in (Operator.O_F, Operator.F_INIT):
@@ -214,12 +211,14 @@ class TimelineNode:
     def _get(self, subtimeline: Timeline) -> "TimelineNode":
         """Get a sub-timeline of this timeline, creating a new one if required."""
         assert not subtimeline.absolute
-        assert len(subtimeline) == 1
-        child = self._children.get(subtimeline[0])
-        if child is None:
-            child = TimelineNode(self.name + subtimeline, self)
-            self._children[subtimeline[0]] = child
-        return child
+        node = self
+        for part in subtimeline:
+            child = node._children.get(part)
+            if child is None:
+                child = TimelineNode(node.name + Timeline([part], False), node)
+                node._children[part] = child
+            node = child
+        return node
 
     def _add(self, component: Component) -> None:
         """Add component to this timeline."""

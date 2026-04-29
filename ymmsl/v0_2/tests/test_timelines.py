@@ -131,3 +131,10 @@ def test_inconsistent_interact(timelines_configuration: Configuration) -> None:
     assert subtimeline.parent_components == [
         model.components[Ref("A")], model.components[Ref("B")]
     ]
+
+
+def test_model_ports(timelines_configuration: Configuration) -> None:
+    model = timelines_configuration.models[Ref("model_ports")]
+    tltree = TimelineTree(model)
+    tltree.check_consistent()
+

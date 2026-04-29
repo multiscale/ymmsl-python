@@ -187,3 +187,33 @@ models:
     conduits:
       A.out: B.in
       B.out: A.in
+
+  model_ports:
+    components:
+      macro:
+        description: macro
+        ports:
+          f_init: init
+          o_i: out
+          s: in
+          o_f: final
+      meso:
+        description: meso
+        ports:
+          f_init: init
+          o_i: out
+          s: in
+          o_f: final
+    ports:
+      f_init: init
+      +macro:meso:
+        o_i: out
+        s: in
+      o_f: final
+    conduits:
+      init: macro.init
+      macro.out: meso.init
+      meso.out: out
+      in: meso.in
+      meso.final: macro.in
+      macro.final: final
