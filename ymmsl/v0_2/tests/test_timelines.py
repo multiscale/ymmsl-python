@@ -137,4 +137,3 @@ def test_model_ports(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("model_ports")]
     tltree = TimelineTree(model)
     tltree.check_consistent()
-
