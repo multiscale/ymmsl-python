@@ -5,6 +5,26 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.15.1
+******
+
+Added
+-----
+
+- Importing from Python entry points
+
+Fixed
+-----
+
+- Custom implementations syntax now allows empty ones
+- Custom implementations are now applied while resolving
+
+Improved
+--------
+
+- Tooling
+
+
 0.15.0
 ******
 
