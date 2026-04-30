@@ -1,3 +1,4 @@
+from copy import copy
 import logging
 import os
 import sys
@@ -5,13 +6,13 @@ from collections.abc import MutableMapping
 from difflib import get_close_matches
 from pathlib import Path
 from textwrap import indent
-from typing import Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Dict, List, Optional, Set, Tuple, TypeVar, Union
 
 from yatiml import RecognitionError
 
 import ymmsl
 from ymmsl.v0_2.configuration import Configuration
-from ymmsl.v0_2.identity import Reference
+from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.implementation import Implementation
 from ymmsl.v0_2.imports import ImportKind, ImportStatement
 from ymmsl.v0_2.model import Model
@@ -102,14 +103,26 @@ def resolve(module: Reference, config: Configuration) -> None:
     Args:
         module: The module corresponding to this configuration
         config: The configuration to resolve
+
+    Raises:
+        RuntimeError: if an error occurs due to an invalid configuration. This will
+            leave config in a broken state, so reload it if you want to try again.
     """
-    do_resolve(Path('<main>'), module, config, ResolutionContext())
+    overwritten_implementations = do_resolve(
+            Path('<main>'), module, config, ResolutionContext())
+
+    used_implementations = {
+            c.implementation for m in config.models.values()
+            for c in m.components.values()}
+
+    for m in list(config.models.keys()):
+        if m in overwritten_implementations and m not in used_implementations:
+            del config.models[m]
 
 
 def do_resolve(
         file: ModuleSource, module: Reference, config: Configuration,
-        ctx: ResolutionContext
-        ) -> None:
+        ctx: ResolutionContext) -> Set[Reference]:
     """Implementation of resolve().
 
     This is separate so we don't keep parsing YMMSL_PATH over and over again. When we
@@ -122,13 +135,24 @@ def do_resolve(
         config: The configuration to resolve
     """
     ctx.push_module(file, module)
-    resolve_impls(module, config, ctx)
+    overwritten_implementations = resolve_impls(module, config, ctx)
     ctx.pop_module()
+    return overwritten_implementations
 
 
 def resolve_impls(
-        module: Reference, config: Configuration, ctx: ResolutionContext) -> None:
-    """Resolve any imports of implementations."""
+        module: Reference, config: Configuration, ctx: ResolutionContext
+        ) -> Set[Reference]:
+    """Resolve implementations.
+
+    This resolves imports of implementations and then applies any local custom
+    implementations.
+
+    Args:
+        module: Module this configuration is for
+        config: Configuration to resolve implementations for
+        ctx: Context for better error messages
+    """
     # translation table from old to new implementation name
     ylocals: Dict[Reference, Reference] = dict()
     rename_local_impls(config.programs, module, ylocals)
@@ -136,6 +160,8 @@ def resolve_impls(
     resolve_impl_imports(config, ylocals, ctx)
     update_local_implementations(config, ylocals)
     config.imports = [i for i in config.imports if i.kind != ImportKind.IMPLEMENTATION]
+
+    return apply_custom_implementations(config, module, ylocals, ctx)
 
 
 T = TypeVar('T', bound='Implementation')
@@ -194,7 +220,6 @@ def resolve_impl_imports(
                 raise RuntimeError(msg)
 
             ylocals[Reference([imp_st.name])] = imp_st.full_name()
-
             ctx.pop_module()
 
         ctx.pop_import()
@@ -208,6 +233,135 @@ def update_local_implementations(
             if cmp.implementation:
                 if cmp.implementation in ylocals:
                     cmp.implementation = ylocals[cmp.implementation]
+
+
+def apply_custom_implementations(
+        config: Configuration, module: Reference, ylocals: Dict[Reference, Reference],
+        ctx: ResolutionContext) -> Set[Reference]:
+    """Applies custom implementations and removes them.
+
+    Custom implementations are keyed by the model plus full component path, and map to
+    a local implementation name.
+
+    After this, the configuration will not have any entries in custom_implementations.
+
+    Args:
+        config: The configuration to modify
+        module: Name of the module it is in
+        ylocals: Map from local to global names
+    """
+    def impl_hint_msg(
+            unknown: Reference, known_impls: Optional[List[str]] = None) -> str:
+        if known_impls is None:
+            known_impls = [str(k) for k in ylocals.keys()]
+        matches = get_close_matches(str(unknown), known_impls)
+        if len(matches) == 1:
+            msg = f'Did you mean {matches[0]}?\n'
+        elif len(matches) > 1:
+            msg = 'Did you mean any of these?\n'
+            msg += indent('- ' + '\n- '.join(matches), 8 * ' ')
+        else:
+            msg = 'Possible values are:\n'
+            msg += indent('- ' + '\n- '.join(known_impls), 8 * ' ')
+        return msg
+
+    overwritten_implementations = set()
+    copied_paths = set()
+
+    for key, value in config.custom_implementations.items():
+        base_model_name = Reference([key[0]])
+        if ylocals.get(base_model_name) not in config.models:
+            raise RuntimeError(
+                    ctx.trace() +
+                    f'    Unknown model "{base_model_name}" in custom_implementations'
+                    f' "{key}: {value}". {impl_hint_msg(base_model_name)}')
+
+        if value is not None and value not in ylocals:
+            raise RuntimeError(
+                    ctx.trace() +
+                    f'    Unknown implementation "{value}" in custom_implementations'
+                    f' "{key}: {value}". {impl_hint_msg(value)}')
+
+        path = key[1:]
+        new_impl = ylocals[value] if value is not None else None
+
+        # Before modifying it, we copy the model from its original a.b.c.Model to
+        # <module>.Model so that the changes don't affect other uses of it, or the
+        # cached version.
+        m = copy(config.models[ylocals[base_model_name]])
+        m.components = copy(m.components)
+        m.name = module + m.name[-1]
+        ylocals[base_model_name] = m.name
+        config.models[m.name] = m
+
+        # Now we can walk down the components and copy-and-rename the models along the
+        # path, again to avoid making unintended changes elsewhere
+        for i, c in enumerate(path[:-1]):
+            if not isinstance(c, Identifier):
+                raise RuntimeError(
+                        ctx.trace() +
+                        f'    Invalid path in custom_implementations "{key}". Only'
+                        ' component names are allowed here.')
+            component = Reference([c])
+            if component not in m.components:
+                raise RuntimeError(
+                        ctx.trace() +
+                        f'    In custom_implementations {key}: {value}:'
+                        f' {base_model_name + path[:i]} is implemented by {m.name},'
+                        f' which does not have a component named {str(component)}.')
+
+            orig_impl = m.components[component].implementation
+            if orig_impl is None or orig_impl not in config.models:
+                raise RuntimeError(
+                        ctx.trace() +
+                        f'    In custom_implementations "{key}: {value}":'
+                        f' {base_model_name + path[:i+1]} has implementation'
+                        f' {orig_impl}, which does not have a component named'
+                        f' {path[i+1]} in it.')
+
+            if (base_model_name + path[:i+1]) not in copied_paths:
+                new_name = module + Identifier((
+                        str(orig_impl) + '__customised_for__' +
+                        str(ylocals[base_model_name] + path[:i+1])
+                        ).replace('.', '_'))
+                new_submodel = copy(config.models[orig_impl])
+                new_submodel.components = copy(new_submodel.components)
+                new_submodel.name = new_name
+                config.models[new_name] = new_submodel
+                m.components[component] = copy(m.components[component])
+                m.components[component].implementation = new_name
+                overwritten_implementations.add(orig_impl)
+                m = new_submodel
+                copied_paths.add(base_model_name + path[:i+1])
+            else:
+                m = config.models[orig_impl]
+
+        if not isinstance(path[-1], Identifier):
+            raise RuntimeError(
+                    ctx.trace() +
+                    f'    In custom_implementations "{key}: {value}":'
+                    f' [i] instance selectors are invalid in custom_implementations.')
+
+        if path[-1] not in m.components:
+            raise RuntimeError(
+                    ctx.trace() +
+                    f'    In custom_implementations "{key}: {value}":'
+                    f' {base_model_name + path[:-1]} is implemented by {m.name}, which'
+                    f' does not have a component named {path[-1]}. ' +
+                    impl_hint_msg(
+                        Reference([path[-1]]), [str(k) for k in m.components.keys()])
+                    )
+
+        component = Reference([path[-1]])
+        new_component = copy(m.components[component])
+        if new_component.implementation is not None:
+            if new_component.implementation in config.models:
+                overwritten_implementations.add(new_component.implementation)
+        new_component.implementation = new_impl
+        m.components[component] = new_component
+
+    config.custom_implementations.clear()
+    return overwritten_implementations
 
 
 def find_impls(

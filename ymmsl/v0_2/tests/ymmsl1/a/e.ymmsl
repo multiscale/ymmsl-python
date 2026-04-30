@@ -1,0 +1,23 @@
+ymmsl_version: v0.2
+
+imports:
+- from a.b.c import implementation macro
+
+models:
+  test_model:
+    ports:
+      o_i: out
+      s: in
+    description: A test model for testing custom_implementations and imports
+    components:
+      macro:
+        ports:
+          o_i: out
+          s: in
+        description: Macro model
+    conduits:
+      macro.o_i: o_i
+      s: macro.s
+
+custom_implementations:
+  test_model.macro: macro
