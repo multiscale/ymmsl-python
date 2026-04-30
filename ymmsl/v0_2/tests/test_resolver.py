@@ -54,6 +54,163 @@ def test_resolve_imports(env_ymmsl_path: None) -> None:
     assert config.programs[Reference('a.b.c.macro')].executable == Path('my_program')
 
 
+def test_apply_custom_implementations(env_ymmsl_path: None) -> None:
+    ymmsl = (
+            'ymmsl_version: v0.2\n'
+            'description: Testing resolving imports with custom_implementations\n'
+            'imports:\n'
+            '- from a.g import implementation test_macro_micro\n'
+            )
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+
+    resolve(Reference('test_resolve_imports'), config)
+
+    assert len(config.imports) == 0
+    assert len(config.models) == 2
+    model = config.models[Reference('a.g.test_macro_micro')]
+    assert model.name == 'a.g.test_macro_micro'
+
+    macro = model.components[Reference('macro')]
+    assert macro.implementation == \
+            'a.g.a_e_test_model__customised_for__a_g_test_macro_micro_macro'
+
+    micro = model.components[Reference('micro')]
+    assert micro.implementation == 'a.f.micro'
+
+    model = config.models[
+            Reference('a.g.a_e_test_model__customised_for__a_g_test_macro_micro_macro')]
+    assert model.name == \
+            'a.g.a_e_test_model__customised_for__a_g_test_macro_micro_macro'
+
+    macro = model.components[Reference('macro')]
+    assert macro.implementation == 'a.g.macro2'
+
+    assert len(config.programs) == 2
+    assert config.programs[Reference('a.f.micro')].args == ['/home/user/micro.py']
+    assert config.programs[Reference('a.g.macro2')].args == ['/home/user/macro2.py']
+
+
+def test_apply_custom_implementations_double_use(env_ymmsl_path: None) -> None:
+    ymmsl = (
+            'ymmsl_version: v0.2\n'
+            'description: |\n'
+            '  Testing resolving imports with custom_implementations, using a model\n'
+            '  that uses the same submodel for two different components, to make sure\n'
+            '  that we can change an implementation in one without affecting the\n'
+            '  other\n'
+            'imports:\n'
+            '- from a.h import implementation test_macro_macro\n'
+            )
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+
+    resolve(Reference('test_resolve_imports'), config)
+
+    assert len(config.imports) == 0
+    assert len(config.models) == 3
+    model = config.models[Reference('a.h.test_macro_macro')]
+    assert model.name == 'a.h.test_macro_macro'
+
+    macro1 = model.components[Reference('macro1')]
+    assert macro1.implementation == 'a.e.test_model'
+
+    macro2 = model.components[Reference('macro2')]
+    assert macro2.implementation == \
+            'a.h.a_e_test_model__customised_for__a_h_test_macro_macro_macro2'
+
+    model = config.models[Reference('a.e.test_model')]
+    assert model.name == 'a.e.test_model'
+
+    macro = model.components[Reference('macro')]
+    assert macro.implementation == 'a.b.c.macro'
+
+    model = config.models[
+            Reference('a.h.a_e_test_model__customised_for__a_h_test_macro_macro_macro2')
+            ]
+    assert model.name == \
+            'a.h.a_e_test_model__customised_for__a_h_test_macro_macro_macro2'
+
+    macro = model.components[Reference('macro')]
+    assert macro.implementation == 'a.h.macro2'
+
+    assert len(config.programs) == 2
+    assert config.programs[Reference('a.b.c.macro')].executable == Path('my_program')
+    assert config.programs[Reference('a.h.macro2')].args == ['/home/user/macro2.py']
+
+
+def test_apply_custom_implementations_errors(env_ymmsl_path: None) -> None:
+    ymmsl = (
+            'ymmsl_version: v0.2\n'
+            'description: |\n'
+            '  Testing resolving imports with custom_implementations, using a model\n'
+            '  that uses the same submodel for two different components, to make sure\n'
+            '  that we can change an implementation in one without affecting the\n'
+            '  other\n'
+            'imports:\n'
+            '- from a.h import implementation test_macro_macro\n'
+            'programs:\n'
+            '  macro3:\n'
+            '    ports:\n'
+            '      o_i: out\n'
+            '      s: in\n'
+            '    description: Alternative macro model implementation\n'
+            '    executable: python3\n'
+            '    args: /home/user/macro3.py\n'
+            )
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+    resolve(Reference('test_resolve_imports'), config)
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+    config.custom_implementations[Reference('test_macro_mAcro.macro')] = \
+            Reference('macro3')
+    with pytest.raises(RuntimeError):
+        resolve(Reference('test_resolve_imports'), config)
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+    config.custom_implementations[Reference('test_macro_macro.macro')] = \
+            Reference('Macro3')
+    with pytest.raises(RuntimeError):
+        resolve(Reference('test_resolve_imports'), config)
+
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+    config.custom_implementations[Reference('test_macro_macro.macro1[0]')] = \
+            Reference('macro3')
+    with pytest.raises(RuntimeError):
+        resolve(Reference('test_resolve_imports'), config)
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+    config.custom_implementations[Reference('test_macro_macro.macro3')] = \
+            Reference('macro3')
+    with pytest.raises(RuntimeError):
+        resolve(Reference('test_resolve_imports'), config)
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+    config.custom_implementations[Reference('test_macro_macro.macro1.mAcro')] = \
+            Reference('macro3')
+    with pytest.raises(RuntimeError):
+        resolve(Reference('test_resolve_imports'), config)
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+    config.custom_implementations[Reference('test_macro_macro.macro1.macro')] = \
+            Reference('test_macro_macro')
+    config.custom_implementations[Reference('test_macro_macro.macro1.macro.mAcro')] = \
+            Reference('macro3')
+    with pytest.raises(RuntimeError):
+        resolve(Reference('test_resolve_imports'), config)
+
+
 def test_resolve_imports_module_not_found(env_ymmsl_path: None) -> None:
     ymmsl = (
             'ymmsl_version: v0.2\n'

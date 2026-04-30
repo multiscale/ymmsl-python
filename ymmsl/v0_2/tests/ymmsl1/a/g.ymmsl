@@ -1,0 +1,37 @@
+ymmsl_version: v0.2
+
+imports:
+- from a.e import implementation test_model
+- from a.f import implementation micro
+
+models:
+  test_macro_micro:
+    description: A macro micro model with custom implementations
+    components:
+      macro:
+        ports:
+          o_i: out
+          s: in
+        description: Macro model
+      micro:
+        ports:
+          f_init: init
+          o_f: final
+        description: Micro model
+    conduits:
+      macro.out: micro.init
+      micro.final: macro.in
+
+programs:
+  macro2:
+    ports:
+      o_i: out
+      s: in
+    description: Alternative macro model implementation
+    executable: python3
+    args: /home/user/macro2.py
+
+custom_implementations:
+  test_macro_micro.macro: test_model
+  test_macro_micro.micro: micro
+  test_macro_micro.macro.macro: macro2
