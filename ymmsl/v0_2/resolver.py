@@ -353,8 +353,12 @@ def apply_custom_implementations(
                     )
 
         component = Reference([path[-1]])
-        m.components[component] = copy(m.components[component])
-        m.components[component].implementation = new_impl
+        new_component = copy(m.components[component])
+        if new_component.implementation is not None:
+            if new_component.implementation in config.models:
+                overwritten_implementations.add(new_component.implementation)
+        new_component.implementation = new_impl
+        m.components[component] = new_component
 
     config.custom_implementations.clear()
     return overwritten_implementations
