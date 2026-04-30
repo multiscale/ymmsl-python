@@ -276,14 +276,14 @@ def apply_custom_implementations(
                     f'    Unknown model "{base_model_name}" in custom_implementations'
                     f' "{key}: {value}". {impl_hint_msg(base_model_name)}')
 
-        if value not in ylocals:
+        if value is not None and value not in ylocals:
             raise RuntimeError(
                     ctx.trace() +
                     f'    Unknown implementation "{value}" in custom_implementations'
                     f' "{key}: {value}". {impl_hint_msg(value)}')
 
         path = key[1:]
-        new_impl = ylocals[value]
+        new_impl = ylocals[value] if value is not None else None
 
         # Before modifying it, we copy the model from its original a.b.c.Model to
         # <module>.Model so that the changes don't affect other uses of it, or the

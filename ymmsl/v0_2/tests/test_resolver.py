@@ -141,6 +141,38 @@ def test_apply_custom_implementations_double_use(env_ymmsl_path: None) -> None:
     assert config.programs[Reference('a.h.macro2')].args == ['/home/user/macro2.py']
 
 
+def test_apply_custom_implementations_set_none(env_ymmsl_path: None) -> None:
+    ymmsl = (
+            'ymmsl_version: v0.2\n'
+            'description: Testing resolving imports with custom_implementations\n'
+            'models:\n'
+            '  macro_micro:\n'
+            '    components:\n'
+            '      macro:\n'
+            '        ports:\n'
+            '          o_i: out\n'
+            '          s: in\n'
+            '        description: Macro model\n'
+            '        implementation: macro\n'
+            '      micro:\n'
+            '        ports:\n'
+            '          f_init: in\n'
+            '          o_f: out\n'
+            '        description: Micro model\n'
+            '        implementation: micro\n'
+            'custom_implementations:\n'
+            '  macro_micro.micro:\n'
+            )
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+
+    resolve(Reference('test_resolve_imports'), config)
+
+    model = config.models[Reference('test_resolve_imports.macro_micro')]
+    assert model.components[Reference('micro')].implementation is None
+
+
 def test_apply_custom_implementations_errors(env_ymmsl_path: None) -> None:
     ymmsl = (
             'ymmsl_version: v0.2\n'
