@@ -293,7 +293,7 @@ class Model(Implementation):
 
             self.components = {copy(c.name): c for c in components}
 
-        self.conduits = list()      # type: List[Conduit]
+        self.conduits: list[Conduit] = list()
         if conduits:
             for conduit in conduits:
                 if isinstance(conduit, Conduit):
@@ -392,7 +392,7 @@ class Model(Implementation):
         for conduit in self.conduits:
             cdts_by_sender.setdefault(conduit.sender, []).append(conduit)
 
-        conduit_list = []   # type: List[AnyConduit]
+        conduit_list: list[AnyConduit] = []
         for sender, conduits in cdts_by_sender.items():
             if len(conduits) == 1:
                 conduit_list.append(conduits[0])

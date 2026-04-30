@@ -1,5 +1,0 @@
-[run]
-source = ymmsl
-
-[xml]
-output = cobertura.xml

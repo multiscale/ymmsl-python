@@ -100,7 +100,7 @@ class Component:
 
         def generate_indices(multiplicity: List[int]) -> List[List[int]]:
             # n-dimensional counter
-            indices = list()    # type: List[List[int]]
+            indices: list[list[int]] = list()
 
             index = [0] * len(multiplicity)
             indices.append(index.copy())
@@ -110,7 +110,7 @@ class Component:
                 increment(index, multiplicity)
             return indices
 
-        result = list()     # type: List[Reference]
+        result: list[Reference] = list()
 
         if len(self.multiplicity) == 0:
             result.append(self.name)

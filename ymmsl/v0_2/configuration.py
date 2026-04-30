@@ -49,7 +49,7 @@ class Configuration(Document):
             models: Optional[Union[
                 Sequence[Model], MutableMapping[Reference, Model]]] = None,
             custom_implementations: Optional[
-                MutableMapping[Reference, Reference]] = None,
+                MutableMapping[Reference, Optional[Reference]]] = None,
             settings: Optional[Settings] = None,
             programs: Optional[Union[
                 Sequence[Program], MutableMapping[Reference, Program]]] = None,
@@ -101,10 +101,10 @@ class Configuration(Document):
         else:
             self.models = models
 
-        _CIType = MutableMapping[Reference, Reference]  # noqa: F841
+        _CIType = MutableMapping[Reference, Optional[Reference]]  # noqa: F841
 
         if custom_implementations is None:
-            self.custom_implementations = {}   # type: _CIType
+            self.custom_implementations: _CIType = {}
         else:
             self.custom_implementations = custom_implementations
 
@@ -134,7 +134,7 @@ class Configuration(Document):
             self.checkpoints = checkpoints
 
         if resume is None:
-            self.resume = dict()    # type: Dict[Reference, Path]
+            self.resume: dict[Reference, Path] = dict()
         else:
             self.resume = resume
 
@@ -283,7 +283,7 @@ class Configuration(Document):
                         del root_models[component.implementation]
 
         for impl in self.custom_implementations.values():
-            if impl in root_models:
+            if impl is not None and impl in root_models:
                 del root_models[impl]
 
         return list(root_models.values())
@@ -362,7 +362,7 @@ class Configuration(Document):
                 continue
 
             if impl_ref in self.programs:
-                impl = self.programs[impl_ref]  # type: Implementation
+                impl: Implementation = self.programs[impl_ref]
             elif impl_ref in self.models:
                 impl = self.models[impl_ref]
             else:
@@ -451,7 +451,7 @@ class Configuration(Document):
 
             errs = list()
             if impl_ref in self.programs:
-                impl = self.programs[impl_ref]   # type: Implementation
+                impl: Implementation = self.programs[impl_ref]
             elif impl_ref in self.models:
                 impl = self.models[impl_ref]
             else:

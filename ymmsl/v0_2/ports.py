@@ -58,7 +58,7 @@ class Timeline:
         if isinstance(timeline, str):
             if timeline == '':
                 self.absolute = False
-                parts = []  # type: Sequence[Union[str, Reference]]
+                parts: Sequence[Union[str, Reference]] = []
             elif timeline == ':':
                 self.absolute = True
                 parts = []
@@ -371,7 +371,7 @@ class Ports:
                     seen.add(timeline)
             return result
 
-        attrs = OrderedDict()       # type: _PortsAttrs
+        attrs: _PortsAttrs = OrderedDict()
         add_ports(attrs, Operator.F_INIT, 'f_init', Timeline(''))
 
         timelines = [p.timeline for p in self._ports.values() if p.timeline != '']
@@ -380,7 +380,7 @@ class Ports:
             add_ports(attrs, Operator.S, 's', Timeline(''))
         else:
             for timeline in unique(timelines):
-                timeline_attrs = OrderedDict()  # type: _PortsSubAttrs
+                timeline_attrs: _PortsSubAttrs = OrderedDict()
                 add_ports(timeline_attrs, Operator.O_I, 'o_i', timeline)
                 add_ports(timeline_attrs, Operator.S, 's', timeline)
                 attrs[f'+{timeline}'] = timeline_attrs
