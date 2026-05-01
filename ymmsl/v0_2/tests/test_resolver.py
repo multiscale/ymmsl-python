@@ -17,6 +17,8 @@ if sys.version_info < (3, 10):
 else:
     from importlib.metadata import EntryPoints, EntryPoint
 
+Ref = Reference
+
 
 @pytest.fixture
 def env_ymmsl_path() -> Generator[None, None, None]:
@@ -197,6 +199,137 @@ def test_apply_custom_implementations_set_none(env_ymmsl_path: None) -> None:
 
     model = config.models[Reference('test_resolve_imports.macro_micro')]
     assert model.components[Reference('micro')].implementation is None
+
+
+def test_apply_custom_implementations_no_hidden_copies() -> None:
+    ymmsl = (
+            'ymmsl_version: v0.2\n'
+            'description: |\n'
+            '  Testing that all local references point to the same object\n'
+            'models:\n'
+            '  A:\n'
+            '    description: Model A\n'
+            '    components:\n'
+            '      c1:\n'
+            '        ports: {}\n'
+            '        description: Component c1\n'
+            '  B:\n'
+            '    description: Model B\n'
+            '    components:\n'
+            '      c2:\n'
+            '        ports: {}\n'
+            '        description: Component c2\n'
+            '      c3:\n'
+            '        ports: {}\n'
+            '        description: Component c3\n'
+            'programs:\n'
+            '  p:\n'
+            '    ports:\n'
+            '    description: A program\n'
+            '    executable: /home/user/p\n'
+            )
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+
+    config.models[Ref('A')].components[Ref('c1')].implementation = Ref('p')
+    config.custom_implementations[Reference('B.c2')] = Reference('A')
+    config.custom_implementations[Reference('B.c3')] = Reference('A')
+
+    resolve(Reference('no_copies'), config)
+
+
+    # Same thing but using custom implementations for everything
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+
+    config.custom_implementations[Reference('A.c1')] = Reference('p')
+    config.custom_implementations[Reference('B.c2')] = Reference('A')
+    config.custom_implementations[Reference('B.c3')] = Reference('A')
+
+    resolve(Reference('no_copies'), config)
+
+    b = config.models[Reference('no_copies.B')]
+    assert b.components[Reference('c2')].implementation == 'no_copies.A'
+    assert b.components[Reference('c3')].implementation == 'no_copies.A'
+
+    a = config.models[Reference('no_copies.A')]
+    assert a.components[Reference('c1')].implementation == 'no_copies.p'
+
+    # this should yield the same result as above, because all references to A point to
+    # the same object
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+
+    config.custom_implementations[Reference('B.c2')] = Reference('A')
+    config.custom_implementations[Reference('B.c3')] = Reference('A')
+    config.custom_implementations[Reference('A.c1')] = Reference('p')
+
+    resolve(Reference('no_copies2'), config)
+
+    b = config.models[Reference('no_copies2.B')]
+    assert b.components[Reference('c2')].implementation == 'no_copies2.A'
+    assert b.components[Reference('c3')].implementation == 'no_copies2.A'
+
+    a = config.models[Reference('no_copies2.A')]
+    assert a.components[Reference('c1')].implementation == 'no_copies2.p'
+
+
+def test_apply_custom_implementations_everything_localised() -> None:
+    ymmsl = (
+            'ymmsl_version: v0.2\n'
+            'description: |\n'
+            '  Testing that local and imported models are treated the same when\n'
+            '  customised.\n'
+            'imports:\n'
+            '- from a.e import implementation test_model\n'
+            'models:\n'
+            '  A:\n'
+            '    description: Model A\n'
+            '    components:\n'
+            '      c1:\n'
+            '        ports: {}\n'
+            '        description: Component c1\n'
+            '  B:\n'
+            '    description: Model B\n'
+            '    components:\n'
+            '      macro:\n'
+            '        ports: {}\n'
+            '        description: Component c2\n'
+            'programs:\n'
+            '  p:\n'
+            '    ports:\n'
+            '    description: A program\n'
+            '    executable: /home/user/p\n'
+            )
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+
+    config.custom_implementations[Ref('A.c1')] = Ref('test_model')
+    config.custom_implementations[Ref('test_model.macro')] = Ref('p')
+
+    resolve(Reference('el'), config)
+
+    c1 = config.models[Ref('el.A')].components[Ref('c1')]
+    assert c1.implementation == 'el.test_model'
+
+    test_model = config.models[Ref('el.test_model')]
+    assert test_model.components[Ref('macro')].implementation == 'el.p'
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+
+    config.custom_implementations[Ref('A.c1')] = Ref('B')
+    config.custom_implementations[Ref('B.macro')] = Ref('p')
+
+    resolve(Reference('el'), config)
+
+    c1 = config.models[Ref('el.A')].components[Ref('c1')]
+    assert c1.implementation == 'el.B'
+
+    b = config.models[Ref('el.B')]
+    assert b.components[Ref('macro')].implementation == 'el.p'
 
 
 def test_apply_custom_implementations_errors(env_ymmsl_path: None) -> None:
