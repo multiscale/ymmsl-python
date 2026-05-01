@@ -288,11 +288,19 @@ def apply_custom_implementations(
         # Before modifying it, we copy the model from its original a.b.c.Model to
         # <module>.Model so that the changes don't affect other uses of it, or the
         # cached version.
-        m = copy(config.models[ylocals[base_model_name]])
-        m.components = copy(m.components)
-        m.name = module + m.name[-1]
-        ylocals[base_model_name] = m.name
-        config.models[m.name] = m
+        orig_name = ylocals[base_model_name]
+        orig_model = config.models[orig_name]
+        new_name = module + base_model_name
+        if orig_name != new_name:
+            m = copy(orig_model)
+            m.components = copy(m.components)
+            m.name = new_name
+
+            config.models[new_name] = m
+            ylocals[base_model_name] = m.name
+            overwritten_implementations.add(orig_name)
+        else:
+            m = orig_model
 
         # Now we can walk down the components and copy-and-rename the models along the
         # path, again to avoid making unintended changes elsewhere

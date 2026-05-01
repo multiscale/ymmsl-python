@@ -54,6 +54,32 @@ def test_resolve_imports(env_ymmsl_path: None) -> None:
     assert config.programs[Reference('a.b.c.macro')].executable == Path('my_program')
 
 
+def test_apply_custom_implementations_simple(env_ymmsl_path: None) -> None:
+    # should import a model, and substitute a local program into it
+    # then check that we have a single root model
+    ymmsl = (
+            'ymmsl_version: v0.2\n'
+            'description: Testing resolving imports with custom_implementations\n'
+            'imports:\n'
+            '- from a.e import implementation test_model\n'
+            '- from a.b.c import implementation macro\n'
+            'custom_implementations:\n'
+            '  test_model.macro: macro\n'
+            )
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+
+    resolve(Reference('test_resolve_imports'), config)
+
+    assert len(config.imports) == 0
+    assert len(config.models) == 1
+    assert Reference('test_resolve_imports.test_model') in config.models
+    m = config.models[Reference('test_resolve_imports.test_model')]
+    c = m.components[Reference('macro')]
+    assert c.implementation == 'a.b.c.macro'
+
+
 def test_apply_custom_implementations(env_ymmsl_path: None) -> None:
     ymmsl = (
             'ymmsl_version: v0.2\n'
