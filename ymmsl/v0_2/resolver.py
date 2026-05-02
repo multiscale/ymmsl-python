@@ -158,10 +158,11 @@ def resolve_impls(
     rename_local_impls(config.programs, module, ylocals)
     rename_local_impls(config.models, module, ylocals)
     resolve_impl_imports(config, ylocals, ctx)
-    update_local_implementations(config, ylocals)
     config.imports = [i for i in config.imports if i.kind != ImportKind.IMPLEMENTATION]
 
-    return apply_custom_implementations(config, module, ylocals, ctx)
+    overwritten_impls = apply_custom_implementations(config, module, ylocals, ctx)
+    update_local_implementations(config, ylocals)
+    return overwritten_impls
 
 
 T = TypeVar('T', bound='Implementation')
@@ -225,16 +226,6 @@ def resolve_impl_imports(
         ctx.pop_import()
 
 
-def update_local_implementations(
-        config: Configuration, ylocals: Dict[Reference, Reference]) -> None:
-    """Updates names of local implementations to their full names."""
-    for model in config.models.values():
-        for cmp in model.components.values():
-            if cmp.implementation:
-                if cmp.implementation in ylocals:
-                    cmp.implementation = ylocals[cmp.implementation]
-
-
 def apply_custom_implementations(
         config: Configuration, module: Reference, ylocals: Dict[Reference, Reference],
         ctx: ResolutionContext) -> Set[Reference]:
@@ -268,6 +259,8 @@ def apply_custom_implementations(
     overwritten_implementations = set()
     copied_paths = set()
 
+    # Pre-copy any models that will be updated, if they were imported and we therefore
+    # cannot modify them in place without interfering with other uses of the same model.
     for key, value in config.custom_implementations.items():
         base_model_name = Reference([key[0]])
         if ylocals.get(base_model_name) not in config.models:
@@ -282,17 +275,27 @@ def apply_custom_implementations(
                     f'    Unknown implementation "{value}" in custom_implementations'
                     f' "{key}: {value}". {impl_hint_msg(value)}')
 
-        path = key[1:]
-        new_impl = ylocals[value] if value is not None else None
-
         # Before modifying it, we copy the model from its original a.b.c.Model to
         # <module>.Model so that the changes don't affect other uses of it, or the
         # cached version.
-        m = copy(config.models[ylocals[base_model_name]])
-        m.components = copy(m.components)
-        m.name = module + m.name[-1]
-        ylocals[base_model_name] = m.name
-        config.models[m.name] = m
+        orig_name = ylocals[base_model_name]
+        orig_model = config.models[orig_name]
+        new_name = module + base_model_name
+        if orig_name != new_name:
+            m = copy(orig_model)
+            m.components = copy(m.components)
+            m.name = new_name
+
+            config.models[new_name] = m
+            ylocals[base_model_name] = m.name
+            overwritten_implementations.add(orig_name)
+
+    for key, value in config.custom_implementations.items():
+        base_model_name = Reference([key[0]])
+        path = key[1:]
+        new_impl = ylocals[value] if value is not None else None
+
+        m = config.models[ylocals[base_model_name]]
 
         # Now we can walk down the components and copy-and-rename the models along the
         # path, again to avoid making unintended changes elsewhere
@@ -311,6 +314,8 @@ def apply_custom_implementations(
                         f' which does not have a component named {str(component)}.')
 
             orig_impl = m.components[component].implementation
+            if orig_impl in ylocals:
+                orig_impl = ylocals[orig_impl]
             if orig_impl is None or orig_impl not in config.models:
                 raise RuntimeError(
                         ctx.trace() +
@@ -364,6 +369,16 @@ def apply_custom_implementations(
     return overwritten_implementations
 
 
+def update_local_implementations(
+        config: Configuration, ylocals: Dict[Reference, Reference]) -> None:
+    """Updates names of local implementations to their full names."""
+    for model in config.models.values():
+        for cmp in model.components.values():
+            if cmp.implementation:
+                if cmp.implementation in ylocals:
+                    cmp.implementation = ylocals[cmp.implementation]
+
+
 def find_impls(
         config: Configuration, name: Reference, ctx: ResolutionContext
         ) -> List[Implementation]:
@@ -408,6 +423,9 @@ def find_impl(
             else:
                 msg += ' Did you mean any of these?\n'
                 msg += indent('- ' + '\n- '.join(matches), 8 * ' ')
+        else:
+            msg += ' Available implementations in this module:\n'
+            msg += indent('- ' + '\n- '.join(impls), 8 * ' ')
 
         raise RuntimeError(msg)
 
