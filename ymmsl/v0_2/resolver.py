@@ -423,6 +423,9 @@ def find_impl(
             else:
                 msg += ' Did you mean any of these?\n'
                 msg += indent('- ' + '\n- '.join(matches), 8 * ' ')
+        else:
+            msg += ' Available implementations in this module:\n'
+            msg += indent('- ' + '\n- '.join(impls), 8 * ' ')
 
         raise RuntimeError(msg)
 
