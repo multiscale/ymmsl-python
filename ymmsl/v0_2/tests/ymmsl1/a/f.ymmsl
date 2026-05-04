@@ -1,0 +1,10 @@
+ymmsl_version: v0.2
+
+programs:
+  micro:
+    ports:
+      f_init: init
+      o_f: final
+    description: Program implementing the micro model
+    executable: python3
+    args: /home/user/micro.py
