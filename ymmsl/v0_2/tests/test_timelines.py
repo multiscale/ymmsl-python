@@ -1,9 +1,16 @@
-from ymmsl.v0_2.timelines import TimelineTree
 from pathlib import Path
-import ymmsl
-from ymmsl.v0_2 import Configuration, Reference as Ref, Timeline, ConduitFilter
 
 import pytest
+import ymmsl
+
+from ymmsl.v0_2 import Configuration, Reference as Ref, Timeline, ConduitFilter
+from ymmsl.v0_2.timelines import (
+    TimelineTree,
+    CyclicDependency,
+    TooManyReducerFilters,
+    InconsistentTimelines,
+    ConduitTimelineError,
+)
 
 ROOT_TIMELINE = Timeline(":")
 
@@ -34,7 +41,7 @@ def test_macromicro(timelines_configuration: Configuration) -> None:
 
 
 def test_cycle(timelines_configuration: Configuration) -> None:
-    with pytest.raises(RuntimeError, match="Cycle detected"):
+    with pytest.raises(CyclicDependency, match="cycle in model"):
         TimelineTree(timelines_configuration.models[Ref("cycle")])
 
 
@@ -48,12 +55,12 @@ def test_reducer(timelines_configuration: Configuration) -> None:
 def test_too_many_reducers(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("reducer")]
     model.conduits[-1].filters.append(model.conduits[-1].filters[0])
-    with pytest.raises(ValueError, match="Too many reducer filters"):
+    with pytest.raises(TooManyReducerFilters, match="too many reducer filters"):
         TimelineTree(model)
 
 
 def test_inconsistent_timelines(timelines_configuration: Configuration) -> None:
-    with pytest.raises(ValueError, match="Inconsistent timelines"):
+    with pytest.raises(InconsistentTimelines):
         TimelineTree(timelines_configuration.models[Ref("inconsistent")])
 
 
@@ -69,7 +76,7 @@ def test_too_many_repeaters(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("repeaters")]
     model.conduits[-2].filters.append(ConduitFilter.REPEAT)
     tltree = TimelineTree(model)
-    with pytest.raises(ValueError, match="Inconsistent conduit filters"):
+    with pytest.raises(ConduitTimelineError, match="remove a repeater"):
         tltree.check_consistent()
 
 
@@ -77,7 +84,7 @@ def test_too_few_repeaters(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("repeaters")]
     model.conduits[-1].filters.pop()
     tltree = TimelineTree(model)
-    with pytest.raises(ValueError, match="Inconsistent conduit filters"):
+    with pytest.raises(ConduitTimelineError, match="add a repeater"):
         tltree.check_consistent()
 
 
@@ -85,7 +92,7 @@ def test_repeater_and_too_many_reducers(timelines_configuration: Configuration) 
     model = timelines_configuration.models[Ref("repeaters")]
     model.conduits[-1].filters.insert(0, ConduitFilter.LAST)
     tltree = TimelineTree(model)
-    with pytest.raises(ValueError, match="Too many reducer filters"):
+    with pytest.raises(TooManyReducerFilters, match="too many reducer filters"):
         tltree.check_consistent()
 
 
@@ -100,14 +107,14 @@ def test_repeater_after_reducer(timelines_configuration: Configuration) -> None:
 
     # Removing the filters on the last conduit is a problem
     model.conduits[-1].filters = []
-    with pytest.raises(ValueError, match="Inconsistent timelines"):
+    with pytest.raises(InconsistentTimelines, match="different timelines"):
         TimelineTree(model)
 
 
 def test_repeater_after_reducer_error(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("repeater_reducer_error")]
     tltree = TimelineTree(model)
-    with pytest.raises(ValueError, match="repeater after reducer"):
+    with pytest.raises(ConduitTimelineError, match="remove a repeater and reducer"):
         tltree.check_consistent()
     model.conduits[-1].filters = []
     tltree = TimelineTree(model)
@@ -120,7 +127,7 @@ def test_repeater_after_reducer_error(timelines_configuration: Configuration) ->
 def test_inconsistent_interact(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("inconsistent_interact")]
     tltree = TimelineTree(model)
-    with pytest.raises(ValueError, match="Inconsistent timelines"):
+    with pytest.raises(ConduitTimelineError, match="missing timeline annotations"):
         tltree.check_consistent()
     model.components[Ref("B")].ports["out"].timeline = Timeline("A")
     model.components[Ref("B")].ports["in"].timeline = Timeline("A")
@@ -129,7 +136,8 @@ def test_inconsistent_interact(timelines_configuration: Configuration) -> None:
 
     subtimeline = tltree.root._children[Ref("A")]
     assert subtimeline.parent_components == [
-        model.components[Ref("A")], model.components[Ref("B")]
+        model.components[Ref("A")],
+        model.components[Ref("B")],
     ]
 
 

@@ -11,6 +11,96 @@ from ymmsl.v0_2 import (
 )
 
 
+class CyclicDependency(RuntimeError):
+    """Error raised when some models form a dependency cycle.
+
+    Dependency cycles occur when messages to an F_INIT port of a component depend in
+    some way on the output of that component.
+    """
+
+    def __init__(self, model: Model, cycle: list[Component]) -> None:
+        self.model = model
+        self.cycle = cycle
+        msg = (
+            f"Detected a dependency cycle in model '{model.name}': "
+            + " -> ".join(str(component.name) for component in cycle)
+        )
+        super().__init__(msg)
+
+
+class TooManyReducerFilters(RuntimeError):
+    """Error raised when a conduit has too many reducer filters applied."""
+
+    def __init__(
+        self, model: Model, conduit: Conduit, sender_timeline: Timeline
+    ) -> None:
+        self.model = model
+        self.conduit = conduit
+        self.sender_timeline = sender_timeline
+        num_reducers = sum(filter.is_reducer() for filter in conduit.filters)
+        msg = (
+            f"{conduit} in model '{model.name}' has too many reducer filters. The "
+            f"sending port ({conduit.sender}) has timeline ({sender_timeline}) and "
+            f"can only be reduced {len(sender_timeline)} times, but there are "
+            f"{num_reducers} reducer filters."
+        )
+        super().__init__(msg)
+
+
+class InconsistentTimelines(RuntimeError):
+    """Error raised when a component's F_INIT ports have inconsistent timelines."""
+
+    def __init__(
+        self,
+        model: Model,
+        component: Component,
+        conduits: list[Conduit],
+        timelines: list[Timeline],
+    ) -> None:
+        self.model = model
+        self.component = component
+        self.conduits = conduits
+        self.timelines = timelines
+        msg = (
+            f"Component '{component.name}' in model '{model.name}' has different "
+            f"timelines for the following F_INIT ports:\n"
+            + "\n".join(
+                f"- Port '{conduit.receiving_port()}' has timeline '{timeline}'"
+                for conduit, timeline in zip(conduits, timelines, strict=True)
+            )
+        )
+        super().__init__(msg)
+
+
+class ConduitTimelineError(RuntimeError):
+    """Error raised for conduits that connect incompatible timelines."""
+
+    def __init__(
+        self,
+        tltree: "TimelineTree",
+        conduit: Conduit,
+        timeline1: Timeline,
+        timeline2: Timeline,
+        hint: str = "",
+    ) -> None:
+        self.tltree = tltree
+        model = tltree._model
+        self.conduit = conduit
+        self.timeline1 = timeline1
+        self.timeline2 = timeline2
+        self.hint = hint
+        msg = (
+            f"{conduit} in model '{model.name}' has inconsistent timelines: it "
+            f"connects timeline '{timeline1}' with timeline '{timeline2}', but this "
+            f"does not match with the filters of the conduit.{hint} Note that this "
+            "error may also be caused by missing timeline annotations for O_I and S "
+            "ports, or because the sending or receiving component has incorrect "
+            "F_INIT conduits. Determined timelines per component:\n"
+            f"{tltree.format_timelines()}"
+        )
+        super().__init__(msg)
+
+
 class TimelineTree:
     """Determines timelines and nesting for a given yMMSL model"""
 
@@ -54,11 +144,9 @@ class TimelineTree:
     def _assign_component(self, component: Component, seen: list[Component]) -> None:
         """Recursive component assignment, uses "seen" list for cycle detection."""
         if component in seen:
-            # TODO: better error message
             idx = seen.index(component)
-            cycle_list = seen[idx:] + [component]
-            cycle = " -> ".join(str(component.name) for component in cycle_list)
-            raise RuntimeError(f"Cycle detected in model '{self._model.name}': {cycle}")
+            cycle = seen[idx:] + [component]
+            raise CyclicDependency(self._model, cycle)
         f_init_conduits = self._f_init_conduits_for_component(component)
 
         # Ensure we know the timelines of the components attached to our F_INIT
@@ -71,24 +159,28 @@ class TimelineTree:
 
         # Now we can determine our timeline
         incoming_timelines: list[TimelineNode] = []
+        checked_conduits: list[Conduit] = []  # To provide better error messages
         for conduit in f_init_conduits:
             if any(filter.is_repeater() for filter in conduit.filters):
                 continue  # We cannot use repeater filters to determine the timeline
             timeline = self.timeline_for_port(conduit.sender)
+            sender_timeline = timeline.name
             for filter in conduit.filters:
                 assert filter.is_reducer()
                 if timeline.parent is None:
-                    # TODO: better error message
-                    raise ValueError("Too many reducer filters")
+                    raise TooManyReducerFilters(self._model, conduit, sender_timeline)
                 timeline = timeline.parent
             incoming_timelines.append(timeline)
+            checked_conduits.append(conduit)
 
         determined_timeline = self.root
         if incoming_timelines:
             determined_timeline = incoming_timelines[0]
         if not all(tl is determined_timeline for tl in incoming_timelines):
-            # TODO: better error message
-            raise ValueError(f"Inconsistent timelines {incoming_timelines}")
+            timelines = [tl.name for tl in incoming_timelines]
+            raise InconsistentTimelines(
+                self._model, component, checked_conduits, timelines
+            )
 
         # Done: register timeline for component
         self._component_timeline[component.name] = determined_timeline
@@ -144,25 +236,42 @@ class TimelineTree:
 
             # Apply reducers
             if len(timeline1) < num_reducers:
-                # TODO: better error message
-                raise ValueError("Too many reducer filters")
+                raise TooManyReducerFilters(self._model, conduit, timeline1)
             if len(timeline1) - num_reducers + num_repeaters != len(timeline2):
-                # TODO: better error message
-                raise ValueError("Inconsistent conduit filters")
+                remove_msg = ""
+                if len(timeline1) - num_reducers + num_repeaters < len(timeline2):
+                    add_filter = "repeater ('pad' or 'repeat')"
+                    if num_reducers > 0:
+                        remove_msg = "reducer ('last')"
+                else:
+                    add_filter = "reducer ('last')"
+                    if num_repeaters > 0:
+                        remove_msg = "repeater ('pad' or 'repeat')"
+                if remove_msg:
+                    remove_msg = f" or remove a {remove_msg} filter"
+                hint = f" You may need to add a {add_filter} filter{remove_msg}."
+                raise ConduitTimelineError(self, conduit, timeline1, timeline2, hint)
 
             # Check consistency
             common_idx = len(timeline1) - num_reducers
             for idx, (part1, part2) in enumerate(zip(timeline1, timeline2)):
                 if idx < common_idx:
                     if part1 != part2:
-                        # TODO: better error message
-                        raise ValueError("Inconsistent timelines")
+                        raise ConduitTimelineError(self, conduit, timeline1, timeline2)
                 else:
                     if part1 == part2:
-                        # TODO: better error message
-                        raise ValueError(
-                            "repeater after reducer cannot be in same timeline"
+                        hint = " You may need to remove a repeater and reducer filter."
+                        raise ConduitTimelineError(
+                            self, conduit, timeline1, timeline2, hint
                         )
+
+    def format_timelines(self) -> str:
+        """Create a formatted list of determined timelines per component."""
+        return "\n".join(
+            f"- Component '{comp}' has timeline '{tl.name}'"
+            for comp, tl in self._component_timeline.items()
+            if len(comp) > 0  # Ony print actual components
+        )
 
 
 class TimelineNode:
