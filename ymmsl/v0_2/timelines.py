@@ -66,7 +66,7 @@ class InconsistentTimelines(RuntimeError):
             f"timelines for the following F_INIT ports:\n"
             + "\n".join(
                 f"- Port '{conduit.receiving_port()}' has timeline '{timeline}'"
-                for conduit, timeline in zip(conduits, timelines, strict=True)
+                for conduit, timeline in zip(conduits, timelines)
             )
         )
         super().__init__(msg)
