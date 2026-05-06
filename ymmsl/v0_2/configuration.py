@@ -305,9 +305,11 @@ class Configuration(Document):
         result = dict()
         queue: List[Tuple[Model, Reference, List[Tuple[Reference, Reference]]]] = \
             [(m, Reference([]), []) for m in self._root_models()]
+        _logger.debug(f'cmp_paths: initial queue: {[t[0].name for t in queue]}')
 
         while queue:
             model, prefix, seen = queue.pop(0)
+            _logger.debug(f'cmp_paths: {model.name} {prefix} {seen}')
             for component in model.components.values():
                 path = prefix + component.name
                 impl = self.custom_implementations.get(path, component.implementation)
@@ -539,7 +541,9 @@ class Configuration(Document):
         """
         errors = list()
         for path, component in component_paths.items():
+            _logger.debug(f'Checking resources for {path} {component.name}')
             impl_ref = self.custom_implementations.get(path, component.implementation)
+            _logger.debug(f'Implementation: {impl_ref}')
             if impl_ref is None or impl_ref not in self.programs:
                 continue
 
