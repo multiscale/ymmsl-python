@@ -65,7 +65,8 @@ class InconsistentTimelines(RuntimeError):
             f"Component '{component.name}' in model '{model.name}' has different "
             f"timelines for the following F_INIT ports:\n"
             + "\n".join(
-                f"- Port '{conduit.receiving_port()}' has timeline '{timeline}'"
+                f"- Port '{conduit.receiving_port()}' has timeline '{timeline}' "
+                f"from {conduit}"
                 for conduit, timeline in zip(conduits, timelines)
             )
         )
