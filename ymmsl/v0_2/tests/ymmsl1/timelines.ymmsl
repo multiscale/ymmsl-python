@@ -1,0 +1,219 @@
+ymmsl_version: v0.2
+description: Test models for determining timelines
+models:
+  dispatch:
+    ports:
+      f_init: init
+    components:
+      first:
+        description: First component
+        ports:
+          f_init: init
+          o_f: final
+      second:
+        description: Second component
+        ports:
+          f_init: init
+    conduits:
+      init: first.init
+      first.final: second.init
+
+  macromicro:
+    ports:
+      f_init: init
+    components:
+      macro:
+        description: Macro component
+        ports:
+          f_init: init
+          o_i: out
+          s: in
+      micro:
+        description: Micro component
+        ports:
+          f_init: init1 init2
+          o_f: final
+    conduits:
+      init:
+      - macro.init
+      - repeat micro.init1  # Test repeater filter
+      macro.out: micro.init2
+      micro.final: macro.in
+
+  cycle:
+    components:
+      first:
+        description: First component
+        ports:
+          f_init: init
+          o_f: final
+      second:
+        description: Second component
+        ports:
+          f_init: init
+          o_f: final
+    conduits:
+      first.final: second.init
+      second.final: first.init
+
+  reducer:
+    components:
+      first:
+        description: First component
+        ports:
+          o_i: out
+          o_f: final
+      second:
+        description: Second component
+        ports:
+          f_init: init1 init2
+    conduits:
+      first.final: second.init1
+      first.out: last second.init2
+
+  inconsistent:
+    components:
+      macro:
+        description: Macro component
+        ports:
+          o_i: out
+          o_f: final
+      micro:
+        description: Micro component
+        ports:
+          f_init: in
+          o_f: final
+      inconsistent:
+        description: Component with inconsistent timelines
+        ports:
+          f_init: init1 init2
+    conduits:
+      macro.out: micro.in
+      macro.final: inconsistent.init1
+      micro.final: inconsistent.init2
+
+  repeaters:
+    ports:
+      f_init: init
+    components:
+      macro:
+        description: Macro component
+        ports:
+          f_init: init
+          o_i: out
+          s: in
+      meso:
+        description: Meso component
+        ports:
+          f_init: init init2
+          o_i: out
+          s: in
+          o_f: final
+      micro:
+        description: Micro component
+        ports:
+          f_init: init init2
+          o_f: final
+    conduits:
+      macro.out: meso.init
+      meso.final: macro.in
+      meso.out: micro.init
+      micro.final: meso.in
+      init:
+      - macro.init
+      - repeat meso.init2
+      - pad pad micro.init2
+
+  repeater_reducer:
+    components:
+      macro1:
+        description: First macro component
+        ports:
+          o_i: out
+          o_f: final
+      micro1:
+        description: First micro
+        ports:
+          f_init: init
+          o_f: final
+      macro2:
+        description: Second macro component
+        ports:
+          f_init: init
+          o_i: out
+      micro2:
+        description: Second micro
+        ports:
+          f_init: init_micro1 init_macro2
+    conduits:
+      macro1.out: micro1.init
+      macro1.final: macro2.init
+      macro2.out: micro2.init_macro2
+      micro1.final: last repeat micro2.init_micro1
+
+  repeater_reducer_error:
+    components:
+      macro:
+        description: Macro component
+        ports:
+          o_i: out
+      micro1:
+        description: First micro
+        ports:
+          f_init: init
+          o_f: final
+      micro2:
+        description: Second micro
+        ports:
+          f_init: init1 init2
+    conduits:
+      macro.out:
+      - micro1.init
+      - micro2.init1
+      micro1.final: last pad micro2.init2
+
+  inconsistent_interact:
+    components:
+      A:
+        description: A
+        ports:
+          o_i: out
+          s: in
+      B:
+        description: A
+        ports:
+          o_i: out
+          s: in
+    conduits:
+      A.out: B.in
+      B.out: A.in
+
+  model_ports:
+    components:
+      macro:
+        description: macro
+        ports:
+          f_init: init
+          o_i: out
+          s: in
+          o_f: final
+      meso:
+        description: meso
+        ports:
+          f_init: init
+          o_i: out
+          s: in
+          o_f: final
+    ports:
+      f_init: init
+      +macro:meso:
+        o_i: out
+        s: in
+      o_f: final
+    conduits:
+      init: macro.init
+      macro.out: meso.init
+      meso.out: out
+      in: meso.in
+      meso.final: macro.in
+      macro.final: final

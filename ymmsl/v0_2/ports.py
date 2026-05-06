@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from collections.abc import ItemsView, KeysView, ValuesView
 from typing import Any, cast, Iterator, List, Optional, overload, Sequence, Union
 
 from ymmsl.v0_1.component import Operator   # also the v0.2 version, import from here
@@ -72,7 +73,7 @@ class Timeline:
 
             self._parts = list(map(make_new_reference, parts))
 
-        elif isinstance(timeline, list):
+        elif isinstance(timeline, Sequence):
             self.absolute = absolute
             self._parts = list(map(make_new_reference, timeline))
 
@@ -104,6 +105,10 @@ class Timeline:
     def __getitem__(self, index: int) -> Reference:
         """Return the index'th item in the timeline."""
         return self._parts[index]
+
+    def __iter__(self) -> Iterator[Reference]:
+        """Return an iterator of the items in the timeline."""
+        return iter(self._parts)
 
     def __add__(self, other: Any) -> 'Timeline':
         """Concatenate this timeline with another (relative!) Timeline."""
@@ -272,6 +277,15 @@ class Ports:
         """Iterate through the ports' names."""
         for port_name in self._ports:
             yield port_name
+
+    def items(self) -> ItemsView[Identifier, Port]:
+        return self._ports.items()
+
+    def keys(self) -> KeysView[Identifier]:
+        return self._ports.keys()
+
+    def values(self) -> ValuesView[Port]:
+        return self._ports.values()
 
     def sending_port_names(self) -> List[Identifier]:
         """Return the names of all the sending ports.

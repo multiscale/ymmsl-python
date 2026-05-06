@@ -16,6 +16,7 @@ from ymmsl.v0_2.resolver import resolve
 from ymmsl.v0_2.settings import Settings, SettingValue
 from ymmsl.v0_2.supported_settings import (
         SettingType, SupportedSetting, SupportedSettings)
+from ymmsl.v0_2.timelines import TimelineNode, TimelineTree
 
 
 __all__ = [
@@ -26,4 +27,4 @@ __all__ = [
         'MPICoresResReq', 'MPINodesResReq', 'Operator', 'Port', 'Ports', 'Program',
         'Reference', 'ReferencePart', 'resolve', 'ResourceRequirements', 'Settings',
         'SettingType', 'SettingValue', 'SupportedSetting', 'SupportedSettings',
-        'ThreadedResReq', 'Timeline']
+        'ThreadedResReq', 'Timeline', "TimelineNode", "TimelineTree"]
