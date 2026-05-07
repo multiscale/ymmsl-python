@@ -17,8 +17,7 @@ threads or processes can be specified; memory and GPUs are future work.
 Resources are specified per component, and apply to each instance of that component. For
 single- or multithreaded components, or components that use multiple local processes
 (for example with OpenMP, or Python's ``multiprocessing``), you specify the number of
-threads. If no resource is defined for a non-MPI component, a default of 1 thread will
-be assigned to it at runtime (e.g. by MUSCLE3):
+threads:
 
 .. code-block:: yaml
     :caption: Resources for threaded processes
@@ -30,6 +29,15 @@ be assigned to it at runtime (e.g. by MUSCLE3):
       micro:
         threads: 8
 
+If no resource is defined for a non-MPI component, a default of 1 thread will
+be assigned to it at runtime (e.g. by MUSCLE3). So, you could also define:
+
+.. code-block:: yaml
+    :caption: Resources for threaded processes
+
+    resources:
+      micro:
+        threads: 8
 
 On the Python side, this is represented by :class:`.ymmsl.v0_2.ThreadedResReq` (short
 for ThreadedResourceRequirements), which holds the name of the component it specifies
