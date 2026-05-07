@@ -153,10 +153,10 @@ def resolve_impls(
     rename_local_impls(config.programs, module, ylocals)
     rename_local_impls(config.models, module, ylocals)
     resolve_impl_imports(config, ylocals, ctx)
+    update_local_implementations(config, ylocals)
     config.imports = [i for i in config.imports if i.kind != ImportKind.IMPLEMENTATION]
 
     overwritten_impls = apply_custom_implementations(config, module, ylocals, ctx)
-    update_local_implementations(config, ylocals)
     return overwritten_impls
 
 
@@ -260,12 +260,14 @@ def apply_custom_implementations(
     copied_paths = set()
 
     def set_overwritten(config: Configuration, implementation: Reference) -> None:
+        _logger.debug(f'Setting {implementation} overwritten')
         seen = set()
         queue = [implementation]
         while queue:
             impl = queue.pop(0)
             seen.add(impl)
             overwritten_implementations.add(impl)
+            _logger.debug(f'Setting {impl} overwritten')
             if impl in config.models:
                 queue.extend([
                     c.implementation
@@ -378,6 +380,8 @@ def apply_custom_implementations(
         component = Reference([path[-1]])
         new_component = copy(m.components[component])
         _logger.debug(f'In {m.name} replacing {component} with {new_impl}')
+        _logger.debug(f'Old implementation: {new_component.implementation}')
+        _logger.debug(f'Models: {[str(m) for m in config.models]}')
         if new_component.implementation is not None:
             if new_component.implementation in config.models:
                 set_overwritten(config, new_component.implementation)
@@ -422,6 +426,7 @@ def remove_overwritten_implementations(
             for c in m.components.values()}
 
     roots = set(config.models.keys()) - referred_to - overwritten
+    _logger.debug(f'Roots: {roots}')
     used = set()
     queue = list(roots)
     seen = set()
