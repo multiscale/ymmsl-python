@@ -535,6 +535,9 @@ class Configuration(Document):
             self, component_paths: Dict[Reference, Component]) -> List[str]:
         """Check that each component path has a corresponding resource request.
 
+        For non-MPI components, resources are optional: if not specified,
+        a default of 1 thread will be assumed at runtime (e.g. by muscle3).
+
         Returns a list of errors, empty if all is ok.
         """
         errors = list()
@@ -543,16 +546,17 @@ class Configuration(Document):
             if impl_ref is None or impl_ref not in self.programs:
                 continue
 
+            impl = self.programs[impl_ref]
+            em_mpi = impl.execution_model in (
+                    ExecutionModel.OPENMPI, ExecutionModel.INTELMPI,
+                    ExecutionModel.SRUNMPI)
+
+            em_nompi = impl.execution_model is ExecutionModel.DIRECT
+
             if path not in self.resources:
-                errors.append(f'Component "{path}" is missing a resource request')
+                if em_mpi:
+                    errors.append(f'Component "{path}" is missing a resource request')
             else:
-                impl = self.programs[impl_ref]
-                em_mpi = impl.execution_model in (
-                        ExecutionModel.OPENMPI, ExecutionModel.INTELMPI,
-                        ExecutionModel.SRUNMPI)
-
-                em_nompi = impl.execution_model is ExecutionModel.DIRECT
-
                 res_mpi = isinstance(
                         self.resources[path], (MPICoresResReq, MPINodesResReq))
 
