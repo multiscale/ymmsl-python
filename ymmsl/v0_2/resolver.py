@@ -131,7 +131,6 @@ def do_resolve(
     overwritten_implementations = resolve_impls(module, config, ctx)
     ctx.pop_module()
     _logger.debug(f'Done resolving {module}')
-    _logger.debug('-----------------------')
     return overwritten_implementations
 
 
@@ -175,7 +174,6 @@ def rename_local_impls(
     """
     new_impls = dict()
     for name, impl in impls.items():
-        _logger.debug(f'Renaming {impl.name} to {module + impl.name}')
         impl.name = module + impl.name
         new_impls[impl.name] = impl
         ylocals[name] = impl.name
@@ -206,10 +204,8 @@ def resolve_impl_imports(
             impls = find_impls(imp_cfg, imp_st.full_name(), ctx)
             for impl in impls:
                 if isinstance(impl, Model):
-                    _logger.debug(f'Importing model {impl.name}')
                     config.models[impl.name] = impl
                 elif isinstance(impl, Program):
-                    _logger.debug(f'Importing program {impl.name}')
                     config.programs[impl.name] = impl
 
             if imp_st.name in ylocals:
@@ -260,14 +256,12 @@ def apply_custom_implementations(
     copied_paths = set()
 
     def set_overwritten(config: Configuration, implementation: Reference) -> None:
-        _logger.debug(f'Setting {implementation} overwritten')
         seen = set()
         queue = [implementation]
         while queue:
             impl = queue.pop(0)
             seen.add(impl)
             overwritten_implementations.add(impl)
-            _logger.debug(f'Setting {impl} overwritten')
             if impl in config.models:
                 queue.extend([
                     c.implementation
@@ -296,7 +290,6 @@ def apply_custom_implementations(
         orig_name = ylocals[base_model_name]
         orig_model = config.models[orig_name]
         new_name = module + base_model_name
-        _logger.debug(f'Checking pre-copy {orig_name} {new_name}')
         if orig_name != new_name:
             m = copy(orig_model)
             m.components = copy(m.components)
@@ -305,14 +298,14 @@ def apply_custom_implementations(
             config.models[new_name] = m
             ylocals[base_model_name] = m.name
             set_overwritten(config, orig_name)
-            _logger.debug(f'Overwrote {orig_name}')
 
     for key, value in config.custom_implementations.items():
         base_model_name = Reference([key[0]])
         path = key[1:]
         new_impl = ylocals[value] if value is not None else None
 
-        _logger.debug(f'Processing ci {base_model_name} {path} {new_impl}')
+        _logger.debug(
+                f'Processing custom implementation {base_model_name} {path} {new_impl}')
         m = config.models[ylocals[base_model_name]]
 
         # Now we can walk down the components and copy-and-rename the models along the
@@ -350,7 +343,6 @@ def apply_custom_implementations(
                 new_submodel = copy(config.models[orig_impl])
                 new_submodel.components = copy(new_submodel.components)
                 new_submodel.name = new_name
-                _logger.debug(f'Copied {orig_impl} to {new_name}')
                 config.models[new_name] = new_submodel
                 m.components[component] = copy(m.components[component])
                 m.components[component].implementation = new_name
@@ -380,8 +372,6 @@ def apply_custom_implementations(
         component = Reference([path[-1]])
         new_component = copy(m.components[component])
         _logger.debug(f'In {m.name} replacing {component} with {new_impl}')
-        _logger.debug(f'Old implementation: {new_component.implementation}')
-        _logger.debug(f'Models: {[str(m) for m in config.models]}')
         if new_component.implementation is not None:
             if new_component.implementation in config.models:
                 set_overwritten(config, new_component.implementation)
@@ -404,8 +394,6 @@ def update_local_implementations(
                 if cmp.implementation in ylocals:
                     # copy to avoid YAML reference when serialising
                     cmp.implementation = copy(ylocals[cmp.implementation])
-                    _logger.debug(
-                            f'Set component {cmp.name} -> {cmp.implementation}')
 
 
 def remove_overwritten_implementations(
@@ -426,7 +414,6 @@ def remove_overwritten_implementations(
             for c in m.components.values()}
 
     roots = set(config.models.keys()) - referred_to - overwritten
-    _logger.debug(f'Roots: {roots}')
     used = set()
     queue = list(roots)
     seen = set()
@@ -443,16 +430,9 @@ def remove_overwritten_implementations(
                     and c.implementation in config.models
                     ])
 
-    _logger.debug(f'Used: {used}')
-
     for m in list(config.models.keys()):
-        _logger.debug(
-                f'oi: {m} o: {m in overwritten} u: {m in used}')
         if m in overwritten and m not in used:
             del config.models[m]
-
-    _logger.debug(
-            f'After removing overwritten models, we have {list(config.models.keys())}')
 
 
 def find_impls(
@@ -463,7 +443,6 @@ def find_impls(
     This searches config for the implementation with the given name, and returns it and
     all its dependencies in config.
     """
-    _logger.debug(f'Finding implementations for import {name}')
     impls = [find_impl(config, name, ctx)]
 
     result = list()
@@ -476,7 +455,6 @@ def find_impls(
 
         result.append(impl)
 
-    _logger.debug(f'Found {[r.name for r in result]}')
     return result
 
 
