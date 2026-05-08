@@ -463,18 +463,18 @@ def test_check_inconsistent_resources(
 
 def test_check_no_resources_for_non_mpi() -> None:
     """Non-MPI components without resources should pass check_consistent."""
-    ymmsl_text = """
-        ymmsl_version: v0.2
-        models:
-            no_resources_test:
-                components:
-                worker:
-                    ports: {}
-                    description: description
-                    implementation: worker_prog
-        programs:
-            worker_prog:
-                script: worker
-        """
+    ymmsl_text = (
+            'ymmsl_version: v0.2\n'
+            'models:\n'
+            '  no_resources_test:\n'
+            '    components:\n'
+            '      worker:\n'
+            '        ports: {}\n'
+            '        description: description\n'
+            '        implementation: worker_prog\n'
+            'programs:\n'
+            '  worker_prog:\n'
+            '    script: worker\n'
+            )
     config = load_as(Configuration, ymmsl_text)
     config.check_consistent()
