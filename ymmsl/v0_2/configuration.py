@@ -184,7 +184,9 @@ class Configuration(Document):
         self.checkpoints.update(overlay.checkpoints)
         self.resume.update(overlay.resume)
 
-    def check_consistent(self, check_runnable: bool = True) -> None:
+    def check_consistent(
+            self, check_runnable: bool = True, selected_model: Optional[str] = None
+            ) -> None:
         """Checks that the configuration is internally consistent.
 
         This checks:
@@ -204,6 +206,9 @@ class Configuration(Document):
         Args:
             check_runnable: if False, skip the checks for whether component
                 implementations exist and whether resources have been requested.
+            selected_model: if set, gives the name of the root model that we intend to
+                run, and which must therefore have resources defined. Only used if
+                check_runnable is True.
         """
         errors = list()
 
@@ -221,14 +226,14 @@ class Configuration(Document):
         errors.extend(self._check_custom_implementations(component_paths))
         errors.extend(self._check_consistent_settings(component_paths))
         if check_runnable:
-            errors.extend(self._check_resources(component_paths))
+            errors.extend(self._check_resources(component_paths, selected_model))
 
         if errors:
             raise RuntimeError(
                     'The configuration is internally inconsistent. The following'
                     ' problems were found:\n- '
                     + '\n- '.join(errors))
-        
+
     def get_resources(self, name: Reference) -> ResourceRequirements:
         """Get the resource requirements for a component.
 
@@ -325,7 +330,7 @@ class Configuration(Document):
         """
         result = dict()
         queue: List[Tuple[Model, Reference, List[Tuple[Reference, Reference]]]] = \
-            [(m, Reference([]), []) for m in self._root_models()]
+            [(m, m.name, []) for m in self._root_models()]
         _logger.debug(f'cmp_paths: initial queue: {[t[0].name for t in queue]}')
 
         while queue:
@@ -512,7 +517,7 @@ class Configuration(Document):
             dims = component.multiplicity
 
         for index in itertools.product(*map(range, dims)):
-            instance_path = component_path + index
+            instance_path = component_path[1:] + index
             for j in range(len(instance_path), -1, -1):
                 found_setting = instance_path[:j] + name
                 if found_setting in self.settings:
@@ -523,7 +528,8 @@ class Configuration(Document):
                             val_str = f'"{val}"'
                         errors.append(
                                 f'Instance "{instance_path}" of component'
-                                f' "{component_path}" with implementation "{impl.name}"'
+                                f' "{component_path[1:]}" with implementation'
+                                f' "{impl.name}"'
                                 f' has a supported setting "{name}" with type'
                                 f' {typ.value}, but setting "{found_setting}" has value'
                                 f' {val_str}, which does not match that type')
@@ -555,7 +561,8 @@ class Configuration(Document):
         return False
 
     def _check_resources(
-            self, component_paths: Dict[Reference, Component]) -> List[str]:
+            self, component_paths: Dict[Reference, Component],
+            selected_model: Optional[str]) -> List[str]:
         """Check that each component path has a corresponding resource request.
 
         For non-MPI components, resources are optional: if not specified,
@@ -566,6 +573,9 @@ class Configuration(Document):
         errors = list()
         for path, component in component_paths.items():
             _logger.debug(f'Checking resources for {path} {component.name}')
+            if selected_model is not None and path[0] != selected_model:
+                continue
+
             impl_ref = self.custom_implementations.get(path, component.implementation)
             _logger.debug(f'Implementation: {impl_ref}')
             if impl_ref is None or impl_ref not in self.programs:
@@ -578,21 +588,23 @@ class Configuration(Document):
 
             em_nompi = impl.execution_model is ExecutionModel.DIRECT
 
-            if path not in self.resources:
+            # can become just path again when we prefix resources with the model name
+            if path[1:] not in self.resources:
                 if em_mpi:
                     errors.append(f'Component "{path}" is missing a resource request')
             else:
+                # also here
                 res_mpi = isinstance(
-                        self.resources[path], (MPICoresResReq, MPINodesResReq))
+                        self.resources[path[1:]], (MPICoresResReq, MPINodesResReq))
 
                 if em_mpi and not res_mpi:
                     errors.append(
-                            f'Component "{path}" has implementation "{impl_ref}",'
+                            f'Component "{path[1:]}" has implementation "{impl_ref}",'
                             ' which has an MPI execution model, but the resources'
                             ' requested for it do not ask for MPI processes.')
                 elif res_mpi and em_nompi:
                     errors.append(
-                            f'Component "{path}" has implementation "{impl_ref}",'
+                            f'Component "{path[1:]}" has implementation "{impl_ref}",'
                             ' which has a non-MPI execution model, but the resources'
                             ' requested for it ask for MPI processes.')
 
