@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from ymmsl.io import load, dump
+from ymmsl.io import load, load_as, dump
 from ymmsl.v0_2 import (
         Configuration, Checkpoints, Component, Conduit, ExecutionModel, Identifier,
         ImportStatement, Model, Operator, Port, Ports, Program, Reference, Settings,
@@ -456,7 +456,6 @@ def test_check_inconsistent_resources(
     with pytest.raises(RuntimeError) as e:
         config_inconsistent_resources.check_consistent()
 
-    # The missing resource for the non-MPI component is no longer an error.
     assert len(str(e.value).split('\n')) == 3
 
     config_inconsistent_resources.check_consistent(False)
@@ -464,13 +463,18 @@ def test_check_inconsistent_resources(
 
 def test_check_no_resources_for_non_mpi() -> None:
     """Non-MPI components without resources should pass check_consistent."""
-    model = Model(
-            'no_resources_test', None, 'description', None,
-            [Component('worker', Ports(), 'description', 'worker_prog')])
-
-    programs = [Program('worker_prog', script='worker', 
-                        execution_model=ExecutionModel.DIRECT)]
-
-    # No resources specified - should be fine for non-MPI
-    config = Configuration('test', None, [model], None, None, programs, resources=None)
+    ymmsl_text = """
+        ymmsl_version: v0.2
+        models:
+            no_resources_test:
+                components:
+                worker:
+                    ports: {}
+                    description: description
+                    implementation: worker_prog
+        programs:
+            worker_prog:
+                script: worker
+        """
+    config = load_as(Configuration, ymmsl_text)
     config.check_consistent()
