@@ -5,7 +5,7 @@ import pytest
 
 from ymmsl.io import load, load_as, dump
 from ymmsl.v0_2 import (
-        Configuration, Checkpoints, Component, Conduit, ExecutionModel, Identifier,
+        Configuration, Checkpoints, Component, Conduit, Identifier,
         ImportStatement, Model, Operator, Port, Ports, Program, Reference, Settings,
         SettingType, SettingValue, ThreadedResReq, Timeline)
 
