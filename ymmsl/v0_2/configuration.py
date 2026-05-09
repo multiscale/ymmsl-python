@@ -588,23 +588,21 @@ class Configuration(Document):
 
             em_nompi = impl.execution_model is ExecutionModel.DIRECT
 
-            # can become just path again when we prefix resources with the model name
-            if path[1:] not in self.resources:
+            if path not in self.resources:
                 if em_mpi:
                     errors.append(f'Component "{path}" is missing a resource request')
             else:
-                # also here
                 res_mpi = isinstance(
-                        self.resources[path[1:]], (MPICoresResReq, MPINodesResReq))
+                        self.resources[path], (MPICoresResReq, MPINodesResReq))
 
                 if em_mpi and not res_mpi:
                     errors.append(
-                            f'Component "{path[1:]}" has implementation "{impl_ref}",'
+                            f'Component "{path}" has implementation "{impl_ref}",'
                             ' which has an MPI execution model, but the resources'
                             ' requested for it do not ask for MPI processes.')
                 elif res_mpi and em_nompi:
                     errors.append(
-                            f'Component "{path[1:]}" has implementation "{impl_ref}",'
+                            f'Component "{path}" has implementation "{impl_ref}",'
                             ' which has a non-MPI execution model, but the resources'
                             ' requested for it ask for MPI processes.')
 
