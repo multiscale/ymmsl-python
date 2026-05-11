@@ -11,7 +11,8 @@ import yaml
 
 from ymmsl.v0_2.checkpoint import Checkpoints
 from ymmsl.v0_2.execution import ExecutionModel
-from ymmsl.v0_2.resources import MPICoresResReq, MPINodesResReq, ResourceRequirements
+from ymmsl.v0_2.resources import (
+    MPICoresResReq, MPINodesResReq, ResourceRequirements, ThreadedResReq)
 from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.implementation import Implementation    # noqa: F401
 from ymmsl.v0_2.imports import ImportStatement
@@ -227,6 +228,26 @@ class Configuration(Document):
                     'The configuration is internally inconsistent. The following'
                     ' problems were found:\n- '
                     + '\n- '.join(errors))
+        
+    def get_resources(self, name: Reference) -> ResourceRequirements:
+        """Get the resource requirements for a component.
+
+        If no resources are defined for this component and
+        it uses a non-MPI execution model (DIRECT), a default of 1 thread is
+        returned.
+
+        Args:
+            name: The name of the component to get resources for.
+
+        Returns:
+            The resource requirements for the component.
+        """
+        res_req = self.resources.get(name)
+        if res_req is None:
+            _logger.debug(
+                    f'No resources defined for {name}, using default of 1 thread.')
+            res_req = ThreadedResReq(name, 1)
+        return res_req
 
     def root_model(self, selected_model: Optional[Reference] = None) -> Model:
         """Return the root model of this configuration.

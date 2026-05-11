@@ -461,6 +461,30 @@ def test_check_inconsistent_resources(
     config_inconsistent_resources.check_consistent(False)
 
 
+def test_get_resources_defined() -> None:
+    """Test that get_resources returns the defined resource for a component."""
+    resources = [
+            ThreadedResReq(Ref('macro'), 10),
+            ThreadedResReq(Ref('micro'), 1)]
+    config = Configuration('test', resources=resources)
+
+    res = config.get_resources(Ref('macro'))
+    assert isinstance(res, ThreadedResReq)
+    assert res.name == Ref('macro')
+    assert res.threads == 10
+
+
+def test_get_resources_default() -> None:
+    """Test that get_resources returns a default of 1 thread for a DIRECT component
+    with no resources defined."""
+    config = Configuration('test')
+
+    res = config.get_resources(Ref('micro'))
+    assert isinstance(res, ThreadedResReq)
+    assert res.name == Ref('micro')
+    assert res.threads == 1
+
+
 def test_check_no_resources_for_non_mpi() -> None:
     """Non-MPI components without resources should pass check_consistent."""
     ymmsl_text = (
