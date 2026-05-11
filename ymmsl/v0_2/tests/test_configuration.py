@@ -3,11 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from ymmsl.io import load, dump
+from ymmsl.io import load, load_as, dump
 from ymmsl.v0_2 import (
-        Configuration, Checkpoints, Component, Conduit, Identifier, ImportStatement,
-        Model, Operator, Port, Ports, Program, Reference, Settings, SettingType,
-        SettingValue, ThreadedResReq, Timeline)
+        Configuration, Checkpoints, Component, Conduit, Identifier,
+        ImportStatement, Model, Operator, Port, Ports, Program, Reference, Settings,
+        SettingType, SettingValue, ThreadedResReq, Timeline)
 
 
 Ref = Reference
@@ -456,6 +456,49 @@ def test_check_inconsistent_resources(
     with pytest.raises(RuntimeError) as e:
         config_inconsistent_resources.check_consistent()
 
-    assert len(str(e.value).split('\n')) == 4
+    assert len(str(e.value).split('\n')) == 3
 
     config_inconsistent_resources.check_consistent(False)
+
+
+def test_get_resources_defined() -> None:
+    """Test that get_resources returns the defined resource for a component."""
+    resources = [
+            ThreadedResReq(Ref('macro'), 10),
+            ThreadedResReq(Ref('micro'), 1)]
+    config = Configuration('test', resources=resources)
+
+    res = config.get_resources(Ref('macro'))
+    assert isinstance(res, ThreadedResReq)
+    assert res.name == Ref('macro')
+    assert res.threads == 10
+
+
+def test_get_resources_default() -> None:
+    """Test that get_resources returns a default of 1 thread for a DIRECT component
+    with no resources defined."""
+    config = Configuration('test')
+
+    res = config.get_resources(Ref('micro'))
+    assert isinstance(res, ThreadedResReq)
+    assert res.name == Ref('micro')
+    assert res.threads == 1
+
+
+def test_check_no_resources_for_non_mpi() -> None:
+    """Non-MPI components without resources should pass check_consistent."""
+    ymmsl_text = (
+            'ymmsl_version: v0.2\n'
+            'models:\n'
+            '  no_resources_test:\n'
+            '    components:\n'
+            '      worker:\n'
+            '        ports: {}\n'
+            '        description: description\n'
+            '        implementation: worker_prog\n'
+            'programs:\n'
+            '  worker_prog:\n'
+            '    script: worker\n'
+            )
+    config = load_as(Configuration, ymmsl_text)
+    config.check_consistent()

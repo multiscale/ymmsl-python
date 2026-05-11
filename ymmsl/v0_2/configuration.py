@@ -11,7 +11,8 @@ import yaml
 
 from ymmsl.v0_2.checkpoint import Checkpoints
 from ymmsl.v0_2.execution import ExecutionModel
-from ymmsl.v0_2.resources import MPICoresResReq, MPINodesResReq, ResourceRequirements
+from ymmsl.v0_2.resources import (
+    MPICoresResReq, MPINodesResReq, ResourceRequirements, ThreadedResReq)
 from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.implementation import Implementation    # noqa: F401
 from ymmsl.v0_2.imports import ImportStatement
@@ -227,6 +228,26 @@ class Configuration(Document):
                     'The configuration is internally inconsistent. The following'
                     ' problems were found:\n- '
                     + '\n- '.join(errors))
+        
+    def get_resources(self, name: Reference) -> ResourceRequirements:
+        """Get the resource requirements for a component.
+
+        If no resources are defined for this component and
+        it uses a non-MPI execution model (DIRECT), a default of 1 thread is
+        returned.
+
+        Args:
+            name: The name of the component to get resources for.
+
+        Returns:
+            The resource requirements for the component.
+        """
+        res_req = self.resources.get(name)
+        if res_req is None:
+            _logger.debug(
+                    f'No resources defined for {name}, using default of 1 thread.')
+            res_req = ThreadedResReq(name, 1)
+        return res_req
 
     def root_model(self, selected_model: Optional[Reference] = None) -> Model:
         """Return the root model of this configuration.
@@ -535,6 +556,9 @@ class Configuration(Document):
             self, component_paths: Dict[Reference, Component]) -> List[str]:
         """Check that each component path has a corresponding resource request.
 
+        For non-MPI components, resources are optional: if not specified,
+        a default of 1 thread will be assumed at runtime (e.g. by muscle3).
+
         Returns a list of errors, empty if all is ok.
         """
         errors = list()
@@ -543,16 +567,17 @@ class Configuration(Document):
             if impl_ref is None or impl_ref not in self.programs:
                 continue
 
+            impl = self.programs[impl_ref]
+            em_mpi = impl.execution_model in (
+                    ExecutionModel.OPENMPI, ExecutionModel.INTELMPI,
+                    ExecutionModel.SRUNMPI)
+
+            em_nompi = impl.execution_model is ExecutionModel.DIRECT
+
             if path not in self.resources:
-                errors.append(f'Component "{path}" is missing a resource request')
+                if em_mpi:
+                    errors.append(f'Component "{path}" is missing a resource request')
             else:
-                impl = self.programs[impl_ref]
-                em_mpi = impl.execution_model in (
-                        ExecutionModel.OPENMPI, ExecutionModel.INTELMPI,
-                        ExecutionModel.SRUNMPI)
-
-                em_nompi = impl.execution_model is ExecutionModel.DIRECT
-
                 res_mpi = isinstance(
                         self.resources[path], (MPICoresResReq, MPINodesResReq))
 

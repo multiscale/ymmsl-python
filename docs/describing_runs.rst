@@ -29,6 +29,15 @@ threads:
       micro:
         threads: 8
 
+If no resource is defined for a non-MPI component, a default of 1 thread will
+be assigned to it at runtime (e.g. by MUSCLE3). So, you could also define:
+
+.. code-block:: yaml
+    :caption: Resources for threaded processes
+
+    resources:
+      micro:
+        threads: 8
 
 On the Python side, this is represented by :class:`.ymmsl.v0_2.ThreadedResReq` (short
 for ThreadedResourceRequirements), which holds the name of the component it specifies
