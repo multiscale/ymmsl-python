@@ -332,6 +332,42 @@ def test_apply_custom_implementations_everything_localised() -> None:
     assert b.components[Ref('macro')].implementation == 'el.p'
 
 
+def test_apply_custom_implementations_cut_branch(env_ymmsl_path: None) -> None:
+    ymmsl = (
+            'ymmsl_version: v0.2\n'
+            'description: |\n'
+            '  Testing that lopped-off branches are cleaned up properly.\n'
+            'imports:\n'
+            '- from a.g import implementation test_macro_micro\n'
+            'models:\n'
+            '  test_deeply_nested:\n'
+            '    description: Models within models within models...\n'
+            '    components:\n'
+            '      c1:\n'
+            '        ports:\n'
+            '          o_i: out\n'
+            '          s: in\n'
+            '        description: Macro model\n'
+            '        implementation: test_macro_micro\n'
+            'programs:\n'
+            '  program3:\n'
+            '    ports:\n'
+            '      o_i: out\n'
+            '      s: in\n'
+            '    description: Alternative implementation\n'
+            '    executable: python3\n'
+            '    args: /home/user/program3.py\n'
+            'custom_implementations:\n'
+            '  test_deeply_nested.c1: program3\n'
+            )
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+
+    resolve(Reference('nested'), config)
+    assert len(config.models) == 1
+
+
 def test_apply_custom_implementations_errors(env_ymmsl_path: None) -> None:
     ymmsl = (
             'ymmsl_version: v0.2\n'
