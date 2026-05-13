@@ -461,6 +461,16 @@ def test_check_inconsistent_resources(
     config_inconsistent_resources.check_consistent(False)
 
 
+def test_check_partial_resources(
+        config_consistent_partial_resources: Configuration) -> None:
+    config_consistent_partial_resources.check_consistent(True, 'resources_test')
+
+    with pytest.raises(RuntimeError) as e:
+        config_consistent_partial_resources.check_consistent(True, 'resources_test2')
+
+    assert len(str(e.value).split('\n')) == 2
+
+
 def test_get_resources_defined() -> None:
     """Test that get_resources returns the defined resource for a component."""
     resources = [

@@ -464,8 +464,8 @@ def config_consistent_custom_impls() -> Configuration:
 
     return Configuration(
             'testing consistency of custom implementations', None, [model1, model2], {
-                Reference('c1'): Reference('program1'),
-                Reference('c2.init_model'): Reference('initer2')},
+                Reference('test_model.c1'): Reference('program1'),
+                Reference('test_model.c2.init_model'): Reference('initer2')},
             None, programs, resources)
 
 
@@ -488,8 +488,8 @@ def config_inconsistent_custom_impls() -> Configuration:
 
     return Configuration(
             'testing consistency of custom implementations', None, [model1, model2], {
-                Reference('cl'): Reference('program1'),
-                Reference('c2.init_model'): Reference('initer2')},
+                Reference('test_model.cl'): Reference('program1'),
+                Reference('test_model.c2.init_model'): Reference('initer2')},
             None, None, resources)
 
 
@@ -617,6 +617,49 @@ def config_inconsistent_resources() -> Configuration:
 
     return Configuration(
             'test_config', None, [model1, model2], None, None, programs, resources)
+
+
+@pytest.fixture
+def config_consistent_partial_resources() -> Configuration:
+    model1 = Model(
+            'resources_test',
+            None,
+            'description',
+            None,
+            [
+                Component('singlethreaded', Ports(), 'description', 'a'),
+                Component('multithreaded', Ports(), 'description', 'b'),
+            ])
+
+    model2 = Model(
+            'resources_test2',
+            None,
+            'description',
+            None,
+            [
+                Component('mpi_cores1', Ports(), 'description', 'c'),
+                Component('mpi_cores2', Ports(), 'description', 'd'),
+                Component('mpi_nodes1', Ports(), 'description', 'c'),
+                Component('mpi_nodes2', Ports(), 'description', 'd')],
+            [])
+
+    em = {
+            'a': ExecutionModel.DIRECT,
+            'b': ExecutionModel.DIRECT,
+            'c': ExecutionModel.OPENMPI,
+            'd': ExecutionModel.OPENMPI}
+    programs = [Program(x, script='script', execution_model=em[x]) for x in 'abcd']
+
+    resources = [
+            ThreadedResReq(Reference('singlethreaded'), 1),
+            ThreadedResReq(Reference('multithreaded'), 4),
+            MPICoresResReq(Reference('mpi_cores1'), 16),
+            MPINodesResReq(Reference('mpi_nodes1'), 10, 16),
+            MPINodesResReq(Reference('mpi_nodes2'), 10, 4, 4)]
+
+    return Configuration(
+            'consistent_resources', None, [model1, model2], None, None, programs,
+            resources)
 
 
 @pytest.fixture
