@@ -371,8 +371,8 @@ def config_consistent_impl_ports() -> Configuration:
             ]
 
     resources = [
-            ThreadedResReq(Reference('impl_no_ports'), 1),
-            MPICoresResReq(Reference('impl_with_ports'), 4, 4),
+            ThreadedResReq(Reference('implementations_test.impl_no_ports'), 1),
+            MPICoresResReq(Reference('implementations_test2.impl_with_ports'), 4, 4),
             ]
 
     return Configuration(
@@ -427,10 +427,16 @@ def config_inconsistent_impl_ports() -> Configuration:
              ]
 
     resources = [
-            ThreadedResReq(Reference('missing_implementation'), 1),
-            ThreadedResReq(Reference('impl_ports_mismatch'), 1),
-            MPICoresResReq(Reference('model_as_impl.impl_also_wrong'), 4, 4),
-            ThreadedResReq(Reference('model_as_impl.impl_extra_ports'), 1),
+            ThreadedResReq(
+                Reference('implementations_test_broken.missing_implementation'), 1),
+            ThreadedResReq(
+                Reference('implementations_test_broken.impl_ports_mismatch'), 1),
+            MPICoresResReq(
+                Reference('implementations_test_broken.model_as_impl.impl_also_wrong'),
+                4, 4),
+            ThreadedResReq(
+                Reference('implementations_test_broken.model_as_impl.impl_extra_ports'),
+                1),
             ]
 
     return Configuration(
@@ -457,9 +463,9 @@ def config_consistent_custom_impls() -> Configuration:
             Program('initer2', executable=Path('initer2'))]
 
     resources = [
-            ThreadedResReq(Reference('c1'), 1),
-            ThreadedResReq(Reference('c2.init_model'), 1),
-            ThreadedResReq(Reference('c2.optional2'), 1),
+            ThreadedResReq(Reference('test_model.c1'), 1),
+            ThreadedResReq(Reference('test_model.c2.init_model'), 1),
+            ThreadedResReq(Reference('test_model.c2.optional2'), 1),
             ]
 
     return Configuration(
@@ -482,8 +488,8 @@ def config_inconsistent_custom_impls() -> Configuration:
             [Component('init_model', Ports(), 'description', 'initer1')])
 
     resources = [
-            ThreadedResReq(Reference('c1'), 1),
-            ThreadedResReq(Reference('c2.init_model'), 1),
+            ThreadedResReq(Reference('test_model.c1'), 1),
+            ThreadedResReq(Reference('test_model.c2.init_model'), 1),
             ]
 
     return Configuration(
@@ -539,9 +545,9 @@ def config_consistent_settings() -> Configuration:
     programs = [program_a, program_b, program_c]
 
     resources = [
-            ThreadedResReq(Reference('c1'), 1),
-            MPICoresResReq(Reference('submodel.c1'), 16),
-            MPICoresResReq(Reference('submodel.c2'), 4, 4)]
+            ThreadedResReq(Reference('supported_settings_test.c1'), 1),
+            MPICoresResReq(Reference('supported_settings_test.submodel.c1'), 16),
+            MPICoresResReq(Reference('supported_settings_test.submodel.c2'), 4, 4)]
 
     return Configuration(
             'config3', None, [model1, model2], None, settings, programs, resources)
@@ -580,12 +586,12 @@ def config_consistent_resources() -> Configuration:
     programs = [Program(x, script='script', execution_model=em[x]) for x in 'abcd']
 
     resources = [
-            ThreadedResReq(Reference('singlethreaded'), 1),
-            ThreadedResReq(Reference('multithreaded'), 8),
-            MPICoresResReq(Reference('submodel.mpi_cores1'), 16),
-            MPICoresResReq(Reference('submodel.mpi_cores2'), 4, 4),
-            MPINodesResReq(Reference('submodel.mpi_nodes1'), 10, 16),
-            MPINodesResReq(Reference('submodel.mpi_nodes2'), 10, 4, 4)]
+            ThreadedResReq(Reference('resources_test.singlethreaded'), 1),
+            ThreadedResReq(Reference('resources_test.multithreaded'), 8),
+            MPICoresResReq(Reference('resources_test.submodel.mpi_cores1'), 16),
+            MPICoresResReq(Reference('resources_test.submodel.mpi_cores2'), 4, 4),
+            MPINodesResReq(Reference('resources_test.submodel.mpi_nodes1'), 10, 16),
+            MPINodesResReq(Reference('resources_test.submodel.mpi_nodes2'), 10, 4, 4)]
 
     return Configuration(
             'consistent_resources', None, [model1, model2], None, None, programs,
@@ -611,9 +617,9 @@ def config_inconsistent_resources() -> Configuration:
             Program('b', script='b', execution_model=ExecutionModel.INTELMPI)]
 
     resources = [
-            ThreadedResReq(Ref('singlethreaded'), 1),
-            ThreadedResReq(Ref('with_mpi'), 2),
-            MPICoresResReq(Ref('without_mpi'), 10)]
+            ThreadedResReq(Ref('got_resources.singlethreaded'), 1),
+            ThreadedResReq(Ref('got_resources.with_mpi'), 2),
+            MPICoresResReq(Ref('got_resources.without_mpi'), 10)]
 
     return Configuration(
             'test_config', None, [model1, model2], None, None, programs, resources)
@@ -651,11 +657,11 @@ def config_consistent_partial_resources() -> Configuration:
     programs = [Program(x, script='script', execution_model=em[x]) for x in 'abcd']
 
     resources = [
-            ThreadedResReq(Reference('singlethreaded'), 1),
-            ThreadedResReq(Reference('multithreaded'), 4),
-            MPICoresResReq(Reference('mpi_cores1'), 16),
-            MPINodesResReq(Reference('mpi_nodes1'), 10, 16),
-            MPINodesResReq(Reference('mpi_nodes2'), 10, 4, 4)]
+            ThreadedResReq(Reference('resources_test.singlethreaded'), 1),
+            ThreadedResReq(Reference('resources_test.multithreaded'), 4),
+            MPICoresResReq(Reference('resources_test2.mpi_cores1'), 16),
+            MPINodesResReq(Reference('resources_test2.mpi_nodes1'), 10, 16),
+            MPINodesResReq(Reference('resources_test2.mpi_nodes2'), 10, 4, 4)]
 
     return Configuration(
             'consistent_resources', None, [model1, model2], None, None, programs,
