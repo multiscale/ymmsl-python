@@ -135,8 +135,9 @@ class Component:
             # output in block style
             ynode = cast(yaml.ScalarNode, descr.yaml_node)
             ynode.style = '|'
-            if not ynode.value.endswith('\n'):
-                ynode.value += '\n'
+            # remove trailing whitespace to ensure PyYAML actually uses block style
+            ynode.value = '\n'.join([
+                line.rstrip() for line in ynode.value.split('\n')]) + '\n'
 
         multiplicity = node.get_attribute('multiplicity')
         items = multiplicity.seq_items()

@@ -256,8 +256,17 @@ class SupportedSetting:
         """If the description is multiple lines, format it block style"""
         desc_node = node.get_attribute('description')
         if desc_node.is_scalar(str):
+            ynode = cast(yaml.ScalarNode, desc_node.yaml_node)
             if '\n' in cast(str, desc_node.get_value()):
-                cast(yaml.ScalarNode, desc_node.yaml_node).style = '|'
+                ynode.style = '|'
+
+                # remove trailing whitespace to ensure PyYAML actually uses block style
+                ynode.value = '\n'.join([
+                    line.rstrip() for line in ynode.value.split('\n')]) + '\n'
+
+            else:
+                # we do it also for single-line descriptions for consistency
+                ynode.value = ynode.value.rstrip()
 
 
 class SupportedSettings(MutableMapping):
@@ -279,7 +288,7 @@ class SupportedSettings(MutableMapping):
 
             - low: Not very accurate, but fast. Good for testing.
             - medium: Slower and more accurate. Good for most use.
-            - hight: Slowest, but very accurate. Good for reference runs.
+            - high: Slowest, but very accurate. Good for reference runs.
         D: '[[float]] Diffusion kernel'
         D2: [[float]]
 
