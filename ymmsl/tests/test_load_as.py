@@ -14,6 +14,7 @@ def test_load_as_v0_1(test_yaml1: str) -> None:
 
 
 @pytest.mark.filterwarnings('ignore:Comments.*')
+@pytest.mark.filterwarnings('ignore:When specifying resources.*')
 def test_load_as_v0_2(test_yaml1: str) -> None:
     config = load_as(v0_2.Configuration, test_yaml1)
     assert isinstance(config, v0_2.Configuration)

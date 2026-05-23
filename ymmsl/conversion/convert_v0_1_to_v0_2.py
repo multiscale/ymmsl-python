@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Dict, List, Optional
+from typing import Dict, List, MutableMapping, Optional
 import warnings
 
 import ymmsl.v0_1 as v0_1
@@ -30,7 +30,7 @@ def convert_v0_1_to_v0_2(config: v0_1.PartialConfiguration) -> v0_2.Configuratio
                 ' incorrect wiring easier to debug. While there, add a description too!'
                 )
 
-    resources = deepcopy(config.resources)
+    resources = convert_resources(config.resources, models)
     checkpoints = deepcopy(config.checkpoints)
     resume = deepcopy(config.resume)
 
@@ -162,3 +162,26 @@ def convert_ports(ports: v0_1.Ports) -> v0_2.Ports:
             list(map(str, ports.o_i)),
             list(map(str, ports.s)),
             list(map(str, ports.o_f)))
+
+
+def convert_resources(
+        resources: MutableMapping[v0_1.Reference, v0_1.ResourceRequirements],
+        models: Optional[List[v0_2.Model]]
+        ) -> MutableMapping[v0_2.Reference, v0_2.ResourceRequirements]:
+    if not models:
+        warnings.warn(
+                'When specifying resources in yMMSL v0.2, component names must be'
+                ' prefixed with the name of the top (outermost) model, e.g. as'
+                ' my_model.my_component rather than just my_component. This file'
+                ' does not contain a model, so its name cannot be added automatically.'
+                ' Please add the model name yourself.')
+        return deepcopy(resources)
+    else:
+        mname = models[0].name
+        result = dict()
+        for res_req in resources.values():
+            new_res_req = deepcopy(res_req)
+            new_res_req.name = mname + res_req.name
+            result[new_res_req.name] = new_res_req
+
+        return result
