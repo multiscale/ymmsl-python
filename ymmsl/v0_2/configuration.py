@@ -492,11 +492,12 @@ class Configuration(Document):
                                 component, path, name, sup_set.typ, impl))
 
             if len(errs) > 7:
-                errs = errs[:6]
                 n = len(errs) - 6
+                errs = errs[:6]
                 errs.append(
-                        f'Another {n} inconsistent settings were found. Is "{impl}"'
-                        ' the correct implementation for component "{component.name}"?')
+                        f'Another {n} inconsistent settings were found. Is'
+                        f' "{impl.name}" the correct implementation for component'
+                        f' "{component.name}"?')
 
             errors.extend(errs)
 
