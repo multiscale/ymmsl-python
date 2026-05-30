@@ -3,6 +3,7 @@ from typing import cast, Optional
 import yaml
 import yatiml
 
+from ymmsl.util import remove_trailing_whitespace
 from ymmsl.v0_2.identity import Reference
 from ymmsl.v0_2.ports import Ports
 from ymmsl.v0_2.supported_settings import SupportedSettings
@@ -56,9 +57,8 @@ class Implementation:
             # output in block style
             ynode = cast(yaml.ScalarNode, descr.yaml_node)
             ynode.style = '|'
-            # remove trailing whitespace to ensure PyYAML actually uses block style
-            ynode.value = '\n'.join([
-                line.rstrip() for line in ynode.value.split('\n')]) + '\n'
+            # ensure PyYAML actually uses block style
+            ynode.value = remove_trailing_whitespace(ynode.value)
 
         if len(node.get_attribute('supported_settings').yaml_node.value) == 0:
             node.remove_attribute('supported_settings')

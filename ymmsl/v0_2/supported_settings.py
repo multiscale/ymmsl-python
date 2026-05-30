@@ -5,6 +5,7 @@ from typing import Any, Dict, Iterator, List, Mapping, Optional, Tuple, Union, c
 import yaml
 import yatiml
 
+from ymmsl.util import remove_trailing_whitespace
 from ymmsl.v0_2.identity import Identifier
 
 
@@ -260,9 +261,8 @@ class SupportedSetting:
             if '\n' in cast(str, desc_node.get_value()):
                 ynode.style = '|'
 
-                # remove trailing whitespace to ensure PyYAML actually uses block style
-                ynode.value = '\n'.join([
-                    line.rstrip() for line in ynode.value.split('\n')]) + '\n'
+                # ensure PyYAML actually uses block style
+                ynode.value = remove_trailing_whitespace(ynode.value)
 
             else:
                 # we do it also for single-line descriptions for consistency

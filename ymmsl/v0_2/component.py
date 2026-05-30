@@ -3,6 +3,7 @@ from typing import cast, List, Optional, Union
 import yaml
 import yatiml
 
+from ymmsl.util import remove_trailing_whitespace
 from ymmsl.v0_2.ports import Ports
 from ymmsl.v0_2.identity import Reference
 
@@ -135,9 +136,8 @@ class Component:
             # output in block style
             ynode = cast(yaml.ScalarNode, descr.yaml_node)
             ynode.style = '|'
-            # remove trailing whitespace to ensure PyYAML actually uses block style
-            ynode.value = '\n'.join([
-                line.rstrip() for line in ynode.value.split('\n')]) + '\n'
+            # ensure PyYAML actually uses block style
+            ynode.value = remove_trailing_whitespace(ynode.value)
 
         multiplicity = node.get_attribute('multiplicity')
         items = multiplicity.seq_items()
