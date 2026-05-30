@@ -30,7 +30,9 @@ threads:
         threads: 8
 
 Note that the component is designated by the name of the top-level model, followed by
-the component name.
+the component name. If the component is inside of a submodel, then you have to specify
+the path all the way from the top, e.g. ``model.micro.c1`` if ``micro`` is implemented
+by a submodel that has a component named ``c1``.
 
 If no resource is defined for a non-MPI component, a default of 1 thread will
 be assigned to it at runtime (e.g. by MUSCLE3). So, you could also define:
