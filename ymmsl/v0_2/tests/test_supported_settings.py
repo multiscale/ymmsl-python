@@ -191,7 +191,7 @@ def test_dump_descriptions() -> None:
             'd: str With single-line description\n'
             'e:\n'
             '  type: [float]\n'
-            '  description: |-\n'
+            '  description: |\n'
             '    With multiline\n'
             '    description\n'
             )

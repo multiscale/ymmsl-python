@@ -9,6 +9,7 @@ from typing import (
 import yatiml
 import yaml
 
+from ymmsl.util import remove_trailing_whitespace
 from ymmsl.v0_2.checkpoint import Checkpoints
 from ymmsl.v0_2.execution import ExecutionModel
 from ymmsl.v0_2.resources import (
@@ -635,8 +636,8 @@ class Configuration(Document):
                 # output in block style
                 ynode = cast(yaml.ScalarNode, descr.yaml_node)
                 ynode.style = '|'
-                if not ynode.value.endswith('\n'):
-                    ynode.value += '\n'
+                # ensure PyYAML actually uses block style
+                ynode.value = remove_trailing_whitespace(ynode.value)
 
         imports = node.get_attribute('imports')
         if imports.is_sequence() and imports.is_empty():
