@@ -9,9 +9,11 @@ from typing import (
 import yatiml
 import yaml
 
+from ymmsl.util import remove_trailing_whitespace
 from ymmsl.v0_2.checkpoint import Checkpoints
 from ymmsl.v0_2.execution import ExecutionModel
-from ymmsl.v0_2.resources import MPICoresResReq, MPINodesResReq, ResourceRequirements
+from ymmsl.v0_2.resources import (
+    MPICoresResReq, MPINodesResReq, ResourceRequirements, ThreadedResReq)
 from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.implementation import Implementation    # noqa: F401
 from ymmsl.v0_2.imports import ImportStatement
@@ -183,7 +185,9 @@ class Configuration(Document):
         self.checkpoints.update(overlay.checkpoints)
         self.resume.update(overlay.resume)
 
-    def check_consistent(self, check_runnable: bool = True) -> None:
+    def check_consistent(
+            self, check_runnable: bool = True, selected_model: Optional[str] = None
+            ) -> None:
         """Checks that the configuration is internally consistent.
 
         This checks:
@@ -203,6 +207,9 @@ class Configuration(Document):
         Args:
             check_runnable: if False, skip the checks for whether component
                 implementations exist and whether resources have been requested.
+            selected_model: if set, gives the name of the root model that we intend to
+                run, and which must therefore have resources defined. Only used if
+                check_runnable is True.
         """
         errors = list()
 
@@ -220,13 +227,33 @@ class Configuration(Document):
         errors.extend(self._check_custom_implementations(component_paths))
         errors.extend(self._check_consistent_settings(component_paths))
         if check_runnable:
-            errors.extend(self._check_resources(component_paths))
+            errors.extend(self._check_resources(component_paths, selected_model))
 
         if errors:
             raise RuntimeError(
                     'The configuration is internally inconsistent. The following'
                     ' problems were found:\n- '
                     + '\n- '.join(errors))
+
+    def get_resources(self, name: Reference) -> ResourceRequirements:
+        """Get the resource requirements for a component.
+
+        If no resources are defined for this component and
+        it uses a non-MPI execution model (DIRECT), a default of 1 thread is
+        returned.
+
+        Args:
+            name: The name of the component to get resources for.
+
+        Returns:
+            The resource requirements for the component.
+        """
+        res_req = self.resources.get(name)
+        if res_req is None:
+            _logger.debug(
+                    f'No resources defined for {name}, using default of 1 thread.')
+            res_req = ThreadedResReq(name, 1)
+        return res_req
 
     def root_model(self, selected_model: Optional[Reference] = None) -> Model:
         """Return the root model of this configuration.
@@ -304,10 +331,12 @@ class Configuration(Document):
         """
         result = dict()
         queue: List[Tuple[Model, Reference, List[Tuple[Reference, Reference]]]] = \
-            [(m, Reference([]), []) for m in self._root_models()]
+            [(m, m.name, []) for m in self._root_models()]
+        _logger.debug(f'cmp_paths: initial queue: {[t[0].name for t in queue]}')
 
         while queue:
             model, prefix, seen = queue.pop(0)
+            _logger.debug(f'cmp_paths: {model.name} {prefix} {seen}')
             for component in model.components.values():
                 path = prefix + component.name
                 impl = self.custom_implementations.get(path, component.implementation)
@@ -464,11 +493,12 @@ class Configuration(Document):
                                 component, path, name, sup_set.typ, impl))
 
             if len(errs) > 7:
-                errs = errs[:6]
                 n = len(errs) - 6
+                errs = errs[:6]
                 errs.append(
-                        f'Another {n} inconsistent settings were found. Is "{impl}"'
-                        ' the correct implementation for component "{component.name}"?')
+                        f'Another {n} inconsistent settings were found. Is'
+                        f' "{impl.name}" the correct implementation for component'
+                        f' "{component.name}"?')
 
             errors.extend(errs)
 
@@ -489,7 +519,7 @@ class Configuration(Document):
             dims = component.multiplicity
 
         for index in itertools.product(*map(range, dims)):
-            instance_path = component_path + index
+            instance_path = component_path[1:] + index
             for j in range(len(instance_path), -1, -1):
                 found_setting = instance_path[:j] + name
                 if found_setting in self.settings:
@@ -500,7 +530,8 @@ class Configuration(Document):
                             val_str = f'"{val}"'
                         errors.append(
                                 f'Instance "{instance_path}" of component'
-                                f' "{component_path}" with implementation "{impl.name}"'
+                                f' "{component_path[1:]}" with implementation'
+                                f' "{impl.name}"'
                                 f' has a supported setting "{name}" with type'
                                 f' {typ.value}, but setting "{found_setting}" has value'
                                 f' {val_str}, which does not match that type')
@@ -532,27 +563,37 @@ class Configuration(Document):
         return False
 
     def _check_resources(
-            self, component_paths: Dict[Reference, Component]) -> List[str]:
+            self, component_paths: Dict[Reference, Component],
+            selected_model: Optional[str]) -> List[str]:
         """Check that each component path has a corresponding resource request.
+
+        For non-MPI components, resources are optional: if not specified,
+        a default of 1 thread will be assumed at runtime (e.g. by muscle3).
 
         Returns a list of errors, empty if all is ok.
         """
         errors = list()
         for path, component in component_paths.items():
+            _logger.debug(f'Checking resources for {path} {component.name}')
+            if selected_model is not None and path[0] != selected_model:
+                continue
+
             impl_ref = self.custom_implementations.get(path, component.implementation)
+            _logger.debug(f'Implementation: {impl_ref}')
             if impl_ref is None or impl_ref not in self.programs:
                 continue
 
+            impl = self.programs[impl_ref]
+            em_mpi = impl.execution_model in (
+                    ExecutionModel.OPENMPI, ExecutionModel.INTELMPI,
+                    ExecutionModel.SRUNMPI)
+
+            em_nompi = impl.execution_model is ExecutionModel.DIRECT
+
             if path not in self.resources:
-                errors.append(f'Component "{path}" is missing a resource request')
+                if em_mpi:
+                    errors.append(f'Component "{path}" is missing a resource request')
             else:
-                impl = self.programs[impl_ref]
-                em_mpi = impl.execution_model in (
-                        ExecutionModel.OPENMPI, ExecutionModel.INTELMPI,
-                        ExecutionModel.SRUNMPI)
-
-                em_nompi = impl.execution_model is ExecutionModel.DIRECT
-
                 res_mpi = isinstance(
                         self.resources[path], (MPICoresResReq, MPINodesResReq))
 
@@ -595,8 +636,8 @@ class Configuration(Document):
                 # output in block style
                 ynode = cast(yaml.ScalarNode, descr.yaml_node)
                 ynode.style = '|'
-                if not ynode.value.endswith('\n'):
-                    ynode.value += '\n'
+                # ensure PyYAML actually uses block style
+                ynode.value = remove_trailing_whitespace(ynode.value)
 
         imports = node.get_attribute('imports')
         if imports.is_sequence() and imports.is_empty():

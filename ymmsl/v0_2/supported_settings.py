@@ -5,6 +5,7 @@ from typing import Any, Dict, Iterator, List, Mapping, Optional, Tuple, Union, c
 import yaml
 import yatiml
 
+from ymmsl.util import remove_trailing_whitespace
 from ymmsl.v0_2.identity import Identifier
 
 
@@ -256,8 +257,16 @@ class SupportedSetting:
         """If the description is multiple lines, format it block style"""
         desc_node = node.get_attribute('description')
         if desc_node.is_scalar(str):
+            ynode = cast(yaml.ScalarNode, desc_node.yaml_node)
             if '\n' in cast(str, desc_node.get_value()):
-                cast(yaml.ScalarNode, desc_node.yaml_node).style = '|'
+                ynode.style = '|'
+
+                # ensure PyYAML actually uses block style
+                ynode.value = remove_trailing_whitespace(ynode.value)
+
+            else:
+                # we do it also for single-line descriptions for consistency
+                ynode.value = ynode.value.rstrip()
 
 
 class SupportedSettings(MutableMapping):
@@ -279,7 +288,7 @@ class SupportedSettings(MutableMapping):
 
             - low: Not very accurate, but fast. Good for testing.
             - medium: Slower and more accurate. Good for most use.
-            - hight: Slowest, but very accurate. Good for reference runs.
+            - high: Slowest, but very accurate. Good for reference runs.
         D: '[[float]] Diffusion kernel'
         D2: [[float]]
 

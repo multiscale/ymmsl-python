@@ -326,6 +326,10 @@ class Implementation:
 class ResourceRequirements:
     """Describes resources to allocate for components.
 
+    For non-MPI components, specifying resources is optional. If no
+    resource is defined for a non-MPI component, a default of 1 thread
+    will be assigned to it at runtime (e.g. by MUSCLE3).
+
     Attributes:
         name: Name of the component to configure.
     """
@@ -349,6 +353,9 @@ class ThreadedResReq(ResourceRequirements):
     This includes singlethreaded and multithreaded implementations
     that do not support MPI. As many cores as specified will be
     allocated on a single node, for each instance.
+
+    If no resource is defined for a non-MPI component, a default of
+    1 thread will be assigned to it at runtime (e.g. by MUSCLE3).
 
     Attributes:
         name: Name of the component to configure.

@@ -4,7 +4,7 @@ Describing runs
 Once we have a model structure, a configuration for a specific scenario, and programs to
 do the calculations, there's only one thing left to configure and that is the run
 itself. In yMMSL, we can specify the compute resources to use for each program, and if
-the programs support then it we can configure when to checkpoint the simulation.
+the programs support it we can configure when to checkpoint the simulation.
 
 Resources
 `````````
@@ -23,12 +23,26 @@ threads:
     :caption: Resources for threaded processes
 
     resources:
-      macro:
+      model.macro:
         threads: 1
 
-      micro:
+      model.micro:
         threads: 8
 
+Note that the component is designated by the name of the top-level model, followed by
+the component name. If the component is inside of a submodel, then you have to specify
+the path all the way from the top, e.g. ``model.micro.c1`` if ``micro`` is implemented
+by a submodel that has a component named ``c1``.
+
+If no resource is defined for a non-MPI component, a default of 1 thread will
+be assigned to it at runtime (e.g. by MUSCLE3). So, you could also define:
+
+.. code-block:: yaml
+    :caption: Resources for threaded processes
+
+    resources:
+      model.micro:
+        threads: 8
 
 On the Python side, this is represented by :class:`.ymmsl.v0_2.ThreadedResReq` (short
 for ThreadedResourceRequirements), which holds the name of the component it specifies
@@ -44,9 +58,9 @@ processes, and optionally the number of threads per MPI process:
     :caption: Core-based resources for MPI components
 
     resources:
-      macro:
+      model.macro:
         mpi_processes: 32
-      micro:
+      model.micro:
         mpi_processes: 16
         threads_per_mpi_process: 8
 
@@ -60,11 +74,11 @@ already specify them as follows:
     :caption: Node-based resources for MPI components
 
     resources:
-      macro:
+      model.macro:
         nodes: 8
         mpi_processes_per_node: 4
         threads_per_mpi_process: 8
-      micro:
+      model.micro:
         nodes: 1
         mpi_processes_per_node: 16
 
