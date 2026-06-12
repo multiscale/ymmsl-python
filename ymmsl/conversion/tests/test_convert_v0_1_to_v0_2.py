@@ -15,6 +15,7 @@ Ref2 = v0_2.Reference
 
 
 @pytest.mark.filterwarnings('ignore:Comments.*')
+@pytest.mark.filterwarnings('ignore:When specifying resources.*')
 def test_convert_simple_config(empty_config: v0_1.PartialConfiguration) -> None:
     v2 = convert_v0_1_to_v0_2(empty_config)
 
@@ -66,16 +67,16 @@ def test_convert_full_config(full_config: v0_1.Configuration) -> None:
     assert v2.resources is not full_config.resources
     assert len(v2.resources) == 2
 
-    ra = v2.resources[Ref2('A')]
+    ra = v2.resources[Ref2('test_model.A')]
     assert ra is not full_config.resources[Ref1('A')]
     assert isinstance(ra, v0_2.ThreadedResReq)
-    assert ra.name == 'A'
+    assert ra.name == 'test_model.A'
     assert ra.threads == 8
 
-    rb = v2.resources[Ref2('B')]
+    rb = v2.resources[Ref2('test_model.B')]
     assert rb is not full_config.resources[Ref1('B')]
     assert isinstance(rb, v0_2.MPICoresResReq)
-    assert rb.name == 'B'
+    assert rb.name == 'test_model.B'
     assert rb.mpi_processes == 4
     assert rb.threads_per_mpi_process == 8
 

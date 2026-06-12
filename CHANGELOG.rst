@@ -6,6 +6,34 @@ All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
+0.17.0
+******
+
+Added
+-----
+
+- Resources now default to a single thread
+- A selected model can now be passed to configuration consistency checks
+
+Changed
+-------
+
+- In resource declarations, components must now be referenced starting with the name of
+  the top model, like in custom implementations
+
+Fixed
+-----
+
+- Bug in custom_implementations when replacing a submodel
+- Broken error message in case of invalid configuration
+- ymmsl.__version__ version tag
+
+Thanks
+------
+
+- Iris for the default resources
+
+
 0.16.0
 ******
 
