@@ -1,5 +1,5 @@
-.. image:: https://readthedocs.org/projects/ymmsl-python/badge/?version=develop
-    :target: https://ymmsl-python.readthedocs.io/en/latest/?badge=develop
+.. image:: https://readthedocs.org/projects/ymmsl-python/badge/?version=master
+    :target: https://ymmsl-python.readthedocs.io/en/latest/?badge=master
     :alt: Documentation Build Status
 
 .. image:: https://github.com/multiscale/ymmsl-python/workflows/continuous_integration/badge.svg
