@@ -6,14 +6,6 @@
     :target: https://github.com/multiscale/ymmsl-python/actions
     :alt: Build Status
 
-.. image:: https://app.codacy.com/project/badge/Grade/e8be82b26b1e44e19374a65a35c193bf
-    :target: https://www.codacy.com/gh/multiscale/ymmsl-python/dashboard
-    :alt: Codacy Grade
-
-.. image:: https://app.codacy.com/project/badge/Coverage/e8be82b26b1e44e19374a65a35c193bf
-    :target: https://www.codacy.com/gh/multiscale/ymmsl-python/dashboard
-    :alt: Test Coverage
-
 .. image:: https://zenodo.org/badge/153272345.svg
    :target: https://zenodo.org/badge/latestdoi/153272345
 
