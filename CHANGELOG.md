@@ -1,84 +1,67 @@
-###########
-Change Log
-###########
+# Change Log
 
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
-0.17.0
-******
+## 0.17.0
 
-Added
------
+### Added
 
 - Resources now default to a single thread
 - A selected model can now be passed to configuration consistency checks
 
-Changed
--------
+### Changed
 
 - In resource declarations, components must now be referenced starting with the name of
   the top model, like in custom implementations
 
-Fixed
------
+### Fixed
 
 - Bug in custom_implementations when replacing a submodel
 - Broken error message in case of invalid configuration
 - ymmsl.__version__ version tag
 
-Thanks
-------
+### Thanks
 
 - Iris for the default resources
 
 
-0.16.0
-******
+## 0.16.0
 
-Added
------
+### Added
 
 - Importing from Python entry points
 
-Fixed
------
+### Fixed
 
 - Custom implementations syntax now allows empty ones
 - Custom implementations are now applied while resolving
 
-Improved
---------
+### Improved
 
 - Tooling
 
 
-0.15.1 (pulled)
-***************
+## 0.15.1 (pulled)
 
-Added
------
+### Added
 
 - Importing from Python entry points
 
-Fixed
------
+### Fixed
 
 - Custom implementations syntax now allows empty ones
 - Custom implementations are now applied while resolving
 
-Improved
---------
+### Improved
 
 - Tooling
 
 
-0.15.0
-******
+## 0.15.0
 
-Added
------
+### Added
 
 - yMMSL v0.2
 - Support for nested models
@@ -93,99 +76,80 @@ Added
 
 - Support for Python 3.13 and 3.14
 
-Changed
--------
+### Changed
 
 - Moved yMMSL v0.1 declarations into ymmsl.v0_1
 
-Removed
--------
+### Removed
 
 - Support for Python 3.8
 
 
-0.14.0
-******
+## 0.14.0
 
-Added
------
+### Added
 
 - Implementations.base_env
 - List of ints is now a valid SettingValue
 
-Fixed
------
+### Fixed
 
 - Handling of Implementation.script
 
 
-0.13.1
-******
+## 0.13.1
 
-Added
------
+### Added
 
 - Support for Python 3.12
 - Show incorrect Identifier in the error message
 
-Changed
--------
+### Changed
 
 - Replace ruamel.yaml with PyYAML dependency via YAtiML update
 
-Removed
--------
+### Removed
 
 - Support for Python 3.7
 
 
-0.13.0
-******
+## 0.13.0
 
-Added
------
+### Added
 
 - Support for connecting multiple conduits to an outgoing port
 - Checkpointing support (preview release)
 - Improved error messages
 
 
-0.12.0
-******
+## 0.12.0
 
-Added
------
+### Added
 
 - Implementation descriptions for starting simulation components
 - Resource requirements
 
-Changed
--------
+### Changed
 
 - Improved consistency checks for more user-friendly error messages
 
-Fixed
------
+### Fixed
 
 - Small fixes and improvements to code and documentation
 
-Removed
--------
+### Removed
 
 - Support for Python 3.5
 
 
-0.11.0
-******
+## 0.11.0
 
-Changed
--------
+### Changed
 
 * ComputeElement renamed to Component
 * Correspondingly, `compute_elements` is now `components`
 
-New
----
+### New
 
 * PartialConfiguration class
 * Support for merging (Partial)Configurations
@@ -193,164 +157,130 @@ New
 * Configuration.implementations
 * Configuration.resources
 
-Fixed
------
+### Fixed
 
 * Small compatibility improvements
 
 
-0.10.1
-******
+## 0.10.1
 
-Fixed
------
+### Fixed
 
 * Python 3.5.1 compatibility
 * Improved documentation
 
-0.10.0
-******
+## 0.10.0
 
-Changed
--------
+### Changed
 
 * Renamed ParameterValue to SettingValue
 
-Fixed
------
+### Fixed
 
 * Improved documentation
 
-0.9.1
-*****
+## 0.9.1
 
-Fixed
------
+### Fixed
 
 * Removed stray log statement
 
-0.9.0
-*****
+## 0.9.0
 
-Changed
--------
+### Changed
 
 * Automatically handle ymmsl_version attribute, no longer user-available
 
-Fixed
------
+### Fixed
 
 * Resynchronized documentation with recent API changes
 * Removed yatiml helper functions from documentation
 
-0.8.0
-*****
+## 0.8.0
 
-Changed
--------
+### Changed
 
 * Rename YmmslDocument to Configuration
 * Rename version field to ymmsl_version
 
-0.7.0
-*****
+## 0.7.0
 
-Changed
--------
+### Changed
 
 * Significant API changes/cleanup (not backwards compatible!)
 * Small fixes
 
 
-0.6.0
-*****
+## 0.6.0
 
-Changed
--------
+### Changed
 
 * Easier-to-use API (not backwards compatible!)
 
-Fixed
------
+### Fixed
 
 * Boolean-valued Experiment parameter values
 * Improved output formatting of list and array settings values
 
 
-0.5.1
-*****
+## 0.5.1
 
-Changed
--------
+### Changed
 
 * Remove MAP operator (mappers should use F_INIT and O_F)
 
-Added
------
+### Added
 
 * Support for slots on Conduits
 * Support for simulation parameters of type bool
 * Export ParameterValue type
 
 
-0.5.0
-*****
+## 0.5.0
 
-Changed
--------
+### Changed
 
 * Add multiplicity to ComputeElementDecl
 
-Fixed
------
+### Fixed
 
 * ComputeElementDecl has a Reference for its name
 * Savorizing issue in ComputeElementDecl
 
 
-0.4.0
-*****
+## 0.4.0
 
-Changed
--------
+### Changed
 
 * Reference is now (intended to be) an immutable sequence of parts
 * Reference is hashable
 * Reference is equality comparable
 
 
-0.3.0
-*****
+## 0.3.0
 
-Fixed
------
+### Fixed
 
 * Renamed Endpoint to Port
 * Simplified Conduit
 
 
-0.2.1
-*****
+## 0.2.1
 
-Added
------
+### Added
 
 * Endpoint class
 
 
-0.2.0
-*****
+## 0.2.0
 
-Added
------
+### Added
 
 * Operator enum
 
 
-0.1.0
-*****
+## 0.1.0
 
-Added
------
+### Added
 
 * Initial version with basic functionality
