@@ -26,6 +26,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 - Iris for the default resources
 
+### Funding
+
+- The ITER Organization
+
 
 ## 0.16.0
 
