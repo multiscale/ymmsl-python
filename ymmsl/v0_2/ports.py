@@ -270,8 +270,7 @@ class Ports:
 
     def __iter__(self) -> Iterator[Identifier]:
         """Iterate through the ports' names."""
-        for port_name in self._ports:
-            yield port_name
+        yield from self._ports
 
     def sending_port_names(self) -> List[Identifier]:
         """Return the names of all the sending ports.

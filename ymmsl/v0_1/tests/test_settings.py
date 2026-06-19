@@ -207,7 +207,7 @@ def test_as_ordered_dict(settings: Settings) -> None:
     assert settings_dict['test4'] == [12.3, 45.6]
 
     for i, (key, _) in enumerate(settings_dict.items()):
-        assert key == 'test{}'.format(i + 1)
+        assert key == f"test{i + 1}"
 
 
 def test_load_settings() -> None:

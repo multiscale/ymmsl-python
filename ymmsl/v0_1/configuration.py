@@ -312,13 +312,13 @@ class Configuration(PartialConfiguration):
 
         for comp in self.model.components:
             if comp.implementation not in self.implementations:
-                raise RuntimeError((
-                        'Model component {} is missing an'
-                        ' implementation').format(comp))
+                raise RuntimeError(
+                    f"Model component {comp} is missing an implementation."
+                )
             if comp.name not in self.resources:
-                raise RuntimeError((
-                        'Model component {} is missing a resource'
-                        ' allocation.').format(comp))
+                raise RuntimeError(
+                    f"Model component {comp} is missing a resource allocation."
+                )
 
             impl = self.implementations[comp.implementation]
             res = self.resources[comp.name]
@@ -326,19 +326,19 @@ class Configuration(PartialConfiguration):
                 if not isinstance(res, ThreadedResReq) and impl.script is None:
                     # Assume that people know what they're doing if they use
                     # script for specifying an implementation.
-                    raise RuntimeError((
-                        'Model component {}\'s implementation does not'
+                    raise RuntimeError(
+                        f"Model component {comp}'s implementation specifies MPI,"
                         ' specify MPI, but mpi_processes are specified in its'
                         ' resources. Please either set "execution_model" to'
                         ' an MPI model, or specify a number of threads.'
-                        ).format(comp))
+                    )
             else:
                 if isinstance(res, ThreadedResReq):
-                    raise RuntimeError((
-                        'Model component {}\'s implementation specifies MPI,'
+                    raise RuntimeError(
+                        f"Model component {comp}'s implementation specifies MPI,"
                         ' but threads are specified in its resources. Please'
                         ' either set "execution_model" to "direct", or'
-                        ' specify a number of mpi processes.').format(comp))
+                        ' specify a number of mpi processes.')
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:

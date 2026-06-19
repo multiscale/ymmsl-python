@@ -56,9 +56,8 @@ class Component:
             self.implementation: Optional[Reference] = Reference(implementation)
             for part in self.implementation:
                 if isinstance(part, int):
-                    raise ValueError('Component implementation {} contains a'
-                                     ' subscript, which is not'
-                                     ' allowed.'.format(self.name))
+                    raise ValueError(f"Component implementation {self.name} contains a"
+                                     " subscript, which is not allowed.")
         else:
             self.implementation = None
 
@@ -73,12 +72,12 @@ class Component:
         """Returns a string representation of the object."""
         result = str(self.name)
         for dim in self.multiplicity:
-            result += '[0:{}]'.format(dim)
+            result += f"[0:{dim}]"
         return result
 
     def __repr__(self) -> str:
         """Returns a string representation of the object."""
-        return 'Component({})'.format(self.name)
+        return f"Component({self.name})"
 
     def instances(self) -> List[Reference]:
         """Creates a list of instances needed.

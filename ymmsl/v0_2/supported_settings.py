@@ -360,8 +360,7 @@ class SupportedSettings(MutableMapping):
 
     def __iter__(self) -> Iterator[Tuple[Identifier, SupportedSetting]]:
         """Iterate through the settings' key, supported_setting pairs."""
-        for key, value in self._store.items():
-            yield key, value
+        yield from self._store.items()
 
     def __len__(self) -> int:
         """Returns the number of settings."""
