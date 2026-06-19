@@ -312,7 +312,7 @@ class Ports:
                 port_id = Identifier(name)
             except ValueError as e:
                 raise ValueError(
-                        f'Port name "{name}" is not a valid identifier. {e}')
+                        f'Port name "{name}" is not a valid identifier. {e}') from None
 
             self._ports[port_id] = Port(port_id, op, Timeline(timeline))
 

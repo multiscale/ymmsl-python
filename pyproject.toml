@@ -84,7 +84,7 @@ select = [
   # pyupgrade
   "UP",
   # flake8-bugbear
-  #"B",
+  "B",
   # isort
   "I",
   # TODO: enable these at some point?

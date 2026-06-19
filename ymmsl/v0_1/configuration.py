@@ -264,12 +264,12 @@ class Configuration(PartialConfiguration):
     def __init__(self,
                  model: Model,
                  settings: Optional[Settings] = None,
-                 implementations: Union[
+                 implementations: Optional[Union[
                      List[Implementation],
-                     Dict[Reference, Implementation]] = [],
-                 resources: Union[
+                     Dict[Reference, Implementation]]] = None,
+                 resources: Optional[Union[
                      Sequence[ResourceRequirements],
-                     MutableMapping[Reference, ResourceRequirements]] = [],
+                     MutableMapping[Reference, ResourceRequirements]]] = None,
                  description: Optional[str] = None,
                  checkpoints: Optional[Checkpoints] = None,
                  resume: Optional[Dict[Reference, Path]] = None

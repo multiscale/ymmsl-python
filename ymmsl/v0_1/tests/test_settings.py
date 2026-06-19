@@ -129,8 +129,7 @@ def test_del_item(settings: Settings) -> None:
 
 def test_iter(settings: Settings) -> None:
     assert len(settings) == 0
-    for setting, value in settings.items():
-        assert False    # pragma: no cover
+    assert list(settings.items()) == []
 
     settings._store = OrderedDict([
             (Reference('test1'), 13),

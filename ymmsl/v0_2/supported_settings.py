@@ -213,10 +213,11 @@ class SupportedSetting:
                 try:
                     typ = SettingType(pieces[0])
                     description = pieces[1] if len(pieces) > 1 else ''
-                except KeyError:
+                except KeyError as exc:
                     raise ValueError(
-                            'If type is not given, then description must start with'
-                            f' the setting\'s type, which is not the case for "{name}"')
+                        'If type is not given, then description must start with'
+                        f' the setting\'s type, which is not the case for "{name}"'
+                    ) from exc
             # else typ is the type and description the description, so nothing to do
         else:
             # description is None, which is okay as long as we have a type

@@ -115,7 +115,7 @@ class Conduit:
                     try:
                         self.filters.append(ConduitFilter(f))
                     except ValueError:
-                        raise RuntimeError(f'Invalid conduit filter "{f}"')
+                        raise RuntimeError(f'Invalid conduit filter "{f}"') from None
 
         self.__check_reference(self.sender)
         self.__check_reference(self.receiver)
