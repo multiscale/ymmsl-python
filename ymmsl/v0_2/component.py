@@ -1,11 +1,11 @@
-from typing import cast, List, Optional, Union
+from typing import List, Optional, Union, cast
 
 import yaml
 import yatiml
 
 from ymmsl.util import remove_trailing_whitespace
-from ymmsl.v0_2.ports import Ports
 from ymmsl.v0_2.identity import Reference
+from ymmsl.v0_2.ports import Ports
 
 
 class Component:

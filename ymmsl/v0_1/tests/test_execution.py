@@ -1,8 +1,14 @@
 from pathlib import Path
 
 import pytest
+
 from ymmsl.v0_1 import (
-        BaseEnv, ExecutionModel, Implementation, KeepsStateForNextUse, Reference)
+    BaseEnv,
+    ExecutionModel,
+    Implementation,
+    KeepsStateForNextUse,
+    Reference,
+)
 
 
 def test_implementation() -> None:

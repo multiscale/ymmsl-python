@@ -5,17 +5,26 @@ as well as to read and write yMMSL files.
 """
 
 from ymmsl.v0_1.checkpoint import (
-        CheckpointRule, CheckpointRangeRule, CheckpointAtRule, Checkpoints)
+        CheckpointAtRule,
+        CheckpointRangeRule,
+        CheckpointRule,
+        Checkpoints,
+)
 from ymmsl.v0_1.component import Component, Operator, Port, Ports
 from ymmsl.v0_1.configuration import Configuration, PartialConfiguration
 from ymmsl.v0_1.execution import (
-        BaseEnv, ExecutionModel, Implementation, MPICoresResReq,
-        MPINodesResReq, ResourceRequirements, ThreadedResReq,
-        KeepsStateForNextUse)
-from ymmsl.v0_1.settings import Settings, SettingValue
+        BaseEnv,
+        ExecutionModel,
+        Implementation,
+        KeepsStateForNextUse,
+        MPICoresResReq,
+        MPINodesResReq,
+        ResourceRequirements,
+        ThreadedResReq,
+)
 from ymmsl.v0_1.identity import Identifier, Reference
 from ymmsl.v0_1.model import Conduit, Model, ModelReference
-
+from ymmsl.v0_1.settings import Settings, SettingValue
 
 __all__ = [
         'BaseEnv', 'CheckpointRule', 'CheckpointRangeRule', 'CheckpointAtRule',

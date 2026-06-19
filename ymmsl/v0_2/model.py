@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from copy import copy
 from enum import Enum
-from typing import Any, cast, List, Optional, Sequence, Union
+from typing import Any, List, Optional, Sequence, Union, cast
 
 import yatiml
 

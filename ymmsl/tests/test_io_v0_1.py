@@ -2,14 +2,22 @@ from pathlib import Path
 from typing import Any, cast
 
 import pytest
-
 from yatiml import RecognitionError
+
 from ymmsl.io import dump, load, save
 from ymmsl.v0_1 import (
-        Configuration, ExecutionModel, KeepsStateForNextUse, Model, ModelReference,
-        MPICoresResReq, MPINodesResReq, PartialConfiguration, Reference,
-        ThreadedResReq, CheckpointRangeRule)
-
+    CheckpointRangeRule,
+    Configuration,
+    ExecutionModel,
+    KeepsStateForNextUse,
+    Model,
+    ModelReference,
+    MPICoresResReq,
+    MPINodesResReq,
+    PartialConfiguration,
+    Reference,
+    ThreadedResReq,
+)
 
 Ref = Reference
 

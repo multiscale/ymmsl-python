@@ -3,12 +3,26 @@ from pathlib import Path
 
 import pytest
 
-from ymmsl.io import load, load_as, dump
+from ymmsl.io import dump, load, load_as
 from ymmsl.v0_2 import (
-        Configuration, Checkpoints, Component, Conduit, Identifier,
-        ImportStatement, Model, Operator, Port, Ports, Program, Reference, Settings,
-        SettingType, SettingValue, ThreadedResReq, Timeline)
-
+    Checkpoints,
+    Component,
+    Conduit,
+    Configuration,
+    Identifier,
+    ImportStatement,
+    Model,
+    Operator,
+    Port,
+    Ports,
+    Program,
+    Reference,
+    Settings,
+    SettingType,
+    SettingValue,
+    ThreadedResReq,
+    Timeline,
+)
 
 Ref = Reference
 

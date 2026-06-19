@@ -1,6 +1,6 @@
-from ymmsl.v0_2 import Identifier, Component, Operator, Port, Ports, Reference, Timeline
-
 import pytest
+
+from ymmsl.v0_2 import Component, Identifier, Operator, Port, Ports, Reference, Timeline
 
 
 def test_component_declaration() -> None:

@@ -1,9 +1,9 @@
-from typing import Callable, cast, Dict, Type, TypeVar
+from typing import Callable, Dict, Type, TypeVar, cast
 
-from ymmsl.conversion.convert_v0_1_to_v0_2 import convert_v0_1_to_v0_2
-from ymmsl.document import Document
 import ymmsl.v0_1 as v0_1
 import ymmsl.v0_2 as v0_2
+from ymmsl.conversion.convert_v0_1_to_v0_2 import convert_v0_1_to_v0_2
+from ymmsl.document import Document
 
 
 class DowngradeError(RuntimeError):

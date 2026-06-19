@@ -2,13 +2,23 @@ from collections import OrderedDict
 from pathlib import Path
 
 import pytest
-from ymmsl.io import load, dump
-from ymmsl.v0_1 import (
-        Component, Configuration, ExecutionModel, Implementation, Model, MPICoresResReq,
-        Checkpoints, PartialConfiguration, Reference, Settings, ThreadedResReq)
-from ymmsl.v0_1 import SettingValue     # noqa: F401 # pylint: disable=unused-import
-from ymmsl.v0_1.model import ModelReference
 
+from ymmsl.io import dump, load
+from ymmsl.v0_1 import (
+    Checkpoints,
+    Component,
+    Configuration,
+    ExecutionModel,
+    Implementation,
+    Model,
+    MPICoresResReq,
+    PartialConfiguration,
+    Reference,
+    Settings,
+    SettingValue,  # noqa: F401 # pylint: disable=unused-import
+    ThreadedResReq,
+)
+from ymmsl.v0_1.model import ModelReference
 
 Ref = Reference
 

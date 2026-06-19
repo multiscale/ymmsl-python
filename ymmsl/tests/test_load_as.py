@@ -1,10 +1,10 @@
-from typing import cast, List
-
-from ymmsl.io import load_as
-import ymmsl.v0_1 as v0_1
-import ymmsl.v0_2 as v0_2
+from typing import List, cast
 
 import pytest
+
+import ymmsl.v0_1 as v0_1
+import ymmsl.v0_2 as v0_2
+from ymmsl.io import load_as
 
 
 def test_load_as_v0_1(test_yaml1: str) -> None:

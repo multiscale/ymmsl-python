@@ -1,8 +1,8 @@
-from copy import copy
 import logging
 import os
 import sys
 from collections.abc import MutableMapping
+from copy import copy
 from difflib import get_close_matches
 from pathlib import Path
 from textwrap import indent

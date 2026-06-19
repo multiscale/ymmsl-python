@@ -1,14 +1,16 @@
+import pytest
+import yatiml
+
 from ymmsl.v0_2.component import Component
 from ymmsl.v0_2.identity import Identifier
 from ymmsl.v0_2.implementation import Implementation, Reference
 from ymmsl.v0_2.model import Conduit, ConduitFilter, Model, MulticastConduit
 from ymmsl.v0_2.ports import Operator, Port, Ports, Timeline
 from ymmsl.v0_2.supported_settings import (
-        SettingType, SupportedSetting, SupportedSettings)
-
-import pytest
-import yatiml
-
+    SettingType,
+    SupportedSetting,
+    SupportedSettings,
+)
 
 Ref = Reference
 

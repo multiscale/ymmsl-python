@@ -1,7 +1,7 @@
 from collections import OrderedDict
-from typing import Any, cast, Iterator, List, Optional, overload, Sequence, Union
+from typing import Any, Iterator, List, Optional, Sequence, Union, cast, overload
 
-from ymmsl.v0_1.component import Operator   # also the v0.2 version, import from here
+from ymmsl.v0_1.component import Operator  # also the v0.2 version, import from here
 from ymmsl.v0_2.identity import Identifier, Reference
 
 

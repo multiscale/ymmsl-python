@@ -1,6 +1,6 @@
+import warnings
 from copy import deepcopy
 from typing import Dict, List, MutableMapping, Optional
-import warnings
 
 import ymmsl.v0_1 as v0_1
 import ymmsl.v0_2 as v0_2

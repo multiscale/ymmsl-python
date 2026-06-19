@@ -1,8 +1,8 @@
 """This module contains definitions for identity."""
-from copy import copy
 import re
 from collections import UserString
-from typing import Any, Generator, Iterable, List, overload, Union
+from copy import copy
+from typing import Any, Generator, Iterable, List, Union, overload
 
 import yatiml
 

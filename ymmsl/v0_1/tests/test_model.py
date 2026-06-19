@@ -3,10 +3,17 @@ from typing import Callable
 import pytest
 import yatiml
 
-from ymmsl.io import load, dump
+from ymmsl.io import dump, load
 from ymmsl.v0_1 import (
-        Component, Conduit, Identifier, Model, ModelReference,
-        PartialConfiguration, Ports, Reference)
+    Component,
+    Conduit,
+    Identifier,
+    Model,
+    ModelReference,
+    PartialConfiguration,
+    Ports,
+    Reference,
+)
 from ymmsl.v0_1.model import MulticastConduit
 
 

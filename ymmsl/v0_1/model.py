@@ -1,12 +1,21 @@
 """This module contains all the definitions for yMMSL."""
 from collections import OrderedDict
-from typing import Any, List, Optional, Sequence, Union, cast
-from typing import Dict     # noqa
+from typing import (
+    Any,
+    Dict,  # noqa
+    List,
+    Optional,
+    Sequence,
+    Union,
+    cast,
+)
 
 import yatiml
 
-from ymmsl.v0_1.component import Operator    # noqa
-from ymmsl.v0_1.component import Component
+from ymmsl.v0_1.component import (
+    Component,
+    Operator,  # noqa
+)
 from ymmsl.v0_1.identity import Identifier, Reference
 
 

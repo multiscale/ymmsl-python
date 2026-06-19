@@ -1,12 +1,11 @@
 from pathlib import Path
-from typing import Any, AnyStr, Callable, IO, Union
-import yatiml
+from typing import IO, Any, AnyStr, Callable, Union
 
 import pytest
+import yatiml
 
 from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.imports import ImportKind, ImportStatement
-
 
 LoadImport = Callable[[Union[str, Path, IO[AnyStr]]], Any]
 

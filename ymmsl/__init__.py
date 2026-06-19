@@ -5,13 +5,12 @@ as well as to read and write yMMSL files.
 """
 from importlib.metadata import version as package_version
 
-from ymmsl.conversion.converter import convert_to, DowngradeError
+from ymmsl.conversion.converter import DowngradeError, convert_to
 from ymmsl.document import Document
 from ymmsl.io import dump, load, load_as, save
 
 # For backwards compatibility of programs
 from ymmsl.v0_2 import Operator, Settings
-
 
 __version__ = package_version("ymmsl")
 __author__ = 'Lourens Veen'

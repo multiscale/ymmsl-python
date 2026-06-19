@@ -4,7 +4,11 @@ import pytest
 import yatiml
 
 from ymmsl.v0_1.checkpoint import (
-        CheckpointRangeRule, CheckpointAtRule, CheckpointRule, Checkpoints)
+    CheckpointAtRule,
+    CheckpointRangeRule,
+    CheckpointRule,
+    Checkpoints,
+)
 
 
 def test_checkpointrange() -> None:

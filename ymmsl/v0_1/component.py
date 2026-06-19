@@ -1,15 +1,19 @@
 """Definitions for describing simulation components."""
+import logging
 from collections import OrderedDict
 from enum import Enum
-import logging
-from typing import Dict     # noqa: F401
-from typing import Iterable, List, Optional, Union
+from typing import (
+    Dict,  # noqa: F401
+    Iterable,
+    List,
+    Optional,
+    Union,
+)
 
 import yaml
 import yatiml
 
 from ymmsl.v0_1.identity import Identifier, Reference
-
 
 _logger = logging.getLogger(__name__)
 

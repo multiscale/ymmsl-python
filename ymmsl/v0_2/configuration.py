@@ -1,28 +1,30 @@
 import collections.abc as abc
-from copy import copy
 import itertools
 import logging
+from copy import copy
 from pathlib import Path
-from typing import (
-        Dict, List, MutableMapping, Optional, Sequence, Tuple, Union, cast)
+from typing import Dict, List, MutableMapping, Optional, Sequence, Tuple, Union, cast
 
-import yatiml
 import yaml
+import yatiml
 
 from ymmsl.util import remove_trailing_whitespace
 from ymmsl.v0_2.checkpoint import Checkpoints
+from ymmsl.v0_2.document import Document
 from ymmsl.v0_2.execution import ExecutionModel
-from ymmsl.v0_2.resources import (
-    MPICoresResReq, MPINodesResReq, ResourceRequirements, ThreadedResReq)
 from ymmsl.v0_2.identity import Identifier, Reference
-from ymmsl.v0_2.implementation import Implementation    # noqa: F401
+from ymmsl.v0_2.implementation import Implementation  # noqa: F401
 from ymmsl.v0_2.imports import ImportStatement
+from ymmsl.v0_2.model import Component, Model
+from ymmsl.v0_2.program import Program
+from ymmsl.v0_2.resources import (
+    MPICoresResReq,
+    MPINodesResReq,
+    ResourceRequirements,
+    ThreadedResReq,
+)
 from ymmsl.v0_2.settings import Settings, SettingValue
 from ymmsl.v0_2.supported_settings import SettingType
-from ymmsl.v0_2.document import Document
-from ymmsl.v0_2.program import Program
-from ymmsl.v0_2.model import Component, Model
-
 
 _logger = logging.getLogger(__name__)
 

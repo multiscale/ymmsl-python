@@ -1,23 +1,24 @@
 """This module contains all the definitions for yMMSL."""
-from collections import OrderedDict
 import collections.abc as abc
 import logging
+from collections import OrderedDict
 from pathlib import Path
-from typing import (
-        Dict, List, MutableMapping, Optional, Sequence, Union, cast)
+from typing import Dict, List, MutableMapping, Optional, Sequence, Union, cast
 
-import yatiml
 import yaml
+import yatiml
 
 from ymmsl.v0_1.checkpoint import Checkpoints
 from ymmsl.v0_1.document import Document
-from ymmsl.v0_1.identity import Reference
 from ymmsl.v0_1.execution import (
-        ExecutionModel, Implementation,
-        ResourceRequirements, ThreadedResReq)
-from ymmsl.v0_1.settings import Settings
+    ExecutionModel,
+    Implementation,
+    ResourceRequirements,
+    ThreadedResReq,
+)
+from ymmsl.v0_1.identity import Reference
 from ymmsl.v0_1.model import Model, ModelReference
-
+from ymmsl.v0_1.settings import Settings
 
 _logger = logging.getLogger(__name__)
 

@@ -1,4 +1,4 @@
-from typing import cast, Optional
+from typing import Optional, cast
 
 import yaml
 import yatiml

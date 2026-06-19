@@ -1,7 +1,7 @@
-from ymmsl.v0_1 import Identifier, Reference
-
 import pytest
 import yatiml
+
+from ymmsl.v0_1 import Identifier, Reference
 
 
 def test_create_identifier() -> None:
