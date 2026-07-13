@@ -31,7 +31,7 @@ _classes = (
         v0_2.SupportedSetting, v0_2.SupportedSettings, v0_2.ThreadedResReq)
 
 
-_load = yatiml.load_function(*_classes)
+_load = yatiml.load_function(*_classes)  # type: ignore
 
 
 def load(source: Union[str, Path, IO[Any]]) -> Document:

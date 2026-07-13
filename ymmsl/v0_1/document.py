@@ -10,6 +10,8 @@ class Document(DocumentBase):
     This gets specialised by a top-level content class, and takes care of a special
     ymmsl_version attribute in the root of the YAML file.
     """
+    def __init__(self) -> None:
+        pass
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
