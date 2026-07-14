@@ -1,9 +1,8 @@
-from ymmsl.v0_2.identity import Identifier, Reference
-from ymmsl.v0_2.ports import Operator, Port, Ports, Timeline
-
 import pytest
 import yatiml
 
+from ymmsl.v0_2.identity import Identifier, Reference
+from ymmsl.v0_2.ports import Operator, Port, Ports, Timeline
 
 Ref = Reference
 

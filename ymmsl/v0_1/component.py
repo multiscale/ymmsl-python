@@ -1,15 +1,19 @@
 """Definitions for describing simulation components."""
+import logging
 from collections import OrderedDict
 from enum import Enum
-import logging
-from typing import Dict     # noqa: F401
-from typing import Iterable, List, Optional, Union
+from typing import (
+    Dict,  # noqa: F401
+    Iterable,
+    List,
+    Optional,
+    Union,
+)
 
 import yaml
 import yatiml
 
 from ymmsl.v0_1.identity import Identifier, Reference
-
 
 _logger = logging.getLogger(__name__)
 
@@ -153,7 +157,7 @@ class Ports:
         if port_name in self.o_f:
             return Operator.O_F
 
-        raise KeyError('No port named "{}" was found'.format(port_name))
+        raise KeyError(f'No port named "{port_name}" was found')
 
     _yatiml_defaults: dict[str, Optional[list[str]]] = {
             'f_init': [],
@@ -209,9 +213,8 @@ class Component:
             self.implementation = Reference(implementation)
             for part in self.implementation:
                 if isinstance(part, int):
-                    raise ValueError('Component implementation {} contains a'
-                                     ' subscript, which is not'
-                                     ' allowed.'.format(self.name))
+                    raise ValueError(f"Component implementation {self.name} contains a"
+                                     " subscript, which is not allowed.")
 
         if multiplicity is None:
             self.multiplicity = list()
@@ -226,12 +229,12 @@ class Component:
         """Returns a string representation of the object."""
         result = str(self.name)
         for dim in self.multiplicity:
-            result += '[0:{}]'.format(dim)
+            result += f"[0:{dim}]"
         return result
 
     def __repr__(self) -> str:
         """Returns a string representation of the object."""
-        return 'Component({})'.format(self.name)
+        return f"Component({self.name})"
 
     def instances(self) -> List[Reference]:
         """Creates a list of instances needed.

@@ -1,5 +1,6 @@
 """Defines the YAML document and version tag."""
 import yatiml
+
 from ymmsl.document import Document as DocumentBase
 
 

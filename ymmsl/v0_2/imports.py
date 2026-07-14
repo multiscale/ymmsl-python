@@ -1,6 +1,6 @@
 from enum import Enum
 from pathlib import Path
-from typing import cast, Tuple
+from typing import Tuple, cast
 
 import yatiml
 
@@ -63,8 +63,9 @@ class ImportStatement:
             self.kind = ImportKind[kind.upper()]
         except KeyError:
             raise ValueError(
-                    f'{kind} is not a valid kind of object to import. Try'
-                    ' "implementation" instead to import a program or a model.')
+                f'{kind} is not a valid kind of object to import. Try'
+                ' "implementation" instead to import a program or a model.'
+            ) from None
 
         self.name = Identifier(name)
 

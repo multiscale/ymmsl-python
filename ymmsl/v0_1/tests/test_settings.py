@@ -1,11 +1,15 @@
-from ymmsl.v0_1 import Identifier, Reference, Settings
-from ymmsl.v0_1 import SettingValue  # noqa: F401 # pytest: disable=W0611
-
 from collections import OrderedDict
-from typing import cast, List
-import yatiml
+from typing import List, cast
 
 import pytest
+import yatiml
+
+from ymmsl.v0_1 import (
+    Identifier,
+    Reference,
+    Settings,
+    SettingValue,  # noqa: F401 # pytest: disable=W0611
+)
 
 
 @pytest.fixture
@@ -125,8 +129,7 @@ def test_del_item(settings: Settings) -> None:
 
 def test_iter(settings: Settings) -> None:
     assert len(settings) == 0
-    for setting, value in settings.items():
-        assert False    # pragma: no cover
+    assert list(settings.items()) == []
 
     settings._store = OrderedDict([
             (Reference('test1'), 13),
@@ -203,7 +206,7 @@ def test_as_ordered_dict(settings: Settings) -> None:
     assert settings_dict['test4'] == [12.3, 45.6]
 
     for i, (key, _) in enumerate(settings_dict.items()):
-        assert key == 'test{}'.format(i + 1)
+        assert key == f"test{i + 1}"
 
 
 def test_load_settings() -> None:

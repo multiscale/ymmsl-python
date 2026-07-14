@@ -3,13 +3,16 @@ from pathlib import Path
 import pytest
 import yatiml
 
-from ymmsl.v0_2.ports import Operator, Ports
 from ymmsl.v0_2.execution import BaseEnv, ExecutionModel, KeepsStateForNextUse
 from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.implementation import Implementation
+from ymmsl.v0_2.ports import Operator, Ports
 from ymmsl.v0_2.program import Program
 from ymmsl.v0_2.supported_settings import (
-        SettingType, SupportedSetting, SupportedSettings)
+    SettingType,
+    SupportedSetting,
+    SupportedSettings,
+)
 
 
 def test_program_script_list() -> None:

@@ -2,11 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from ymmsl.conversion.convert_v0_1_to_v0_2 import convert_v0_1_to_v0_2
-
 import ymmsl.v0_1 as v0_1
 import ymmsl.v0_2 as v0_2
-
+from ymmsl.conversion.convert_v0_1_to_v0_2 import convert_v0_1_to_v0_2
 
 Ref1 = v0_1.Reference
 

@@ -1,8 +1,8 @@
-from copy import copy
 import logging
 import os
 import sys
 from collections.abc import MutableMapping
+from copy import copy
 from difflib import get_close_matches
 from pathlib import Path
 from textwrap import indent
@@ -573,6 +573,6 @@ def load_resolve_module(
         except RecognitionError as e:
             msg = ctx.trace()
             msg += indent(str(e), ' ' * 4)
-            raise RuntimeError(msg)
+            raise RuntimeError(msg) from None
 
     return ymmsl_cache[module_path]

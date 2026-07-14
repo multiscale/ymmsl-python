@@ -1,9 +1,9 @@
 import logging
+import os
 import sys
 from collections.abc import Generator
-import os
 from pathlib import Path
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -13,9 +13,9 @@ from ymmsl.v0_2.identity import Reference
 from ymmsl.v0_2.resolver import resolve
 
 if sys.version_info < (3, 10):
-    from importlib_metadata import EntryPoints, EntryPoint
+    from importlib_metadata import EntryPoint, EntryPoints
 else:
-    from importlib.metadata import EntryPoints, EntryPoint
+    from importlib.metadata import EntryPoint, EntryPoints
 
 Ref = Reference
 

@@ -2,12 +2,11 @@
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from copy import deepcopy
-from typing import Any, Dict, Iterator, List, Optional, overload, Tuple, TypeVar, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, TypeVar, Union, overload
 
 import yatiml
 
 from ymmsl.v0_1.identity import Reference
-
 
 SettingValue = Union[
         str, int, float, bool, List[int], List[float], List[List[float]],

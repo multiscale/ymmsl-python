@@ -1,7 +1,7 @@
+from pathlib import Path
+
 from ymmsl import load_as
 from ymmsl.v0_2 import Configuration
-
-from pathlib import Path
 
 
 def test_load_examples() -> None:

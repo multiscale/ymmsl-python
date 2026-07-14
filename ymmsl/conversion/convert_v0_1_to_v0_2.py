@@ -1,6 +1,6 @@
+import warnings
 from copy import deepcopy
 from typing import Dict, List, MutableMapping, Optional
-import warnings
 
 import ymmsl.v0_1 as v0_1
 import ymmsl.v0_2 as v0_2
@@ -24,19 +24,22 @@ def convert_v0_1_to_v0_2(config: v0_1.PartialConfiguration) -> v0_2.Configuratio
             convert_implementation(impl) for impl in config.implementations.values()]
     if programs:
         warnings.warn(
-                'In yMMSL v0.2 implementations have become programs, and you can now'
-                ' specify the ports of a program in the yMMSL description. If your'
-                ' program has fixed ports then you should do this, because it will make'
-                ' incorrect wiring easier to debug. While there, add a description too!'
-                )
+            'In yMMSL v0.2 implementations have become programs, and you can now'
+            ' specify the ports of a program in the yMMSL description. If your'
+            ' program has fixed ports then you should do this, because it will make'
+            ' incorrect wiring easier to debug. While there, add a description too!',
+            stacklevel=2,
+        )
 
     resources = convert_resources(config.resources, models)
     checkpoints = deepcopy(config.checkpoints)
     resume = deepcopy(config.resume)
 
     warnings.warn(
-            'Comments can unfortunately not be read by this converter, and so have been'
-            ' ignored. Please copy them into an appropriate description field.')
+        'Comments can unfortunately not be read by this converter, and so have been'
+        ' ignored. Please copy them into an appropriate description field.',
+        stacklevel=2,
+    )
 
     return v0_2.Configuration(
             description, None, models, None, settings, programs, resources, checkpoints,
@@ -94,7 +97,7 @@ def infer_ports(components: List[v0_2.Component], conduits: List[v0_2.Conduit]) 
                 ' been added based on the connected conduits. THIS MAY BE WRONG,'
                 ' because the operators have all been set to F_INIT and O_F, while they'
                 ' may really be O_I or S. Please check these components and adjust'
-                f' as needed: {ch_comp_list}')
+                f' as needed: {ch_comp_list}', stacklevel=4)
 
 
 def convert_model(model: v0_1.ModelReference) -> v0_2.Model:
@@ -174,7 +177,7 @@ def convert_resources(
                 ' prefixed with the name of the top (outermost) model, e.g. as'
                 ' my_model.my_component rather than just my_component. This file'
                 ' does not contain a model, so its name cannot be added automatically.'
-                ' Please add the model name yourself.')
+                ' Please add the model name yourself.', stacklevel=3)
         return deepcopy(resources)
     else:
         mname = models[0].name

@@ -1,8 +1,7 @@
-from ymmsl.v0_2 import (
-        Identifier, SettingType, SupportedSetting, SupportedSettings)
-
 import pytest
 import yatiml
+
+from ymmsl.v0_2 import Identifier, SettingType, SupportedSetting, SupportedSettings
 
 
 @pytest.fixture

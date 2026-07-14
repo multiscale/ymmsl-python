@@ -1,23 +1,24 @@
 """This module contains all the definitions for yMMSL."""
-from collections import OrderedDict
 import collections.abc as abc
 import logging
+from collections import OrderedDict
 from pathlib import Path
-from typing import (
-        Dict, List, MutableMapping, Optional, Sequence, Union, cast)
+from typing import Dict, List, MutableMapping, Optional, Sequence, Union, cast
 
-import yatiml
 import yaml
+import yatiml
 
 from ymmsl.v0_1.checkpoint import Checkpoints
 from ymmsl.v0_1.document import Document
-from ymmsl.v0_1.identity import Reference
 from ymmsl.v0_1.execution import (
-        ExecutionModel, Implementation,
-        ResourceRequirements, ThreadedResReq)
-from ymmsl.v0_1.settings import Settings
+    ExecutionModel,
+    Implementation,
+    ResourceRequirements,
+    ThreadedResReq,
+)
+from ymmsl.v0_1.identity import Reference
 from ymmsl.v0_1.model import Model, ModelReference
-
+from ymmsl.v0_1.settings import Settings
 
 _logger = logging.getLogger(__name__)
 
@@ -263,12 +264,12 @@ class Configuration(PartialConfiguration):
     def __init__(self,
                  model: Model,
                  settings: Optional[Settings] = None,
-                 implementations: Union[
+                 implementations: Optional[Union[
                      List[Implementation],
-                     Dict[Reference, Implementation]] = [],
-                 resources: Union[
+                     Dict[Reference, Implementation]]] = None,
+                 resources: Optional[Union[
                      Sequence[ResourceRequirements],
-                     MutableMapping[Reference, ResourceRequirements]] = [],
+                     MutableMapping[Reference, ResourceRequirements]]] = None,
                  description: Optional[str] = None,
                  checkpoints: Optional[Checkpoints] = None,
                  resume: Optional[Dict[Reference, Path]] = None
@@ -311,13 +312,13 @@ class Configuration(PartialConfiguration):
 
         for comp in self.model.components:
             if comp.implementation not in self.implementations:
-                raise RuntimeError((
-                        'Model component {} is missing an'
-                        ' implementation').format(comp))
+                raise RuntimeError(
+                    f"Model component {comp} is missing an implementation."
+                )
             if comp.name not in self.resources:
-                raise RuntimeError((
-                        'Model component {} is missing a resource'
-                        ' allocation.').format(comp))
+                raise RuntimeError(
+                    f"Model component {comp} is missing a resource allocation."
+                )
 
             impl = self.implementations[comp.implementation]
             res = self.resources[comp.name]
@@ -325,19 +326,19 @@ class Configuration(PartialConfiguration):
                 if not isinstance(res, ThreadedResReq) and impl.script is None:
                     # Assume that people know what they're doing if they use
                     # script for specifying an implementation.
-                    raise RuntimeError((
-                        'Model component {}\'s implementation does not'
+                    raise RuntimeError(
+                        f"Model component {comp}'s implementation specifies MPI,"
                         ' specify MPI, but mpi_processes are specified in its'
                         ' resources. Please either set "execution_model" to'
                         ' an MPI model, or specify a number of threads.'
-                        ).format(comp))
+                    )
             else:
                 if isinstance(res, ThreadedResReq):
-                    raise RuntimeError((
-                        'Model component {}\'s implementation specifies MPI,'
+                    raise RuntimeError(
+                        f"Model component {comp}'s implementation specifies MPI,"
                         ' but threads are specified in its resources. Please'
                         ' either set "execution_model" to "direct", or'
-                        ' specify a number of mpi processes.').format(comp))
+                        ' specify a number of mpi processes.')
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:

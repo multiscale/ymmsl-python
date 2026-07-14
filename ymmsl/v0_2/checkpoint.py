@@ -1,2 +1,6 @@
-from ymmsl.v0_1.checkpoint import (     # noqa: F401
-        CheckpointRule, CheckpointRangeRule, CheckpointAtRule, Checkpoints)
+from ymmsl.v0_1.checkpoint import (  # noqa: F401
+        CheckpointAtRule,
+        CheckpointRangeRule,
+        CheckpointRule,
+        Checkpoints,
+)

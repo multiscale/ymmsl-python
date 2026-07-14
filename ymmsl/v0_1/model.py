@@ -1,12 +1,21 @@
 """This module contains all the definitions for yMMSL."""
 from collections import OrderedDict
-from typing import Any, List, Optional, Sequence, Union, cast
-from typing import Dict     # noqa
+from typing import (
+    Any,
+    Dict,  # noqa
+    List,
+    Optional,
+    Sequence,
+    Union,
+    cast,
+)
 
 import yatiml
 
-from ymmsl.v0_1.component import Operator    # noqa
-from ymmsl.v0_1.component import Component
+from ymmsl.v0_1.component import (
+    Component,
+    Operator,  # noqa
+)
 from ymmsl.v0_1.identity import Identifier, Reference
 
 
@@ -43,7 +52,7 @@ class Conduit:
 
     def __str__(self) -> str:
         """Return a string representation of the object."""
-        return 'Conduit({} -> {})'.format(self.sender, self.receiver)
+        return f"Conduit({self.sender} -> {self.receiver})"
 
     def __eq__(self, other: Any) -> bool:
         """Returns whether the conduits connect the same ports."""
@@ -58,19 +67,19 @@ class Conduit:
         for i, part in enumerate(ref):
             if isinstance(part, int):
                 if (i+1) < len(ref) and isinstance(ref[i+1], Identifier):
-                    raise ValueError('Reference {} contains a subscript that'
-                                     ' is not at the end, which is not allowed'
-                                     ' in conduits.'.format(ref))
+                    raise ValueError(f"Reference {ref} contains a subscript that"
+                                     " is not at the end, which is not allowed"
+                                     " in conduits.")
 
         # check that the length is at least 2
         if len(Conduit.__stem(ref)) < 2:
-            raise ValueError((
-                    'Senders and receivers in conduits must have a component'
-                    ' name, a period, and then a port name and optionally a'
-                    ' slot. Reference {} is missing either the component or'
-                    ' the port. Did you perhaps type a comma or an underscore'
+            raise ValueError(
+                    "Senders and receivers in conduits must have a component"
+                    " name, a period, and then a port name and optionally a"
+                    f" slot. Reference {ref} is missing either the component or"
+                    " the port. Did you perhaps type a comma or an underscore"
                     ' instead of a period? It should be "component.port"'
-                    ).format(ref))
+                    )
 
     def sending_component(self) -> Reference:
         """Returns a reference to the sending component."""
@@ -322,33 +331,29 @@ class Model(ModelReference):
             scomp = conduit.sending_component()
             if not component_exists(scomp):
                 raise RuntimeError(
-                    'Unknown sending component "{}" of {}'.format(
-                        scomp, conduit))
+                    f'Unknown sending component "{scomp}" of {conduit}')
 
             rcomp = conduit.receiving_component()
             if not component_exists(rcomp):
                 raise RuntimeError(
-                    'Unknown receiving component "{}" of {}'.format(
-                        rcomp, conduit))
+                    f'Unknown receiving component "{rcomp}" of {conduit}')
 
             sport = conduit.sending_port()
             if not component_has_sending_port(scomp, sport):
                 raise RuntimeError(
-                        'Invalid conduit "{}": component "{}" does not'
-                        ' have a sending port "{}"'.format(
-                            conduit, scomp, sport))
+                        f'Invalid conduit "{conduit}": component "{scomp}" does not'
+                        f' have a sending port "{sport}"')
 
             rport = conduit.receiving_port()
             if not component_has_receiving_port(rcomp, rport):
                 raise RuntimeError(
-                        'Invalid conduit "{}": component "{}" does not'
-                        ' have a receiving port "{}"'.format(
-                            conduit, rcomp, rport))
+                        f'Invalid conduit "{conduit}": component "{rcomp}" does not'
+                        f' have a receiving port "{rport}"')
 
             if conduit.receiver in receivers_seen:
                 raise RuntimeError(
-                        'Receiving port "{}" is connected by multiple'
-                        ' conduits.'.format(conduit.receiver))
+                        f'Receiving port "{conduit.receiver}" is connected by multiple'
+                        " conduits.")
             receivers_seen.add(conduit.receiver)
 
     def __conduits_for_export(self) -> List[AnyConduit]:

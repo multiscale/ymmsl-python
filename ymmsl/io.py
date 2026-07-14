@@ -1,19 +1,16 @@
 """Loading and saving functions."""
 from pathlib import Path
-from typing import Any, IO, Type, TypeVar, Union
+from typing import IO, Any, Type, TypeVar, Union
 
 import yatiml
 
+import ymmsl.v0_1 as v0_1
+import ymmsl.v0_2 as v0_2
 from ymmsl.conversion.converter import convert_to
 from ymmsl.document import Document
-
-import ymmsl.v0_1 as v0_1
 from ymmsl.v0_1.document import Document as v0_1_Document
 from ymmsl.v0_1.model import MulticastConduit as v0_1_MulticastConduit
-
-import ymmsl.v0_2 as v0_2
 from ymmsl.v0_2.model import MulticastConduit as v0_2_MulticastConduit
-
 
 _classes = (
         Document,
@@ -34,7 +31,7 @@ _classes = (
         v0_2.SupportedSetting, v0_2.SupportedSettings, v0_2.ThreadedResReq)
 
 
-_load = yatiml.load_function(*_classes)
+_load = yatiml.load_function(*_classes)  # type: ignore
 
 
 def load(source: Union[str, Path, IO[Any]]) -> Document:

@@ -1,8 +1,8 @@
 """This module contains definitions for identity."""
-from copy import copy
 import re
 from collections import UserString
-from typing import Any, Generator, Iterable, List, overload, Union
+from copy import copy
+from typing import Any, Generator, Iterable, List, Union, overload
 
 import yatiml
 
@@ -31,7 +31,7 @@ class Identifier(UserString):
                              ' lower- and uppercase letters, digits and'
                              ' underscores, must start with a letter or'
                              ' an underscore, and must not be empty.'
-                             ' "{}" is therefore invalid.'.format(self.data))
+                             f' "{self.data}" is therefore invalid.')
 
 
 ReferencePart = Union[Identifier, int]
@@ -93,7 +93,7 @@ class Reference(yatiml.String):
 
     def __repr__(self) -> str:
         """Produce a representation in string form."""
-        return 'Reference("{}")'.format(str(self))
+        return f'Reference("{self}")'
 
     def __len__(self) -> int:
         """Return the number of parts in the Reference."""
@@ -176,8 +176,7 @@ class Reference(yatiml.String):
             Each part in turn from left to right.
 
         """
-        for part in self._parts:
-            yield part
+        yield from self._parts
 
     @overload
     def __getitem__(self, key: int) -> ReferencePart: ...
@@ -295,20 +294,19 @@ class Reference(yatiml.String):
             elif text[cur_op] == '[':
                 close_bracket = text.find(']', cur_op)
                 if close_bracket == -1:
-                    raise ValueError('Missing closing bracket in Reference {}'
-                                     ''.format(text))
+                    raise ValueError(f"Missing closing bracket in Reference {text}")
                 try:
                     index = int(text[cur_op + 1:close_bracket])
                 except ValueError as exc:
-                    raise ValueError('Invalid index \'{}\' in {}, expected an'
-                                     ' int'.format(
-                                         text[cur_op + 1:close_bracket], text)
-                                     ) from exc
+                    raise ValueError(
+                        f"Invalid index '{text[cur_op + 1 : close_bracket]}' in "
+                        f"{text}, expected an int"
+                    ) from exc
                 parts.append(index)
                 cur_op = close_bracket + 1
             else:
-                raise ValueError('Invalid character \'{}\' encountered in'
-                                 ' Reference {}'.format(text[cur_op], text))
+                raise ValueError(f"Invalid character '{text[cur_op]}' encountered in"
+                                 f" Reference {text}")
         return parts
 
     @classmethod
@@ -328,7 +326,7 @@ class Reference(yatiml.String):
         text = str(parts[0])
         for part in parts[1:]:
             if isinstance(part, int):
-                text += '[{}]'.format(part)
+                text += f"[{part}]"
             else:
-                text += '.{}'.format(part)
+                text += f".{part}"
         return text

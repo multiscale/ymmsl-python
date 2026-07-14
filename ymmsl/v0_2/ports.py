@@ -1,7 +1,7 @@
 from collections import OrderedDict
-from typing import Any, cast, Iterator, List, Optional, overload, Sequence, Union
+from typing import Any, Iterator, List, Optional, Sequence, Union, cast, overload
 
-from ymmsl.v0_1.component import Operator   # also the v0.2 version, import from here
+from ymmsl.v0_1.component import Operator  # also the v0.2 version, import from here
 from ymmsl.v0_2.identity import Identifier, Reference
 
 
@@ -270,8 +270,7 @@ class Ports:
 
     def __iter__(self) -> Iterator[Identifier]:
         """Iterate through the ports' names."""
-        for port_name in self._ports:
-            yield port_name
+        yield from self._ports
 
     def sending_port_names(self) -> List[Identifier]:
         """Return the names of all the sending ports.
@@ -313,7 +312,7 @@ class Ports:
                 port_id = Identifier(name)
             except ValueError as e:
                 raise ValueError(
-                        f'Port name "{name}" is not a valid identifier. {e}')
+                        f'Port name "{name}" is not a valid identifier. {e}') from None
 
             self._ports[port_id] = Port(port_id, op, Timeline(timeline))
 

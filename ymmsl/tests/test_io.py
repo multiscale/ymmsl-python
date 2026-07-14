@@ -1,8 +1,8 @@
-import ymmsl
-from ymmsl import v0_2
+import pytest
 import yatiml
 
-import pytest
+import ymmsl
+from ymmsl import v0_2
 
 
 def test_invalid_version() -> None:

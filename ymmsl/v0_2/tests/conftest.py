@@ -3,11 +3,25 @@ from pathlib import Path
 import pytest
 
 from ymmsl.v0_2 import (
-        BaseEnv, Component, Conduit, Configuration, CheckpointRangeRule,
-        CheckpointAtRule, Checkpoints, KeepsStateForNextUse, ExecutionModel, Model,
-        MPICoresResReq, MPINodesResReq, Ports, Program, Reference, Settings,
-        SupportedSettings, ThreadedResReq)
-
+    BaseEnv,
+    CheckpointAtRule,
+    CheckpointRangeRule,
+    Checkpoints,
+    Component,
+    Conduit,
+    Configuration,
+    ExecutionModel,
+    KeepsStateForNextUse,
+    Model,
+    MPICoresResReq,
+    MPINodesResReq,
+    Ports,
+    Program,
+    Reference,
+    Settings,
+    SupportedSettings,
+    ThreadedResReq,
+)
 
 Ref = Reference
 

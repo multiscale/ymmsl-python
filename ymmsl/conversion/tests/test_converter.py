@@ -1,9 +1,8 @@
 import pytest
 
-from ymmsl.conversion.converter import convert_to
-
 import ymmsl.v0_1 as v0_1
 import ymmsl.v0_2 as v0_2
+from ymmsl.conversion.converter import convert_to
 
 
 def test_convert_to_no_change(full_config: v0_1.PartialConfiguration) -> None:

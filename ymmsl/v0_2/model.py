@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from copy import copy
 from enum import Enum
-from typing import Any, cast, List, Optional, Sequence, Union
+from typing import Any, List, Optional, Sequence, Union, cast
 
 import yatiml
 
@@ -115,7 +115,7 @@ class Conduit:
                     try:
                         self.filters.append(ConduitFilter(f))
                     except ValueError:
-                        raise RuntimeError(f'Invalid conduit filter "{f}"')
+                        raise RuntimeError(f'Invalid conduit filter "{f}"') from None
 
         self.__check_reference(self.sender)
         self.__check_reference(self.receiver)
