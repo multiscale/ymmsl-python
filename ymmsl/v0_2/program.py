@@ -1,4 +1,5 @@
 """Definitions for how to start programs."""
+
 from pathlib import Path
 from typing import Dict, List, Optional, Union, cast
 
@@ -62,24 +63,24 @@ class Program(Implementation):
         keeps_state_for_next_use: Does this program keep state for the next
             iteration of the reuse loop. See :class:`KeepsStateForNextUse`.
     """
+
     def __init__(
-            self,
-            name: str,
-            ports: Optional[Ports] = None,
-            description: str = '',
-            supported_settings: Optional[SupportedSettings] = None,
-            base_env: Optional[BaseEnv] = None,
-            modules: Union[str, List[str], None] = None,
-            virtual_env: Optional[Path] = None,
-            env: Optional[Dict[str, str]] = None,
-            execution_model: ExecutionModel = ExecutionModel.DIRECT,
-            executable: Optional[Path] = None,
-            args: Union[str, List[str], None] = None,
-            script: Union[str, List[str], None] = None,
-            can_share_resources: bool = True,
-            keeps_state_for_next_use: KeepsStateForNextUse
-            = KeepsStateForNextUse.NECESSARY
-            ) -> None:
+        self,
+        name: str,
+        ports: Optional[Ports] = None,
+        description: str = "",
+        supported_settings: Optional[SupportedSettings] = None,
+        base_env: Optional[BaseEnv] = None,
+        modules: Union[str, List[str], None] = None,
+        virtual_env: Optional[Path] = None,
+        env: Optional[Dict[str, str]] = None,
+        execution_model: ExecutionModel = ExecutionModel.DIRECT,
+        executable: Optional[Path] = None,
+        args: Union[str, List[str], None] = None,
+        script: Union[str, List[str], None] = None,
+        can_share_resources: bool = True,
+        keeps_state_for_next_use: KeepsStateForNextUse = KeepsStateForNextUse.NECESSARY,
+    ) -> None:
         """Create a Program description.
 
         A Program normally has an ``executable`` and any other needed arguments, with
@@ -127,22 +128,26 @@ class Program(Implementation):
                 err_arg.append('"args"')
             if err_arg:
                 raise RuntimeError(
-                        'When creating a Program, script was specified together with'
-                        f' arguments {", ".join(err_arg)}, which is not supported, as'
-                        ' they are supposed to be inside the script if there is one.'
-                        ' Please use either a script or the arguments listed above.')
+                    "When creating a Program, script was specified together with"
+                    f" arguments {', '.join(err_arg)}, which is not supported, as"
+                    " they are supposed to be inside the script if there is one."
+                    " Please use either a script or the arguments listed above."
+                )
 
         if (
-                executable is None and script is None and
-                execution_model != ExecutionModel.MANUAL):
+            executable is None
+            and script is None
+            and execution_model != ExecutionModel.MANUAL
+        ):
             raise RuntimeError(
-                    f'In {name}, neither a script nor an executable was given. Please'
-                    ' specify either a script, or the other parameters.')
+                f"In {name}, neither a script nor an executable was given. Please"
+                " specify either a script, or the other parameters."
+            )
 
         self.base_env = base_env if base_env else BaseEnv.MANAGER
 
         if isinstance(modules, str):
-            self.modules: Optional[List[str]] = modules.split(' ')
+            self.modules: Optional[List[str]] = modules.split(" ")
         else:
             self.modules = modules
 
@@ -161,7 +166,7 @@ class Program(Implementation):
             self.args = args
 
         if isinstance(script, list):
-            self.script: Optional[str] = '\n'.join(script) + '\n'
+            self.script: Optional[str] = "\n".join(script) + "\n"
         else:
             self.script = script
 
@@ -176,35 +181,36 @@ class Program(Implementation):
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        if node.has_attribute('env'):
-            env_node = node.get_attribute('env')
+        if node.has_attribute("env"):
+            env_node = node.get_attribute("env")
             if env_node.is_mapping():
                 for _, value_node in env_node.yaml_node.value:
                     if isinstance(value_node, yaml.ScalarNode):
-                        if value_node.tag == 'tag:yaml.org,2002:int':
-                            value_node.tag = 'tag:yaml.org,2002:str'
-                        if value_node.tag == 'tag:yaml.org,2002:float':
-                            value_node.tag = 'tag:yaml.org,2002:str'
-                        if value_node.tag == 'tag:yaml.org,2002:bool':
-                            value_node.tag = 'tag:yaml.org,2002:str'
+                        if value_node.tag == "tag:yaml.org,2002:int":
+                            value_node.tag = "tag:yaml.org,2002:str"
+                        if value_node.tag == "tag:yaml.org,2002:float":
+                            value_node.tag = "tag:yaml.org,2002:str"
+                        if value_node.tag == "tag:yaml.org,2002:bool":
+                            value_node.tag = "tag:yaml.org,2002:str"
 
     _yatiml_defaults = {
-        'base_env': 'manager',
-        'execution_model': 'direct',
-        'keeps_state_for_next_use': 'necessary'}
+        "base_env": "manager",
+        "execution_model": "direct",
+        "keeps_state_for_next_use": "necessary",
+    }
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        if node.has_attribute('script'):
-            script_node = node.get_attribute('script')
+        if node.has_attribute("script"):
+            script_node = node.get_attribute("script")
             if script_node.is_scalar(str):
                 text = cast(str, script_node.get_value())
-                if '\n' in text:
-                    cast(yaml.ScalarNode, script_node.yaml_node).style = '|'
+                if "\n" in text:
+                    cast(yaml.ScalarNode, script_node.yaml_node).style = "|"
 
         node.remove_attributes_with_default_values(cls)
-        if node.has_attribute('env'):
-            env_attr = node.get_attribute('env')
+        if node.has_attribute("env"):
+            env_attr = node.get_attribute("env")
             if env_attr.is_mapping():
                 if env_attr.is_empty():
-                    node.remove_attribute('env')
+                    node.remove_attribute("env")

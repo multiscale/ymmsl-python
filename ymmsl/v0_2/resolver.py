@@ -37,10 +37,11 @@ class ResolutionContext:
     generate descriptive error messages. It also contains a pre-parsed version of the
     ymmsl search path for convenience.
     """
+
     def __init__(self) -> None:
         """Create a ResolutionContext."""
-        if 'YMMSL_PATH' in os.environ:
-            self.ymmsl_path = list(map(Path, os.environ['YMMSL_PATH'].split(':')))
+        if "YMMSL_PATH" in os.environ:
+            self.ymmsl_path = list(map(Path, os.environ["YMMSL_PATH"].split(":")))
         else:
             self.ymmsl_path = list()
 
@@ -76,20 +77,21 @@ class ResolutionContext:
                 imp_mod = self._imports[i].module
                 imp_name = self._imports[i].name
                 result.append(
-                        f'While importing {imp_name} from {imp_mod} in {file_path}:')
+                    f"While importing {imp_name} from {imp_mod} in {file_path}:"
+                )
             else:
-                result.append(f'In {file_path}:')
+                result.append(f"In {file_path}:")
 
-        return '\n'.join(result) + '\n'
+        return "\n".join(result) + "\n"
 
     def search_paths(self, rel_path: Path, indent_depth: int) -> str:
         """Return a description of the search path.
 
         Returns a multiline string indented by indent_depth spaces.
         """
-        return '\n'.join([
-                ' ' * indent_depth + f'{p / rel_path}'
-                for p in self.ymmsl_path])
+        return "\n".join(
+            [" " * indent_depth + f"{p / rel_path}" for p in self.ymmsl_path]
+        )
 
 
 def resolve(module: Reference, config: Configuration) -> None:
@@ -108,13 +110,13 @@ def resolve(module: Reference, config: Configuration) -> None:
         RuntimeError: if an error occurs due to an invalid configuration. This will
             leave config in a broken state, so reload it if you want to try again.
     """
-    overwritten = do_resolve(Path('<main>'), module, config, ResolutionContext())
+    overwritten = do_resolve(Path("<main>"), module, config, ResolutionContext())
     remove_overwritten_implementations(config, overwritten)
 
 
 def do_resolve(
-        file: ModuleSource, module: Reference, config: Configuration,
-        ctx: ResolutionContext) -> Set[Reference]:
+    file: ModuleSource, module: Reference, config: Configuration, ctx: ResolutionContext
+) -> Set[Reference]:
     """Implementation of resolve().
 
     This is separate so we don't keep parsing YMMSL_PATH over and over again. When we
@@ -126,17 +128,17 @@ def do_resolve(
         module: The module corresponding to this configuration
         config: The configuration to resolve
     """
-    _logger.debug(f'Resolving {module}')
+    _logger.debug(f"Resolving {module}")
     ctx.push_module(file, module)
     overwritten_implementations = resolve_impls(module, config, ctx)
     ctx.pop_module()
-    _logger.debug(f'Done resolving {module}')
+    _logger.debug(f"Done resolving {module}")
     return overwritten_implementations
 
 
 def resolve_impls(
-        module: Reference, config: Configuration, ctx: ResolutionContext
-        ) -> Set[Reference]:
+    module: Reference, config: Configuration, ctx: ResolutionContext
+) -> Set[Reference]:
     """Resolve implementations.
 
     This resolves imports of implementations and then applies any local custom
@@ -159,12 +161,14 @@ def resolve_impls(
     return overwritten_impls
 
 
-T = TypeVar('T', bound='Implementation')
+T = TypeVar("T", bound="Implementation")
 
 
 def rename_local_impls(
-        impls: MutableMapping[Reference, T], module: Reference,
-        ylocals: Dict[Reference, Reference]) -> None:
+    impls: MutableMapping[Reference, T],
+    module: Reference,
+    ylocals: Dict[Reference, Reference],
+) -> None:
     """Rename local implementations to their full name.
 
     Update the given dict of implementations, changing names from p, q and r to a.b.c.p,
@@ -183,8 +187,8 @@ def rename_local_impls(
 
 
 def resolve_impl_imports(
-        config: Configuration, ylocals: Dict[Reference, Reference],
-        ctx: ResolutionContext) -> None:
+    config: Configuration, ylocals: Dict[Reference, Reference], ctx: ResolutionContext
+) -> None:
     """Resolve any imports of implementations.
 
     This takes all import statements in config that import implementations, loads the
@@ -194,10 +198,11 @@ def resolve_impl_imports(
     """
     for imp_st in config.imports:
         ctx.push_import(imp_st)
-        _logger.debug(f'Processing import {imp_st.module} implementation {imp_st.name}')
+        _logger.debug(f"Processing import {imp_st.module} implementation {imp_st.name}")
         if imp_st.kind == ImportKind.IMPLEMENTATION:
             imp_cfg, loaded_file = load_resolve_module(
-                    imp_st.module, imp_st.module_path(), ctx)
+                imp_st.module, imp_st.module_path(), ctx
+            )
 
             ctx.push_module(loaded_file, imp_st.module)
 
@@ -210,21 +215,24 @@ def resolve_impl_imports(
 
             if imp_st.name in ylocals:
                 msg = ctx.trace()
-                msg += f'    Implementation {imp_st.name} is both defined and'
-                msg += ' imported. Please remove\n'
-                msg += '    or rename one of the definitions to avoid ambiguity.'
+                msg += f"    Implementation {imp_st.name} is both defined and"
+                msg += " imported. Please remove\n"
+                msg += "    or rename one of the definitions to avoid ambiguity."
                 raise RuntimeError(msg)
 
             ylocals[Reference([imp_st.name])] = imp_st.full_name()
-            _logger.debug(f'Imported {imp_st.full_name()} as {imp_st.name}')
+            _logger.debug(f"Imported {imp_st.full_name()} as {imp_st.name}")
             ctx.pop_module()
 
         ctx.pop_import()
 
 
 def apply_custom_implementations(
-        config: Configuration, module: Reference, ylocals: Dict[Reference, Reference],
-        ctx: ResolutionContext) -> Set[Reference]:
+    config: Configuration,
+    module: Reference,
+    ylocals: Dict[Reference, Reference],
+    ctx: ResolutionContext,
+) -> Set[Reference]:
     """Applies custom implementations and removes them.
 
     Custom implementations are keyed by the model plus full component path, and map to
@@ -237,19 +245,21 @@ def apply_custom_implementations(
         module: Name of the module it is in
         ylocals: Map from local to global names
     """
+
     def impl_hint_msg(
-            unknown: Reference, known_impls: Optional[List[str]] = None) -> str:
+        unknown: Reference, known_impls: Optional[List[str]] = None
+    ) -> str:
         if known_impls is None:
             known_impls = [str(k) for k in ylocals.keys()]
         matches = get_close_matches(str(unknown), known_impls)
         if len(matches) == 1:
-            msg = f'Did you mean {matches[0]}?\n'
+            msg = f"Did you mean {matches[0]}?\n"
         elif len(matches) > 1:
-            msg = 'Did you mean any of these?\n'
-            msg += indent('- ' + '\n- '.join(matches), 8 * ' ')
+            msg = "Did you mean any of these?\n"
+            msg += indent("- " + "\n- ".join(matches), 8 * " ")
         else:
-            msg = 'Possible values are:\n'
-            msg += indent('- ' + '\n- '.join(known_impls), 8 * ' ')
+            msg = "Possible values are:\n"
+            msg += indent("- " + "\n- ".join(known_impls), 8 * " ")
         return msg
 
     overwritten_implementations = set()
@@ -263,10 +273,13 @@ def apply_custom_implementations(
             seen.add(impl)
             overwritten_implementations.add(impl)
             if impl in config.models:
-                queue.extend([
-                    c.implementation
-                    for c in config.models[impl].components.values()
-                    if c.implementation is not None and c.implementation not in seen])
+                queue.extend(
+                    [
+                        c.implementation
+                        for c in config.models[impl].components.values()
+                        if c.implementation is not None and c.implementation not in seen
+                    ]
+                )
 
     # Pre-copy any models that will be updated, if they were imported and we therefore
     # cannot modify them in place without interfering with other uses of the same model.
@@ -274,15 +287,17 @@ def apply_custom_implementations(
         base_model_name = Reference([key[0]])
         if ylocals.get(base_model_name) not in config.models:
             raise RuntimeError(
-                    ctx.trace() +
-                    f'    Unknown model "{base_model_name}" in custom_implementations'
-                    f' "{key}: {value}". {impl_hint_msg(base_model_name)}')
+                ctx.trace()
+                + f'    Unknown model "{base_model_name}" in custom_implementations'
+                f' "{key}: {value}". {impl_hint_msg(base_model_name)}'
+            )
 
         if value is not None and value not in ylocals:
             raise RuntimeError(
-                    ctx.trace() +
-                    f'    Unknown implementation "{value}" in custom_implementations'
-                    f' "{key}: {value}". {impl_hint_msg(value)}')
+                ctx.trace()
+                + f'    Unknown implementation "{value}" in custom_implementations'
+                f' "{key}: {value}". {impl_hint_msg(value)}'
+            )
 
         # Before modifying it, we copy the model from its original a.b.c.Model to
         # <module>.Model so that the changes don't affect other uses of it, or the
@@ -305,7 +320,8 @@ def apply_custom_implementations(
         new_impl = ylocals[value] if value is not None else None
 
         _logger.debug(
-                f'Processing custom implementation {base_model_name} {path} {new_impl}')
+            f"Processing custom implementation {base_model_name} {path} {new_impl}"
+        )
         m = config.models[ylocals[base_model_name]]
 
         # Now we can walk down the components and copy-and-rename the models along the
@@ -313,65 +329,69 @@ def apply_custom_implementations(
         for i, c in enumerate(path[:-1]):
             if not isinstance(c, Identifier):
                 raise RuntimeError(
-                        ctx.trace() +
-                        f'    Invalid path in custom_implementations "{key}". Only'
-                        ' component names are allowed here.')
+                    ctx.trace()
+                    + f'    Invalid path in custom_implementations "{key}". Only'
+                    " component names are allowed here."
+                )
             component = Reference([c])
             if component not in m.components:
                 raise RuntimeError(
-                        ctx.trace() +
-                        f'    In custom_implementations {key}: {value}:'
-                        f' {base_model_name + path[:i]} is implemented by {m.name},'
-                        f' which does not have a component named {str(component)}.')
+                    ctx.trace() + f"    In custom_implementations {key}: {value}:"
+                    f" {base_model_name + path[:i]} is implemented by {m.name},"
+                    f" which does not have a component named {str(component)}."
+                )
 
             orig_impl = m.components[component].implementation
             if orig_impl in ylocals:
                 orig_impl = ylocals[orig_impl]
             if orig_impl is None or orig_impl not in config.models:
                 raise RuntimeError(
-                        ctx.trace() +
-                        f'    In custom_implementations "{key}: {value}":'
-                        f' {base_model_name + path[:i+1]} has implementation'
-                        f' {orig_impl}, which does not have a component named'
-                        f' {path[i+1]} in it.')
+                    ctx.trace() + f'    In custom_implementations "{key}: {value}":'
+                    f" {base_model_name + path[: i + 1]} has implementation"
+                    f" {orig_impl}, which does not have a component named"
+                    f" {path[i + 1]} in it."
+                )
 
-            if (base_model_name + path[:i+1]) not in copied_paths:
-                new_name = module + Identifier((
-                        str(orig_impl) + '__customised_for__' +
-                        str(ylocals[base_model_name] + path[:i+1])
-                        ).replace('.', '_'))
+            if (base_model_name + path[: i + 1]) not in copied_paths:
+                new_name = module + Identifier(
+                    (
+                        str(orig_impl)
+                        + "__customised_for__"
+                        + str(ylocals[base_model_name] + path[: i + 1])
+                    ).replace(".", "_")
+                )
                 new_submodel = copy(config.models[orig_impl])
                 new_submodel.components = copy(new_submodel.components)
                 new_submodel.name = new_name
                 config.models[new_name] = new_submodel
                 m.components[component] = copy(m.components[component])
                 m.components[component].implementation = new_name
-                _logger.debug(f'Set {new_name} as impl of {m.name} {component}')
+                _logger.debug(f"Set {new_name} as impl of {m.name} {component}")
                 set_overwritten(config, orig_impl)
                 m = new_submodel
-                copied_paths.add(base_model_name + path[:i+1])
+                copied_paths.add(base_model_name + path[: i + 1])
             else:
                 m = config.models[orig_impl]
 
         if not isinstance(path[-1], Identifier):
             raise RuntimeError(
-                    ctx.trace() +
-                    f'    In custom_implementations "{key}: {value}":'
-                    f' [i] instance selectors are invalid in custom_implementations.')
+                ctx.trace() + f'    In custom_implementations "{key}: {value}":'
+                f" [i] instance selectors are invalid in custom_implementations."
+            )
 
         if path[-1] not in m.components:
             raise RuntimeError(
-                    ctx.trace() +
-                    f'    In custom_implementations "{key}: {value}":'
-                    f' {base_model_name + path[:-1]} is implemented by {m.name}, which'
-                    f' does not have a component named {path[-1]}. ' +
-                    impl_hint_msg(
-                        Reference([path[-1]]), [str(k) for k in m.components.keys()])
-                    )
+                ctx.trace() + f'    In custom_implementations "{key}: {value}":'
+                f" {base_model_name + path[:-1]} is implemented by {m.name}, which"
+                f" does not have a component named {path[-1]}. "
+                + impl_hint_msg(
+                    Reference([path[-1]]), [str(k) for k in m.components.keys()]
+                )
+            )
 
         component = Reference([path[-1]])
         new_component = copy(m.components[component])
-        _logger.debug(f'In {m.name} replacing {component} with {new_impl}')
+        _logger.debug(f"In {m.name} replacing {component} with {new_impl}")
         if new_component.implementation is not None:
             if new_component.implementation in config.models:
                 set_overwritten(config, new_component.implementation)
@@ -384,11 +404,12 @@ def apply_custom_implementations(
 
 
 def update_local_implementations(
-        config: Configuration, ylocals: Dict[Reference, Reference]) -> None:
+    config: Configuration, ylocals: Dict[Reference, Reference]
+) -> None:
     """Updates names of local implementations to their full names."""
-    _logger.debug('Updating local implementations')
+    _logger.debug("Updating local implementations")
     for model in config.models.values():
-        _logger.debug(f'Updating impls in model {model.name}')
+        _logger.debug(f"Updating impls in model {model.name}")
         for cmp in model.components.values():
             if cmp.implementation:
                 if cmp.implementation in ylocals:
@@ -397,7 +418,8 @@ def update_local_implementations(
 
 
 def remove_overwritten_implementations(
-        config: Configuration, overwritten: Set[Reference]) -> None:
+    config: Configuration, overwritten: Set[Reference]
+) -> None:
     """Remove implementations that are no longer needed.
 
     This can happen when a custom_implementation overwrites the implementation of a
@@ -410,8 +432,8 @@ def remove_overwritten_implementations(
             reference to a different implementation.
     """
     referred_to = {
-            c.implementation for m in config.models.values()
-            for c in m.components.values()}
+        c.implementation for m in config.models.values() for c in m.components.values()
+    }
 
     roots = set(config.models.keys()) - referred_to - overwritten
     used = set()
@@ -422,13 +444,15 @@ def remove_overwritten_implementations(
         seen.add(cur_impl)
         used.add(cur_impl)
         if cur_impl in config.models:
-            queue.extend([
-                c.implementation
-                for c in config.models[cur_impl].components.values()
-                if c.implementation is not None
+            queue.extend(
+                [
+                    c.implementation
+                    for c in config.models[cur_impl].components.values()
+                    if c.implementation is not None
                     and c.implementation not in seen
                     and c.implementation in config.models
-                    ])
+                ]
+            )
 
     for m in list(config.models.keys()):
         if m in overwritten and m not in used:
@@ -436,8 +460,8 @@ def remove_overwritten_implementations(
 
 
 def find_impls(
-        config: Configuration, name: Reference, ctx: ResolutionContext
-        ) -> List[Implementation]:
+    config: Configuration, name: Reference, ctx: ResolutionContext
+) -> List[Implementation]:
     """Find and return an implementation and its dependencies.
 
     This searches config for the implementation with the given name, and returns it and
@@ -459,8 +483,8 @@ def find_impls(
 
 
 def find_impl(
-        config: Configuration, name: Reference, ctx: ResolutionContext
-        ) -> Implementation:
+    config: Configuration, name: Reference, ctx: ResolutionContext
+) -> Implementation:
     """Find a model or program in a configuration."""
     if name in config.programs:
         return config.programs[name]
@@ -468,20 +492,21 @@ def find_impl(
         return config.models[name]
     else:
         impls = [
-                str(k[-1])
-                for k in list(config.models.keys()) + list(config.programs.keys())]
+            str(k[-1])
+            for k in list(config.models.keys()) + list(config.programs.keys())
+        ]
         matches = get_close_matches(str(name[-1]), impls)
         msg = ctx.trace()
-        msg += f'    Implementation {name[-1]} not found.'
+        msg += f"    Implementation {name[-1]} not found."
         if matches:
             if len(matches) == 1:
-                msg += f' Did you mean {matches[0]}?\n'
+                msg += f" Did you mean {matches[0]}?\n"
             else:
-                msg += ' Did you mean any of these?\n'
-                msg += indent('- ' + '\n- '.join(matches), 8 * ' ')
+                msg += " Did you mean any of these?\n"
+                msg += indent("- " + "\n- ".join(matches), 8 * " ")
         else:
-            msg += ' Available implementations in this module:\n'
-            msg += indent('- ' + '\n- '.join(impls), 8 * ' ')
+            msg += " Available implementations in this module:\n"
+            msg += indent("- " + "\n- ".join(impls), 8 * " ")
 
         raise RuntimeError(msg)
 
@@ -490,7 +515,8 @@ ymmsl_cache: Dict[Path, Tuple[Configuration, ModuleSource]] = dict()
 
 
 def _load_from_entrypoints(
-        module: Reference) -> Optional[Tuple[Configuration, EntryPoint]]:
+    module: Reference,
+) -> Optional[Tuple[Configuration, EntryPoint]]:
     # Find entry point
     entrypoints = entry_points(group="ymmsl.module", name=str(module))
     if not entrypoints:
@@ -503,7 +529,7 @@ def _load_from_entrypoints(
             ", ".join(
                 f"'{ep.value}' (from {ep.dist.name if ep.dist else '<unknown>'})"
                 for ep in entrypoints
-            )
+            ),
         )
     entrypoint = next(iter(entrypoints))
 
@@ -523,8 +549,8 @@ def _load_from_entrypoints(
 
 
 def _load_from_ymmsl_path(
-        module_path: Path, ymmsl_path: list[Path]
-        ) -> Optional[Tuple[Configuration, Path]]:
+    module_path: Path, ymmsl_path: list[Path]
+) -> Optional[Tuple[Configuration, Path]]:
     for yp in ymmsl_path:
         try:
             loaded_file = yp / module_path
@@ -536,8 +562,8 @@ def _load_from_ymmsl_path(
 
 
 def load_resolve_module(
-        module: Reference, module_path: Path, ctx: ResolutionContext
-        ) -> Tuple[Configuration, ModuleSource]:
+    module: Reference, module_path: Path, ctx: ResolutionContext
+) -> Tuple[Configuration, ModuleSource]:
     """Load and resolve an imported ymmsl file.
 
     Caches the result, without functools.lru_cache because ctx shouldn't hash.
@@ -551,19 +577,19 @@ def load_resolve_module(
     if module_path not in ymmsl_cache:
         # TODO: relative to working directory?
         try:
-            config_and_loaded_file = (
-                _load_from_entrypoints(module)
-                or _load_from_ymmsl_path(module_path, ctx.ymmsl_path)
-            )
+            config_and_loaded_file = _load_from_entrypoints(
+                module
+            ) or _load_from_ymmsl_path(module_path, ctx.ymmsl_path)
             if config_and_loaded_file is None:
                 msg = ctx.trace()
-                msg += f'    Failed to find a file {module_path} for module {module}.\n'
-                msg += '    Based on the YMMSL_PATH environment variable and Python'
-                msg += ' entry points. I\'ve searched at:\n'
+                msg += f"    Failed to find a file {module_path} for module {module}.\n"
+                msg += "    Based on the YMMSL_PATH environment variable and Python"
+                msg += " entry points. I've searched at:\n"
                 msg += ctx.search_paths(module_path, 8)
-                msg += '\n    and in entry points:\n'
-                msg += '\n'.join(
-                    8*' ' + ep.name for ep in entry_points(group="ymmsl.module"))
+                msg += "\n    and in entry points:\n"
+                msg += "\n".join(
+                    8 * " " + ep.name for ep in entry_points(group="ymmsl.module")
+                )
                 raise RuntimeError(msg)
 
             config, loaded_file = config_and_loaded_file
@@ -572,7 +598,7 @@ def load_resolve_module(
 
         except RecognitionError as e:
             msg = ctx.trace()
-            msg += indent(str(e), ' ' * 4)
+            msg += indent(str(e), " " * 4)
             raise RuntimeError(msg) from None
 
     return ymmsl_cache[module_path]

@@ -34,10 +34,12 @@ class CheckpointRangeRule(CheckpointRule):
         every: Step size of the range, must be positive.
     """
 
-    def __init__(self,
-                 start: Optional[Union[float, int]] = None,
-                 stop: Optional[Union[float, int]] = None,
-                 every: Union[float, int] = 0) -> None:
+    def __init__(
+        self,
+        start: Optional[Union[float, int]] = None,
+        stop: Optional[Union[float, int]] = None,
+        every: Union[float, int] = 0,
+    ) -> None:
         """Create a checkpoint range.
 
         Args:
@@ -46,19 +48,22 @@ class CheckpointRangeRule(CheckpointRule):
             every: Step size, must be larger than 0.
         """
         if every <= 0:
-            raise ValueError(f"Invalid every {every} in checkpoint range:"
-                             " must be larger than 0.")
+            raise ValueError(
+                f"Invalid every {every} in checkpoint range: must be larger than 0."
+            )
         if start is not None and stop is not None and start > stop:
-            raise ValueError(f"Invalid start {start} and stop {stop} in"
-                             "checkpoint range: stop cannot be smaller than"
-                             " start.")
+            raise ValueError(
+                f"Invalid start {start} and stop {stop} in"
+                "checkpoint range: stop cannot be smaller than"
+                " start."
+            )
         self.start = start
         self.stop = stop
         self.every = every
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
-        node.require_attribute('every')
+        node.require_attribute("every")
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
@@ -91,20 +96,21 @@ class CheckpointAtRule(CheckpointRule):
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
-        node.require_attribute('at')
+        node.require_attribute("at")
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        if node.has_attribute('at'):
-            if (node.has_attribute_type('at', int) or
-                    node.has_attribute_type('at', float)):
-                attr = node.get_attribute('at')
+        if node.has_attribute("at"):
+            if node.has_attribute_type("at", int) or node.has_attribute_type(
+                "at", float
+            ):
+                attr = node.get_attribute("at")
                 start_mark = attr.yaml_node.start_mark
                 end_mark = attr.yaml_node.end_mark
                 new_seq = yaml.nodes.SequenceNode(
-                        'tag:yaml.org,2002:seq', [attr.yaml_node], start_mark,
-                        end_mark)
-                node.set_attribute('at', new_seq)
+                    "tag:yaml.org,2002:seq", [attr.yaml_node], start_mark, end_mark
+                )
+                node.set_attribute("at", new_seq)
 
 
 class Checkpoints:
@@ -126,11 +132,13 @@ class Checkpoints:
         wallclock_time: Checkpoint rules for the wallclock_time trigger.
         simulation_time: Checkpoint rules for the simulation_time trigger.
     """
-    def __init__(self,
-                 at_end: bool = False,
-                 wallclock_time: Optional[List[CheckpointRule]] = None,
-                 simulation_time: Optional[List[CheckpointRule]] = None
-                 ) -> None:
+
+    def __init__(
+        self,
+        at_end: bool = False,
+        wallclock_time: Optional[List[CheckpointRule]] = None,
+        simulation_time: Optional[List[CheckpointRule]] = None,
+    ) -> None:
         """Create checkpoint definitions.
 
         Args:
@@ -147,11 +155,9 @@ class Checkpoints:
 
     def __bool__(self) -> bool:
         """Evaluate to true iff any rules are defined."""
-        return (self.at_end or
-                bool(self.wallclock_time) or
-                bool(self.simulation_time))
+        return self.at_end or bool(self.wallclock_time) or bool(self.simulation_time)
 
-    def update(self, overlay: 'Checkpoints') -> None:
+    def update(self, overlay: "Checkpoints") -> None:
         """Update this checkpoints with the given overlay.
 
         Sets `at_end` to True if it is set in the overlay, otherwise `at_end`
@@ -169,10 +175,12 @@ class Checkpoints:
 
         wallclock_time = node.get_attribute("wallclock_time")
         if wallclock_time.is_scalar(type(None)) or (
-                wallclock_time.is_sequence() and wallclock_time.is_empty()):
+            wallclock_time.is_sequence() and wallclock_time.is_empty()
+        ):
             node.remove_attribute("wallclock_time")
 
         simulation_time = node.get_attribute("simulation_time")
         if simulation_time.is_scalar(type(None)) or (
-                simulation_time.is_sequence() and simulation_time.is_empty()):
+            simulation_time.is_sequence() and simulation_time.is_empty()
+        ):
             node.remove_attribute("simulation_time")

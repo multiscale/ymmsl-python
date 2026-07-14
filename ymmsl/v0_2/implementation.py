@@ -21,10 +21,14 @@ class Implementation:
         name: Name of this implementation, must be a valid Reference
         ports: The ports this implementation has on which it sends and receives messages
     """
+
     def __init__(
-            self, name: str, ports: Optional[Ports] = None,
-            description: str = 'Please add a description!',
-            supported_settings: Optional[SupportedSettings] = None) -> None:
+        self,
+        name: str,
+        ports: Optional[Ports] = None,
+        description: str = "Please add a description!",
+        supported_settings: Optional[SupportedSettings] = None,
+    ) -> None:
         """Create an Implementation
 
         Args:
@@ -49,18 +53,18 @@ class Implementation:
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        if len(node.get_attribute('ports').yaml_node.value) == 0:
-            node.remove_attribute('ports')
+        if len(node.get_attribute("ports").yaml_node.value) == 0:
+            node.remove_attribute("ports")
 
-        descr = node.get_attribute('description')
+        descr = node.get_attribute("description")
         if descr.is_scalar(str):
             # output in block style
             ynode = cast(yaml.ScalarNode, descr.yaml_node)
-            ynode.style = '|'
+            ynode.style = "|"
             # ensure PyYAML actually uses block style
             ynode.value = remove_trailing_whitespace(ynode.value)
 
-        if len(node.get_attribute('supported_settings').yaml_node.value) == 0:
-            node.remove_attribute('supported_settings')
+        if len(node.get_attribute("supported_settings").yaml_node.value) == 0:
+            node.remove_attribute("supported_settings")
 
         node.remove_attributes_with_default_values(cls)

@@ -8,6 +8,7 @@ from ymmsl.v0_1.execution import BaseEnv, KeepsStateForNextUse  # noqa: F401
 
 class ExecutionModel(Enum):
     """Describes how to start a model component."""
+
     DIRECT = 1
     """Start directly on the allocated core(s), without MPI."""
     OPENMPI = 2

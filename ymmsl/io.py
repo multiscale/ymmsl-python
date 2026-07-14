@@ -1,4 +1,5 @@
 """Loading and saving functions."""
+
 from pathlib import Path
 from typing import IO, Any, Type, TypeVar, Union
 
@@ -13,22 +14,61 @@ from ymmsl.v0_1.model import MulticastConduit as v0_1_MulticastConduit
 from ymmsl.v0_2.model import MulticastConduit as v0_2_MulticastConduit
 
 _classes = (
-        Document,
-        v0_1.BaseEnv, v0_1.CheckpointRangeRule, v0_1.CheckpointAtRule,
-        v0_1.CheckpointRule, v0_1.Checkpoints, v0_1.Component, v0_1.Conduit,
-        v0_1.Configuration, v0_1_Document, v0_1.ExecutionModel, v0_1.Identifier,
-        v0_1.Implementation, v0_1.KeepsStateForNextUse, v0_1.Model, v0_1.ModelReference,
-        v0_1.MPICoresResReq, v0_1.MPINodesResReq, v0_1.PartialConfiguration, v0_1.Ports,
-        v0_1.Reference, v0_1.ResourceRequirements, v0_1.Settings, v0_1.ThreadedResReq,
-        v0_1_MulticastConduit,
-        v0_2.BaseEnv, v0_2.CheckpointRangeRule, v0_2.CheckpointAtRule,
-        v0_2.CheckpointRule, v0_2.Checkpoints, v0_2.Component, v0_2.Conduit,
-        v0_2.ConduitFilter, v0_2.Configuration, v0_2.Document, v0_2.ExecutionModel,
-        v0_2.Identifier, v0_2.Implementation, v0_2.ImportKind, v0_2.ImportStatement,
-        v0_2.KeepsStateForNextUse, v0_2.Model, v0_2.MPICoresResReq, v0_2.MPINodesResReq,
-        v0_2_MulticastConduit, v0_2.Ports, v0_2.Program, v0_2.Reference,
-        v0_2.ResourceRequirements, v0_2.SettingType, v0_2.Settings,
-        v0_2.SupportedSetting, v0_2.SupportedSettings, v0_2.ThreadedResReq)
+    Document,
+    v0_1.BaseEnv,
+    v0_1.CheckpointRangeRule,
+    v0_1.CheckpointAtRule,
+    v0_1.CheckpointRule,
+    v0_1.Checkpoints,
+    v0_1.Component,
+    v0_1.Conduit,
+    v0_1.Configuration,
+    v0_1_Document,
+    v0_1.ExecutionModel,
+    v0_1.Identifier,
+    v0_1.Implementation,
+    v0_1.KeepsStateForNextUse,
+    v0_1.Model,
+    v0_1.ModelReference,
+    v0_1.MPICoresResReq,
+    v0_1.MPINodesResReq,
+    v0_1.PartialConfiguration,
+    v0_1.Ports,
+    v0_1.Reference,
+    v0_1.ResourceRequirements,
+    v0_1.Settings,
+    v0_1.ThreadedResReq,
+    v0_1_MulticastConduit,
+    v0_2.BaseEnv,
+    v0_2.CheckpointRangeRule,
+    v0_2.CheckpointAtRule,
+    v0_2.CheckpointRule,
+    v0_2.Checkpoints,
+    v0_2.Component,
+    v0_2.Conduit,
+    v0_2.ConduitFilter,
+    v0_2.Configuration,
+    v0_2.Document,
+    v0_2.ExecutionModel,
+    v0_2.Identifier,
+    v0_2.Implementation,
+    v0_2.ImportKind,
+    v0_2.ImportStatement,
+    v0_2.KeepsStateForNextUse,
+    v0_2.Model,
+    v0_2.MPICoresResReq,
+    v0_2.MPINodesResReq,
+    v0_2_MulticastConduit,
+    v0_2.Ports,
+    v0_2.Program,
+    v0_2.Reference,
+    v0_2.ResourceRequirements,
+    v0_2.SettingType,
+    v0_2.Settings,
+    v0_2.SupportedSetting,
+    v0_2.SupportedSettings,
+    v0_2.ThreadedResReq,
+)
 
 
 _load = yatiml.load_function(*_classes)  # type: ignore
@@ -51,7 +91,7 @@ def load(source: Union[str, Path, IO[Any]]) -> Document:
     return _load(source)
 
 
-T = TypeVar('T', bound=Document)
+T = TypeVar("T", bound=Document)
 
 
 def load_as(as_type: Type[T], source: Union[str, Path, IO[Any]]) -> T:
@@ -105,9 +145,7 @@ def dump(config: Document) -> str:
 _save = yatiml.dump_function(*_classes)
 
 
-def save(
-        config: Document, target: Union[str, Path, IO[Any]]
-        ) -> None:
+def save(config: Document, target: Union[str, Path, IO[Any]]) -> None:
     """Saves a yMMSL configuration to a file.
 
     The `config` argument should be either a v0_1.PartialConfiguration, a

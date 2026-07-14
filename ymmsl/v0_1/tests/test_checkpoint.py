@@ -54,7 +54,8 @@ def test_checkpoints() -> None:
 
 def test_checkpointrules_update() -> None:
     load = yatiml.load_function(
-            Checkpoints, CheckpointRangeRule, CheckpointAtRule, CheckpointRule)
+        Checkpoints, CheckpointRangeRule, CheckpointAtRule, CheckpointRule
+    )
     rule1 = load("simulation_time: [{every: 300}]")
     rule2 = load("wallclock_time: [{at: [10, 20]}]")
     rule3 = load("wallclock_time: [{at: [15, 5]}]")

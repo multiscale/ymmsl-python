@@ -36,39 +36,43 @@ class Timeline:
     Timelines have a technical representation as a list of References, and a string
     representation in which those References are joined using colons.
     """
+
     @overload
     def __init__(self, timeline: str) -> None: ...
 
     @overload
     def __init__(
-            self, timeline: Sequence[Union[str, Reference]], absolute: bool = True
-            ) -> None: ...
+        self, timeline: Sequence[Union[str, Reference]], absolute: bool = True
+    ) -> None: ...
 
     def __init__(
-            self, timeline: Union[str, Sequence[Union[str, Reference]]],
-            absolute: bool = True) -> None:
+        self,
+        timeline: Union[str, Sequence[Union[str, Reference]]],
+        absolute: bool = True,
+    ) -> None:
         """Create a Timeline.
 
         The argument is either a string describing the timeline, or a list of components
         that are each a string that is also a valid Reference.
         """
+
         def make_new_reference(x: Union[str, Reference]) -> Reference:
             return Reference(str(x))
 
         if isinstance(timeline, str):
-            if timeline == '':
+            if timeline == "":
                 self.absolute = False
                 parts: Sequence[Union[str, Reference]] = []
-            elif timeline == ':':
+            elif timeline == ":":
                 self.absolute = True
                 parts = []
             else:
                 self.absolute = False
-                if timeline[0] == ':':
+                if timeline[0] == ":":
                     self.absolute = True
                     timeline = timeline[1:]
 
-                parts = timeline.split(':')
+                parts = timeline.split(":")
 
             self._parts = list(map(make_new_reference, parts))
 
@@ -90,12 +94,12 @@ class Timeline:
 
     def __str__(self) -> str:
         """Return the string representation of this Timeline."""
-        anchor = ':' if self.absolute else ''
-        return anchor + ':'.join(map(str, self._parts))
+        anchor = ":" if self.absolute else ""
+        return anchor + ":".join(map(str, self._parts))
 
     def __repr__(self) -> str:
         """Return a representation of the object."""
-        return f'Timeline({self.__str__()})'
+        return f"Timeline({self.__str__()})"
 
     def __len__(self) -> int:
         """Return the number of parts in the Timeline."""
@@ -105,12 +109,13 @@ class Timeline:
         """Return the index'th item in the timeline."""
         return self._parts[index]
 
-    def __add__(self, other: Any) -> 'Timeline':
+    def __add__(self, other: Any) -> "Timeline":
         """Concatenate this timeline with another (relative!) Timeline."""
         if isinstance(other, Timeline):
             if other.absolute:
                 raise ValueError(
-                        'Cannot concatenate an absolute Timeline onto another one')
+                    "Cannot concatenate an absolute Timeline onto another one"
+                )
             return Timeline(self._parts + other._parts, self.absolute)
         return NotImplemented
 
@@ -126,9 +131,10 @@ class Port:
         operator: The MMSL operator in which this port is used
         timeline: The timeline this port is on, relative to its component.
     """
+
     def __init__(
-            self, name: Identifier, operator: Operator,
-            timeline: Optional[Timeline] = None) -> None:
+        self, name: Identifier, operator: Operator, timeline: Optional[Timeline] = None
+    ) -> None:
         """Create a Port.
 
         Args:
@@ -140,15 +146,17 @@ class Port:
         self.name = name
         self.operator = operator
         if timeline is None:
-            timeline = Timeline('')
+            timeline = Timeline("")
         self.timeline = timeline
 
     def __eq__(self, other: Any) -> bool:
         """Compare Port objects by value."""
         if isinstance(other, Port):
             return (
-                    self.name == other.name and self.operator == other.operator and
-                    self.timeline == other.timeline)
+                self.name == other.name
+                and self.operator == other.operator
+                and self.timeline == other.timeline
+            )
 
         return NotImplemented
 
@@ -156,8 +164,7 @@ class Port:
 _PortsSubAttrs = OrderedDict[str, Union[str, List[str]]]
 
 
-_PortsAttrs = OrderedDict[
-        str, Union[str, List[str], _PortsSubAttrs]]
+_PortsAttrs = OrderedDict[str, Union[str, List[str], _PortsSubAttrs]]
 
 
 def _ensure_identifier(port_name: Union[str, Identifier]) -> Identifier:
@@ -202,21 +209,26 @@ class Ports:
     On the Python side, this class acts like a dictionary mapping port names to Port
     objects.
     """
+
     @overload
     def __init__(
-            self, f_init: Union[None, str, List[str]] = None,
-            o_i: Union[None, str, List[str]] = None,
-            s: Union[None, str, List[str]] = None,
-            o_f: Union[None, str, List[str]] = None) -> None: ...
+        self,
+        f_init: Union[None, str, List[str]] = None,
+        o_i: Union[None, str, List[str]] = None,
+        s: Union[None, str, List[str]] = None,
+        o_f: Union[None, str, List[str]] = None,
+    ) -> None: ...
 
     @overload
     def __init__(self, f_init: List[Port]) -> None: ...
 
     def __init__(
-            self, f_init: Union[None, str, List[str], List[Port]] = None,
-            o_i: Union[None, str, List[str]] = None,
-            s: Union[None, str, List[str]] = None,
-            o_f: Union[None, str, List[str]] = None) -> None:
+        self,
+        f_init: Union[None, str, List[str], List[Port]] = None,
+        o_i: Union[None, str, List[str]] = None,
+        s: Union[None, str, List[str]] = None,
+        o_f: Union[None, str, List[str]] = None,
+    ) -> None:
         """Create a Ports declaration.
 
         This can be called in two ways, either with four sets of ports, or with a single
@@ -244,8 +256,9 @@ class Ports:
         if is_port_list or (is_empty_list and others_none):
             if not others_none:
                 raise ValueError(
-                        'Both a list of ports and per-operator ports were given. Please'
-                        ' use either, not both.')
+                    "Both a list of ports and per-operator ports were given. Please"
+                    " use either, not both."
+                )
 
             self._ports = {p.name: p for p in cast(List[Port], f_init)}
         else:
@@ -278,8 +291,10 @@ class Ports:
         These are ports associated with O_I or O_F operators.
         """
         return [
-                p.name for p in self._ports.values()
-                if p.operator in (Operator.O_I, Operator.O_F)]
+            p.name
+            for p in self._ports.values()
+            if p.operator in (Operator.O_I, Operator.O_F)
+        ]
 
     def receiving_port_names(self) -> List[Identifier]:
         """Return the names of all the receiving ports.
@@ -287,12 +302,14 @@ class Ports:
         These are ports associated with F_INIT or S operators.
         """
         return [
-                p.name for p in self._ports.values()
-                if p.operator in (Operator.F_INIT, Operator.S)]
+            p.name
+            for p in self._ports.values()
+            if p.operator in (Operator.F_INIT, Operator.S)
+        ]
 
     def _add_ports(
-            self, op: Operator, ports: Union[None, str, List[str]],
-            timeline: str = '') -> None:
+        self, op: Operator, ports: Union[None, str, List[str]], timeline: str = ""
+    ) -> None:
         """Add the described ports to self._ports, helper function"""
         if ports is None:
             name_list = []
@@ -304,26 +321,28 @@ class Ports:
         for name in name_list:
             if name in self._ports:
                 raise RuntimeError(
-                        f'Invalid ports specification: port "{name}" is'
-                        ' specified more than once. Port names must be unique'
-                        ' within the object they are on.')
+                    f'Invalid ports specification: port "{name}" is'
+                    " specified more than once. Port names must be unique"
+                    " within the object they are on."
+                )
 
             try:
                 port_id = Identifier(name)
             except ValueError as e:
                 raise ValueError(
-                        f'Port name "{name}" is not a valid identifier. {e}') from None
+                    f'Port name "{name}" is not a valid identifier. {e}'
+                ) from None
 
             self._ports[port_id] = Port(port_id, op, Timeline(timeline))
 
     def _yatiml_init(
-            self,
-            _yatiml_extra: OrderedDict,
-            f_init: Union[None, str, List[str]] = None,
-            o_i: Union[None, str, List[str]] = None,
-            s: Union[None, str, List[str]] = None,
-            o_f: Union[None, str, List[str]] = None
-            ) -> None:
+        self,
+        _yatiml_extra: OrderedDict,
+        f_init: Union[None, str, List[str]] = None,
+        o_i: Union[None, str, List[str]] = None,
+        s: Union[None, str, List[str]] = None,
+        o_f: Union[None, str, List[str]] = None,
+    ) -> None:
         """Alternative initialisation when loading from YAML."""
         self._ports = dict()
         self._add_ports(Operator.F_INIT, f_init)
@@ -332,38 +351,43 @@ class Ports:
         self._add_ports(Operator.S, s)
 
         for tl_tag, tl_ports in _yatiml_extra.items():
-            if not tl_tag.startswith('+'):
+            if not tl_tag.startswith("+"):
                 raise RuntimeError(
-                        f'Invalid operator "{tl_tag}". Please use f_init, o_i, s, or'
-                        ' o_f, or prepend a + to the timeline name.')
+                    f'Invalid operator "{tl_tag}". Please use f_init, o_i, s, or'
+                    " o_f, or prepend a + to the timeline name."
+                )
 
-            if 'o_i' in tl_ports:
-                self._add_ports(Operator.O_I, tl_ports['o_i'], tl_tag[1:])
+            if "o_i" in tl_ports:
+                self._add_ports(Operator.O_I, tl_ports["o_i"], tl_tag[1:])
 
-            if 's' in tl_ports:
-                self._add_ports(Operator.S, tl_ports['s'], tl_tag[1:])
+            if "s" in tl_ports:
+                self._add_ports(Operator.S, tl_ports["s"], tl_tag[1:])
 
-            additional_keys = set(tl_ports.keys()) - {'o_i', 's'}
+            additional_keys = set(tl_ports.keys()) - {"o_i", "s"}
             if additional_keys:
                 raise RuntimeError(
-                        f'Found additional keys {",".join(additional_keys)} under'
-                        f' timeline {tl_tag}. Only o_i and s can be specified here.')
+                    f"Found additional keys {','.join(additional_keys)} under"
+                    f" timeline {tl_tag}. Only o_i and s can be specified here."
+                )
 
     def _yatiml_attributes(self) -> OrderedDict:
         def add_ports(
-                attrs: OrderedDict, op: Operator, key: str, timeline: Timeline) -> None:
+            attrs: OrderedDict, op: Operator, key: str, timeline: Timeline
+        ) -> None:
             op_ports = [
-                    p for p in self._ports.values()
-                    if p.operator == op and p.timeline == timeline]
+                p
+                for p in self._ports.values()
+                if p.operator == op and p.timeline == timeline
+            ]
             names = [str(p.name) for p in op_ports]
-            if len(names) > 5 or len(' '.join(names)) > 60:
+            if len(names) > 5 or len(" ".join(names)) > 60:
                 attrs[key] = names
             elif names:
-                attrs[key] = ' '.join(names)
+                attrs[key] = " ".join(names)
 
         def unique(timelines: List[Timeline]) -> List[Timeline]:
-            result = list()     # keeps the order
-            seen = set()        # fast lookup
+            result = list()  # keeps the order
+            seen = set()  # fast lookup
             for timeline in timelines:
                 if timeline not in seen:
                     result.append(timeline)
@@ -371,18 +395,18 @@ class Ports:
             return result
 
         attrs: _PortsAttrs = OrderedDict()
-        add_ports(attrs, Operator.F_INIT, 'f_init', Timeline(''))
+        add_ports(attrs, Operator.F_INIT, "f_init", Timeline(""))
 
-        timelines = [p.timeline for p in self._ports.values() if p.timeline != '']
+        timelines = [p.timeline for p in self._ports.values() if p.timeline != ""]
         if not timelines:
-            add_ports(attrs, Operator.O_I, 'o_i', Timeline(''))
-            add_ports(attrs, Operator.S, 's', Timeline(''))
+            add_ports(attrs, Operator.O_I, "o_i", Timeline(""))
+            add_ports(attrs, Operator.S, "s", Timeline(""))
         else:
             for timeline in unique(timelines):
                 timeline_attrs: _PortsSubAttrs = OrderedDict()
-                add_ports(timeline_attrs, Operator.O_I, 'o_i', timeline)
-                add_ports(timeline_attrs, Operator.S, 's', timeline)
-                attrs[f'+{timeline}'] = timeline_attrs
+                add_ports(timeline_attrs, Operator.O_I, "o_i", timeline)
+                add_ports(timeline_attrs, Operator.S, "s", timeline)
+                attrs[f"+{timeline}"] = timeline_attrs
 
-        add_ports(attrs, Operator.O_F, 'o_f', Timeline(''))
+        add_ports(attrs, Operator.O_F, "o_f", Timeline(""))
         return attrs

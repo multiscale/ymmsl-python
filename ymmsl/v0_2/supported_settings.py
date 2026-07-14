@@ -10,13 +10,13 @@ from ymmsl.v0_2.identity import Identifier
 
 
 class SettingType(Enum):
-    STR = 'str'
-    INT = 'int'
-    FLOAT = 'float'
-    BOOL = 'bool'
-    LIST_INT = '[int]'
-    LIST_FLOAT = '[float]'
-    LIST_LIST_FLOAT = '[[float]]'
+    STR = "str"
+    INT = "int"
+    FLOAT = "float"
+    BOOL = "bool"
+    LIST_INT = "[int]"
+    LIST_FLOAT = "[float]"
+    LIST_LIST_FLOAT = "[[float]]"
 
     def __str__(self) -> str:
         return self.value
@@ -46,9 +46,9 @@ class SettingType(Enum):
             elif node.is_sequence():
                 items = node.seq_items()
                 if len(items) != 1:
-                    raise yatiml.SeasoningError('Invalid setting type')
-                return 'LIST_' + to_str(items[0])
-            raise yatiml.SeasoningError('Invalid setting type')
+                    raise yatiml.SeasoningError("Invalid setting type")
+                return "LIST_" + to_str(items[0])
+            raise yatiml.SeasoningError("Invalid setting type")
 
         node.set_value(to_str(node))
 
@@ -63,19 +63,22 @@ class SettingType(Enum):
             rather than a multiline sequence with dashes, and finally inserts the
             lowercased remaining part.
             """
-            if not typ.startswith('LIST_'):
+            if not typ.startswith("LIST_"):
                 return yaml.ScalarNode(
-                        'tag:yaml.org,2002:str', typ.lower(), start_mark, end_mark)
+                    "tag:yaml.org,2002:str", typ.lower(), start_mark, end_mark
+                )
             else:
                 subnode = to_node(typ[5:], start_mark, end_mark)
                 seq = yaml.SequenceNode(
-                        'tag:yaml.org,2002:seq', [subnode], start_mark, end_mark)
+                    "tag:yaml.org,2002:seq", [subnode], start_mark, end_mark
+                )
                 seq.flow_style = True
                 return seq
 
         val = cast(str, node.get_value())
         node.yaml_node = to_node(
-                val, node.yaml_node.start_mark, node.yaml_node.end_mark)
+            val, node.yaml_node.start_mark, node.yaml_node.end_mark
+        )
 
 
 class SupportedSetting:
@@ -87,9 +90,13 @@ class SupportedSetting:
     typ: Type of the setting
     description: Description of what this sets, allowed values, etc.
     """
+
     def __init__(
-            self, name: Union[str, Identifier], typ: Union[str, SettingType],
-            description: str) -> None:
+        self,
+        name: Union[str, Identifier],
+        typ: Union[str, SettingType],
+        description: str,
+    ) -> None:
         """Create a SupportedSetting.
 
         Args:
@@ -112,8 +119,10 @@ class SupportedSetting:
         if not isinstance(other, SupportedSetting):
             return NotImplemented
         return (
-                self.name == other.name and self.typ == other.typ and
-                self.description == other.description)
+            self.name == other.name
+            and self.typ == other.typ
+            and self.description == other.description
+        )
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
@@ -130,13 +139,15 @@ class SupportedSetting:
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
         """Rename to avoid the Python keyword"""
         if node.is_mapping():
-            if node.has_attribute('type'):
-                node.rename_attribute('type', 'typ')
+            if node.has_attribute("type"):
+                node.rename_attribute("type", "typ")
 
     def _yatiml_init(
-            self, name: Identifier, typ: Optional[SettingType] = None,
-            description: Optional[Union[str, List[str], List[List[str]]]] = None
-            ) -> None:
+        self,
+        name: Identifier,
+        typ: Optional[SettingType] = None,
+        description: Optional[Union[str, List[str], List[List[str]]]] = None,
+    ) -> None:
         """
         Yeah, sorry. I wanted nice syntax for the users and couldn't find a cleaner
         way.
@@ -177,45 +188,51 @@ class SupportedSetting:
         bracket makes this a sequence, and those aren't allowed to have anything after
         the corresponding closing square bracket.
         """
+
         def list_to_setting_type(
-                description: Union[List[str], List[List[str]]]) -> SettingType:
+            description: Union[List[str], List[List[str]]],
+        ) -> SettingType:
             """convert ['something'] or [['something']] to a SettingType"""
             if len(description) == 0:
                 raise ValueError(f'Invalid setting type [] for "{name}"')
 
             if isinstance(description[0], str):
-                return SettingType(f'[{description[0]}]')
+                return SettingType(f"[{description[0]}]")
             else:
                 if len(description[0]) == 0:
                     raise ValueError(f'Invalid setting type [[]] for "{name}"')
-                return SettingType(f'[[{description[0][0]}]]')
+                return SettingType(f"[[{description[0][0]}]]")
 
         if isinstance(description, list):
             # description contains only a type, a funny one
             if typ is not None:
                 raise ValueError(
-                        f'The description of "{name}" gives a type, rather than a'
-                        ' description')
+                    f'The description of "{name}" gives a type, rather than a'
+                    " description"
+                )
 
             typ = list_to_setting_type(description)
-            description = ''
+            description = ""
 
         elif isinstance(description, str):
             if typ is None:
                 # description must contain a type, and perhaps a description
                 if (
-                        description is None or
-                        isinstance(description, str) and description.strip() == ''):
+                    description is None
+                    or isinstance(description, str)
+                    and description.strip() == ""
+                ):
                     raise ValueError(
-                            f'Neither a type nor a description was given for "{name}"')
+                        f'Neither a type nor a description was given for "{name}"'
+                    )
 
                 pieces = description.split(maxsplit=1)
                 try:
                     typ = SettingType(pieces[0])
-                    description = pieces[1] if len(pieces) > 1 else ''
+                    description = pieces[1] if len(pieces) > 1 else ""
                 except KeyError as exc:
                     raise ValueError(
-                        'If type is not given, then description must start with'
+                        "If type is not given, then description must start with"
                         f' the setting\'s type, which is not the case for "{name}"'
                     ) from exc
             # else typ is the type and description the description, so nothing to do
@@ -223,44 +240,38 @@ class SupportedSetting:
             # description is None, which is okay as long as we have a type
             if typ is None:
                 raise ValueError(
-                        f'Neither a type nor a description was given for "{name}"')
-            description = ''
+                    f'Neither a type nor a description was given for "{name}"'
+                )
+            description = ""
 
         SupportedSetting.__init__(self, name, typ, description)
 
     def _yatiml_attributes(self) -> Dict:
         """Create output data for YAML serialisation."""
-        if self.description.strip() == '':
+        if self.description.strip() == "":
             # Put type into the description field so that
             # SupportedSettings._yatiml_sweeten maps this to name: type
-            return {
-                    'name': self.name,
-                    'description': self.typ}
+            return {"name": self.name, "description": self.typ}
 
         # If the description is short enough, put it on a single line too
         short = len(self.name) + len(self.description) < 72
-        if short and '\n' not in self.description:
+        if short and "\n" not in self.description:
             desc = self.typ.value
             if self.description:
-                desc += f' {self.description}'
-            return {
-                    'name': self.name,
-                    'description': desc}
+                desc += f" {self.description}"
+            return {"name": self.name, "description": desc}
 
         # For long or multiline descriptions, use type: and description: subkeys
-        return {
-                'name': self.name,
-                'type': self.typ,
-                'description': self.description}
+        return {"name": self.name, "type": self.typ, "description": self.description}
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         """If the description is multiple lines, format it block style"""
-        desc_node = node.get_attribute('description')
+        desc_node = node.get_attribute("description")
         if desc_node.is_scalar(str):
             ynode = cast(yaml.ScalarNode, desc_node.yaml_node)
-            if '\n' in cast(str, desc_node.get_value()):
-                ynode.style = '|'
+            if "\n" in cast(str, desc_node.get_value()):
+                ynode.style = "|"
 
                 # ensure PyYAML actually uses block style
                 ynode.value = remove_trailing_whitespace(ynode.value)
@@ -298,11 +309,13 @@ class SupportedSettings(MutableMapping):
     description of D needs to be quoted to avoid it being invalid YAML. If there is only
     the type, then the quotes can be omitted.
     """
+
     def __init__(
-            self,
-            supported_settings: Union[
-                Mapping[str, str], List[SupportedSetting], None] = None
-            ) -> None:
+        self,
+        supported_settings: Union[
+            Mapping[str, str], List[SupportedSetting], None
+        ] = None,
+    ) -> None:
         """Create a SupportedSettings object.
 
         If given, the argument must be a dictionary mapping strings to strings as in the
@@ -335,7 +348,7 @@ class SupportedSettings(MutableMapping):
 
     def __str__(self) -> str:
         """Represent as a string, omitting the descriptions."""
-        return ', '.join([f'{s.name}: {s.typ}' for s in self._store.values()])
+        return ", ".join([f"{s.name}: {s.typ}" for s in self._store.values()])
 
     def __getitem__(self, key: Union[str, Identifier]) -> SupportedSetting:
         """Returns a supported setting, implements supported_settings[name]."""
@@ -344,8 +357,8 @@ class SupportedSettings(MutableMapping):
         return self._store[key]
 
     def __setitem__(
-            self, key: Union[str, Identifier], value: Union[str, SupportedSetting]
-            ) -> None:
+        self, key: Union[str, Identifier], value: Union[str, SupportedSetting]
+    ) -> None:
         """Sets a value, implements supported_settings[name] = typ, desc."""
         if isinstance(key, str):
             key = Identifier(key)
@@ -367,7 +380,7 @@ class SupportedSettings(MutableMapping):
         """Returns the number of settings."""
         return len(self._store)
 
-    def copy(self) -> 'SupportedSettings':
+    def copy(self) -> "SupportedSettings":
         """Makes a shallow copy of these supported settings and returns it."""
         new_settings = SupportedSettings()
         new_settings._store = self._store.copy()
@@ -377,10 +390,11 @@ class SupportedSettings(MutableMapping):
         """Parse a string into a SupportedSetting."""
         pieces = arg.split(maxsplit=1)
         if len(pieces) == 0:
-            raise RuntimeError(f'Empty description for setting {name}')
+            raise RuntimeError(f"Empty description for setting {name}")
 
         return SupportedSetting(
-                name, SettingType(pieces[0]), '' if len(pieces) == 1 else pieces[1])
+            name, SettingType(pieces[0]), "" if len(pieces) == 1 else pieces[1]
+        )
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
@@ -391,25 +405,24 @@ class SupportedSettings(MutableMapping):
         # Nest the input inside of a new mapping with a supported_settings key
         sup_set = node.yaml_node
         node.make_mapping()
-        node.set_attribute('supported_settings', sup_set)
+        node.set_attribute("supported_settings", sup_set)
         # And then convert it to a list of SupportedSetting mappings
         # SupportedSettings can take a type for description, see its _yatiml_init
-        node.map_attribute_to_seq('supported_settings', 'name', 'description')
+        node.map_attribute_to_seq("supported_settings", "name", "description")
 
     def _yatiml_init(
-            self, supported_settings: Optional[List[SupportedSetting]] = None
-            ) -> None:
+        self, supported_settings: Optional[List[SupportedSetting]] = None
+    ) -> None:
         # Take that list of supported settings and initialise the object
         SupportedSettings.__init__(self, supported_settings)
 
     def _yatiml_attributes(self) -> Dict:
         # Put everything into a mapping under the supported_settings key,
         # so that we can use seq_attribute_to_map below.
-        return {
-                'supported_settings': list(self._store.values())}
+        return {"supported_settings": list(self._store.values())}
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        node.seq_attribute_to_map('supported_settings', 'name', 'description')
+        node.seq_attribute_to_map("supported_settings", "name", "description")
         # use the created map directly again
         node.yaml_node.value = node.yaml_node.value[0][1].value

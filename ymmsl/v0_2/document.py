@@ -1,4 +1,5 @@
 """Defines the YAML document and version tag."""
+
 import yatiml
 
 from ymmsl.document import Document as DocumentBase
@@ -14,12 +15,12 @@ class Document(DocumentBase):
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_mapping()
-        node.require_attribute('ymmsl_version')
-        node.require_attribute_value('ymmsl_version', 'v0.2')
+        node.require_attribute("ymmsl_version")
+        node.require_attribute_value("ymmsl_version", "v0.2")
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        node.set_attribute('ymmsl_version', 'v0.2')
+        node.set_attribute("ymmsl_version", "v0.2")
         # The above adds the attribute to the end, but we want it at
         # the top; this moves it there.
         node.yaml_node.value.insert(0, node.yaml_node.value[-1])
@@ -27,4 +28,4 @@ class Document(DocumentBase):
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        node.remove_attribute('ymmsl_version')
+        node.remove_attribute("ymmsl_version")

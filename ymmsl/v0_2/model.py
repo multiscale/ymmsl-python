@@ -28,13 +28,14 @@ class ConduitFilter(Enum):
 
     Objects of this class represent the different possible filters.
     """
-    LAST = 'last'
+
+    LAST = "last"
     """Pass only the last message and drop any preceding ones."""
 
-    REPEAT = 'repeat'
+    REPEAT = "repeat"
     """Repeat a single message as often as needed."""
 
-    PAD = 'pad'
+    PAD = "pad"
     """Pass a single message and then generate nil-messages as needed."""
 
     def is_reducer(self) -> bool:
@@ -82,9 +83,13 @@ class Conduit:
         receiver: The receiving port that this conduit is connected to.
         filters: A list of filters, or a string containing space-separated filter names
     """
+
     def __init__(
-            self, sender: str, receiver: str,
-            filters: Optional[Union[str, List[ConduitFilter]]] = None) -> None:
+        self,
+        sender: str,
+        receiver: str,
+        filters: Optional[Union[str, List[ConduitFilter]]] = None,
+    ) -> None:
         """Create a Conduit.
 
         Args:
@@ -101,7 +106,8 @@ class Conduit:
         else:
             if filters:
                 raise ValueError(
-                        'Cannot specify filters both in receiver and in filters')
+                    "Cannot specify filters both in receiver and in filters"
+                )
 
             filters = recv_pieces[0]
             self.receiver = Reference(recv_pieces[1])
@@ -123,10 +129,10 @@ class Conduit:
     def __str__(self) -> str:
         """Return a string representation of the object."""
         if not self.filters:
-            filter_clause = ''
+            filter_clause = ""
         else:
-            filter_clause = ' -> ' + ' '.join([f.value for f in self.filters])
-        return f'Conduit({self.sender}{filter_clause} -> {self.receiver})'
+            filter_clause = " -> " + " ".join([f.value for f in self.filters])
+        return f"Conduit({self.sender}{filter_clause} -> {self.receiver})"
 
     def __eq__(self, other: Any) -> bool:
         """Returns whether the conduits are equal.
@@ -136,8 +142,10 @@ class Conduit:
         if not isinstance(other, Conduit):
             return NotImplemented
         return (
-                self.sender == other.sender and self.receiver == other.receiver and
-                self.filters == other.filters)
+            self.sender == other.sender
+            and self.receiver == other.receiver
+            and self.filters == other.filters
+        )
 
     @staticmethod
     def __check_reference(ref: Reference) -> None:
@@ -146,14 +154,16 @@ class Conduit:
         for part in ref:
             if isinstance(part, int):
                 raise ValueError(
-                        f'Reference {ref} contains a subscript, which is not allowed in'
-                        ' conduits.')
+                    f"Reference {ref} contains a subscript, which is not allowed in"
+                    " conduits."
+                )
 
         # check that the length is at least 1
         if len(ref) < 1:
             raise ValueError(
-                    'Senders and receivers in conduits must have either a port name,'
-                    ' or a component name, a period, and then a port name.')
+                "Senders and receivers in conduits must have either a port name,"
+                " or a component name, a period, and then a port name."
+            )
 
     def sending_component(self) -> Reference:
         """Returns a reference to the sending component."""
@@ -185,20 +195,19 @@ class Conduit:
 
         filter_strs = [f.value for f in self.filters]
         if filter_strs:
-            result = ' '.join(filter_strs) + ' ' + result
+            result = " ".join(filter_strs) + " " + result
         return result
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        filters = node.get_attribute('filters')
+        filters = node.get_attribute("filters")
         filter_strs = [v.value for v in filters.yaml_node.value]
 
         if filter_strs:
-            recv_str = cast(str, node.get_attribute('receiver').get_value())
-            node.set_attribute(
-                    'receiver', ' '.join(filter_strs) + ' ' + recv_str)
+            recv_str = cast(str, node.get_attribute("receiver").get_value())
+            node.set_attribute("receiver", " ".join(filter_strs) + " " + recv_str)
 
-        node.remove_attribute('filters')
+        node.remove_attribute("filters")
 
 
 class MulticastConduit:
@@ -216,6 +225,7 @@ class MulticastConduit:
     Once parsed and populated in :class:`Model`, a multicast is identified by
     two or more conduits with the same :attr:`Conduit.sender`.
     """
+
     def __init__(self, sender: str, receiver: List[str]) -> None:
         """Create a Multicast Conduit.
 
@@ -260,12 +270,16 @@ class Model(Implementation):
         components: A list of components making up the model.
         conduits: A list of conduits connecting the components.
     """
+
     def __init__(
-            self, name: str, ports: Optional[Ports] = None,
-            description: str = '',
-            supported_settings: Optional[SupportedSettings] = None,
-            components: Optional[Sequence[Component]] = None,
-            conduits: Optional[Sequence[AnyConduit]] = None) -> None:
+        self,
+        name: str,
+        ports: Optional[Ports] = None,
+        description: str = "",
+        supported_settings: Optional[SupportedSettings] = None,
+        components: Optional[Sequence[Component]] = None,
+        conduits: Optional[Sequence[AnyConduit]] = None,
+    ) -> None:
         """Create a Model.
 
         Args:
@@ -283,13 +297,13 @@ class Model(Implementation):
         else:
             for i1, c1 in enumerate(components):
                 num_conflicts = 0
-                for i2 in range(i1-1):
+                for i2 in range(i1 - 1):
                     if c1.name == components[i2].name:
                         num_conflicts += 1
                 if num_conflicts > 0:
                     raise ValueError(
-                            f'There are {num_conflicts + 1} components named'
-                            f' {c1.name}.')
+                        f"There are {num_conflicts + 1} components named {c1.name}."
+                    )
 
             self.components = {copy(c.name): c for c in components}
 
@@ -322,64 +336,70 @@ class Model(Implementation):
         return errors
 
     def _check_sending_side(
-            self, conduit: Conduit, model_receiving_ports: List[Identifier]
-            ) -> List[str]:
+        self, conduit: Conduit, model_receiving_ports: List[Identifier]
+    ) -> List[str]:
         """Check the sending side of a conduit."""
         errors = list()
         if not conduit.sending_component():
             # from model input port
             if conduit.sending_port() not in model_receiving_ports:
                 errors.append(
-                    f'Conduit {conduit} refers to an incoming model port'
-                    f' {conduit.sending_port()} that does not exist.')
+                    f"Conduit {conduit} refers to an incoming model port"
+                    f" {conduit.sending_port()} that does not exist."
+                )
         else:
             # from component
             if conduit.sending_component() not in self.components:
                 errors.append(
-                        f'Conduit {conduit} refers to a component named'
-                        f' {conduit.sending_component()}, which is not present in'
-                        ' the model.')
+                    f"Conduit {conduit} refers to a component named"
+                    f" {conduit.sending_component()}, which is not present in"
+                    " the model."
+                )
             else:
                 snd_cmp = self.components[conduit.sending_component()]
                 cmp_sending_ports = snd_cmp.ports.sending_port_names()
                 if conduit.sending_port() not in cmp_sending_ports:
                     errors.append(
-                            f'Conduit {conduit} refers to a sending port named'
-                            f' {conduit.sending_port()}, which is not present on'
-                            f' sending component {snd_cmp.name}, or is not an O_I or'
-                            ' O_F port.')
+                        f"Conduit {conduit} refers to a sending port named"
+                        f" {conduit.sending_port()}, which is not present on"
+                        f" sending component {snd_cmp.name}, or is not an O_I or"
+                        " O_F port."
+                    )
         return errors
 
     def _check_receiving_side(
-            self, conduit: Conduit, model_sending_ports: List[Identifier]
-            ) -> List[str]:
+        self, conduit: Conduit, model_sending_ports: List[Identifier]
+    ) -> List[str]:
         """Check the receiving side of a conduit."""
         errors = list()
         if not conduit.receiving_component():
             # to model output port
             if conduit.receiving_port() not in model_sending_ports:
                 errors.append(
-                    f'Conduit {conduit} refers to an incoming model port'
-                    f' {conduit.receiving_port()} that does not exist.')
+                    f"Conduit {conduit} refers to an incoming model port"
+                    f" {conduit.receiving_port()} that does not exist."
+                )
         else:
             # to component
             if conduit.receiving_component() not in self.components:
                 errors.append(
-                        f'Conduit {conduit} refers to a component named'
-                        f' {conduit.receiving_component()}, which is not present in'
-                        ' the model.')
+                    f"Conduit {conduit} refers to a component named"
+                    f" {conduit.receiving_component()}, which is not present in"
+                    " the model."
+                )
             else:
                 rcvng_cmp = self.components[conduit.receiving_component()]
-                rcvr_recv_ports = (
-                        rcvng_cmp.ports.receiving_port_names() +
-                        ['muscle_settings_in'])
+                rcvr_recv_ports = rcvng_cmp.ports.receiving_port_names() + [
+                    "muscle_settings_in"
+                ]
 
                 if conduit.receiving_port() not in rcvr_recv_ports:
                     errors.append(
-                            f'Conduit {conduit} refers to a receiving port named'
-                            f' {conduit.receiving_port()}, which is not present on'
-                            f' receiving component {rcvng_cmp.name}, or is not an'
-                            ' F_INIT or S port.')
+                        f"Conduit {conduit} refers to a receiving port named"
+                        f" {conduit.receiving_port()}, which is not present on"
+                        f" receiving component {rcvng_cmp.name}, or is not an"
+                        " F_INIT or S port."
+                    )
         return errors
 
     def _conduits_for_export(self) -> List[AnyConduit]:
@@ -397,19 +417,25 @@ class Model(Implementation):
             if len(conduits) == 1:
                 conduit_list.append(conduits[0])
             else:
-                conduit_list.append(MulticastConduit(
+                conduit_list.append(
+                    MulticastConduit(
                         str(sender),
-                        [str(conduit._filters_receiver()) for conduit in conduits]))
+                        [str(conduit._filters_receiver()) for conduit in conduits],
+                    )
+                )
         return conduit_list
 
     def _yatiml_attributes(self) -> OrderedDict:
-        return OrderedDict([
-            ('name', self.name),
-            ('ports', self.ports),
-            ('description', self.description),
-            ('supported_settings', self.supported_settings),
-            ('components', self.components),
-            ('conduits', self._conduits_for_export())])
+        return OrderedDict(
+            [
+                ("name", self.name),
+                ("ports", self.ports),
+                ("description", self.description),
+                ("supported_settings", self.supported_settings),
+                ("components", self.components),
+                ("conduits", self._conduits_for_export()),
+            ]
+        )
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
@@ -418,14 +444,14 @@ class Model(Implementation):
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        node.map_attribute_to_seq('components', 'name')
-        node.map_attribute_to_seq('conduits', 'sender', 'receiver')
+        node.map_attribute_to_seq("components", "name")
+        node.map_attribute_to_seq("conduits", "sender", "receiver")
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        node.index_attribute_to_map('components', 'name')
+        node.index_attribute_to_map("components", "name")
 
-        if len(node.get_attribute('conduits').seq_items()) == 0:
-            node.remove_attribute('conduits')
+        if len(node.get_attribute("conduits").seq_items()) == 0:
+            node.remove_attribute("conduits")
 
-        node.seq_attribute_to_map('conduits', 'sender', 'receiver')
+        node.seq_attribute_to_map("conduits", "sender", "receiver")
