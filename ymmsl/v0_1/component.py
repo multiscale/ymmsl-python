@@ -1,4 +1,5 @@
 """Definitions for describing simulation components."""
+
 import logging
 from collections import OrderedDict
 from enum import Enum
@@ -25,11 +26,11 @@ class Operator(Enum):
     and operators for other components such as mappers.
     """
 
-    NONE = 0    #: No operator
+    NONE = 0  #: No operator
     F_INIT = 1  #: Initialisation phase, before start of the SEL
-    O_I = 2     #: State observation within the model's main loop
-    S = 3       #: State update in the model's main loop
-    O_F = 5     #: Observation of final state, after the SEL
+    O_I = 2  #: State observation within the model's main loop
+    S = 3  #: State update in the model's main loop
+    O_F = 5  #: Observation of final state, after the SEL
 
     def allows_sending(self) -> bool:
         """Whether ports on this operator can send."""
@@ -87,11 +88,14 @@ class Ports:
         s: The ports associated with the S operator.
         o_f: The ports associated with the O_F operator
     """
+
     def __init__(
-            self, f_init: Union[None, str, List[str]] = None,
-            o_i: Union[None, str, List[str]] = None,
-            s: Union[None, str, List[str]] = None,
-            o_f: Union[None, str, List[str]] = None) -> None:
+        self,
+        f_init: Union[None, str, List[str]] = None,
+        o_i: Union[None, str, List[str]] = None,
+        s: Union[None, str, List[str]] = None,
+        o_f: Union[None, str, List[str]] = None,
+    ) -> None:
         """Create a Ports declaration.
 
         Args:
@@ -100,12 +104,13 @@ class Ports:
             s: The ports associated with the S operator.
             o_f: The ports associated with the O_F operator
         """
+
         def to_list(ports: Union[None, str, List[str]]) -> List[Identifier]:
             if ports is None:
                 return list()
 
             if isinstance(ports, str):
-                ports = ports.split(' ')
+                ports = ports.split(" ")
             return list(map(Identifier, ports))
 
         self.f_init = to_list(f_init)
@@ -115,11 +120,12 @@ class Ports:
 
         all_names = sorted(self.port_names())
         for i in range(len(all_names) - 1):
-            if all_names[i] == all_names[i+1]:
+            if all_names[i] == all_names[i + 1]:
                 raise RuntimeError(
-                        'Invalid ports specification: port "{}" is specified'
-                        ' more than once. Port names must be unique within'
-                        ' the component.')
+                    'Invalid ports specification: port "{}" is specified'
+                    " more than once. Port names must be unique within"
+                    " the component."
+                )
 
     def port_names(self) -> Iterable[Identifier]:
         """Returns an iterable containing the names of all ports."""
@@ -128,10 +134,11 @@ class Ports:
     def all_ports(self) -> Iterable[Port]:
         """Returns an iterable containing all ports."""
         return (
-                [Port(n, Operator.F_INIT) for n in self.f_init] +
-                [Port(name, Operator.O_I) for name in self.o_i] +
-                [Port(name, Operator.S) for name in self.s] +
-                [Port(name, Operator.O_F) for name in self.o_f])
+            [Port(n, Operator.F_INIT) for n in self.f_init]
+            + [Port(name, Operator.O_I) for name in self.o_i]
+            + [Port(name, Operator.S) for name in self.s]
+            + [Port(name, Operator.O_F) for name in self.o_f]
+        )
 
     def operator(self, port_name: Identifier) -> Operator:
         """Looks up the operator for a given port.
@@ -160,10 +167,11 @@ class Ports:
         raise KeyError(f'No port named "{port_name}" was found')
 
     _yatiml_defaults: dict[str, Optional[list[str]]] = {
-            'f_init': [],
-            'o_i': [],
-            's': [],
-            'o_f': []}
+        "f_init": [],
+        "o_i": [],
+        "s": [],
+        "o_f": [],
+    }
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
@@ -190,9 +198,13 @@ class Component:
 
     """
 
-    def __init__(self, name: str, implementation: Optional[str] = None,
-                 multiplicity: Union[None, int, List[int]] = None,
-                 ports: Optional[Ports] = None) -> None:
+    def __init__(
+        self,
+        name: str,
+        implementation: Optional[str] = None,
+        multiplicity: Union[None, int, List[int]] = None,
+        ports: Optional[Ports] = None,
+    ) -> None:
         """Create a Component.
 
         Args:
@@ -213,8 +225,10 @@ class Component:
             self.implementation = Reference(implementation)
             for part in self.implementation:
                 if isinstance(part, int):
-                    raise ValueError(f"Component implementation {self.name} contains a"
-                                     " subscript, which is not allowed.")
+                    raise ValueError(
+                        f"Component implementation {self.name} contains a"
+                        " subscript, which is not allowed."
+                    )
 
         if multiplicity is None:
             self.multiplicity = list()
@@ -243,6 +257,7 @@ class Component:
             A list with one Reference for each instance of this
             component.
         """
+
         def increment(index: List[int], dims: List[int]) -> None:
             # assumes index and dims are the same length > 0
             # modifies index argument
@@ -279,37 +294,40 @@ class Component:
 
     def _yatiml_attributes(self) -> OrderedDict:
         """Reorder attributes for saving to YAML."""
-        return OrderedDict([
-            ('name', self.name),
-            ('ports', self.ports),
-            ('multiplicity', self.multiplicity),
-            ('implementation', self.implementation)])
+        return OrderedDict(
+            [
+                ("name", self.name),
+                ("ports", self.ports),
+                ("multiplicity", self.multiplicity),
+                ("implementation", self.implementation),
+            ]
+        )
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
-        node.require_attribute('name', str)
+        node.require_attribute("name", str)
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        if node.has_attribute('multiplicity'):
-            if node.has_attribute_type('multiplicity', int):
-                attr = node.get_attribute('multiplicity')
+        if node.has_attribute("multiplicity"):
+            if node.has_attribute_type("multiplicity", int):
+                attr = node.get_attribute("multiplicity")
                 start_mark = attr.yaml_node.start_mark
                 end_mark = attr.yaml_node.end_mark
                 new_seq = yaml.nodes.SequenceNode(
-                        'tag:yaml.org,2002:seq', [attr.yaml_node], start_mark,
-                        end_mark)
-                node.set_attribute('multiplicity', new_seq)
+                    "tag:yaml.org,2002:seq", [attr.yaml_node], start_mark, end_mark
+                )
+                node.set_attribute("multiplicity", new_seq)
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        multiplicity = node.get_attribute('multiplicity')
+        multiplicity = node.get_attribute("multiplicity")
         items = multiplicity.seq_items()
         if len(items) == 0:
-            node.remove_attribute('multiplicity')
+            node.remove_attribute("multiplicity")
         elif len(items) == 1:
-            node.set_attribute('multiplicity', items[0].get_value())
+            node.set_attribute("multiplicity", items[0].get_value())
 
-        ports_node = node.get_attribute('ports').yaml_node
-        if ports_node.tag == 'tag:yaml.org,2002:null':
-            node.remove_attribute('ports')
+        ports_node = node.get_attribute("ports").yaml_node
+        if ports_node.tag == "tag:yaml.org,2002:null":
+            node.remove_attribute("ports")

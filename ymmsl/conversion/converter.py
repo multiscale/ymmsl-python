@@ -14,11 +14,12 @@ _config_types = {v0_1.PartialConfiguration, v0_1.Configuration, v0_2.Configurati
 
 
 _converters: Dict[Type[Document], Callable] = {
-        v0_1.PartialConfiguration: convert_v0_1_to_v0_2,
-        v0_1.Configuration: convert_v0_1_to_v0_2}
+    v0_1.PartialConfiguration: convert_v0_1_to_v0_2,
+    v0_1.Configuration: convert_v0_1_to_v0_2,
+}
 
 
-T = TypeVar('T', bound=Document)
+T = TypeVar("T", bound=Document)
 
 
 def convert_to(to_type: Type[T], document: Document) -> T:
@@ -53,15 +54,16 @@ def convert_to(to_type: Type[T], document: Document) -> T:
     cur_type = type(document)
 
     if cur_type not in _config_types:
-        raise TypeError(f'Unsupported document type {cur_type}')
+        raise TypeError(f"Unsupported document type {cur_type}")
 
     if to_type not in _config_types:
-        raise ValueError(f'Unsupported to_type {to_type}')
+        raise ValueError(f"Unsupported to_type {to_type}")
 
     while cur_type != to_type:
         if cur_type not in _converters:
             raise DowngradeError(
-                'The requested version is not supported. Are you trying to downgrade?')
+                "The requested version is not supported. Are you trying to downgrade?"
+            )
 
         document = _converters[cur_type](document)
         cur_type = type(document)

@@ -1,4 +1,5 @@
 """This module contains definitions for identity."""
+
 import re
 from collections import UserString
 from copy import copy
@@ -26,12 +27,14 @@ class Identifier(UserString):
 
         """
         super().__init__(seq)
-        if not re.fullmatch(r'[a-zA-Z_]\w*', self.data, flags=re.ASCII):
-            raise ValueError('Identifiers must consist only of'
-                             ' lower- and uppercase letters, digits and'
-                             ' underscores, must start with a letter or'
-                             ' an underscore, and must not be empty.'
-                             f' "{self.data}" is therefore invalid.')
+        if not re.fullmatch(r"[a-zA-Z_]\w*", self.data, flags=re.ASCII):
+            raise ValueError(
+                "Identifiers must consist only of"
+                " lower- and uppercase letters, digits and"
+                " underscores, must start with a letter or"
+                " an underscore, and must not be empty."
+                f' "{self.data}" is therefore invalid.'
+            )
 
 
 ReferencePart = Union[Identifier, int]
@@ -82,8 +85,7 @@ class Reference(yatiml.String):
         if isinstance(parts, str):
             self._parts = self._string_to_parts(parts)
         elif len(parts) > 0 and not isinstance(parts[0], Identifier):
-            raise ValueError(
-                    'The first part of a Reference must be an Identifier')
+            raise ValueError("The first part of a Reference must be an Identifier")
         else:
             self._parts = parts
 
@@ -153,7 +155,7 @@ class Reference(yatiml.String):
                     if o < s:
                         return False
                 elif isinstance(s, Identifier) and isinstance(o, Identifier):
-                    if s < o:       # repeated because mypy is dumb
+                    if s < o:  # repeated because mypy is dumb
                         return True
                     if o < s:
                         return False
@@ -182,11 +184,9 @@ class Reference(yatiml.String):
     def __getitem__(self, key: int) -> ReferencePart: ...
 
     @overload
-    def __getitem__(self, key: slice) -> 'Reference': ...
+    def __getitem__(self, key: slice) -> "Reference": ...
 
-    def __getitem__(
-            self, key: Union[int, slice]
-            ) -> Union['Reference', ReferencePart]:
+    def __getitem__(self, key: Union[int, slice]) -> Union["Reference", ReferencePart]:
         """Get a part or a slice.
 
         If passed an int, e.g. ref[2], will return that part as an int
@@ -208,7 +208,7 @@ class Reference(yatiml.String):
             return self._parts[key]
         if isinstance(key, slice):
             return Reference(self._parts[key])
-        raise ValueError('Subscript must be either an int or a slice')
+        raise ValueError("Subscript must be either an int or a slice")
 
     def __setitem__(self, key: Union[int, slice], value: Any) -> None:
         """Does not set the value of a part.
@@ -220,11 +220,13 @@ class Reference(yatiml.String):
             RuntimeError: Always.
 
         """
-        raise RuntimeError('Reference objects are immutable, please don\'t try'
-                           ' to change them.')
+        raise RuntimeError(
+            "Reference objects are immutable, please don't try to change them."
+        )
 
-    def __add__(self, other: Union['Reference', Iterable[ReferencePart],
-                ReferencePart]) -> 'Reference':
+    def __add__(
+        self, other: Union["Reference", Iterable[ReferencePart], ReferencePart]
+    ) -> "Reference":
         """Concatenates something onto a Reference.
 
         The object to add on can be another Reference, a list of
@@ -244,11 +246,11 @@ class Reference(yatiml.String):
             ret._parts.extend(other._parts)
         elif isinstance(other, (Identifier, int)):
             ret._parts.append(other)
-        elif hasattr(other, '__iter__'):
+        elif hasattr(other, "__iter__"):
             ret._parts.extend(other)
         return ret
 
-    def without_trailing_ints(self) -> 'Reference':
+    def without_trailing_ints(self) -> "Reference":
         """Returns a copy of this Reference with trailing ints removed.
 
         Examples:
@@ -260,7 +262,7 @@ class Reference(yatiml.String):
         i = len(self._parts) - 1
         while i > 0 and isinstance(self._parts[i], int):
             i -= 1
-        return Reference(self._parts[0:i+1])
+        return Reference(self._parts[0 : i + 1])
 
     @classmethod
     def _string_to_parts(cls, text: str) -> List[ReferencePart]:
@@ -274,11 +276,12 @@ class Reference(yatiml.String):
                     Reference.
 
         """
+
         def find_next_op(text: str, start: int) -> int:
-            next_bracket = text.find('[', start)
+            next_bracket = text.find("[", start)
             if next_bracket == -1:
                 next_bracket = len(text)
-            next_period = text.find('.', start)
+            next_period = text.find(".", start)
             if next_period == -1:
                 next_period = len(text)
             return min(next_period, next_bracket)
@@ -287,16 +290,16 @@ class Reference(yatiml.String):
         cur_op = find_next_op(text, 0)
         parts: list[ReferencePart] = [Identifier(text[0:cur_op])]
         while cur_op < end:
-            if text[cur_op] == '.':
+            if text[cur_op] == ".":
                 next_op = find_next_op(text, cur_op + 1)
-                parts.append(Identifier(text[cur_op + 1:next_op]))
+                parts.append(Identifier(text[cur_op + 1 : next_op]))
                 cur_op = next_op
-            elif text[cur_op] == '[':
-                close_bracket = text.find(']', cur_op)
+            elif text[cur_op] == "[":
+                close_bracket = text.find("]", cur_op)
                 if close_bracket == -1:
                     raise ValueError(f"Missing closing bracket in Reference {text}")
                 try:
-                    index = int(text[cur_op + 1:close_bracket])
+                    index = int(text[cur_op + 1 : close_bracket])
                 except ValueError as exc:
                     raise ValueError(
                         f"Invalid index '{text[cur_op + 1 : close_bracket]}' in "
@@ -305,8 +308,10 @@ class Reference(yatiml.String):
                 parts.append(index)
                 cur_op = close_bracket + 1
             else:
-                raise ValueError(f"Invalid character '{text[cur_op]}' encountered in"
-                                 f" Reference {text}")
+                raise ValueError(
+                    f"Invalid character '{text[cur_op]}' encountered in"
+                    f" Reference {text}"
+                )
         return parts
 
     @classmethod
@@ -321,7 +326,7 @@ class Reference(yatiml.String):
 
         """
         if len(parts) == 0:
-            return '[]'
+            return "[]"
 
         text = str(parts[0])
         for part in parts[1:]:

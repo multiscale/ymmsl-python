@@ -31,11 +31,16 @@ class Component:
         optional: Whether this component is optional
         multiplicity: The shape of the set of instances
     """
+
     def __init__(
-            self, name: str, ports: Ports,
-            description: str, implementation: Optional[str] = None,
-            optional: bool = False,
-            multiplicity: Union[None, int, List[int]] = None) -> None:
+        self,
+        name: str,
+        ports: Ports,
+        description: str,
+        implementation: Optional[str] = None,
+        optional: bool = False,
+        multiplicity: Union[None, int, List[int]] = None,
+    ) -> None:
         """Create a Component
 
         Args:
@@ -56,8 +61,10 @@ class Component:
             self.implementation: Optional[Reference] = Reference(implementation)
             for part in self.implementation:
                 if isinstance(part, int):
-                    raise ValueError(f"Component implementation {self.name} contains a"
-                                     " subscript, which is not allowed.")
+                    raise ValueError(
+                        f"Component implementation {self.name} contains a"
+                        " subscript, which is not allowed."
+                    )
         else:
             self.implementation = None
 
@@ -86,6 +93,7 @@ class Component:
             A list with one Reference for each instance of this
             component.
         """
+
         def increment(index: List[int], dims: List[int]) -> None:
             # assumes index and dims are the same length > 0
             # modifies index argument
@@ -122,27 +130,27 @@ class Component:
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
-        node.require_attribute('name', str)
+        node.require_attribute("name", str)
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        ports_node = node.get_attribute('ports').yaml_node
-        if ports_node.tag == 'tag:yaml.org,2002:null':
-            node.remove_attribute('ports')
+        ports_node = node.get_attribute("ports").yaml_node
+        if ports_node.tag == "tag:yaml.org,2002:null":
+            node.remove_attribute("ports")
 
-        descr = node.get_attribute('description')
+        descr = node.get_attribute("description")
         if descr.is_scalar(str):
             # output in block style
             ynode = cast(yaml.ScalarNode, descr.yaml_node)
-            ynode.style = '|'
+            ynode.style = "|"
             # ensure PyYAML actually uses block style
             ynode.value = remove_trailing_whitespace(ynode.value)
 
-        multiplicity = node.get_attribute('multiplicity')
+        multiplicity = node.get_attribute("multiplicity")
         items = multiplicity.seq_items()
         if len(items) == 0:
-            node.remove_attribute('multiplicity')
+            node.remove_attribute("multiplicity")
         elif len(items) == 1:
-            node.set_attribute('multiplicity', items[0].get_value())
+            node.set_attribute("multiplicity", items[0].get_value())
 
         node.remove_attributes_with_default_values(cls)

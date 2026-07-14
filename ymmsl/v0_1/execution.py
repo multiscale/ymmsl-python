@@ -1,4 +1,5 @@
 """Definitions for specifying how to start a component."""
+
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Union, cast
@@ -52,6 +53,7 @@ class BaseEnv(Enum):
     the active environment.
 
     """
+
     LOGIN = 1
     """The environment you get after logging in when using bash."""
     CLEAN = 2
@@ -103,6 +105,7 @@ class KeepsStateForNextUse(Enum):
 
 class ExecutionModel(Enum):
     """Describes how to start a model component."""
+
     DIRECT = 1
     """Start directly on the allocated core(s), without MPI."""
     OPENMPI = 2
@@ -180,20 +183,19 @@ class Implementation:
     """
 
     def __init__(
-            self,
-            name: Reference,
-            base_env: Optional[BaseEnv] = None,
-            modules: Union[str, List[str], None] = None,
-            virtual_env: Optional[Path] = None,
-            env: Optional[Dict[str, str]] = None,
-            execution_model: ExecutionModel = ExecutionModel.DIRECT,
-            executable: Optional[Path] = None,
-            args: Union[str, List[str], None] = None,
-            script: Union[str, List[str], None] = None,
-            can_share_resources: bool = True,
-            keeps_state_for_next_use: KeepsStateForNextUse
-            = KeepsStateForNextUse.NECESSARY
-            ) -> None:
+        self,
+        name: Reference,
+        base_env: Optional[BaseEnv] = None,
+        modules: Union[str, List[str], None] = None,
+        virtual_env: Optional[Path] = None,
+        env: Optional[Dict[str, str]] = None,
+        execution_model: ExecutionModel = ExecutionModel.DIRECT,
+        executable: Optional[Path] = None,
+        args: Union[str, List[str], None] = None,
+        script: Union[str, List[str], None] = None,
+        can_share_resources: bool = True,
+        keeps_state_for_next_use: KeepsStateForNextUse = KeepsStateForNextUse.NECESSARY,
+    ) -> None:
         """Create an Implementation description.
 
         An Implementation normally has an ``executable`` and any other
@@ -241,29 +243,30 @@ class Implementation:
                 err_arg.append('"args"')
             if err_arg:
                 raise RuntimeError(
-                        'When creating an Implementation, script was specified'
-                        f' together with the arguments {", ".join(err_arg)},'
-                        ' which is not supported, as they are supposed to be'
-                        ' inside the script if there is one. Please use either'
-                        ' a script or the arguments listed above.')
+                    "When creating an Implementation, script was specified"
+                    f" together with the arguments {', '.join(err_arg)},"
+                    " which is not supported, as they are supposed to be"
+                    " inside the script if there is one. Please use either"
+                    " a script or the arguments listed above."
+                )
 
         if executable is None and script is None:
             raise RuntimeError(
-                    f'In {name}, neither a script nor an executable was given.'
-                    ' Please specify either a script, or the other parameters.'
-                    )
+                f"In {name}, neither a script nor an executable was given."
+                " Please specify either a script, or the other parameters."
+            )
 
         self.name = name
 
         if isinstance(script, list):
-            self.script: Optional[str] = '\n'.join(script) + '\n'
+            self.script: Optional[str] = "\n".join(script) + "\n"
         else:
             self.script = script
 
         self.base_env = base_env if base_env else BaseEnv.MANAGER
 
         if isinstance(modules, str):
-            self.modules: Optional[list[str]] = modules.split(' ')
+            self.modules: Optional[list[str]] = modules.split(" ")
         else:
             self.modules = modules
         self.virtual_env = virtual_env
@@ -289,38 +292,39 @@ class Implementation:
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        if node.has_attribute('env'):
-            env_node = node.get_attribute('env')
+        if node.has_attribute("env"):
+            env_node = node.get_attribute("env")
             if env_node.is_mapping():
                 for _, value_node in env_node.yaml_node.value:
                     if isinstance(value_node, yaml.ScalarNode):
-                        if value_node.tag == 'tag:yaml.org,2002:int':
-                            value_node.tag = 'tag:yaml.org,2002:str'
-                        if value_node.tag == 'tag:yaml.org,2002:float':
-                            value_node.tag = 'tag:yaml.org,2002:str'
-                        if value_node.tag == 'tag:yaml.org,2002:bool':
-                            value_node.tag = 'tag:yaml.org,2002:str'
+                        if value_node.tag == "tag:yaml.org,2002:int":
+                            value_node.tag = "tag:yaml.org,2002:str"
+                        if value_node.tag == "tag:yaml.org,2002:float":
+                            value_node.tag = "tag:yaml.org,2002:str"
+                        if value_node.tag == "tag:yaml.org,2002:bool":
+                            value_node.tag = "tag:yaml.org,2002:str"
 
     _yatiml_defaults = {
-        'base_env': 'manager',
-        'execution_model': 'direct',
-        'keeps_state_for_next_use': 'necessary'}
+        "base_env": "manager",
+        "execution_model": "direct",
+        "keeps_state_for_next_use": "necessary",
+    }
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        if node.has_attribute('script'):
-            script_node = node.get_attribute('script')
+        if node.has_attribute("script"):
+            script_node = node.get_attribute("script")
             if script_node.is_scalar(str):
                 text = cast(str, script_node.get_value())
-                if '\n' in text:
-                    cast(yaml.ScalarNode, script_node.yaml_node).style = '|'
+                if "\n" in text:
+                    cast(yaml.ScalarNode, script_node.yaml_node).style = "|"
 
         node.remove_attributes_with_default_values(cls)
-        if node.has_attribute('env'):
-            env_attr = node.get_attribute('env')
+        if node.has_attribute("env"):
+            env_attr = node.get_attribute("env")
             if env_attr.is_mapping():
                 if env_attr.is_empty():
-                    node.remove_attribute('env')
+                    node.remove_attribute("env")
 
 
 class ResourceRequirements:
@@ -333,6 +337,7 @@ class ResourceRequirements:
     Attributes:
         name: Name of the component to configure.
     """
+
     def __init__(self, name: Reference) -> None:
         """Create a ResourceRequirements description.
 
@@ -344,7 +349,8 @@ class ResourceRequirements:
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         raise yatiml.RecognitionError(
-                'Please specify either "threads" or "mpi_processes".')
+            'Please specify either "threads" or "mpi_processes".'
+        )
 
 
 class ThreadedResReq(ResourceRequirements):
@@ -386,8 +392,8 @@ class MPICoresResReq(ResourceRequirements):
     """
 
     def __init__(
-            self, name: Reference, mpi_processes: int,
-            threads_per_mpi_process: int = 1) -> None:
+        self, name: Reference, mpi_processes: int, threads_per_mpi_process: int = 1
+    ) -> None:
         """Create a ThreadedMPIResourceRequirements description.
 
         Args:
@@ -420,9 +426,12 @@ class MPINodesResReq(ResourceRequirements):
     """
 
     def __init__(
-            self, name: Reference, nodes: int,
-            mpi_processes_per_node: int, threads_per_mpi_process: int = 1
-            ) -> None:
+        self,
+        name: Reference,
+        nodes: int,
+        mpi_processes_per_node: int,
+        threads_per_mpi_process: int = 1,
+    ) -> None:
         """Create a NodeBasedMPIResourceRequirements description.
 
         Args:

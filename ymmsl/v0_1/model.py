@@ -1,4 +1,5 @@
 """This module contains all the definitions for yMMSL."""
+
 from collections import OrderedDict
 from typing import (
     Any,
@@ -66,20 +67,22 @@ class Conduit:
         # check that subscripts are at the end
         for i, part in enumerate(ref):
             if isinstance(part, int):
-                if (i+1) < len(ref) and isinstance(ref[i+1], Identifier):
-                    raise ValueError(f"Reference {ref} contains a subscript that"
-                                     " is not at the end, which is not allowed"
-                                     " in conduits.")
+                if (i + 1) < len(ref) and isinstance(ref[i + 1], Identifier):
+                    raise ValueError(
+                        f"Reference {ref} contains a subscript that"
+                        " is not at the end, which is not allowed"
+                        " in conduits."
+                    )
 
         # check that the length is at least 2
         if len(Conduit.__stem(ref)) < 2:
             raise ValueError(
-                    "Senders and receivers in conduits must have a component"
-                    " name, a period, and then a port name and optionally a"
-                    f" slot. Reference {ref} is missing either the component or"
-                    " the port. Did you perhaps type a comma or an underscore"
-                    ' instead of a period? It should be "component.port"'
-                    )
+                "Senders and receivers in conduits must have a component"
+                " name, a period, and then a port name and optionally a"
+                f" slot. Reference {ref} is missing either the component or"
+                " the port. Did you perhaps type a comma or an underscore"
+                ' instead of a period? It should be "component.port"'
+            )
 
     def sending_component(self) -> Reference:
         """Returns a reference to the sending component."""
@@ -142,7 +145,7 @@ class Conduit:
         If there is no slot, returns the whole reference.
         """
         i = len(reference)
-        while isinstance(reference[i-1], int):
+        while isinstance(reference[i - 1], int):
             i -= 1
         return reference[:i]
 
@@ -197,6 +200,7 @@ class ModelReference:
         name: The name of the simulation model this refers to.
 
     """
+
     def __init__(self, name: str) -> None:
         """Create a ModelReference.
 
@@ -226,9 +230,13 @@ class Model(ModelReference):
         conduits: A list of conduits connecting the components.
 
     """
-    def __init__(self, name: str,
-                 components: List[Component],
-                 conduits: Optional[Sequence[AnyConduit]] = None) -> None:
+
+    def __init__(
+        self,
+        name: str,
+        components: List[Component],
+        conduits: Optional[Sequence[AnyConduit]] = None,
+    ) -> None:
         """Create a Model.
 
         Args:
@@ -247,7 +255,7 @@ class Model(ModelReference):
                 if isinstance(conduit, MulticastConduit):
                     self.conduits.extend(conduit.as_conduits())
 
-    def update(self, overlay: 'Model') -> None:
+    def update(self, overlay: "Model") -> None:
         """Overlay another model definition on top of this one.
 
         This updates the object with the name, components and conduits
@@ -290,6 +298,7 @@ class Model(ModelReference):
         components, and will raise a RuntimeError with an explanation
         if one is not.
         """
+
         def component_exists(name: Reference) -> bool:
             for comp in self.components:
                 if comp.name == name:
@@ -297,8 +306,9 @@ class Model(ModelReference):
             return False
 
         def component_has_receiving_port(
-                component: Reference, port: Identifier) -> bool:
-            if port == 'muscle_settings_in':
+            component: Reference, port: Identifier
+        ) -> bool:
+            if port == "muscle_settings_in":
                 return True
             for comp in self.components:
                 if comp.name == component:
@@ -312,8 +322,7 @@ class Model(ModelReference):
                         pass
             return False
 
-        def component_has_sending_port(
-                component: Reference, port: Identifier) -> bool:
+        def component_has_sending_port(component: Reference, port: Identifier) -> bool:
             for comp in self.components:
                 if comp.name == component:
                     if not comp.ports:
@@ -330,30 +339,33 @@ class Model(ModelReference):
         for conduit in self.conduits:
             scomp = conduit.sending_component()
             if not component_exists(scomp):
-                raise RuntimeError(
-                    f'Unknown sending component "{scomp}" of {conduit}')
+                raise RuntimeError(f'Unknown sending component "{scomp}" of {conduit}')
 
             rcomp = conduit.receiving_component()
             if not component_exists(rcomp):
                 raise RuntimeError(
-                    f'Unknown receiving component "{rcomp}" of {conduit}')
+                    f'Unknown receiving component "{rcomp}" of {conduit}'
+                )
 
             sport = conduit.sending_port()
             if not component_has_sending_port(scomp, sport):
                 raise RuntimeError(
-                        f'Invalid conduit "{conduit}": component "{scomp}" does not'
-                        f' have a sending port "{sport}"')
+                    f'Invalid conduit "{conduit}": component "{scomp}" does not'
+                    f' have a sending port "{sport}"'
+                )
 
             rport = conduit.receiving_port()
             if not component_has_receiving_port(rcomp, rport):
                 raise RuntimeError(
-                        f'Invalid conduit "{conduit}": component "{rcomp}" does not'
-                        f' have a receiving port "{rport}"')
+                    f'Invalid conduit "{conduit}": component "{rcomp}" does not'
+                    f' have a receiving port "{rport}"'
+                )
 
             if conduit.receiver in receivers_seen:
                 raise RuntimeError(
-                        f'Receiving port "{conduit.receiver}" is connected by multiple'
-                        " conduits.")
+                    f'Receiving port "{conduit.receiver}" is connected by multiple'
+                    " conduits."
+                )
             receivers_seen.add(conduit.receiver)
 
     def __conduits_for_export(self) -> List[AnyConduit]:
@@ -370,31 +382,36 @@ class Model(ModelReference):
             if len(conduits) == 1:
                 conduit_list.append(conduits[0])
             else:
-                conduit_list.append(MulticastConduit(
-                        str(sender),
-                        [str(conduit.receiver) for conduit in conduits]))
+                conduit_list.append(
+                    MulticastConduit(
+                        str(sender), [str(conduit.receiver) for conduit in conduits]
+                    )
+                )
         return conduit_list
 
     def _yatiml_attributes(self) -> OrderedDict:
-        return OrderedDict([
-            ('name', self.name),
-            ('components', self.components),
-            ('conduits', self.__conduits_for_export())])
+        return OrderedDict(
+            [
+                ("name", self.name),
+                ("components", self.components),
+                ("conduits", self.__conduits_for_export()),
+            ]
+        )
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         node.require_mapping()
-        node.require_attribute('name')
-        node.require_attribute('components')
+        node.require_attribute("name")
+        node.require_attribute("components")
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        node.map_attribute_to_seq('components', 'name', 'implementation')
-        node.map_attribute_to_seq('conduits', 'sender', 'receiver')
+        node.map_attribute_to_seq("components", "name", "implementation")
+        node.map_attribute_to_seq("conduits", "sender", "receiver")
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        node.seq_attribute_to_map('components', 'name', 'implementation')
-        if len(node.get_attribute('conduits').seq_items()) == 0:
-            node.remove_attribute('conduits')
-        node.seq_attribute_to_map('conduits', 'sender', 'receiver')
+        node.seq_attribute_to_map("components", "name", "implementation")
+        if len(node.get_attribute("conduits").seq_items()) == 0:
+            node.remove_attribute("conduits")
+        node.seq_attribute_to_map("conduits", "sender", "receiver")

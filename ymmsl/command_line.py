@@ -13,9 +13,14 @@ from ymmsl.io import load_as, save
 
 
 def showwarning(
-        message: Union[Warning, str], category: Type[Warning], filename: str,
-        lineno: int, file: Optional[TextIO] = None, line: Optional[str] = None) -> None:
-    print(f'WARNING: {message}', file=file)
+    message: Union[Warning, str],
+    category: Type[Warning],
+    filename: str,
+    lineno: int,
+    file: Optional[TextIO] = None,
+    line: Optional[str] = None,
+) -> None:
+    print(f"WARNING: {message}", file=file)
 
 
 warnings.showwarning = showwarning
@@ -33,24 +38,37 @@ def ymmsl() -> None:
 
 
 _version_tag_to_type: Dict[str, Type] = {
-        'v0.1': v0_1.PartialConfiguration,
-        'v0.2': v0_2.Configuration,
-        }
+    "v0.1": v0_1.PartialConfiguration,
+    "v0.2": v0_2.Configuration,
+}
 
 
-@ymmsl.command(short_help='Convert a yMMSL file to a newer version')
+@ymmsl.command(short_help="Convert a yMMSL file to a newer version")
 @click.argument(
-        'input_file', default='-', type=click.Path(
-            exists=True, file_okay=True, dir_okay=False, readable=True,
-            resolve_path=False, allow_dash=True))
+    "input_file",
+    default="-",
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=False,
+        allow_dash=True,
+    ),
+)
 @click.argument(
-        'output_file', required=False, type=click.Path(
-            file_okay=True, dir_okay=True, writable=True, resolve_path=False,
-            allow_dash=True))
-@click.option(
-        '-t', '--to', default='v0.2', help='Version to convert to, e.g. "v0.2".')
-def convert(
-        input_file: str, output_file: Optional[str], to: str) -> None:
+    "output_file",
+    required=False,
+    type=click.Path(
+        file_okay=True,
+        dir_okay=True,
+        writable=True,
+        resolve_path=False,
+        allow_dash=True,
+    ),
+)
+@click.option("-t", "--to", default="v0.2", help='Version to convert to, e.g. "v0.2".')
+def convert(input_file: str, output_file: Optional[str], to: str) -> None:
     """Convert a yMMSL file to a later version
 
     When upgrading in place, and/or if an output file is specified and it exists, a
@@ -98,16 +116,17 @@ def convert(
     won't work, because the shell will open the file to do the redirect, empty it, and
     then run ymmsl convert, which then fails because the input is empty.
     """
-    if input_file != '-':
-        print(f'Converting {input_file}')
+    if input_file != "-":
+        print(f"Converting {input_file}")
 
     if output_file is None:
         output_file = input_file
 
     if to not in _version_tag_to_type:
         click.echo(
-                f'Invalid version {to} specified. Supported versions are v0.1 and v0.2',
-                err=True)
+            f"Invalid version {to} specified. Supported versions are v0.1 and v0.2",
+            err=True,
+        )
         exit(1)
 
     try:
@@ -116,22 +135,24 @@ def convert(
     except DowngradeError:
         click.echo()
         click.echo(
-                f'It seems that {input_file} is of a newer version than the target'
-                f' version {to}.')
+            f"It seems that {input_file} is of a newer version than the target"
+            f" version {to}."
+        )
         click.echo()
         click.echo(
-                'This tool can only upgrade files, not downgrade them, so that does'
-                ' not work.')
+            "This tool can only upgrade files, not downgrade them, so that does"
+            " not work."
+        )
         exit(1)
 
-    if output_file != '-' and os.path.exists(output_file):
-        backup_file = output_file + '.bak'
+    if output_file != "-" and os.path.exists(output_file):
+        backup_file = output_file + ".bak"
         if not os.path.exists(backup_file):
             copyfile(output_file, backup_file)
-            print(f'Wrote backup file {backup_file}')
+            print(f"Wrote backup file {backup_file}")
 
-    with click.open_file(output_file, 'w') as output_stream:
+    with click.open_file(output_file, "w") as output_stream:
         save(document, output_stream)
 
-    if input_file != '-':
-        print('Conversion complete')
+    if input_file != "-":
+        print("Conversion complete")

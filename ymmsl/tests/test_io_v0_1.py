@@ -34,15 +34,15 @@ def test_load_string1(test_yaml1: str) -> None:
     settings = configuration.settings
     assert settings is not None
     assert len(settings) == 4
-    assert isinstance(settings['test_list'], list)
-    assert settings['test_list'][1] == 1.3
+    assert isinstance(settings["test_list"], list)
+    assert settings["test_list"][1] == 1.3
 
     configuration = load(test_yaml1)
     assert isinstance(configuration, PartialConfiguration)
     assert configuration.settings is not None
-    assert configuration.settings['test_str'] == 'value'
-    assert configuration.settings['test_int'] == 13
-    assert configuration.settings['test_list'] == [12.3, 1.3]
+    assert configuration.settings["test_str"] == "value"
+    assert configuration.settings["test_int"] == 13
+    assert configuration.settings["test_list"] == [12.3, 1.3]
 
 
 def test_load_string2(test_yaml2: str) -> None:
@@ -51,14 +51,14 @@ def test_load_string2(test_yaml2: str) -> None:
     assert not isinstance(configuration, Configuration)
     model = configuration.model
     assert isinstance(model, Model)
-    assert str(model.name) == 'test_model'
+    assert str(model.name) == "test_model"
     assert len(model.components) == 5
-    assert str(model.components[4].name) == 'bf2smc'
-    assert str(model.components[2].implementation) == 'isr2d.blood_flow'
+    assert str(model.components[4].name) == "bf2smc"
+    assert str(model.components[2].implementation) == "isr2d.blood_flow"
     assert len(model.conduits) == 5
-    assert str(model.conduits[0].sender) == 'ic.out'
-    assert str(model.conduits[1].sending_port()) == 'cell_positions'
-    assert str(model.conduits[3].receiving_component()) == 'bf2smc'
+    assert str(model.conduits[0].sender) == "ic.out"
+    assert str(model.conduits[1].sending_port()) == "cell_positions"
+    assert str(model.conduits[3].receiving_component()) == "bf2smc"
 
 
 def test_load_string3(test_yaml3: str) -> None:
@@ -66,7 +66,7 @@ def test_load_string3(test_yaml3: str) -> None:
     assert isinstance(configuration, PartialConfiguration)
     assert not isinstance(configuration, Configuration)
     assert isinstance(configuration.model, ModelReference)
-    assert str(configuration.model.name) == 'test_model'
+    assert str(configuration.model.name) == "test_model"
 
 
 def test_load_string4(test_yaml4: str) -> None:
@@ -75,17 +75,17 @@ def test_load_string4(test_yaml4: str) -> None:
     assert not isinstance(configuration, Configuration)
     assert len(configuration.implementations) == 5
     impls = configuration.implementations
-    ic = Reference('isr2d.initial_conditions')
-    bf2smc = Reference('isr2d.bf2smc')
-    assert impls[ic].name == 'isr2d.initial_conditions'
-    assert impls[bf2smc].script == 'isr2d/bin/bf2smc.py'
+    ic = Reference("isr2d.initial_conditions")
+    bf2smc = Reference("isr2d.bf2smc")
+    assert impls[ic].name == "isr2d.initial_conditions"
+    assert impls[bf2smc].script == "isr2d/bin/bf2smc.py"
 
     assert len(configuration.resources) == 5
-    ic_res = configuration.resources[Reference('ic')]
+    ic_res = configuration.resources[Reference("ic")]
     assert isinstance(ic_res, ThreadedResReq)
     assert ic_res.threads == 4
 
-    bf2smc_res = configuration.resources[Reference('bf2smc')]
+    bf2smc_res = configuration.resources[Reference("bf2smc")]
     assert isinstance(bf2smc_res, ThreadedResReq)
     assert bf2smc_res.threads == 1
 
@@ -107,30 +107,30 @@ def test_load_string6(test_yaml6: str) -> None:
     res = configuration.resources
     assert len(res) == 6
 
-    singlethreaded = res[Reference('singlethreaded')]
+    singlethreaded = res[Reference("singlethreaded")]
     assert isinstance(singlethreaded, ThreadedResReq)
     assert singlethreaded.threads == 1
 
-    multithreaded = res[Reference('multithreaded')]
+    multithreaded = res[Reference("multithreaded")]
     assert isinstance(multithreaded, ThreadedResReq)
     assert multithreaded.threads == 8
 
-    mpi_cores1 = res[Reference('mpi_cores1')]
+    mpi_cores1 = res[Reference("mpi_cores1")]
     assert isinstance(mpi_cores1, MPICoresResReq)
     assert mpi_cores1.mpi_processes == 16
 
-    mpi_cores2 = res[Reference('mpi_cores2')]
+    mpi_cores2 = res[Reference("mpi_cores2")]
     assert isinstance(mpi_cores2, MPICoresResReq)
     assert mpi_cores2.mpi_processes == 4
     assert mpi_cores2.threads_per_mpi_process == 4
 
-    mpi_nodes1 = res[Reference('mpi_nodes1')]
+    mpi_nodes1 = res[Reference("mpi_nodes1")]
     assert isinstance(mpi_nodes1, MPINodesResReq)
     assert mpi_nodes1.nodes == 10
     assert mpi_nodes1.mpi_processes_per_node == 16
     assert mpi_nodes1.threads_per_mpi_process == 1
 
-    mpi_nodes2 = res[Reference('mpi_nodes2')]
+    mpi_nodes2 = res[Reference("mpi_nodes2")]
     assert isinstance(mpi_nodes2, MPINodesResReq)
     assert mpi_nodes2.nodes == 10
     assert mpi_nodes2.mpi_processes_per_node == 4
@@ -144,18 +144,18 @@ def test_load_string7(test_yaml7: str) -> None:
     assert isinstance(configuration.model, Model)
     components = configuration.model.components
     assert components is not None
-    assert components[0].name == 'macro'
-    assert components[0].implementation == 'macro_python'
+    assert components[0].name == "macro"
+    assert components[0].implementation == "macro_python"
     assert components[0].ports is not None
     assert components[0].ports.f_init == []
-    assert components[0].ports.o_i == ['state_out']
-    assert components[0].ports.s == ['x_in']
+    assert components[0].ports.o_i == ["state_out"]
+    assert components[0].ports.s == ["x_in"]
     assert components[0].ports.o_f == []
     assert components[1].ports is not None
-    assert components[1].ports.f_init == ['init_in']
+    assert components[1].ports.f_init == ["init_in"]
     assert components[1].ports.o_i == []
     assert components[1].ports.s == []
-    assert components[1].ports.o_f == ['final_output', 'extra_output']
+    assert components[1].ports.o_f == ["final_output", "extra_output"]
 
 
 def test_load_string8(test_yaml8: str) -> None:
@@ -178,20 +178,20 @@ def test_load_string9(test_yaml9: str) -> None:
     configuration = load(test_yaml9)
     assert isinstance(configuration, PartialConfiguration)
 
-    implementation = configuration.implementations[Ref('isr2d.initial_conditions')]
-    assert implementation.name == 'isr2d.initial_conditions'
+    implementation = configuration.implementations[Ref("isr2d.initial_conditions")]
+    assert implementation.name == "isr2d.initial_conditions"
     assert implementation.execution_model == ExecutionModel.OPENMPI
     assert implementation.can_share_resources is True
     assert implementation.keeps_state_for_next_use == KeepsStateForNextUse.HELPFUL
-    assert implementation.script == '#!/bin/bash\n\nmpirun my_model\n'
+    assert implementation.script == "#!/bin/bash\n\nmpirun my_model\n"
 
 
 def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
-    test_file = tmpdir_path / 'test_yaml1.ymmsl'
-    with test_file.open('w') as f:
+    test_file = tmpdir_path / "test_yaml1.ymmsl"
+    with test_file.open("w") as f:
         f.write(test_yaml1)
 
-    with test_file.open('r') as f:
+    with test_file.open("r") as f:
         configuration = load(f)
 
     assert isinstance(configuration, PartialConfiguration)
@@ -199,8 +199,8 @@ def test_load_file(test_yaml1: str, tmpdir_path: Path) -> None:
 
 
 def test_load_path(test_yaml1: str, tmpdir_path: Path) -> None:
-    test_file = tmpdir_path / 'test_yaml1.ymmsl'
-    with test_file.open('w') as f:
+    test_file = tmpdir_path / "test_yaml1.ymmsl"
+    with test_file.open("w") as f:
         f.write(test_yaml1)
 
     configuration = load(test_file)
@@ -248,48 +248,48 @@ def test_dump8(test_yaml8: str, test_config8: Configuration) -> None:
     assert text == test_yaml8
 
 
-def test_save_str(test_config1: PartialConfiguration, test_yaml1: str,
-                  tmpdir_path: Path) -> None:
-    test_file = tmpdir_path / 'test_yaml1.ymmsl'
+def test_save_str(
+    test_config1: PartialConfiguration, test_yaml1: str, tmpdir_path: Path
+) -> None:
+    test_file = tmpdir_path / "test_yaml1.ymmsl"
 
     save(test_config1, str(test_file))
 
-    with test_file.open('r') as f:
+    with test_file.open("r") as f:
         yaml_out = f.read()
 
     assert yaml_out == test_yaml1
 
 
-def test_save_path(test_config2: PartialConfiguration, test_yaml2: str,
-                   tmpdir_path: Path) -> None:
-    test_file = tmpdir_path / 'test_yaml1.ymmsl'
+def test_save_path(
+    test_config2: PartialConfiguration, test_yaml2: str, tmpdir_path: Path
+) -> None:
+    test_file = tmpdir_path / "test_yaml1.ymmsl"
 
     save(test_config2, test_file)
 
-    with test_file.open('r') as f:
+    with test_file.open("r") as f:
         yaml_out = f.read()
 
     assert yaml_out == test_yaml2
 
 
-def test_save_file(test_config2: PartialConfiguration, test_yaml2: str,
-                   tmpdir_path: Path) -> None:
-    test_file = tmpdir_path / 'test_yaml1.ymmsl'
+def test_save_file(
+    test_config2: PartialConfiguration, test_yaml2: str, tmpdir_path: Path
+) -> None:
+    test_file = tmpdir_path / "test_yaml1.ymmsl"
 
-    with test_file.open('w') as f:
+    with test_file.open("w") as f:
         save(test_config2, f)
 
-    with test_file.open('r') as f:
+    with test_file.open("r") as f:
         yaml_out = f.read()
 
     assert yaml_out == test_yaml2
 
 
 def test_resource_requirements() -> None:
-    text = (
-            'ymmsl_version: v0.1\n'
-            'resources:\n'
-            '  - name: submodel\n')
+    text = "ymmsl_version: v0.1\nresources:\n  - name: submodel\n"
 
     with pytest.raises(RecognitionError):
         load(text)

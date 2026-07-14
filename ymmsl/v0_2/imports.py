@@ -13,6 +13,7 @@ class ImportKind(Enum):
     Currently only IMPLEMENTATION is supported, which is used to import either a program
     or a model. In the future other things will be importable as well.
     """
+
     IMPLEMENTATION = 1
 
     @classmethod
@@ -45,6 +46,7 @@ class ImportStatement:
         kind: Kind of object to import, currently always 'implementation'
         name: Name of the object to import from it
     """
+
     def __init__(self, module: str, kind: str, name: str) -> None:
         """Create an ImportStatement
 
@@ -53,7 +55,7 @@ class ImportStatement:
             kind: Kind of object to import
             name: Name of the object to import
         """
-        path_parts = module.split('.')
+        path_parts = module.split(".")
         for path_part in path_parts:
             Identifier(path_part)
 
@@ -63,7 +65,7 @@ class ImportStatement:
             self.kind = ImportKind[kind.upper()]
         except KeyError:
             raise ValueError(
-                f'{kind} is not a valid kind of object to import. Try'
+                f"{kind} is not a valid kind of object to import. Try"
                 ' "implementation" instead to import a program or a model.'
             ) from None
 
@@ -74,7 +76,7 @@ class ImportStatement:
 
         This returns a path a/b/c.ymmsl for module a.b.c.
         """
-        return Path('/'.join(map(str, self.module)) + '.ymmsl')
+        return Path("/".join(map(str, self.module)) + ".ymmsl")
 
     def full_name(self) -> Reference:
         """Return the full name of the imported object.
@@ -93,16 +95,16 @@ class ImportStatement:
         module, kind, name = cls._parse_string_representation(text)
 
         node.make_mapping()
-        node.set_attribute('module', module)
-        node.set_attribute('kind', kind)
-        node.set_attribute('name', name)
+        node.set_attribute("module", module)
+        node.set_attribute("kind", kind)
+        node.set_attribute("name", name)
 
     @classmethod
     def _yatiml_sweeten(self, node: yatiml.Node) -> None:
-        module = node.get_attribute('module').get_value()
-        kind = node.get_attribute('kind').get_value()
-        name = node.get_attribute('name').get_value()
-        node.set_value(f'from {module} import {kind} {name}')
+        module = node.get_attribute("module").get_value()
+        kind = node.get_attribute("kind").get_value()
+        name = node.get_attribute("name").get_value()
+        node.set_value(f"from {module} import {kind} {name}")
 
     @classmethod
     def _parse_string_representation(cls, text: str) -> Tuple[str, str, str]:
@@ -110,36 +112,38 @@ class ImportStatement:
 
         parts = text.split()
 
-        if len(parts) > 0 and parts[0] != 'from':
+        if len(parts) > 0 and parts[0] != "from":
             raise RuntimeError(
-                    f'Import statement "{text}" does not start with "from".\n' +
-                    help_text)
+                f'Import statement "{text}" does not start with "from".\n' + help_text
+            )
 
         if len(parts) > 1:
             module = parts[1]
 
-        if len(parts) > 2 and parts[2] != 'import':
+        if len(parts) > 2 and parts[2] != "import":
             raise RuntimeError(
-                    f'Import statement "{text}" does not have "import" part.\n' +
-                    help_text)
+                f'Import statement "{text}" does not have "import" part.\n' + help_text
+            )
 
         if len(parts) > 3:
             kind = parts[3]
         else:
             raise RuntimeError(
-                    f'Import statement "{text}" does not specify which kind of thing'
-                    ' to import.\n' + help_text)
+                f'Import statement "{text}" does not specify which kind of thing'
+                " to import.\n" + help_text
+            )
 
         if len(parts) > 4:
             name = parts[4]
         else:
             raise RuntimeError(
-                    f'Import statement "{text}" does not specify the name of the thing'
-                    ' to import.\n' + help_text)
+                f'Import statement "{text}" does not specify the name of the thing'
+                " to import.\n" + help_text
+            )
 
         if len(parts) > 5:
             raise RuntimeError(
-                    f'Extra text found at end of import statement "{text}".\n' +
-                    help_text)
+                f'Extra text found at end of import statement "{text}".\n' + help_text
+            )
 
         return module, kind, name
