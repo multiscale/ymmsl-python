@@ -76,7 +76,7 @@ class Timeline:
 
             self._parts = list(map(make_new_reference, parts))
 
-        elif isinstance(timeline, list):
+        else:
             self.absolute = absolute
             self._parts = list(map(make_new_reference, timeline))
 
