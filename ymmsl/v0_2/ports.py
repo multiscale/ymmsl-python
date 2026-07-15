@@ -123,6 +123,25 @@ class Timeline:
             return Timeline(self._parts + other._parts, self.absolute)
         return NotImplemented
 
+    @property
+    def parent(self) -> "Timeline | None":
+        """Get the parent of this timeline. Returns None when there is no parent."""
+        if not self._parts:
+            return None
+        return Timeline(self._parts[:-1], self.absolute)
+
+    def relative_to(self, other: "Timeline") -> "Timeline":
+        """Compute a version of this timeline relative to `other`.
+
+        Both timelines must be absolute, and the other timeline must be a parent
+        timeline of this one.
+        """
+        if not self.absolute or not other.absolute:
+            raise ValueError("Both timelines must be absolute")
+        if self._parts[: len(other)] != other._parts:
+            raise ValueError(f"{self} is not a subtimeline of {other}")
+        return Timeline(self._parts[len(other) :], False)
+
 
 class Port:
     """A port on a component.
