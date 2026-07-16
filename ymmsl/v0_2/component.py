@@ -5,7 +5,7 @@ import yatiml
 
 from ymmsl.util import remove_trailing_whitespace
 from ymmsl.v0_2.identity import Reference
-from ymmsl.v0_2.ports import Ports
+from ymmsl.v0_2.ports import Ports, Timeline
 
 
 class Component:
@@ -30,6 +30,9 @@ class Component:
         implementation: A Model or Program implementing this component
         optional: Whether this component is optional
         multiplicity: The shape of the set of instances
+        timeline: The resolved (absolute) timeline for this component inside the model.
+            This will be ``None`` until resolved by
+            :meth:`~ymmsl.v0_2.timeline_resolver.resolve_timelines()`.
     """
 
     def __init__(
@@ -56,6 +59,7 @@ class Component:
         self.ports = ports
         self.description = description
         self.optional = optional
+        self.timeline: Optional[Timeline] = None
 
         if implementation is not None:
             self.implementation: Optional[Reference] = Reference(implementation)
