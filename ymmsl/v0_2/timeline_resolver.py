@@ -37,13 +37,19 @@ class CyclicDependency(RuntimeError):
     some way on the output of that component.
     """
 
-    def __init__(self, model: Model, cycle: list[Component]) -> None:
+    def __init__(
+        self, model: Model, cycle: list[Component], conduits: list[Conduit]
+    ) -> None:
         self.model = model
         self.cycle = cycle
-        msg = f"Detected a dependency cycle in model '{model.name}': " + " -> ".join(
-            str(component.name) for component in cycle
+        self.conduits = conduits
+        cycle_str = " -> ".join(str(conduit) for conduit in reversed(conduits))
+        super().__init__(
+            f"Detected a dependency cycle in model '{model.name}'. The component "
+            f"'{cycle[0].name}' has an F_INIT port that depends on data produced by "
+            f"one of its own O_F or O_I ports: {cycle_str}. You may have an error "
+            "in the conduits or may need a different coupling schema."
         )
-        super().__init__(msg)
 
 
 class TooManyReducerFilters(RuntimeError):
@@ -146,7 +152,7 @@ class TimelineChecker:
         for component in self._model.components.values():
             if component.name in self._component_timeline:
                 continue
-            self._assign_component(component, [])
+            self._assign_component(component, [], [])
 
     def _f_init_conduits_for_component(self, component: Component) -> list[Conduit]:
         """Get conduits that are connected to an F_INIT port on the component"""
@@ -158,12 +164,14 @@ class TimelineChecker:
                     result.append(conduit)
         return result
 
-    def _assign_component(self, component: Component, seen: list[Component]) -> None:
+    def _assign_component(
+        self, component: Component, seen: list[Component], seen_conduits: list[Conduit]
+    ) -> None:
         """Recursive component assignment, uses "seen" list for cycle detection."""
         if component in seen:
             idx = seen.index(component)
             cycle = seen[idx:] + [component]
-            raise CyclicDependency(self._model, cycle)
+            raise CyclicDependency(self._model, cycle, seen_conduits[idx:])
         f_init_conduits = self._f_init_conduits_for_component(component)
 
         # Ensure we know the timelines of the components attached to our F_INIT
@@ -171,7 +179,11 @@ class TimelineChecker:
         for conduit in f_init_conduits:
             sender = conduit.sending_component()
             if sender not in self._component_timeline:
-                self._assign_component(self._model.components[sender], seen)
+                seen_conduits.append(conduit)
+                self._assign_component(
+                    self._model.components[sender], seen, seen_conduits
+                )
+                seen_conduits.pop()
         seen.pop()
 
         # Now we can determine our timeline
