@@ -32,7 +32,7 @@ class Component:
         multiplicity: The shape of the set of instances
         timeline: The resolved (absolute) timeline for this component inside the model.
             This will be ``None`` until resolved by
-            :meth:`~ymmsl.v0_2.timeline_resolver.resolve_timelines()`.
+            :meth:`~ymmsl.v0_2.resolve_timelines()`.
     """
 
     def __init__(
