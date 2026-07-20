@@ -233,10 +233,10 @@ def test_load_ports_with_timelines() -> None:
     text = (
         "f_init: a b\n"
         "o_f: c\n"
-        "+timeline1:\n"
+        "timeline timeline1:\n"
         "  o_i: d\n"
         "  s: e f\n"
-        "+timeline2:\n"
+        "timeline timeline2:\n"
         "  o_i: g h\n"
     )
 
@@ -266,7 +266,9 @@ def test_load_ports_invalid_operator() -> None:
 def test_load_ports_invalid_timeline() -> None:
     load = yatiml.load_function(Ports, Port, Operator, Timeline)
 
-    text = "f_init: a b\n+timeline1:\n  o_i: d\n  s: e f\ntimeline2:\n  o_i: g h\n"
+    text = (
+        "f_init: a b\ntimeline timeline1:\n  o_i: d\n  s: e f\ntimeline2:\n  o_i: g h\n"
+    )
 
     with pytest.raises(yatiml.RecognitionError):
         load(text)
@@ -277,12 +279,12 @@ def test_load_ports_invalid_timeline_operator() -> None:
 
     text = (
         "f_init: a b\n"
-        "+timeline1:\n"
+        "timeline timeline1:\n"
         "  o_i: d\n"
         "  s: e f\n"
-        "+timeline2:\n"
+        "timeline timeline2:\n"
         "  o_i: g h\n"
-        "  +timeline3:\n"
+        "  timeline timeline3:\n"
         "    o_i: i\n"
     )
 
@@ -347,10 +349,10 @@ def test_dump_ports_with_timelines() -> None:
 
     assert text == (
         "f_init: init\n"
-        "+timeline1:\n"
+        "timeline timeline1:\n"
         "  o_i: out1\n"
         "  s: in1\n"
-        "+timeline2:\n"
+        "timeline timeline2:\n"
         "  o_i: out2\n"
         "  s: in2\n"
         "o_f: final\n"
