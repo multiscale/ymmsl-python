@@ -212,7 +212,7 @@ models:
           o_f: final
     ports:
       f_init: init
-      +macro:meso:
+      timeline macro:meso:
         o_i: out
         s: in
       o_f: final
