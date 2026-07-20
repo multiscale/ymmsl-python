@@ -196,14 +196,14 @@ class Ports:
         ports:
           f_init: a
           o_f: b
-          +timeline1:
+          timeline timeline1:
             o_i: c d
             s: e
-          +timeline2:
+          timeline timeline2:
             o_i: f
             s: g h
 
-    Note that the + symbol is not a part of the timeline name, it's just there to
+    Note that 'timeline ' is not a part of the timeline name, it's just there to
     make it a bit easier to distinguish timelines from operators.
 
     On the Python side, this class acts like a dictionary mapping port names to Port
@@ -351,17 +351,18 @@ class Ports:
         self._add_ports(Operator.S, s)
 
         for tl_tag, tl_ports in _yatiml_extra.items():
-            if not tl_tag.startswith("+"):
+            if not tl_tag.startswith("timeline "):
                 raise RuntimeError(
                     f'Invalid operator "{tl_tag}". Please use f_init, o_i, s, or'
-                    " o_f, or prepend a + to the timeline name."
+                    ' o_f, or prepend "timeline " to the timeline name.'
                 )
+            tl_tag = tl_tag.removeprefix("timeline ")
 
             if "o_i" in tl_ports:
-                self._add_ports(Operator.O_I, tl_ports["o_i"], tl_tag[1:])
+                self._add_ports(Operator.O_I, tl_ports["o_i"], tl_tag)
 
             if "s" in tl_ports:
-                self._add_ports(Operator.S, tl_ports["s"], tl_tag[1:])
+                self._add_ports(Operator.S, tl_ports["s"], tl_tag)
 
             additional_keys = set(tl_ports.keys()) - {"o_i", "s"}
             if additional_keys:
@@ -406,7 +407,7 @@ class Ports:
                 timeline_attrs: _PortsSubAttrs = OrderedDict()
                 add_ports(timeline_attrs, Operator.O_I, "o_i", timeline)
                 add_ports(timeline_attrs, Operator.S, "s", timeline)
-                attrs[f"+{timeline}"] = timeline_attrs
+                attrs[f"timeline {timeline}"] = timeline_attrs
 
         add_ports(attrs, Operator.O_F, "o_f", Timeline(""))
         return attrs
