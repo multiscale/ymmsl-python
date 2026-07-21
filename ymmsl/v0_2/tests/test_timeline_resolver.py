@@ -61,6 +61,16 @@ def test_reducer(timelines_configuration: Configuration) -> None:
     assert model.components[Ref("second")].timeline == ROOT_TIMELINE
 
 
+def test_only_reducer(timelines_configuration: Configuration) -> None:
+    model = timelines_configuration.models[Ref("reducer")]
+    # Remove the conduit first.final -> second.init1 and keep only the reduced conduit
+    del model.conduits[0]
+    assert model.conduits[0].filters == [ConduitFilter("last")]
+    resolve_timelines(model)
+    assert model.components[Ref("first")].timeline == ROOT_TIMELINE
+    assert model.components[Ref("second")].timeline == ROOT_TIMELINE
+
+
 def test_too_many_reducers(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("reducer")]
     model.conduits[-1].filters.append(model.conduits[-1].filters[0])

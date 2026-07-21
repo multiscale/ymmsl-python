@@ -15,8 +15,15 @@ ROOT_TIMELINE = Timeline(":")
 def resolve_timelines(model: Model) -> None:
     """Determine timelines for each component and their O_I and S ports in this model.
 
-    An exception will be raised when the model timelines are not consistent. This
-    function updates the timeline attributes of the components and ports in the model.
+    This function updates the timeline attributes of the components and ports in the
+    model. Any of the following exceptions (which are a subclass of
+    :class:`ResolveTimelineException`) will be raised when the model timelines are not
+    consistent. See their description for more details:
+
+    - :class:`CyclicDependency`
+    - :class:`TooManyReducerFilters`
+    - :class:`InconsistentTimelines`
+    - :class:`ConduitTimelineError`
     """
     checker = TimelineChecker(model)
     checker.check_consistent()
@@ -30,7 +37,11 @@ def resolve_timelines(model: Model) -> None:
             port.timeline = timeline.relative_to(component.timeline)
 
 
-class CyclicDependency(RuntimeError):
+class ResolveTimelineException(RuntimeError):
+    """Base class for exceptions raised while resolving timelines."""
+
+
+class CyclicDependency(ResolveTimelineException):
     """Error raised when some models form a dependency cycle.
 
     Dependency cycles occur when messages to an F_INIT port of a component depend in
@@ -48,12 +59,18 @@ class CyclicDependency(RuntimeError):
             f"Detected a dependency cycle in model '{model.name}'. The component "
             f"'{cycle[0].name}' has an F_INIT port that depends on data produced by "
             f"one of its own O_F or O_I ports: {cycle_str}. You may have an error "
-            "in the conduits or may need a different coupling schema."
+            "in the conduits or may need a different coupling scheme."
         )
 
 
-class TooManyReducerFilters(RuntimeError):
-    """Error raised when a conduit has too many reducer filters applied."""
+class TooManyReducerFilters(ResolveTimelineException):
+    """Error raised when a conduit has too many reducer filters applied.
+
+    This error is raised when a reducer filter attempts to reduce a conduit that
+    already sends on the root timeline. :class:`InconsistentTimelines` or
+    :class:`ConduitTimelineError` may also be raised when too many reducer filters are
+    applied.
+    """
 
     def __init__(
         self, model: Model, conduit: Conduit, sender_timeline: Timeline
@@ -71,8 +88,13 @@ class TooManyReducerFilters(RuntimeError):
         super().__init__(msg)
 
 
-class InconsistentTimelines(RuntimeError):
-    """Error raised when a component's F_INIT ports have inconsistent timelines."""
+class InconsistentTimelines(ResolveTimelineException):
+    """Error raised when a component's F_INIT ports have inconsistent timelines.
+
+    When a component has multiple F_INIT ports, each port should receive on the same
+    timeline. Note that :class:`ConduitTimelineError` may be raised for conduits
+    connected to F_INIT ports when they have a repeater filter.
+    """
 
     def __init__(
         self,
@@ -97,7 +119,7 @@ class InconsistentTimelines(RuntimeError):
         super().__init__(msg)
 
 
-class ConduitTimelineError(RuntimeError):
+class ConduitTimelineError(ResolveTimelineException):
     """Error raised for conduits that connect incompatible timelines."""
 
     def __init__(

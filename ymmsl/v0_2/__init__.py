@@ -31,6 +31,7 @@ from ymmsl.v0_2.timeline_resolver import (
     ConduitTimelineError,
     CyclicDependency,
     InconsistentTimelines,
+    ResolveTimelineException,
     TooManyReducerFilters,
     resolve_timelines,
 )
@@ -67,6 +68,7 @@ __all__ = [
     "ReferencePart",
     "resolve",
     "resolve_timelines",
+    "ResolveTimelineException",
     "ResourceRequirements",
     "Settings",
     "SettingType",
