@@ -16,14 +16,17 @@ def resolve_timelines(model: Model) -> None:
     """Determine timelines for each component and their O_I and S ports in this model.
 
     This function updates the timeline attributes of the components and ports in the
-    model. Any of the following exceptions (which are a subclass of
-    :class:`ResolveTimelineException`) will be raised when the model timelines are not
-    consistent. See their description for more details:
+    model. Raises any of below subclasses of :class:`ResolveTimelineException` when the
+    model timelines are not consistent.
 
-    - :class:`CyclicDependency`
-    - :class:`TooManyReducerFilters`
-    - :class:`InconsistentTimelines`
-    - :class:`ConduitTimelineError`
+    Raises:
+        CyclicDependency: When messages to an F_INIT port of a component depend in some
+            way on the output of that component.
+        TooManyReducerFilters: When a conduit filter is applied to messages in the root
+            timeline.
+        InconsistentTimelines: When a component's F_INIT ports are not all connected to
+            the same timeline.
+        ConduitTimelineError: When a conduit connects incompatible timelines.
     """
     checker = TimelineChecker(model)
     checker.check_consistent()
@@ -69,7 +72,7 @@ class TooManyReducerFilters(ResolveTimelineException):
     This error is raised when a reducer filter attempts to reduce a conduit that
     already sends on the root timeline. :class:`InconsistentTimelines` or
     :class:`ConduitTimelineError` may also be raised when too many reducer filters are
-    applied.
+    applied if that doesn't reduce the timeline beyond the root timeline.
     """
 
     def __init__(
