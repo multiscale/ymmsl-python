@@ -125,6 +125,27 @@ def test_timeline_concatenate_empty() -> None:
     assert tl4 == tl1
 
 
+def test_timeline_parent() -> None:
+    assert Timeline("").parent is None
+    assert Timeline(":").parent is None
+
+    assert Timeline("a:b").parent == Timeline("a")
+    assert Timeline(":a:b").parent == Timeline(":a")
+
+
+def test_timeline_relative_to() -> None:
+    assert Timeline(":a:b:c").relative_to(Timeline(":a:b")) == Timeline("c")
+    assert Timeline(":a:b:c").relative_to(Timeline(":a")) == Timeline("b:c")
+
+    with pytest.raises(ValueError, match="absolute"):
+        Timeline("a:b").relative_to(Timeline(":a"))
+    with pytest.raises(ValueError, match="absolute"):
+        Timeline(":a:b").relative_to(Timeline("a"))
+
+    with pytest.raises(ValueError, match="subtimeline"):
+        Timeline(":a:b").relative_to(Timeline(":b"))
+
+
 def test_create_empty_ports() -> None:
     p = Ports()
     assert len(p._ports) == 0

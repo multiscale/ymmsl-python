@@ -27,6 +27,14 @@ from ymmsl.v0_2.supported_settings import (
     SupportedSetting,
     SupportedSettings,
 )
+from ymmsl.v0_2.timeline_resolver import (
+    ConduitTimelineError,
+    CyclicDependency,
+    InconsistentTimelines,
+    ResolveTimelineException,
+    TooManyReducerFilters,
+    resolve_timelines,
+)
 
 __all__ = [
     "BaseEnv",
@@ -38,13 +46,16 @@ __all__ = [
     "Ports",
     "Conduit",
     "ConduitFilter",
+    "ConduitTimelineError",
     "Configuration",
+    "CyclicDependency",
     "Document",
     "ExecutionModel",
     "Identifier",
     "Implementation",
     "ImportKind",
     "ImportStatement",
+    "InconsistentTimelines",
     "KeepsStateForNextUse",
     "Model",
     "MPICoresResReq",
@@ -56,6 +67,8 @@ __all__ = [
     "Reference",
     "ReferencePart",
     "resolve",
+    "resolve_timelines",
+    "ResolveTimelineException",
     "ResourceRequirements",
     "Settings",
     "SettingType",
@@ -64,4 +77,5 @@ __all__ = [
     "SupportedSettings",
     "ThreadedResReq",
     "Timeline",
+    "TooManyReducerFilters",
 ]

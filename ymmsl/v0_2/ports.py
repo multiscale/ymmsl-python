@@ -76,7 +76,7 @@ class Timeline:
 
             self._parts = list(map(make_new_reference, parts))
 
-        elif isinstance(timeline, list):
+        else:
             self.absolute = absolute
             self._parts = list(map(make_new_reference, timeline))
 
@@ -109,6 +109,10 @@ class Timeline:
         """Return the index'th item in the timeline."""
         return self._parts[index]
 
+    def __iter__(self) -> Iterator[Reference]:
+        """Iterate over the timeline parts."""
+        yield from self._parts
+
     def __add__(self, other: Any) -> "Timeline":
         """Concatenate this timeline with another (relative!) Timeline."""
         if isinstance(other, Timeline):
@@ -118,6 +122,25 @@ class Timeline:
                 )
             return Timeline(self._parts + other._parts, self.absolute)
         return NotImplemented
+
+    @property
+    def parent(self) -> "Timeline | None":
+        """Get the parent of this timeline. Returns None when there is no parent."""
+        if not self._parts:
+            return None
+        return Timeline(self._parts[:-1], self.absolute)
+
+    def relative_to(self, other: "Timeline") -> "Timeline":
+        """Compute a version of this timeline relative to `other`.
+
+        Both timelines must be absolute, and the other timeline must be a parent
+        timeline of this one.
+        """
+        if not self.absolute or not other.absolute:
+            raise ValueError("Both timelines must be absolute")
+        if self._parts[: len(other)] != other._parts:
+            raise ValueError(f"{self} is not a subtimeline of {other}")
+        return Timeline(self._parts[len(other) :], False)
 
 
 class Port:
@@ -284,6 +307,15 @@ class Ports:
     def __iter__(self) -> Iterator[Identifier]:
         """Iterate through the ports' names."""
         yield from self._ports
+
+    def items(self) -> Iterator[tuple[Identifier, Port]]:
+        yield from self._ports.items()
+
+    def keys(self) -> Iterator[Identifier]:
+        yield from self._ports.keys()
+
+    def values(self) -> Iterator[Port]:
+        yield from self._ports.values()
 
     def sending_port_names(self) -> List[Identifier]:
         """Return the names of all the sending ports.
