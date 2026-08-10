@@ -26,7 +26,6 @@ class Operator(Enum):
     and operators for other components such as mappers.
     """
 
-    NONE = 0  #: No operator
     F_INIT = 1  #: Initialisation phase, before start of the SEL
     O_I = 2  #: State observation within the model's main loop
     S = 3  #: State update in the model's main loop
@@ -34,11 +33,11 @@ class Operator(Enum):
 
     def allows_sending(self) -> bool:
         """Whether ports on this operator can send."""
-        return self in {Operator.NONE, Operator.O_I, Operator.O_F}
+        return self in {Operator.O_I, Operator.O_F}
 
     def allows_receiving(self) -> bool:
         """Whether ports on this operator can receive."""
-        return self in {Operator.NONE, Operator.F_INIT, Operator.S}
+        return self in {Operator.F_INIT, Operator.S}
 
 
 class Port:
