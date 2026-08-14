@@ -149,3 +149,8 @@ def test_inconsistent_interact(timelines_configuration: Configuration) -> None:
 def test_model_ports(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("model_ports")]
     resolve_timelines(model)
+
+
+def test_muscle_settings_in(timelines_configuration: Configuration) -> None:
+    model = timelines_configuration.models[Ref("qmc")]
+    resolve_timelines(model)
