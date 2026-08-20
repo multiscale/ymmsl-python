@@ -21,6 +21,21 @@ def test_conduit_filter() -> None:
     assert ConduitFilter.PAD.is_repeater()
 
 
+def test_conduit_order() -> None:
+    Conduit("a", "b", "last last")
+    Conduit("a", "b", "last pad")
+    Conduit("a", "b", "last repeat")
+    Conduit("a", "b", "repeat repeat")
+    Conduit("a", "b", "repeat pad")
+    Conduit("a", "b", "pad pad")
+    with pytest.raises(RuntimeError):
+        Conduit("a", "b", "repeat last")
+    with pytest.raises(RuntimeError):
+        Conduit("a", "b", "pad last")
+    with pytest.raises(RuntimeError):
+        Conduit("a", "b", "pad repeat")
+
+
 def test_conduit_access() -> None:
     conduit = Conduit("macro.out", "micro.in")
 
