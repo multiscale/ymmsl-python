@@ -132,6 +132,144 @@ separated by periods. Depending on the context, this may represent a name in a n
 or an attribute of an object (as we will see below with Conduits).
 
 
+Timelines
+`````````
+
+Different components of a model run at their own rate, which is expressed by putting them
+on a timeline. A model's timelines must follow a few rules:
+
+- A component that is not called by any other component has its ``f_init`` and ``o_f``
+  ports on the root timeline, written ``:``.
+- A component's ``o_i``/``s`` ports belong to a timeline nested inside the component's own
+  timeline.
+- A component whose ``f_init``/``o_f`` ports are connected by a conduit is on the same
+  timeline as the port on the other end of that conduit.
+
+:func:`.ymmsl.v0_2.resolve_timelines` works out the timeline of every component and port
+automatically, purely from how ``f_init``/``o_f`` and ``o_i``/``s`` ports are wired together
+with conduits. It raises a :class:`.ymmsl.v0_2.ResolveTimelineException` if the conduits
+don't describe a consistent set of timelines.
+
+Take a macro model that calls a micro model in a loop, without naming any timelines:
+
+.. code-block:: yaml
+    :caption: A macro-micro coupling, timelines left to the default
+
+    components:
+      macro:
+        ports:
+          o_i: bc_out
+          s: bc_in
+        description: ''
+      micro:
+        ports:
+          f_init: init_in
+          o_f: final_out
+        description: ''
+    conduits:
+      macro.bc_out: micro.init_in
+      micro.final_out: macro.bc_in
+
+Since ``macro``'s ``o_i``/``s`` ports aren't given a name, they default to a
+subtimeline named after ``macro`` itself, and ``micro`` ends up on that same
+subtimeline:
+
+.. code-block:: python
+    :caption: Resolving the default timelines in python code
+
+    from pathlib import Path
+    import ymmsl
+    from ymmsl.v0_2 import resolve_timelines
+
+    config = ymmsl.load(Path('macro_micro.ymmsl'))
+    model = config.models['macro_micro']
+    resolve_timelines(model)
+
+    print(model.components['macro'].timeline)   # output: :
+    print(model.components['micro'].timeline)   # output: :macro
+
+A timeline is written as a colon-separated list of names, starting with the root
+timeline ``:`` for the outermost level of the model, and growing by one name
+for each level of nesting.
+
+You could also name the timeline yourself:
+
+.. code-block:: yaml
+    :caption: The same coupling, with an explicit timeline name
+
+    components:
+      macro:
+        ports:
+          timeline tl1:
+            o_i: bc_out
+            s: bc_in
+        description: ''
+      micro:
+        ports:
+          f_init: init_in
+          o_f: final_out
+        description: ''
+    conduits:
+      macro.bc_out: micro.init_in
+      micro.final_out: macro.bc_in
+
+now puts ``micro`` on ``:tl1`` instead of ``:macro``. Note that this absolute timeline
+is only stored on ``micro`` as a whole; ``macro``'s own port just gets the new name as
+its (relative) timeline, since it is still part of ``macro`` itself:
+
+.. code-block:: python
+    :caption: Resolving the explicitly named timeline
+
+    print(model.components['macro'].timeline)         # output: :
+    print(model.components['micro'].timeline)         # output: :tl1
+    print(model.components['macro'].ports['bc_out'].timeline)  # output: tl1
+
+A component can also be connected to more than one timeline, for example when it calls
+two other components at different rates. In that case, its ``o_i``/``s`` ports must be
+grouped explicitly by timeline name, as in the previous example, rather than left to
+default grouping. Extending the example with an extra ``micro2`` component that ``macro``
+calls at a different rate than ``micro1``:
+
+.. code-block:: yaml
+    :caption: One component with two subtimelines
+
+    components:
+      macro:
+        ports:
+          timeline tl1:
+            o_i: micro1_out
+            s: micro1_in
+          timeline tl2:
+            o_i: micro2_out
+            s: micro2_in
+        description: ''
+      micro1:
+        ports:
+          f_init: init_in
+          o_f: final_out
+        description: ''
+      micro2:
+        ports:
+          f_init: init_in
+          o_f: final_out
+        description: ''
+    conduits:
+      macro.micro1_out: micro1.init_in
+      micro1.final_out: macro.micro1_in
+      macro.micro2_out: micro2.init_in
+      micro2.final_out: macro.micro2_in
+
+``macro`` itself stays on the root timeline, but ``micro1`` and ``micro2`` end up on the two
+different subtimelines it calls them on:
+
+.. code-block:: python
+    :caption: Resolving multiple subtimelines from one component
+
+    print(model.components['macro'].timeline)    # output: :
+    print(model.components['micro1'].timeline)   # output: :tl1
+    print(model.components['micro2'].timeline)   # output: :tl2
+
+
 Conduits
 ````````
 
