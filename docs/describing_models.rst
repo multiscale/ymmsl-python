@@ -141,18 +141,16 @@ driving it, and a meso model may sit somewhere in between the two. yMMSL capture
 idea of "running at a different pace" as a *timeline*. Wiring a component's ``o_i``/``s``
 ports to another component's ``f_init``/``o_f`` ports puts that other component, and anything
 it in turn drives, on a timeline nested inside the first. yMMSL works this out automatically
-from how components are wired together with conduits, so in most models you never have
-to declare a timeline explicitly.
+from how components are wired together with conduits.
 
 A component that nobody calls sits on the outermost, root timeline, written ``:``. Every
 level of nesting adds one more name, giving each timeline in the model an addressable
-path, a bit like a folder structure.
+path, a bit like a folder structure. 
 
 Take a macro model that calls a meso model in a loop, and where that meso model in turn
 calls a micro model in its own loop. This produces three levels of timelines: the root
-timeline for ``macro``, a timeline nested inside it for ``meso`` (which runs once for
-every step ``macro`` takes), and a timeline nested inside *that* for ``micro`` (which runs
-once for every step ``meso`` takes):
+timeline for ``macro``, a timeline nested inside it for ``meso``, and a timeline nested
+inside *that* for ``micro``:
 
 .. literalinclude:: timelines_macro_meso_micro.ymmsl
    :caption: ``docs/timelines_macro_meso_micro.ymmsl``
@@ -185,12 +183,6 @@ the ports that belong together under a ``timeline <name>:`` heading, one per loo
    <https://github.com/multiscale/ymmsl2svg>`_. ``macro``'s two named timelines are drawn
    side by side beneath it, each with its own pair of ports, one leading to ``micro1``
    and the other to ``micro2``.
-
-This is the pattern to reach for whenever a single component acts as the driver for
-more than one independently-paced loop, for example a component that advances a coarse
-grid with one fast inner solver and a separate, differently-paced inner solver for a
-refined region, or a driver that runs an ensemble of replicas at one rate while also
-maintaining some shared bookkeeping process at another.
 
 
 Conduits
