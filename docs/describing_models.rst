@@ -135,139 +135,62 @@ or an attribute of an object (as we will see below with Conduits).
 Timelines
 `````````
 
-Different components of a model run at their own rate, which is expressed by putting them
-on a timeline. A model's timelines must follow a few rules:
+Different components of a coupled simulation typically run at their own pace: a fast,
+detailed micro model may take many small steps for every single step of the macro model
+driving it, and a meso model may sit somewhere in between the two. yMMSL captures this
+idea of "running at a different pace" as a *timeline*. Wiring a component's ``o_i``/``s``
+ports (the ports it uses to run a loop) to another component's ``f_init``/``o_f`` ports
+puts that other component, and anything it in turn drives, on a timeline nested inside the
+first. yMMSL works this out automatically from how components are wired together with
+conduits, so in most models you never have to declare a timeline explicitly.
 
-- A component that is not called by any other component has its ``f_init`` and ``o_f``
-  ports on the root timeline, written ``:``.
-- A component's ``o_i``/``s`` ports belong to a timeline nested inside the component's own
-  timeline.
-- A component whose ``f_init``/``o_f`` ports are connected by a conduit is on the same
-  timeline as the port on the other end of that conduit.
+A component that nobody calls sits on the outermost, root timeline, written ``:``. Every
+level of nesting adds one more name, giving each timeline in the model an addressable
+path, a bit like a folder structure.
 
-:func:`.ymmsl.v0_2.resolve_timelines` works out the timeline of every component and port
-automatically, purely from how ``f_init``/``o_f`` and ``o_i``/``s`` ports are wired together
-with conduits. It raises a :class:`.ymmsl.v0_2.ResolveTimelineException` if the conduits
-don't describe a consistent set of timelines.
+Take a macro model that calls a meso model in a loop, and where that meso model in turn
+calls a micro model in its own loop. This produces three levels of timelines: the root
+timeline for ``macro``, a timeline nested inside it for ``meso`` (which runs once for
+every step ``macro`` takes), and a timeline nested inside *that* for ``micro`` (which runs
+once for every step ``meso`` takes):
 
-Take a macro model that calls a micro model in a loop, without naming any timelines:
+.. literalinclude:: timelines_macro_meso_micro.ymmsl
+   :caption: ``docs/timelines_macro_meso_micro.ymmsl``
+   :language: yaml
 
-.. code-block:: yaml
-    :caption: A macro-micro coupling, timelines left to the default
+.. figure:: timelines_macro_meso_micro.svg
+   :alt: macro connects to meso through F_INIT/O_F and O_I/S ports, and meso connects to
+         micro the same way, producing three nested timelines.
 
-    components:
-      macro:
-        ports:
-          o_i: bc_out
-          s: bc_in
-        description: ''
-      micro:
-        ports:
-          f_init: init_in
-          o_f: final_out
-        description: ''
-    conduits:
-      macro.bc_out: micro.init_in
-      micro.final_out: macro.bc_in
+   The same model, visualized with `ymmsl2svg
+   <https://github.com/multiscale/ymmsl2svg>`_. Nesting in the figure mirrors nesting in
+   time: ``meso``'s box sits inside ``macro``'s, and ``micro``'s sits inside ``meso``'s.
 
-Since ``macro``'s ``o_i``/``s`` ports aren't given a name, they default to a
-subtimeline named after ``macro`` itself, and ``micro`` ends up on that same
-subtimeline:
+A single component can also be connected to more than one timeline at once, for example
+when it drives two other components that run at different rates. ``macro`` calling
+``micro1`` in one loop and ``micro2`` in a separate loop puts ``micro1`` and ``micro2`` on
+two independent timelines nested inside ``macro``'s own, rather than on a shared one.
+Since there's more than one loop to keep apart, each one needs an explicit name: group
+the ports that belong together under a ``timeline <name>:`` heading, one per loop:
 
-.. code-block:: python
-    :caption: Resolving the default timelines in python code
+.. literalinclude:: timelines_two_subtimelines.ymmsl
+   :caption: ``docs/timelines_two_subtimelines.ymmsl``
+   :language: yaml
 
-    from pathlib import Path
-    import ymmsl
-    from ymmsl.v0_2 import resolve_timelines
+.. figure:: timelines_two_subtimelines.svg
+   :alt: macro has two separate pairs of O_I/S ports, one connecting down to micro1 and
+         one connecting down to micro2, side by side.
 
-    config = ymmsl.load(Path('macro_micro.ymmsl'))
-    model = config.models['macro_micro']
-    resolve_timelines(model)
+   The same model, visualized with `ymmsl2svg
+   <https://github.com/multiscale/ymmsl2svg>`_. ``macro``'s two named timelines are drawn
+   side by side beneath it, each with its own pair of ports, one leading to ``micro1``
+   and the other to ``micro2``.
 
-    print(model.components['macro'].timeline)   # output: :
-    print(model.components['micro'].timeline)   # output: :macro
-
-A timeline is written as a colon-separated list of names, starting with the root
-timeline ``:`` for the outermost level of the model, and growing by one name
-for each level of nesting.
-
-You could also name the timeline yourself:
-
-.. code-block:: yaml
-    :caption: The same coupling, with an explicit timeline name
-
-    components:
-      macro:
-        ports:
-          timeline tl1:
-            o_i: bc_out
-            s: bc_in
-        description: ''
-      micro:
-        ports:
-          f_init: init_in
-          o_f: final_out
-        description: ''
-    conduits:
-      macro.bc_out: micro.init_in
-      micro.final_out: macro.bc_in
-
-now puts ``micro`` on ``:tl1`` instead of ``:macro``. Note that this absolute timeline
-is only stored on ``micro`` as a whole; ``macro``'s own port just gets the new name as
-its (relative) timeline, since it is still part of ``macro`` itself:
-
-.. code-block:: python
-    :caption: Resolving the explicitly named timeline
-
-    print(model.components['macro'].timeline)         # output: :
-    print(model.components['micro'].timeline)         # output: :tl1
-    print(model.components['macro'].ports['bc_out'].timeline)  # output: tl1
-
-A component can also be connected to more than one timeline, for example when it calls
-two other components at different rates. In that case, its ``o_i``/``s`` ports must be
-grouped explicitly by timeline name, as in the previous example, rather than left to
-default grouping. Extending the example with an extra ``micro2`` component that ``macro``
-calls at a different rate than ``micro1``:
-
-.. code-block:: yaml
-    :caption: One component with two subtimelines
-
-    components:
-      macro:
-        ports:
-          timeline tl1:
-            o_i: micro1_out
-            s: micro1_in
-          timeline tl2:
-            o_i: micro2_out
-            s: micro2_in
-        description: ''
-      micro1:
-        ports:
-          f_init: init_in
-          o_f: final_out
-        description: ''
-      micro2:
-        ports:
-          f_init: init_in
-          o_f: final_out
-        description: ''
-    conduits:
-      macro.micro1_out: micro1.init_in
-      micro1.final_out: macro.micro1_in
-      macro.micro2_out: micro2.init_in
-      micro2.final_out: macro.micro2_in
-
-``macro`` itself stays on the root timeline, but ``micro1`` and ``micro2`` end up on the two
-different subtimelines it calls them on:
-
-.. code-block:: python
-    :caption: Resolving multiple subtimelines from one component
-
-    print(model.components['macro'].timeline)    # output: :
-    print(model.components['micro1'].timeline)   # output: :tl1
-    print(model.components['micro2'].timeline)   # output: :tl2
+This is the pattern to reach for whenever a single component acts as the driver for
+more than one independently-paced loop, for example a component that advances a coarse
+grid with one fast inner solver and a separate, differently-paced inner solver for a
+refined region, or a driver that runs an ensemble of replicas at one rate while also
+maintaining some shared bookkeeping process at another.
 
 
 Conduits
