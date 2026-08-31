@@ -139,10 +139,10 @@ Different components of a coupled simulation typically run at their own pace: a 
 detailed micro model may take many small steps for every single step of the macro model
 driving it, and a meso model may sit somewhere in between the two. yMMSL captures this
 idea of "running at a different pace" as a *timeline*. Wiring a component's ``o_i``/``s``
-ports (the ports it uses to run a loop) to another component's ``f_init``/``o_f`` ports
-puts that other component, and anything it in turn drives, on a timeline nested inside the
-first. yMMSL works this out automatically from how components are wired together with
-conduits, so in most models you never have to declare a timeline explicitly.
+ports to another component's ``f_init``/``o_f`` ports puts that other component, and anything
+it in turn drives, on a timeline nested inside the first. yMMSL works this out automatically
+from how components are wired together with conduits, so in most models you never have
+to declare a timeline explicitly.
 
 A component that nobody calls sits on the outermost, root timeline, written ``:``. Every
 level of nesting adds one more name, giving each timeline in the model an addressable
@@ -250,9 +250,14 @@ sender:
 Conduit filters
 ^^^^^^^^^^^^^^^
 
-As explained in :ref:`Timelines` above, a conduit that connects a port on one timeline
-to a port on another must bridge the difference in how often either side sends or
-receives, using a filter:
+A conduit filter lets a conduit skip past an in-between timeline(s): a component can send
+directly to (or receive directly from) another one further down or up the nesting,
+without the message being relayed through whatever sits between them. Because the
+deeper side of such a conduit still gets called multiple times for every step the
+shallower side takes, skipping down needs a filter that produces enough messages to
+match (``repeat``/``pad``), and skipping back up needs one that picks a single message
+out of the many produced (``last``). A conduit between directly connected timelines (a
+component and its own caller) doesn't skip anything, so it can't take a filter at all.
 
 - ``repeat`` and ``pad`` cross from an outer timeline into a nested one: a single
   message sent on the outer timeline (e.g. an initial state) is repeated, or followed
@@ -269,12 +274,11 @@ Filters are written in front of the receiver and may be combined:
       macro.init_out: repeat micro.init_in
       micro.state_out: last macro.final_in
 
-A filter is only needed where a conduit *skips* a level of nesting. Extending the
-macro-meso-micro example from :ref:`Timelines`: ``macro`` lives on the root timeline
-``:``, ``meso`` on ``:macro``, and ``micro`` on ``:macro:meso``. The conduits that call
-``meso`` and that call ``micro`` from ``meso`` don't need a filter, since each one only
-crosses a single level of nesting that it also establishes. A conduit that goes directly
-from ``macro`` to ``micro``, bypassing ``meso``, skips a level, and does need one:
+Extending the macro-meso-micro example from :ref:`Timelines`: ``macro`` lives on the
+root timeline ``:``, ``meso`` on ``:macro``, and ``micro`` on ``:macro:meso``. The
+conduits that call ``meso`` and that call ``micro`` from ``meso`` are each a direct
+connection, so neither needs a filter. A conduit that goes directly from ``macro`` to
+``micro``, bypassing ``meso``, does:
 
 .. literalinclude:: conduit_filters_bypass.ymmsl
    :caption: ``docs/conduit_filters_bypass.ymmsl``
@@ -285,28 +289,7 @@ from ``macro`` to ``micro``, bypassing ``meso``, skips a level, and does need on
          bypassing meso, labeled "repeat" and "last".
 
    The same model, visualized with `ymmsl2svg
-   <https://github.com/multiscale/ymmsl2svg>`_. Besides the normal call/release
-   conduits, ``macro`` sends directly into ``micro``'s timeline with ``repeat`` (since
-   ``macro`` only sends once per ``meso`` step, but ``micro`` runs several times per
-   ``meso`` step), and ``micro`` reports back to ``macro`` with ``last`` (since only
-   the final value of several ``micro`` runs is meaningful once you're back up at
-   ``macro``'s level).
-
-This is represented in Python by the ``filters`` attribute of
-:class:`.ymmsl.v0_2.Conduit`, a list of :class:`.ymmsl.v0_2.ConduitFilter` values:
-
-.. code-block:: python
-    :caption: Conduit filters in python code
-
-    from pathlib import Path
-    import ymmsl
-
-    config = ymmsl.load(Path('conduit_filters_bypass.ymmsl'))
-    model = config.models['macro_meso_micro_filtered']
-
-    conduits = model.conduits
-    print(conduits[1])          # output: Conduit(macro.bypass_out -> repeat -> micro.bypass_in)
-    print(conduits[1].filters)  # output: [<ConduitFilter.REPEAT: 'repeat'>]
+   <https://github.com/multiscale/ymmsl2svg>`_.
 
 
 Nesting models
