@@ -247,6 +247,68 @@ sender:
     print(conduits[0])      # output: Conduit(sender.port -> receiver1.port)
     print(conduits[1])      # output: Conduit(sender.port -> receiver2.port)
 
+Conduit filters
+^^^^^^^^^^^^^^^
+
+As explained in :ref:`Timelines` above, a conduit that connects a port on one timeline
+to a port on another must bridge the difference in how often either side sends or
+receives, using a filter:
+
+- ``repeat`` and ``pad`` cross from an outer timeline into a nested one: a single
+  message sent on the outer timeline (e.g. an initial state) is repeated, or followed
+  by empty messages, to match every receive on the nested timeline.
+- ``last`` crosses from a nested timeline back out to its parent: of the many messages
+  sent on the nested timeline, only the last one (e.g. a final result) is passed on.
+
+Filters are written in front of the receiver and may be combined:
+
+.. code-block:: yaml
+    :caption: Specifying conduit filters in yMMSL
+
+    conduits:
+      macro.init_out: repeat micro.init_in
+      micro.state_out: last macro.final_in
+
+A filter is only needed where a conduit *skips* a level of nesting. Extending the
+macro-meso-micro example from :ref:`Timelines`: ``macro`` lives on the root timeline
+``:``, ``meso`` on ``:macro``, and ``micro`` on ``:macro:meso``. The conduits that call
+``meso`` and that call ``micro`` from ``meso`` don't need a filter, since each one only
+crosses a single level of nesting that it also establishes. A conduit that goes directly
+from ``macro`` to ``micro``, bypassing ``meso``, skips a level, and does need one:
+
+.. literalinclude:: conduit_filters_bypass.ymmsl
+   :caption: ``docs/conduit_filters_bypass.ymmsl``
+   :language: yaml
+
+.. figure:: conduit_filters_bypass.svg
+   :alt: macro and micro have an extra pair of ports directly connecting them,
+         bypassing meso, labeled "repeat" and "last".
+
+   The same model, visualized with `ymmsl2svg
+   <https://github.com/multiscale/ymmsl2svg>`_. Besides the normal call/release
+   conduits, ``macro`` sends directly into ``micro``'s timeline with ``repeat`` (since
+   ``macro`` only sends once per ``meso`` step, but ``micro`` runs several times per
+   ``meso`` step), and ``micro`` reports back to ``macro`` with ``last`` (since only
+   the final value of several ``micro`` runs is meaningful once you're back up at
+   ``macro``'s level).
+
+This is represented in Python by the ``filters`` attribute of
+:class:`.ymmsl.v0_2.Conduit`, a list of :class:`.ymmsl.v0_2.ConduitFilter` values:
+
+.. code-block:: python
+    :caption: Conduit filters in python code
+
+    from pathlib import Path
+    import ymmsl
+
+    config = ymmsl.load(Path('conduit_filters_bypass.ymmsl'))
+    model = config.models['macro_meso_micro_filtered']
+
+    conduits = model.conduits
+    print(conduits[1])          # output: Conduit(macro.bypass_out -> repeat -> micro.bypass_in)
+    print(conduits[1].filters)  # output: [<ConduitFilter.REPEAT: 'repeat'>]
+
+
 Nesting models
 ``````````````
 
