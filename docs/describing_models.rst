@@ -132,6 +132,62 @@ separated by periods. Depending on the context, this may represent a name in a n
 or an attribute of an object (as we will see below with Conduits).
 
 
+Timelines
+`````````
+
+Different components of a coupled simulation typically run at their own pace: a fast,
+detailed micro model may take many small steps for every single step of the macro model
+driving it, and a meso model may sit somewhere in between the two. yMMSL captures this
+idea of "running at a different pace" as a *timeline*. Wiring a component's ``o_i``/``s``
+ports to another component's ``f_init``/``o_f`` ports puts that other component, and anything
+it in turn drives, on a timeline nested inside the first. yMMSL works this out automatically
+from how components are wired together with conduits.
+
+A component that nobody calls sits on the outermost, root timeline, written ``:``. Every
+level of nesting adds one more name, giving each timeline in the model an addressable
+path, a bit like a folder structure. 
+
+Take a macro model that calls a meso model in a loop, and where that meso model in turn
+calls a micro model in its own loop. This produces three levels of timelines: the root
+timeline for ``macro``, a timeline nested inside it for ``meso``, and a timeline nested
+inside *that* for ``micro``:
+
+.. literalinclude:: timelines_macro_meso_micro.ymmsl
+   :caption: ``docs/timelines_macro_meso_micro.ymmsl``
+   :language: yaml
+
+.. figure:: timelines_macro_meso_micro.svg
+   :align: center
+   :alt: macro connects to meso through F_INIT/O_F and O_I/S ports, and meso connects to
+         micro the same way, producing three nested timelines.
+
+   The same model, visualized with `ymmsl2svg
+   <https://github.com/multiscale/ymmsl2svg>`_. The order of the boxes in the figure,
+   from top to bottom, mirrors the nesting in time: ``macro`` first, then ``meso``
+   below it, then ``micro`` below ``meso``.
+
+A single component can also be connected to more than one timeline at once, for example
+when it drives two other components that run at different rates. ``macro`` calling
+``micro1`` in one loop and ``micro2`` in a separate loop puts ``micro1`` and ``micro2`` on
+two independent sub-timelines of ``macro``. The following example shows how you can
+use ``timeline <name>:`` to indicate that the ports connecting to ``micro1`` belong to
+a different subtimeline than the ports connecting to ``micro2``:
+
+.. literalinclude:: timelines_two_subtimelines.ymmsl
+   :caption: ``docs/timelines_two_subtimelines.ymmsl``
+   :language: yaml
+
+.. figure:: timelines_two_subtimelines.svg
+   :align: center
+   :alt: macro has two separate pairs of O_I/S ports, one connecting down to micro1 and
+         one connecting down to micro2, side by side.
+
+   The same model, visualized with `ymmsl2svg
+   <https://github.com/multiscale/ymmsl2svg>`_. ``macro``'s two named timelines are drawn
+   side by side beneath it, each with its own pair of ports, one leading to ``micro1``
+   and the other to ``micro2``.
+
+
 Conduits
 ````````
 
@@ -185,6 +241,63 @@ sender:
     print(len(conduits))    # output: 2
     print(conduits[0])      # output: Conduit(sender.port -> receiver1.port)
     print(conduits[1])      # output: Conduit(sender.port -> receiver2.port)
+
+Conduit filters
+^^^^^^^^^^^^^^^
+
+A conduit connects two components that call each other directly, for example ``macro``
+and ``meso``, or ``meso`` and ``micro``. ``macro`` and ``micro`` are not directly
+connected in this sense: ``meso`` sits between them. Connecting ``macro`` and ``micro``
+directly, bypassing ``meso``, means their pace no longer matches: ``micro`` is still
+called many times for every step ``macro`` takes, and still produces a message on
+every one of those calls, even though there is no longer a ``meso`` in between to
+absorb the difference. A conduit filter reconciles that mismatch.
+
+Extending the macro-meso-micro example from :ref:`Timelines` with a conduit that
+bypasses ``meso`` to connect ``macro`` and ``micro`` directly shows both filters in
+use:
+
+.. literalinclude:: conduit_filters_bypass.ymmsl
+   :caption: ``docs/conduit_filters_bypass.ymmsl``
+   :language: yaml
+
+.. figure:: conduit_filters_bypass.svg
+   :align: center
+   :alt: macro and micro have an extra pair of ports directly connecting them,
+         bypassing meso, labeled "repeat" and "last".
+
+   The same model, visualized with `ymmsl2svg
+   <https://github.com/multiscale/ymmsl2svg>`_.
+
+``macro`` produces the ``bypass_out`` message once, but ``micro`` is called many times
+for every step of ``macro`` and needs the message on each of those calls. The conduit
+from ``macro.bypass_out`` to ``micro.bypass_in`` uses a ``repeat`` filter for this: the
+single message ``macro`` sends is resent to ``micro`` every time it runs, without
+``meso`` having to relay it.
+
+The reverse happens on the way back: ``micro`` produces a ``bypass_out`` message on
+every one of its many runs, but ``macro`` still expects only one message per call. The
+conduit from ``micro.bypass_out`` to ``macro.bypass_in`` uses a ``last`` filter to
+reduce those many messages down to the single most recently produced one.
+
+- ``repeat`` and ``pad`` go from the shallower side to the deeper one: a single message
+  is repeated, or followed by empty messages, to match every time the deeper side
+  receives.
+- ``last`` goes from the deeper side back to the shallower one: of the many messages
+  produced, only the last one is passed on.
+
+A conduit between two components that call each other directly doesn't skip anything,
+so it can't take a filter at all.
+
+Filters are written in front of the receiver and may be combined:
+
+.. code-block:: yaml
+    :caption: Specifying conduit filters in yMMSL
+
+    conduits:
+      macro.init_out: repeat micro.init_in
+      micro.state_out: last macro.final_in
+
 
 Nesting models
 ``````````````
