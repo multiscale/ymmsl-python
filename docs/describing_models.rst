@@ -245,20 +245,49 @@ sender:
 Conduit filters
 ^^^^^^^^^^^^^^^
 
-A conduit filter lets a conduit skip past an in-between timeline(s): a component can send
-directly to (or receive directly from) another one further down or up the nesting,
-without the message being relayed through whatever sits between them. Because the
-deeper side of such a conduit still gets called multiple times for every step the
-shallower side takes, skipping down needs a filter that produces enough messages to
-match (``repeat``/``pad``), and skipping back up needs one that picks a single message
-out of the many produced (``last``). A conduit between directly connected timelines (a
-component and its own caller) doesn't skip anything, so it can't take a filter at all.
+A conduit connects two components that call each other directly, for example ``macro``
+and ``meso``, or ``meso`` and ``micro``. ``macro`` and ``micro`` are not directly
+connected in this sense: ``meso`` sits between them. Connecting ``macro`` and ``micro``
+directly, bypassing ``meso``, means their pace no longer matches: ``micro`` is still
+called many times for every step ``macro`` takes, and still produces a message on
+every one of those calls, even though there is no longer a ``meso`` in between to
+absorb the difference. A conduit filter reconciles that mismatch.
 
-- ``repeat`` and ``pad`` cross from an outer timeline into a nested one: a single
-  message sent on the outer timeline (e.g. an initial state) is repeated, or followed
-  by empty messages, to match every receive on the nested timeline.
-- ``last`` crosses from a nested timeline back out to its parent: of the many messages
-  sent on the nested timeline, only the last one (e.g. a final result) is passed on.
+Extending the macro-meso-micro example from :ref:`Timelines` with a conduit that
+bypasses ``meso`` to connect ``macro`` and ``micro`` directly shows both filters in
+use:
+
+.. literalinclude:: conduit_filters_bypass.ymmsl
+   :caption: ``docs/conduit_filters_bypass.ymmsl``
+   :language: yaml
+
+.. figure:: conduit_filters_bypass.svg
+   :align: center
+   :alt: macro and micro have an extra pair of ports directly connecting them,
+         bypassing meso, labeled "repeat" and "last".
+
+   The same model, visualized with `ymmsl2svg
+   <https://github.com/multiscale/ymmsl2svg>`_.
+
+``macro`` produces the ``bypass_out`` message once, but ``micro`` is called many times
+for every step of ``macro`` and needs the message on each of those calls. The conduit
+from ``macro.bypass_out`` to ``micro.bypass_in`` uses a ``repeat`` filter for this: the
+single message ``macro`` sends is resent to ``micro`` every time it runs, without
+``meso`` having to relay it.
+
+The reverse happens on the way back: ``micro`` produces a ``bypass_out`` message on
+every one of its many runs, but ``macro`` still expects only one message per call. The
+conduit from ``micro.bypass_out`` to ``macro.bypass_in`` uses a ``last`` filter to
+reduce those many messages down to the single most recently produced one.
+
+- ``repeat`` and ``pad`` go from the shallower side to the deeper one: a single message
+  is repeated, or followed by empty messages, to match every time the deeper side
+  receives.
+- ``last`` goes from the deeper side back to the shallower one: of the many messages
+  produced, only the last one is passed on.
+
+A conduit between two components that call each other directly doesn't skip anything,
+so it can't take a filter at all.
 
 Filters are written in front of the receiver and may be combined:
 
@@ -268,23 +297,6 @@ Filters are written in front of the receiver and may be combined:
     conduits:
       macro.init_out: repeat micro.init_in
       micro.state_out: last macro.final_in
-
-Extending the macro-meso-micro example from :ref:`Timelines`: ``macro`` lives on the
-root timeline ``:``, ``meso`` on ``:macro``, and ``micro`` on ``:macro:meso``. The
-conduits that call ``meso`` and that call ``micro`` from ``meso`` are each a direct
-connection, so neither needs a filter. A conduit that goes directly from ``macro`` to
-``micro``, bypassing ``meso``, does:
-
-.. literalinclude:: conduit_filters_bypass.ymmsl
-   :caption: ``docs/conduit_filters_bypass.ymmsl``
-   :language: yaml
-
-.. figure:: conduit_filters_bypass.svg
-   :alt: macro and micro have an extra pair of ports directly connecting them,
-         bypassing meso, labeled "repeat" and "last".
-
-   The same model, visualized with `ymmsl2svg
-   <https://github.com/multiscale/ymmsl2svg>`_.
 
 
 Nesting models
