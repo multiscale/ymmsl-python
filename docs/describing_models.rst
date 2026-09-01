@@ -157,25 +157,28 @@ inside *that* for ``micro``:
    :language: yaml
 
 .. figure:: timelines_macro_meso_micro.svg
+   :align: center
    :alt: macro connects to meso through F_INIT/O_F and O_I/S ports, and meso connects to
          micro the same way, producing three nested timelines.
 
    The same model, visualized with `ymmsl2svg
-   <https://github.com/multiscale/ymmsl2svg>`_. Nesting in the figure mirrors nesting in
-   time: ``meso``'s box sits inside ``macro``'s, and ``micro``'s sits inside ``meso``'s.
+   <https://github.com/multiscale/ymmsl2svg>`_. The order of the boxes in the figure,
+   from top to bottom, mirrors the nesting in time: ``macro`` first, then ``meso``
+   below it, then ``micro`` below ``meso``.
 
 A single component can also be connected to more than one timeline at once, for example
 when it drives two other components that run at different rates. ``macro`` calling
 ``micro1`` in one loop and ``micro2`` in a separate loop puts ``micro1`` and ``micro2`` on
-two independent timelines nested inside ``macro``'s own, rather than on a shared one.
-Since there's more than one loop to keep apart, each one needs an explicit name: group
-the ports that belong together under a ``timeline <name>:`` heading, one per loop:
+two independent sub-timelines of ``macro``. The following example shows how you can
+use ``timeline <name>:`` to indicate that the ports connecting to ``micro1`` belong to
+a different subtimeline than the ports connecting to ``micro2``:
 
 .. literalinclude:: timelines_two_subtimelines.ymmsl
    :caption: ``docs/timelines_two_subtimelines.ymmsl``
    :language: yaml
 
 .. figure:: timelines_two_subtimelines.svg
+   :align: center
    :alt: macro has two separate pairs of O_I/S ports, one connecting down to micro1 and
          one connecting down to micro2, side by side.
 
