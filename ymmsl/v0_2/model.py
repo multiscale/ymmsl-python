@@ -126,6 +126,21 @@ class Conduit:
         self.__check_reference(self.sender)
         self.__check_reference(self.receiver)
 
+        # Check if filters are in the correct order:
+        err_msg = None
+        for i in range(len(self.filters) - 1):
+            pair = self.filters[i : i + 2]
+            if pair == [ConduitFilter.REPEAT, ConduitFilter.LAST]:
+                err_msg = "'repeat' filter must come after 'last'"
+                break
+            if pair == [ConduitFilter.PAD, ConduitFilter.LAST]:
+                err_msg = "'pad' filter must come after 'last'"
+                break
+            if pair == [ConduitFilter.PAD, ConduitFilter.REPEAT]:
+                err_msg = "'pad' filter must come after 'repeat'"
+        if err_msg is not None:
+            raise RuntimeError(f"Invalid conduit filter for {self}: {err_msg}.")
+
     def __str__(self) -> str:
         """Return a string representation of the object."""
         if not self.filters:
