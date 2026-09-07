@@ -10,6 +10,7 @@ from ymmsl.v0_2 import (
 )
 
 ROOT_TIMELINE = Timeline(":")
+MUSCLE_SETTINGS_IN = Identifier("muscle_settings_in")
 
 
 def resolve_timelines(model: Model) -> None:
@@ -172,6 +173,11 @@ class TimelineChecker:
             for port_name, port in component.ports.items()
         }
         """Map of Port objects by their full reference"""
+        # Special ports:
+        for component in self._model.components.values():
+            self._all_ports[component.name + MUSCLE_SETTINGS_IN] = Port(
+                MUSCLE_SETTINGS_IN, Operator.F_INIT
+            )
 
         # Assign components to timelines
         for component in self._model.components.values():
@@ -187,6 +193,10 @@ class TimelineChecker:
                 conduit = self._conduits_by_receiver.get(component.name + port.name)
                 if conduit is not None:
                     result.append(conduit)
+        # Special ports:
+        conduit = self._conduits_by_receiver.get(component.name + MUSCLE_SETTINGS_IN)
+        if conduit is not None:
+            result.append(conduit)
         return result
 
     def _assign_component(

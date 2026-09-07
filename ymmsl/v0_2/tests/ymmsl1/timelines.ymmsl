@@ -223,3 +223,18 @@ models:
       in: meso.in
       meso.final: macro.in
       macro.final: final
+
+  qmc:
+    components:
+      mc:
+        ports:
+          o_i: parameters_out
+          s: states_in
+        description: Monte Carlo driver for UQ.
+      sim:
+        ports:
+          o_f: state_out
+        description: Simulation
+    conduits:
+      mc.parameters_out: sim.muscle_settings_in
+      sim.state_out: mc.states_in
