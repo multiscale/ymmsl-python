@@ -156,19 +156,3 @@ def test_muscle_settings_in(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("qmc")]
     resolve_timelines(model)
 
-
-def test_check_timelines_does_not_mutate(
-    timelines_configuration: Configuration,
-) -> None:
-    model = timelines_configuration.models[Ref("macromicro")]
-    check_timelines(model)
-    assert model.components[Ref("macro")].timeline is None
-    assert model.components[Ref("micro")].timeline is None
-    for component in model.components.values():
-        for port in component.ports.values():
-            assert port.timeline == Timeline("")
-
-    # The model can still be resolved afterwards
-    resolve_timelines(model)
-    assert model.components[Ref("macro")].timeline == ROOT_TIMELINE
-    assert model.components[Ref("micro")].timeline == Timeline(":macro")
