@@ -13,6 +13,26 @@ ROOT_TIMELINE = Timeline(":")
 MUSCLE_SETTINGS_IN = Identifier("muscle_settings_in")
 
 
+def check_timelines(model: Model) -> "TimelineChecker":
+    """Check that timelines for this model are consistent.
+
+    This function checks that the timelines are consistent, and raises any of below
+    subclasses of :class:`ResolveTimelineException` if they are not.
+
+    Raises:
+        CyclicDependency: When messages to an F_INIT port of a component depend in some
+            way on the output of that component.
+        TooManyReducerFilters: When a conduit filter is applied to messages in the root
+            timeline.
+        InconsistentTimelines: When a component's F_INIT ports are not all connected to
+            the same timeline.
+        ConduitTimelineError: When a conduit connects incompatible timelines.
+    """
+    checker = TimelineChecker(model)
+    checker.check_consistent()
+    return checker
+
+
 def resolve_timelines(model: Model) -> None:
     """Determine timelines for each component and their O_I and S ports in this model.
 
@@ -29,8 +49,7 @@ def resolve_timelines(model: Model) -> None:
             the same timeline.
         ConduitTimelineError: When a conduit connects incompatible timelines.
     """
-    checker = TimelineChecker(model)
-    checker.check_consistent()
+    checker = check_timelines(model)
 
     # Update timeline attributes
     for component in model.components.values():
