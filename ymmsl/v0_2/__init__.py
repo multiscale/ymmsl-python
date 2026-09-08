@@ -33,6 +33,7 @@ from ymmsl.v0_2.timeline_resolver import (
     InconsistentTimelines,
     ResolveTimelineException,
     TooManyReducerFilters,
+    check_timelines,
     resolve_timelines,
 )
 
@@ -41,6 +42,7 @@ __all__ = [
     "CheckpointRule",
     "CheckpointRangeRule",
     "CheckpointAtRule",
+    "check_timelines",
     "Checkpoints",
     "Component",
     "Ports",
