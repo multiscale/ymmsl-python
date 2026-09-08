@@ -13,7 +13,7 @@ ROOT_TIMELINE = Timeline(":")
 MUSCLE_SETTINGS_IN = Identifier("muscle_settings_in")
 
 
-def check_timelines(model: Model) -> None:
+def check_timelines(model: Model) -> "TimelineChecker":
     """Check that timelines for this model are consistent.
 
     This function checks that the timelines are consistent, and raises any of below
