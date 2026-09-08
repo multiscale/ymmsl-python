@@ -11,7 +11,6 @@ from ymmsl.v0_2.timeline_resolver import (
     CyclicDependency,
     InconsistentTimelines,
     TooManyReducerFilters,
-    check_timelines,
     resolve_timelines,
 )
 
@@ -155,4 +154,3 @@ def test_model_ports(timelines_configuration: Configuration) -> None:
 def test_muscle_settings_in(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("qmc")]
     resolve_timelines(model)
-
