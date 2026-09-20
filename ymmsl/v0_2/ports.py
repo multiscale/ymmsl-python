@@ -92,6 +92,15 @@ class Timeline:
         """Make this hashable so we can make sets of Timelines."""
         return hash(str(self))
 
+    def __lt__(self, other: Any) -> bool:
+        """Compare lexicographically by parts."""
+        if isinstance(other, str):
+            other_tl = Timeline(other)
+        else:
+            other_tl = other
+
+        return tuple(self._parts) < tuple(other_tl._parts)
+
     def __str__(self) -> str:
         """Return the string representation of this Timeline."""
         anchor = ":" if self.absolute else ""

@@ -1,4 +1,5 @@
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 
@@ -12,6 +13,7 @@ from ymmsl.v0_2 import (
     Configuration,
     ExecutionModel,
     KeepsStateForNextUse,
+    MatchingTimelines,
     Model,
     MPICoresResReq,
     MPINodesResReq,
@@ -52,6 +54,7 @@ def model() -> Model:
             Component("smc2bf", Ports("in", o_f="out"), "Grids domain", "smc2bf"),
             Component("bf2smc", Ports("in", o_f="out"), "Interpolates wss", "bf2smc"),
         ],
+        None,
         [
             Conduit("ic.out", "smc.initial_state"),
             Conduit("smc.cell_positions", "smc2bf.in"),
@@ -130,6 +133,7 @@ def model_multicast() -> Model:
             Component("b", Ports("in"), "Receives data", "b"),
             Component("c", Ports("in"), "Receives data", "b"),
         ],
+        None,
         [
             Conduit("a.out", "b.in"),
             Conduit("a.out", "c.in"),
@@ -208,6 +212,7 @@ def model_with_filters() -> Model:
                 "micro2",
             ),
         ],
+        None,
         [
             Conduit("init.macro_out", "macro1.init"),
             Conduit("init.micro_out", "micro1.init_state", "pad"),
@@ -275,6 +280,60 @@ def model_with_filters_text() -> str:
         "  macro2.bc_out: micro2.init_bc\n"
         "  micro2.final_bc: macro2.bc_in\n"
     )
+
+
+@pytest.fixture
+def model_matching_timelines() -> Model:
+    return Model(
+        "test_with_matching_timelines",
+        Ports(),
+        "Featuring lock-step interaction",
+        SupportedSettings(),
+        [
+            Component(
+                "left",
+                Ports(o_i="out", s="in"),
+                "Left side of the domain",
+            ),
+            Component(
+                "right",
+                Ports(o_i="out", s="in"),
+                "Right side of the domain",
+            ),
+        ],
+        [MatchingTimelines("main", ["left", "right"])],
+        [
+            Conduit("left.out", "right.in"),
+            Conduit("right.out", "left.in"),
+        ],
+    )
+
+
+@pytest.fixture
+def model_matching_timelines_text() -> str:
+    return dedent("""\
+        name: test_with_matching_timelines
+        description: |
+          Featuring lock-step interaction
+        components:
+          left:
+            ports:
+              o_i: out
+              s: in
+            description: |
+              Left side of the domain
+          right:
+            ports:
+              o_i: out
+              s: in
+            description: |
+              Right side of the domain
+        matching_timelines:
+          main: left right
+        conduits:
+          left.out: right.in
+          right.out: left.in
+        """)
 
 
 @pytest.fixture
@@ -862,6 +921,7 @@ def config_component_loop() -> Configuration:
             ),
             Component("micro", Ports("init", o_f="final"), "Micro model", "micro"),
         ],
+        None,
         [
             Conduit("init.final", "macro.init"),
             Conduit("macro.out", "micro.init"),
@@ -885,6 +945,7 @@ def config_component_loop() -> Configuration:
                 "second",
             ),
         ],
+        None,
         [
             Conduit("init", "first.init"),
             Conduit("first.final", "second.init"),
@@ -899,6 +960,7 @@ def config_component_loop() -> Configuration:
         "Processes the input a bit",
         None,
         [Component("micro", Ports("init", o_f="final"), "Ooops...", "submodel1")],
+        None,
         [Conduit("init", "micro.init"), Conduit("micro.final", "final")],
     )
 
