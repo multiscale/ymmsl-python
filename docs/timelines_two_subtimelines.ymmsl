@@ -1,0 +1,31 @@
+ymmsl_version: v0.2
+
+description: One component (macro) connected to two independent timelines
+
+models:
+  two_subtimelines_model:
+    components:
+      macro:
+        ports:
+          timeline tl1:
+            o_i: micro1_out
+            s: micro1_in
+          timeline tl2:
+            o_i: micro2_out
+            s: micro2_in
+        description: ''
+      micro1:
+        ports:
+          f_init: init_in
+          o_f: final_out
+        description: ''
+      micro2:
+        ports:
+          f_init: init_in
+          o_f: final_out
+        description: ''
+    conduits:
+      macro.micro1_out: micro1.init_in
+      micro1.final_out: macro.micro1_in
+      macro.micro2_out: micro2.init_in
+      micro2.final_out: macro.micro2_in
