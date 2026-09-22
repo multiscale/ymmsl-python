@@ -187,6 +187,71 @@ a different subtimeline than the ports connecting to ``micro2``:
    side by side beneath it, each with its own pair of ports, one leading to ``micro1``
    and the other to ``micro2``.
 
+Matching timelines
+^^^^^^^^^^^^^^^^^^^
+
+The timeline hierarchy above is worked out automatically from how ``f_init``/``o_f``
+and ``o_i``/``s`` ports are wired together, and a conduit can only connect ports whose
+timelines match. Sometimes, though, two components are expected to produce matching
+time points without one being nested inside the other's timeline this way, for example
+two components that call each other directly and are expected to stay in lock-step, or
+a component that adapts its output to another component's timeline, as time bridges do.
+``matching_timelines`` lets you declare such timelines equivalent, so that a conduit can
+still connect ports on them directly:
+
+.. code-block:: yaml
+    :caption: Declaring matching timelines
+
+    components:
+      left:
+        ports:
+          o_i: out
+          s: in
+        description: Left side of the domain
+      right:
+        ports:
+          o_i: out
+          s: in
+        description: Right side of the domain
+
+    matching_timelines:
+      left: right
+
+    conduits:
+      left.out: right.in
+      right.out: left.in
+
+``left`` and ``right`` call each other directly rather than through a shared driver, so
+their O_I and S ports live on their own default timelines, ``:left`` and ``:right``,
+named after the component as usual. A conduit between these ports would therefore not be
+allowed. The entry under ``matching_timelines`` declares ``left`` and ``right``'s
+timelines equivalent, so that the conduits connecting them are valid after all.
+
+On the Python side, ``matching_timelines`` is a list of
+:class:`.ymmsl.v0_2.MatchingTimelines` objects, each representing a set of equivalent
+timelines, with a ``head`` attribute and a ``matches`` attribute holding the full set,
+including the head.
+
+A head can have more than one match, for example if ``left`` is expected to stay in
+lock-step with both ``right`` and ``top``. The matches can then be written as a
+whitespace-separated string:
+
+.. code-block:: yaml
+    :caption: A head with multiple matches
+
+    matching_timelines:
+      left: right top
+
+or, equivalently, as a YAML list:
+
+.. code-block:: yaml
+    :caption: The same, as a YAML list
+
+    matching_timelines:
+      left:
+      - right
+      - top
+
 
 Conduits
 ````````
