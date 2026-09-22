@@ -126,8 +126,11 @@ def test_timeline_concatenate_empty() -> None:
 
 
 def test_timeline_parent() -> None:
-    assert Timeline("").parent is None
-    assert Timeline(":").parent is None
+    with pytest.raises(RuntimeError, match="root timeline"):
+        _ = Timeline("").parent
+
+    with pytest.raises(RuntimeError, match="root timeline"):
+        _ = Timeline(":").parent
 
     assert Timeline("a:b").parent == Timeline("a")
     assert Timeline(":a:b").parent == Timeline(":a")

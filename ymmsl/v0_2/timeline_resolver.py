@@ -54,10 +54,6 @@ def resolve_timelines(model: Model) -> None:
     # Update timeline attributes
     for component in model.components.values():
         component.timeline = checker.component_timeline(component.name)
-        for port in component.ports.values():
-            full_port_name = component.name + port.name
-            timeline = checker.timeline_for_port(full_port_name)
-            port.timeline = timeline.relative_to(component.timeline)
 
 
 class ResolveTimelineException(RuntimeError):
@@ -161,8 +157,8 @@ class ConduitTimelineError(ResolveTimelineException):
         self.hint = hint
         msg = (
             f"{conduit} in model '{model.name}' has inconsistent timelines: it "
-            f"connects timeline '{timeline1}' with timeline '{timeline2}', but this "
-            f"does not match with the filters of the conduit.{hint} Note that this "
+            f"connects timeline '{timeline1}' with timeline '{timeline2}' and, taking "
+            f"any filters into account, these do not match.{hint} Note that this "
             "error may also be caused by missing timeline annotations for O_I and S "
             "ports, or because the sending or receiving component has incorrect "
             "F_INIT conduits. Determined timelines per component:\n"
@@ -178,7 +174,7 @@ class TimelineChecker:
         self._model = model
         """yMMSL model that is checked."""
 
-        self._component_timeline: dict[Reference, Timeline] = {
+        self._parent_timeline: dict[Reference, Timeline] = {
             Reference([]): ROOT_TIMELINE,  # Support model ports
         }
         """Map of component names to the TimelineNode they are part of."""
@@ -200,7 +196,7 @@ class TimelineChecker:
 
         # Assign components to timelines
         for component in self._model.components.values():
-            if component.name in self._component_timeline:
+            if component.name in self._parent_timeline:
                 continue
             self._assign_component(component, [], [])
 
@@ -232,7 +228,7 @@ class TimelineChecker:
         seen.append(component)
         for conduit in f_init_conduits:
             sender = conduit.sending_component()
-            if sender not in self._component_timeline:
+            if sender not in self._parent_timeline:
                 seen_conduits.append(conduit)
                 self._assign_component(
                     self._model.components[sender], seen, seen_conduits
@@ -246,10 +242,13 @@ class TimelineChecker:
         for conduit in f_init_conduits:
             if any(filter.is_repeater() for filter in conduit.filters):
                 continue  # We cannot use repeater filters to determine the timeline
-            timeline = sender_timeline = self.timeline_for_port(conduit.sender)
+
+            sender_timeline = self.timeline_for_port(conduit.sender, True)
+
+            timeline = sender_timeline
             for filter in conduit.filters:
                 assert filter.is_reducer()
-                if timeline.parent is None:
+                if len(timeline) == 0:
                     raise TooManyReducerFilters(self._model, conduit, sender_timeline)
                 timeline = timeline.parent
             incoming_timelines.append(timeline)
@@ -264,31 +263,64 @@ class TimelineChecker:
             )
 
         # Done: register timeline for component
-        self._component_timeline[component.name] = determined_timeline
+        self._parent_timeline[component.name] = determined_timeline
 
-    def timeline_for_port(self, port_name: Reference) -> Timeline:
-        """Determine the timeline for messages sent or received on the provided port
-        name."""
+    def timeline_for_port(
+        self, port_name: Reference, message: bool = False
+    ) -> Timeline:
+        """Determine the timeline for the given port.
+
+        This returns the name of the timeline the given port communicates on. These are
+        as follows:
+
+        - for a model port without timeline annotation, empty
+        - for a model port with a timeline annotation, that annotation
+        - for a component port without timeline annotation, <parent_tl>:<component>
+        - for a component O_I or S port with timeline annotation "subtl1",
+          <parent_tl>:<component>.subtl1
+
+        F_INIT and O_F ports sit at the beginning and end of their timeline, and import
+        messages from and to their parent timeline. As a result, for these ports the
+        timeline of the port is no the same as that of the message.
+
+        If ``message`` is ``True``, then the resulting timeline will be the one for the
+        message, rather than for the port, so for O_F and F_INIT ports this will return
+        the parent timeline rather than the port timeline. The parent timeline of a
+        model port is the root timeline.
+        """
+
         component = port_name[:-1]
         if len(component) == 0:
-            # Connected to a model port
+            # Model port
             model_port = port_name[-1]
             assert isinstance(model_port, Identifier)
             port = self._model.ports[model_port]
-            return ROOT_TIMELINE + port.timeline
-        timeline = self._component_timeline[component]
-        port = self._all_ports[port_name]
-        if port.operator in (Operator.O_F, Operator.F_INIT):
-            return timeline
-        subtimeline = port.timeline
-        if len(port.timeline) == 0:
-            # No explicit label attached to the timeline, so we take the component name
-            subtimeline = Timeline(str(component))
-        return timeline + subtimeline
+            if port.timeline:
+                result = port.timeline
+            else:
+                result = ROOT_TIMELINE
+
+        else:
+            # Component port
+            parent_tl = self._parent_timeline[component]
+            port = self._all_ports[port_name]
+            if port.timeline:
+                subtimeline = Timeline(
+                    [f"{component}.{name}" for name in port.timeline], False
+                )
+            else:
+                subtimeline = Timeline([component], False)
+
+            result = parent_tl + subtimeline
+
+        if port.operator in (Operator.F_INIT, Operator.O_F) and message:
+            result = result[:-1]
+
+        return result
 
     def component_timeline(self, component: Reference) -> Timeline:
         """Get the determined timeline for a component in the model"""
-        return self._component_timeline[component]
+        return self._parent_timeline[component] + component
 
     def check_consistent(self) -> None:
         """Check if the timelines are consistent.
@@ -298,8 +330,8 @@ class TimelineChecker:
         """
         # Check that all conduits connect consistently
         for conduit in self._model.conduits:
-            timeline1 = self.timeline_for_port(conduit.sender)
-            timeline2 = self.timeline_for_port(conduit.receiver)
+            timeline1 = self.timeline_for_port(conduit.sender, True)
+            timeline2 = self.timeline_for_port(conduit.receiver, True)
 
             num_reducers = sum(filter.is_reducer() for filter in conduit.filters)
             num_repeaters = sum(filter.is_repeater() for filter in conduit.filters)
@@ -324,6 +356,10 @@ class TimelineChecker:
                 hint = f" You may need to add a {add_filter} filter{remove_msg}."
                 raise ConduitTimelineError(self, conduit, timeline1, timeline2, hint)
 
+            # For model ports, we just require that the length is the same
+            if not conduit.sending_component() or not conduit.receiving_component():
+                continue
+
             # Check consistency
             common_idx = len(timeline1) - num_reducers
             for idx, (part1, part2) in enumerate(
@@ -342,7 +378,7 @@ class TimelineChecker:
     def format_timelines(self) -> str:
         """Create a formatted list of determined timelines per component."""
         return "\n".join(
-            f"- Component '{comp}' has timeline '{tl}'"
-            for comp, tl in self._component_timeline.items()
+            f"- Component '{comp}' has timeline '{tl}:{comp}'"
+            for comp, tl in self._parent_timeline.items()
             if len(comp) > 0  # Ony print actual components
         )
