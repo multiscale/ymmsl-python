@@ -1,4 +1,4 @@
-from typing import List, Optional, Union, cast
+from typing import List, cast
 
 import yaml
 import yatiml
@@ -40,9 +40,9 @@ class Component:
         name: str,
         ports: Ports,
         description: str,
-        implementation: Optional[str] = None,
+        implementation: str | None = None,
         optional: bool = False,
-        multiplicity: Union[None, int, List[int]] = None,
+        multiplicity: None | int | List[int] = None,
     ) -> None:
         """Create a Component
 
@@ -59,10 +59,10 @@ class Component:
         self.ports = ports
         self.description = description
         self.optional = optional
-        self.timeline: Optional[Timeline] = None
+        self.timeline: Timeline | None = None
 
         if implementation is not None:
-            self.implementation: Optional[Reference] = Reference(implementation)
+            self.implementation: Reference | None = Reference(implementation)
             for part in self.implementation:
                 if isinstance(part, int):
                     raise ValueError(

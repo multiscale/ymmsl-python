@@ -1,7 +1,7 @@
 import logging
 import os
-import sys
 from collections.abc import Generator
+from importlib.metadata import EntryPoint, EntryPoints
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -11,11 +11,6 @@ from ymmsl.io import load
 from ymmsl.v0_2.configuration import Configuration
 from ymmsl.v0_2.identity import Reference
 from ymmsl.v0_2.resolver import resolve
-
-if sys.version_info < (3, 10):
-    from importlib_metadata import EntryPoint, EntryPoints
-else:
-    from importlib.metadata import EntryPoint, EntryPoints
 
 Ref = Reference
 

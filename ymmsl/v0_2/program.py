@@ -1,7 +1,7 @@
 """Definitions for how to start programs."""
 
 from pathlib import Path
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, cast
 
 import yaml
 import yatiml
@@ -67,17 +67,17 @@ class Program(Implementation):
     def __init__(
         self,
         name: str,
-        ports: Optional[Ports] = None,
+        ports: Ports | None = None,
         description: str = "",
-        supported_settings: Optional[SupportedSettings] = None,
-        base_env: Optional[BaseEnv] = None,
-        modules: Union[str, List[str], None] = None,
-        virtual_env: Optional[Path] = None,
-        env: Optional[Dict[str, str]] = None,
+        supported_settings: SupportedSettings | None = None,
+        base_env: BaseEnv | None = None,
+        modules: str | List[str] | None = None,
+        virtual_env: Path | None = None,
+        env: Dict[str, str] | None = None,
         execution_model: ExecutionModel = ExecutionModel.DIRECT,
-        executable: Optional[Path] = None,
-        args: Union[str, List[str], None] = None,
-        script: Union[str, List[str], None] = None,
+        executable: Path | None = None,
+        args: str | List[str] | None = None,
+        script: str | List[str] | None = None,
         can_share_resources: bool = True,
         keeps_state_for_next_use: KeepsStateForNextUse = KeepsStateForNextUse.NECESSARY,
     ) -> None:
@@ -147,7 +147,7 @@ class Program(Implementation):
         self.base_env = base_env if base_env else BaseEnv.MANAGER
 
         if isinstance(modules, str):
-            self.modules: Optional[List[str]] = modules.split(" ")
+            self.modules: List[str] | None = modules.split(" ")
         else:
             self.modules = modules
 
@@ -161,12 +161,12 @@ class Program(Implementation):
         self.executable = executable
 
         if isinstance(args, str):
-            self.args: Optional[List[str]] = [args]
+            self.args: List[str] | None = [args]
         else:
             self.args = args
 
         if isinstance(script, list):
-            self.script: Optional[str] = "\n".join(script) + "\n"
+            self.script: str | None = "\n".join(script) + "\n"
         else:
             self.script = script
 

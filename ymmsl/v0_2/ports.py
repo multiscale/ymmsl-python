@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Any, Iterator, List, Optional, Sequence, Union, cast, overload
+from typing import Any, Iterator, List, Sequence, cast, overload
 
 from ymmsl.v0_1.component import Operator  # also the v0.2 version, import from here
 from ymmsl.v0_2.identity import Identifier, Reference
@@ -42,12 +42,12 @@ class Timeline:
 
     @overload
     def __init__(
-        self, timeline: Sequence[Union[str, Reference]], absolute: bool = True
+        self, timeline: Sequence[str | Reference], absolute: bool = True
     ) -> None: ...
 
     def __init__(
         self,
-        timeline: Union[str, Sequence[Union[str, Reference]]],
+        timeline: str | Sequence[str | Reference],
         absolute: bool = True,
     ) -> None:
         """Create a Timeline.
@@ -56,13 +56,13 @@ class Timeline:
         that are each a string that is also a valid Reference.
         """
 
-        def make_new_reference(x: Union[str, Reference]) -> Reference:
+        def make_new_reference(x: str | Reference) -> Reference:
             return Reference(str(x))
 
         if isinstance(timeline, str):
             if timeline == "":
                 self.absolute = False
-                parts: Sequence[Union[str, Reference]] = []
+                parts: Sequence[str | Reference] = []
             elif timeline == ":":
                 self.absolute = True
                 parts = []
@@ -156,7 +156,7 @@ class Port:
     """
 
     def __init__(
-        self, name: Identifier, operator: Operator, timeline: Optional[Timeline] = None
+        self, name: Identifier, operator: Operator, timeline: Timeline | None = None
     ) -> None:
         """Create a Port.
 
@@ -184,13 +184,13 @@ class Port:
         return NotImplemented
 
 
-_PortsSubAttrs = OrderedDict[str, Union[str, List[str]]]
+_PortsSubAttrs = OrderedDict[str, str | List[str]]
 
 
-_PortsAttrs = OrderedDict[str, Union[str, List[str], _PortsSubAttrs]]
+_PortsAttrs = OrderedDict[str, str | List[str] | _PortsSubAttrs]
 
 
-def _ensure_identifier(port_name: Union[str, Identifier]) -> Identifier:
+def _ensure_identifier(port_name: str | Identifier) -> Identifier:
     if isinstance(port_name, str):
         port_name = Identifier(port_name)
     return port_name
@@ -236,10 +236,10 @@ class Ports:
     @overload
     def __init__(
         self,
-        f_init: Union[None, str, List[str]] = None,
-        o_i: Union[None, str, List[str]] = None,
-        s: Union[None, str, List[str]] = None,
-        o_f: Union[None, str, List[str]] = None,
+        f_init: None | str | List[str] = None,
+        o_i: None | str | List[str] = None,
+        s: None | str | List[str] = None,
+        o_f: None | str | List[str] = None,
     ) -> None: ...
 
     @overload
@@ -247,10 +247,10 @@ class Ports:
 
     def __init__(
         self,
-        f_init: Union[None, str, List[str], List[Port]] = None,
-        o_i: Union[None, str, List[str]] = None,
-        s: Union[None, str, List[str]] = None,
-        o_f: Union[None, str, List[str]] = None,
+        f_init: None | str | List[str] | List[Port] = None,
+        o_i: None | str | List[str] = None,
+        s: None | str | List[str] = None,
+        o_f: None | str | List[str] = None,
     ) -> None:
         """Create a Ports declaration.
 
@@ -287,7 +287,7 @@ class Ports:
         else:
             self._ports = dict()
 
-            self._add_ports(Operator.F_INIT, cast(Union[None, str, List[str]], f_init))
+            self._add_ports(Operator.F_INIT, cast(None | str | List[str], f_init))
             self._add_ports(Operator.O_I, o_i)
             self._add_ports(Operator.S, s)
             self._add_ports(Operator.O_F, o_f)
@@ -295,13 +295,13 @@ class Ports:
     def __len__(self) -> int:
         return len(self._ports)
 
-    def __contains__(self, port_name: Union[str, Identifier]) -> bool:
+    def __contains__(self, port_name: str | Identifier) -> bool:
         return _ensure_identifier(port_name) in self._ports
 
-    def __getitem__(self, port_name: Union[str, Identifier]) -> Port:
+    def __getitem__(self, port_name: str | Identifier) -> Port:
         return self._ports[_ensure_identifier(port_name)]
 
-    def __setitem__(self, port_name: Union[str, Identifier], port: Port) -> None:
+    def __setitem__(self, port_name: str | Identifier, port: Port) -> None:
         self._ports[_ensure_identifier(port_name)] = port
 
     def __iter__(self) -> Iterator[Identifier]:
@@ -340,7 +340,7 @@ class Ports:
         ]
 
     def _add_ports(
-        self, op: Operator, ports: Union[None, str, List[str]], timeline: str = ""
+        self, op: Operator, ports: None | str | List[str], timeline: str = ""
     ) -> None:
         """Add the described ports to self._ports, helper function"""
         if ports is None:
@@ -370,10 +370,10 @@ class Ports:
     def _yatiml_init(
         self,
         _yatiml_extra: OrderedDict,
-        f_init: Union[None, str, List[str]] = None,
-        o_i: Union[None, str, List[str]] = None,
-        s: Union[None, str, List[str]] = None,
-        o_f: Union[None, str, List[str]] = None,
+        f_init: None | str | List[str] = None,
+        o_i: None | str | List[str] = None,
+        s: None | str | List[str] = None,
+        o_f: None | str | List[str] = None,
     ) -> None:
         """Alternative initialisation when loading from YAML."""
         self._ports = dict()

@@ -7,8 +7,6 @@ from typing import (
     Dict,  # noqa: F401
     Iterable,
     List,
-    Optional,
-    Union,
 )
 
 import yaml
@@ -90,10 +88,10 @@ class Ports:
 
     def __init__(
         self,
-        f_init: Union[None, str, List[str]] = None,
-        o_i: Union[None, str, List[str]] = None,
-        s: Union[None, str, List[str]] = None,
-        o_f: Union[None, str, List[str]] = None,
+        f_init: None | str | List[str] = None,
+        o_i: None | str | List[str] = None,
+        s: None | str | List[str] = None,
+        o_f: None | str | List[str] = None,
     ) -> None:
         """Create a Ports declaration.
 
@@ -104,7 +102,7 @@ class Ports:
             o_f: The ports associated with the O_F operator
         """
 
-        def to_list(ports: Union[None, str, List[str]]) -> List[Identifier]:
+        def to_list(ports: None | str | List[str]) -> List[Identifier]:
             if ports is None:
                 return list()
 
@@ -165,7 +163,7 @@ class Ports:
 
         raise KeyError(f'No port named "{port_name}" was found')
 
-    _yatiml_defaults: dict[str, Optional[list[str]]] = {
+    _yatiml_defaults: dict[str, list[str] | None] = {
         "f_init": [],
         "o_i": [],
         "s": [],
@@ -200,9 +198,9 @@ class Component:
     def __init__(
         self,
         name: str,
-        implementation: Optional[str] = None,
-        multiplicity: Union[None, int, List[int]] = None,
-        ports: Optional[Ports] = None,
+        implementation: str | None = None,
+        multiplicity: None | int | List[int] = None,
+        ports: Ports | None = None,
     ) -> None:
         """Create a Component.
 
@@ -219,7 +217,7 @@ class Component:
         """
         self.name = Reference(name)
         if implementation is None:
-            self.implementation: Optional[Reference] = None
+            self.implementation: Reference | None = None
         else:
             self.implementation = Reference(implementation)
             for part in self.implementation:

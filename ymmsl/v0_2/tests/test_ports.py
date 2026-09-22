@@ -207,7 +207,7 @@ def test_ports_iteration() -> None:
     p = Ports("p", "q r", ["s", "t"], "u v")
     names = "pqrstuv"
 
-    for port_name, ref in zip(p, names):
+    for port_name, ref in zip(p, names, strict=False):
         assert port_name == ref
 
 
