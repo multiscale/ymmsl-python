@@ -306,10 +306,10 @@ class TimelineChecker:
             port = self._all_ports[port_name]
             if port.timeline:
                 subtimeline = Timeline(
-                    [f"{component}.{name}" for name in port.timeline], False
+                    [f"{component}.{name}" for name in port.timeline]
                 )
             else:
-                subtimeline = Timeline([component], False)
+                subtimeline = Timeline([component])
 
             result = parent_tl + subtimeline
 

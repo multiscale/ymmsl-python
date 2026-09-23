@@ -9,54 +9,41 @@ Ref = Reference
 
 def test_create_empty_timeline() -> None:
     tl = Timeline("")
-    assert tl.absolute is False
     assert len(tl._parts) == 0
 
 
 def test_create_root_timeline() -> None:
     tl = Timeline(":")
-    assert tl.absolute is True
     assert len(tl._parts) == 0
 
 
-def test_create_absolute_timeline() -> None:
-    tl = Timeline(":timeline")
-    assert tl.absolute is True
-    assert len(tl._parts) == 1
-    assert tl._parts[0] == "timeline"
-
-
-def test_create_relative_timeline() -> None:
+def test_create_timeline() -> None:
     tl = Timeline("timeline")
-    assert tl.absolute is False
     assert len(tl._parts) == 1
     assert tl._parts[0] == "timeline"
 
 
 def test_create_full_timeline() -> None:
     tl = Timeline("c1.a:c2.b:c3:c4")
-    assert tl.absolute is False
     assert len(tl._parts) == 4
     assert tl._parts == ["c1.a", "c2.b", "c3", "c4"]
 
 
-def test_create_absolute_from_list_of_str() -> None:
-    tl = Timeline(["c1.a", "c2.b", "c3", "c4"], True)
-    assert tl.absolute is True
+def test_create_from_list_of_str() -> None:
+    tl = Timeline(["c1.a", "c2.b", "c3", "c4"])
     assert len(tl._parts) == 4
     assert tl._parts == ["c1.a", "c2.b", "c3", "c4"]
 
 
-def test_create_relative_from_list_of_ref() -> None:
-    tl = Timeline([Ref("c1"), Ref("c2.a")], False)
-    assert tl.absolute is False
+def test_create_from_list_of_ref() -> None:
+    tl = Timeline([Ref("c1"), Ref("c2.a")])
     assert len(tl._parts) == 2
     assert tl._parts == ["c1", "c2.a"]
 
 
 def test_timeline_equality() -> None:
     tl1 = Timeline(":c0:c1:c2.a")
-    tl2 = Timeline(["c0", "c1", "c2.a"], True)
+    tl2 = Timeline(["c0", "c1", "c2.a"])
     assert tl1 == tl2
 
     tl2._parts[1] = Reference("c1.x")
@@ -65,26 +52,14 @@ def test_timeline_equality() -> None:
     tl1._parts[1] = Reference("c1.x")
     assert tl1 == tl2
 
-    tl2.absolute = False
-    assert tl1 != tl2
-
-    tl1.absolute = False
-    assert tl1 == tl2
-
-    tl2.absolute = True
-    assert tl1 != tl2
-
 
 def test_timeline_to_str() -> None:
-    tl = Timeline([Ref("c1"), Ref("c2.a"), Ref("c3")], False)
+    tl = Timeline([Ref("c1"), Ref("c2.a"), Ref("c3")])
     assert str(tl) == "c1:c2.a:c3"
-
-    tl.absolute = True
-    assert str(tl) == ":c1:c2.a:c3"
 
 
 def test_timeline_indexing() -> None:
-    tl = Timeline(":c0:c1:c2.p:c3.q")
+    tl = Timeline("c0:c1:c2.p:c3.q")
     assert len(tl) == 4
     assert isinstance(tl[0], Reference)
     assert tl[0] == "c0"
@@ -98,20 +73,17 @@ def test_timeline_indexing() -> None:
     with pytest.raises(IndexError):
         tl[4]
 
+    assert tl[0:2] == "c0:c1"
+    assert tl[1:3] == "c1:c2.p"
+
 
 def test_timeline_concatenation() -> None:
-    tl1 = Timeline(":c1:c2.a")
+    tl1 = Timeline("c1:c2.a")
     tl2 = Timeline("c3.b:c4")
     tl3 = tl1 + tl2
 
-    assert tl3.absolute is True
     assert len(tl3._parts) == 4
-    assert tl3 == Timeline(":c1:c2.a:c3.b:c4")
-
-    tl2.absolute = True
-
-    with pytest.raises(ValueError):
-        tl1 + tl2
+    assert tl3 == Timeline("c1:c2.a:c3.b:c4")
 
 
 def test_timeline_concatenate_empty() -> None:
@@ -133,20 +105,14 @@ def test_timeline_parent() -> None:
         _ = Timeline(":").parent
 
     assert Timeline("a:b").parent == Timeline("a")
-    assert Timeline(":a:b").parent == Timeline(":a")
 
 
 def test_timeline_relative_to() -> None:
-    assert Timeline(":a:b:c").relative_to(Timeline(":a:b")) == Timeline("c")
-    assert Timeline(":a:b:c").relative_to(Timeline(":a")) == Timeline("b:c")
-
-    with pytest.raises(ValueError, match="absolute"):
-        Timeline("a:b").relative_to(Timeline(":a"))
-    with pytest.raises(ValueError, match="absolute"):
-        Timeline(":a:b").relative_to(Timeline("a"))
+    assert Timeline("a:b:c").relative_to(Timeline("a:b")) == Timeline("c")
+    assert Timeline("a:b:c").relative_to(Timeline("a")) == Timeline("b:c")
 
     with pytest.raises(ValueError, match="subtimeline"):
-        Timeline(":a:b").relative_to(Timeline(":b"))
+        Timeline("a:b").relative_to(Timeline("b"))
 
 
 def test_create_empty_ports() -> None:

@@ -29,15 +29,15 @@ def test_consistent_configuration(timelines_configuration: Configuration) -> Non
 def test_dispatch(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("dispatch")]
     resolve_timelines(model)
-    assert model.components[Ref("first")].timeline == ":first"
-    assert model.components[Ref("second")].timeline == ":second"
+    assert model.components[Ref("first")].timeline == "first"
+    assert model.components[Ref("second")].timeline == "second"
 
 
 def test_macromicro(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("macromicro")]
     resolve_timelines(model)
-    assert model.components[Ref("macro")].timeline == Timeline(":macro")
-    assert model.components[Ref("micro")].timeline == Timeline(":macro:micro")
+    assert model.components[Ref("macro")].timeline == Timeline("macro")
+    assert model.components[Ref("micro")].timeline == Timeline("macro:micro")
 
 
 def test_cycle(timelines_configuration: Configuration) -> None:
@@ -48,8 +48,8 @@ def test_cycle(timelines_configuration: Configuration) -> None:
 def test_reducer(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("reducer")]
     resolve_timelines(model)
-    assert model.components[Ref("first")].timeline == Timeline(":first")
-    assert model.components[Ref("second")].timeline == Timeline(":second")
+    assert model.components[Ref("first")].timeline == Timeline("first")
+    assert model.components[Ref("second")].timeline == Timeline("second")
 
 
 def test_only_reducer(timelines_configuration: Configuration) -> None:
@@ -58,8 +58,8 @@ def test_only_reducer(timelines_configuration: Configuration) -> None:
     del model.conduits[0]
     assert model.conduits[0].filters == [ConduitFilter("last")]
     resolve_timelines(model)
-    assert model.components[Ref("first")].timeline == Timeline(":first")
-    assert model.components[Ref("second")].timeline == Timeline(":second")
+    assert model.components[Ref("first")].timeline == Timeline("first")
+    assert model.components[Ref("second")].timeline == Timeline("second")
 
 
 def test_too_many_reducers(timelines_configuration: Configuration) -> None:
@@ -77,9 +77,9 @@ def test_inconsistent_timelines(timelines_configuration: Configuration) -> None:
 def test_repeaters(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("repeaters")]
     resolve_timelines(model)
-    assert model.components[Ref("macro")].timeline == Timeline(":macro")
-    assert model.components[Ref("meso")].timeline == Timeline(":macro:meso")
-    assert model.components[Ref("micro")].timeline == Timeline(":macro:meso:micro")
+    assert model.components[Ref("macro")].timeline == Timeline("macro")
+    assert model.components[Ref("meso")].timeline == Timeline("macro:meso")
+    assert model.components[Ref("micro")].timeline == Timeline("macro:meso:micro")
 
 
 def test_too_many_repeaters(timelines_configuration: Configuration) -> None:
@@ -106,10 +106,10 @@ def test_repeater_and_too_many_reducers(timelines_configuration: Configuration) 
 def test_repeater_after_reducer(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("repeater_reducer")]
     resolve_timelines(model)
-    assert model.components[Ref("macro1")].timeline == Timeline(":macro1")
-    assert model.components[Ref("macro2")].timeline == Timeline(":macro2")
-    assert model.components[Ref("micro1")].timeline == Timeline(":macro1:micro1")
-    assert model.components[Ref("micro2")].timeline == Timeline(":macro2:micro2")
+    assert model.components[Ref("macro1")].timeline == Timeline("macro1")
+    assert model.components[Ref("macro2")].timeline == Timeline("macro2")
+    assert model.components[Ref("micro1")].timeline == Timeline("macro1:micro1")
+    assert model.components[Ref("micro2")].timeline == Timeline("macro2:micro2")
 
     # Remove filters on the last conduit to make the incoming timelines inconsistent
     model.conduits[-1].filters = []
@@ -123,9 +123,9 @@ def test_repeater_after_reducer_error(timelines_configuration: Configuration) ->
         resolve_timelines(model)
     model.conduits[-1].filters = []
     resolve_timelines(model)
-    assert model.components[Ref("macro")].timeline == Timeline(":macro")
-    assert model.components[Ref("micro1")].timeline == Timeline(":macro:micro1")
-    assert model.components[Ref("micro2")].timeline == Timeline(":macro:micro2")
+    assert model.components[Ref("macro")].timeline == Timeline("macro")
+    assert model.components[Ref("micro1")].timeline == Timeline("macro:micro1")
+    assert model.components[Ref("micro2")].timeline == Timeline("macro:micro2")
 
 
 def test_inconsistent_interact(timelines_configuration: Configuration) -> None:
