@@ -89,7 +89,10 @@ containing those import statements at ``config.imports``, as a list of
 To get the imported objects, these imports must be resolved, which can be done through
 the :func:`ymmsl.v0_2.resolve` function. This takes the name of the module corresponding
 to a ``Configuration`` (which is the file name without the ``.ymmsl`` extension, wrapped
-in a :class:`ymmsl.v0_2.Reference`) and the configuration itself.
+in a :class:`ymmsl.v0_2.Reference`), the configuration itself, and an optional
+``reuse_cached_imports`` keyword argument. By default, imports are cached between calls to
+avoid re-reading previously loaded modules. Set ``reuse_cached_imports=False`` when the
+search path is changed (``YMMSL_PATH`` or ``sys.path``) to avoid stale module imports.
 
 It updates that configuration in place, renaming any local models and programs to their
 absolute name by prefixing them with the given module name, then imports the
