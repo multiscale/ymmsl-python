@@ -1,7 +1,7 @@
 """Loading and saving functions."""
 
 from pathlib import Path
-from typing import IO, Any, Type, TypeVar, Union
+from typing import IO, Any, Type, TypeVar
 
 import yatiml
 
@@ -74,7 +74,7 @@ _classes = (
 _load = yatiml.load_function(*_classes)  # type: ignore
 
 
-def load(source: Union[str, Path, IO[Any]]) -> Document:
+def load(source: str | Path | IO[Any]) -> Document:
     """Loads a yMMSL document from a string or a file.
 
     Args:
@@ -94,7 +94,7 @@ def load(source: Union[str, Path, IO[Any]]) -> Document:
 T = TypeVar("T", bound=Document)
 
 
-def load_as(as_type: Type[T], source: Union[str, Path, IO[Any]]) -> T:
+def load_as(as_type: Type[T], source: str | Path | IO[Any]) -> T:
     """Loads and converts a yMMSL document from a string or a file.
 
     If the file is of a version older than the specified version, then it will be
@@ -145,7 +145,7 @@ def dump(config: Document) -> str:
 _save = yatiml.dump_function(*_classes)
 
 
-def save(config: Document, target: Union[str, Path, IO[Any]]) -> None:
+def save(config: Document, target: str | Path | IO[Any]) -> None:
     """Saves a yMMSL configuration to a file.
 
     The `config` argument should be either a v0_1.PartialConfiguration, a

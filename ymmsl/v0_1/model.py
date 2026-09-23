@@ -5,9 +5,7 @@ from typing import (
     Any,
     Dict,  # noqa
     List,
-    Optional,
     Sequence,
-    Union,
     cast,
 )
 
@@ -190,7 +188,7 @@ class MulticastConduit:
         return self._conduits
 
 
-AnyConduit = Union[Conduit, MulticastConduit]
+AnyConduit = Conduit | MulticastConduit
 
 
 class ModelReference:
@@ -235,7 +233,7 @@ class Model(ModelReference):
         self,
         name: str,
         components: List[Component],
-        conduits: Optional[Sequence[AnyConduit]] = None,
+        conduits: Sequence[AnyConduit] | None = None,
     ) -> None:
         """Create a Model.
 

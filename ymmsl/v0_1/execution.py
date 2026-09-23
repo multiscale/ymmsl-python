@@ -2,7 +2,7 @@
 
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, cast
 
 import yaml
 import yatiml
@@ -185,14 +185,14 @@ class Implementation:
     def __init__(
         self,
         name: Reference,
-        base_env: Optional[BaseEnv] = None,
-        modules: Union[str, List[str], None] = None,
-        virtual_env: Optional[Path] = None,
-        env: Optional[Dict[str, str]] = None,
+        base_env: BaseEnv | None = None,
+        modules: str | List[str] | None = None,
+        virtual_env: Path | None = None,
+        env: Dict[str, str] | None = None,
         execution_model: ExecutionModel = ExecutionModel.DIRECT,
-        executable: Optional[Path] = None,
-        args: Union[str, List[str], None] = None,
-        script: Union[str, List[str], None] = None,
+        executable: Path | None = None,
+        args: str | List[str] | None = None,
+        script: str | List[str] | None = None,
         can_share_resources: bool = True,
         keeps_state_for_next_use: KeepsStateForNextUse = KeepsStateForNextUse.NECESSARY,
     ) -> None:
@@ -259,14 +259,14 @@ class Implementation:
         self.name = name
 
         if isinstance(script, list):
-            self.script: Optional[str] = "\n".join(script) + "\n"
+            self.script: str | None = "\n".join(script) + "\n"
         else:
             self.script = script
 
         self.base_env = base_env if base_env else BaseEnv.MANAGER
 
         if isinstance(modules, str):
-            self.modules: Optional[list[str]] = modules.split(" ")
+            self.modules: list[str] | None = modules.split(" ")
         else:
             self.modules = modules
         self.virtual_env = virtual_env
@@ -277,7 +277,7 @@ class Implementation:
         self.executable = executable
 
         if isinstance(args, str):
-            self.args: Optional[list[str]] = [args]
+            self.args: list[str] | None = [args]
         else:
             self.args = args
 

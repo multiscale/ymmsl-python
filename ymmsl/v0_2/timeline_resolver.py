@@ -136,7 +136,7 @@ class InconsistentTimelines(ResolveTimelineException):
             + "\n".join(
                 f"- Port '{conduit.receiving_port()}' has timeline '{timeline}' "
                 f"from {conduit}"
-                for conduit, timeline in zip(conduits, timelines)
+                for conduit, timeline in zip(conduits, timelines, strict=False)
             )
         )
         super().__init__(msg)
@@ -326,7 +326,9 @@ class TimelineChecker:
 
             # Check consistency
             common_idx = len(timeline1) - num_reducers
-            for idx, (part1, part2) in enumerate(zip(timeline1, timeline2)):
+            for idx, (part1, part2) in enumerate(
+                zip(timeline1, timeline2, strict=False)
+            ):
                 if idx < common_idx:
                     if part1 != part2:
                         raise ConduitTimelineError(self, conduit, timeline1, timeline2)

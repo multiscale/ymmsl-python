@@ -1,6 +1,6 @@
 import warnings
 from copy import deepcopy
-from typing import Dict, List, MutableMapping, Optional
+from typing import Dict, List, MutableMapping
 
 import ymmsl.v0_1 as v0_1
 import ymmsl.v0_2 as v0_2
@@ -59,7 +59,7 @@ def convert_component(component: v0_1.Component) -> v0_2.Component:
     """Convert a v0.1 Component object to a v0.2 Component."""
     ports = component.ports if component.ports else v0_1.Ports()
     description = "Please add a description"
-    implementation: Optional[str] = None
+    implementation: str | None = None
     if component.implementation is not None:
         implementation = str(component.implementation)
 
@@ -153,8 +153,8 @@ def convert_implementation(impl: v0_1.Implementation) -> v0_2.Program:
         The corresponding program expressed in yMMSL v0.2.
     """
     description = "Please add a description"
-    base_env: Optional[v0_1.BaseEnv] = impl.base_env
-    env: Optional[Dict[str, str]] = impl.env
+    base_env: v0_1.BaseEnv | None = impl.base_env
+    env: Dict[str, str] | None = impl.env
 
     execution_model = v0_2.ExecutionModel[impl.execution_model.name]
 
@@ -201,7 +201,7 @@ def convert_ports(ports: v0_1.Ports) -> v0_2.Ports:
 
 def convert_resources(
     resources: MutableMapping[v0_1.Reference, v0_1.ResourceRequirements],
-    models: Optional[List[v0_2.Model]],
+    models: List[v0_2.Model] | None,
 ) -> MutableMapping[v0_2.Reference, v0_2.ResourceRequirements]:
     if not models:
         warnings.warn(

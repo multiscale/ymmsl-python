@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from copy import copy
 from enum import Enum
-from typing import Any, List, Optional, Sequence, Union, cast
+from typing import Any, List, Sequence, TypeAlias, cast
 
 import yatiml
 
@@ -88,7 +88,7 @@ class Conduit:
         self,
         sender: str,
         receiver: str,
-        filters: Optional[Union[str, List[ConduitFilter]]] = None,
+        filters: str | List[ConduitFilter] | None = None,
     ) -> None:
         """Create a Conduit.
 
@@ -264,7 +264,7 @@ class MulticastConduit:
         return [Conduit(self.sender, recv_str) for recv_str in self.receiver]
 
 
-AnyConduit = Union[Conduit, MulticastConduit]
+AnyConduit: TypeAlias = Conduit | MulticastConduit
 
 
 class Model(Implementation):
@@ -289,11 +289,11 @@ class Model(Implementation):
     def __init__(
         self,
         name: str,
-        ports: Optional[Ports] = None,
+        ports: Ports | None = None,
         description: str = "",
-        supported_settings: Optional[SupportedSettings] = None,
-        components: Optional[Sequence[Component]] = None,
-        conduits: Optional[Sequence[AnyConduit]] = None,
+        supported_settings: SupportedSettings | None = None,
+        components: Sequence[Component] | None = None,
+        conduits: Sequence[AnyConduit] | None = None,
     ) -> None:
         """Create a Model.
 
