@@ -328,7 +328,7 @@ class MatchingTimelines:
             }
         self.matches.add(self.head)
 
-    def __in__(self, timeline: Timeline) -> bool:
+    def __contains__(self, timeline: Timeline) -> bool:
         return timeline in self.matches
 
     def _yatiml_attributes(self) -> OrderedDict:

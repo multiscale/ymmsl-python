@@ -361,19 +361,17 @@ class TimelineChecker:
                 continue
 
             # Check consistency
+            filtered_tl1 = timeline1[:-num_reducers] if num_reducers else timeline1
+            filtered_tl2 = timeline2[:-num_repeaters] if num_repeaters else timeline2
+            if self._model.matching_timelines:
+                for mt in self._model.matching_timelines:
+                    if filtered_tl1 in mt and filtered_tl2 in mt:
+                        return
+
             common_idx = len(timeline1) - num_reducers
-            for idx, (part1, part2) in enumerate(
-                zip(timeline1, timeline2, strict=False)
-            ):
-                if idx < common_idx:
-                    if part1 != part2:
-                        raise ConduitTimelineError(self, conduit, timeline1, timeline2)
-                else:
-                    if part1 == part2:
-                        hint = " You may need to remove a repeater and reducer filter."
-                        raise ConduitTimelineError(
-                            self, conduit, timeline1, timeline2, hint
-                        )
+            self._check_consistent_equal_length(
+                conduit, timeline1, timeline2, common_idx
+            )
 
     def format_timelines(self) -> str:
         """Create a formatted list of determined timelines per component."""
@@ -382,3 +380,22 @@ class TimelineChecker:
             for comp, tl in self._parent_timeline.items()
             if len(comp) > 0  # Ony print actual components
         )
+
+    def _check_consistent_equal_length(
+        self,
+        conduit: Conduit,
+        timeline1: Timeline,
+        timeline2: Timeline,
+        common_idx: int,
+    ) -> None:
+        """Check that two equal-length (modulo filters) timelines are consistent."""
+        for idx, (part1, part2) in enumerate(zip(timeline1, timeline2, strict=False)):
+            if idx < common_idx:
+                if part1 != part2:
+                    raise ConduitTimelineError(self, conduit, timeline1, timeline2)
+            else:
+                if part1 == part2:
+                    hint = " You may need to remove a repeater and reducer filter."
+                    raise ConduitTimelineError(
+                        self, conduit, timeline1, timeline2, hint
+                    )

@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 import ymmsl
-from ymmsl.v0_2 import ConduitFilter, Configuration, Timeline
+from ymmsl.v0_2 import ConduitFilter, Configuration, MatchingTimelines, Timeline
 from ymmsl.v0_2 import Reference as Ref
 from ymmsl.v0_2.timeline_resolver import (
     ConduitTimelineError,
@@ -132,7 +132,9 @@ def test_inconsistent_interact(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("inconsistent_interact")]
     with pytest.raises(ConduitTimelineError, match="missing timeline annotations"):
         resolve_timelines(model)
-    # TODO: add matching_timelines and try again successfully
+
+    model.matching_timelines = [MatchingTimelines("A", "B")]
+    resolve_timelines(model)
 
 
 def test_subtimelines(timelines_configuration: Configuration) -> None:
@@ -153,3 +155,11 @@ def test_model_ports(timelines_configuration: Configuration) -> None:
 def test_muscle_settings_in(timelines_configuration: Configuration) -> None:
     model = timelines_configuration.models[Ref("qmc")]
     resolve_timelines(model)
+
+
+def test_interact_time_bridge_matching(timelines_configuration: Configuration) -> None:
+    model = timelines_configuration.models[Ref("interact_time_bridge")]
+    resolve_timelines(model)
+
+    assert model.components[Ref("A")].timeline == Timeline("A")
+    assert model.components[Ref("bridge")].timeline == Timeline("bridge")
