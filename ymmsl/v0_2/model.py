@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from copy import copy
 from enum import Enum
-from typing import Any, List, Sequence, TypeAlias, cast
+from typing import Any, List, Self, Sequence, TypeAlias, cast
 
 import yatiml
 
@@ -330,6 +330,35 @@ class MatchingTimelines:
 
     def __contains__(self, timeline: Timeline) -> bool:
         return timeline in self.matches
+
+    def __copy__(self) -> "MatchingTimelines":
+        """Shallow-copy the object.
+
+        Since this class effectively models a container, a shallow copy should create a
+        new container with the same items in it, to which items can be added or removed
+        without affecting the original. By default, copy.copy() won't do that however,
+        as it will return a new MatchingTimelines containing the same self.matches. So
+        we override it to give more natural semantics.
+        """
+        return MatchingTimelines(self.head, list(self.matches))
+
+    def __ior__(self, other: "MatchingTimelines") -> Self:
+        """Merge another MatchingTimelines into this one.
+
+        This takes all of the matching timelines from other and adds them to this
+        object. If the head timeline of other is nested less deeply than the current
+        head, then it will replace the current head, otherwise the head remains
+        unchanged.
+        """
+
+        self.matches |= other.matches
+
+        this_depth = max([len(ref) for ref in self.head])
+        other_depth = max([len(ref) for ref in other.head])
+        if other_depth < this_depth:
+            self.head = other.head
+
+        return self
 
     def _yatiml_attributes(self) -> OrderedDict:
         matches: str | list[str] = list(map(str, sorted(self.matches - {self.head})))
