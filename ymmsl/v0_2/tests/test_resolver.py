@@ -638,3 +638,48 @@ def test_resolve_entrypoints_loading_error(
     assert isinstance(config, Configuration)
     with pytest.raises(RuntimeError, match="Error while loading the entrypoint"):
         resolve(Reference("test_importing"), config)
+
+
+def test_resolve_cache_after_ymmsl_path_change() -> None:
+    cur_dir = Path(__file__).parent
+    ymmsl1 = cur_dir / "ymmsl1"
+    ymmsl_other = cur_dir / "ymmsl_other"
+
+    ymmsl = (
+        "ymmsl_version: v0.2\n"
+        "description: Testing cache after changing YMMSL_PATH\n"
+        "imports:\n"
+        "- from a.d import implementation test_importing\n"
+    )
+
+    os.environ["YMMSL_PATH"] = str(ymmsl1)
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+    resolve_impl(Reference("test_importing"), config)
+
+    module_path = Path("a/d.ymmsl")
+    assert module_path in ymmsl_cache
+    assert ymmsl_cache[module_path][1] == ymmsl1 / module_path
+
+    os.environ["YMMSL_PATH"] = str(ymmsl_other)
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+    resolve_impl(
+        Reference("test_importing"),
+        config,
+        reuse_cached_imports=True,
+    )
+
+    assert ymmsl_cache[module_path][1] == ymmsl1 / module_path
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+    resolve_impl(
+        Reference("test_importing"),
+        config,
+        reuse_cached_imports=False,
+    )
+
+    assert ymmsl_cache[module_path][1] == ymmsl_other / module_path
