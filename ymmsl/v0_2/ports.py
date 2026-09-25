@@ -105,9 +105,24 @@ class Timeline:
         """Return the number of parts in the Timeline."""
         return len(self._parts)
 
-    def __getitem__(self, index: int) -> Reference:
-        """Return the index'th item in the timeline."""
-        return self._parts[index]
+    @overload
+    def __getitem__(self, index: int) -> Reference: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> "Timeline": ...
+
+    def __getitem__(self, index: int | slice) -> "Reference | Timeline":
+        """Return an item or a subtimeline.
+
+        Args
+            key: Either an int, to retrieve the given item, or a slice, to return a new
+                Timeline object with the given items.
+        """
+        if isinstance(index, int):
+            return self._parts[index]
+        if isinstance(index, slice):
+            return Timeline(self._parts[index])
+        raise TypeError("Subscript must be either an int or a slice")
 
     def __iter__(self) -> Iterator[Reference]:
         """Iterate over the timeline parts."""
@@ -121,13 +136,20 @@ class Timeline:
                     "Cannot concatenate an absolute Timeline onto another one"
                 )
             return Timeline(self._parts + other._parts, self.absolute)
+
+        if isinstance(other, Reference):
+            return Timeline(self._parts + [other], self.absolute)
+
         return NotImplemented
 
     @property
-    def parent(self) -> "Timeline | None":
-        """Get the parent of this timeline. Returns None when there is no parent."""
+    def parent(self) -> "Timeline":
+        """Get the parent of this timeline.
+
+        Raises:
+            RuntimeError if this is the root and there is no parent."""
         if not self._parts:
-            return None
+            raise RuntimeError("The root timeline does not have a parent")
         return Timeline(self._parts[:-1], self.absolute)
 
     def relative_to(self, other: "Timeline") -> "Timeline":

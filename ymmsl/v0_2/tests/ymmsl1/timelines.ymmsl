@@ -195,6 +195,12 @@ models:
       B.out: A.in
 
   model_ports:
+    ports:
+      f_init: init
+      timeline tl1:tl2:
+        o_i: out
+        s: in
+      o_f: final
     components:
       macro:
         description: macro
@@ -210,12 +216,6 @@ models:
           o_i: out
           s: in
           o_f: final
-    ports:
-      f_init: init
-      timeline macro:meso:
-        o_i: out
-        s: in
-      o_f: final
     conduits:
       init: macro.init
       macro.out: meso.init
@@ -238,3 +238,30 @@ models:
     conduits:
       mc.parameters_out: sim.muscle_settings_in
       sim.state_out: mc.states_in
+
+  different_subtimelines:
+    components:
+      macro:
+        description: macro with two subtimelines
+        ports:
+          timeline tl1:
+            o_i: out1
+            s: in1
+          timeline tl2:
+            o_i: out2
+            s: in2
+      micro1:
+        description: micro1
+        ports:
+          f_init: init
+          o_f: final
+      micro2:
+        description: micro2
+        ports:
+          f_init: init
+          o_f: final
+    conduits:
+      macro.out1: micro1.init
+      micro1.final: macro.in1
+      macro.out2: micro2.init
+      micro2.final: macro.in2
