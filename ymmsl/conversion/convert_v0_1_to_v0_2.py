@@ -134,7 +134,7 @@ def convert_model(model: v0_1.ModelReference) -> v0_2.Model:
         conduits = list(map(convert_conduit, model.conduits))
         infer_ports(components, conduits)
         return v0_2.Model(
-            str(model.name), None, description, None, components, conduits
+            str(model.name), None, description, None, components, None, conduits
         )
     else:
         return v0_2.Model(str(model.name), None, description, None, [], [])

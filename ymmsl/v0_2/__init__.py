@@ -11,7 +11,7 @@ from ymmsl.v0_2.execution import BaseEnv, ExecutionModel, KeepsStateForNextUse
 from ymmsl.v0_2.identity import Identifier, Reference, ReferencePart
 from ymmsl.v0_2.implementation import Implementation
 from ymmsl.v0_2.imports import ImportKind, ImportStatement
-from ymmsl.v0_2.model import Conduit, ConduitFilter, Model
+from ymmsl.v0_2.model import Conduit, ConduitFilter, MatchingTimelines, Model
 from ymmsl.v0_2.ports import Operator, Port, Ports, Timeline
 from ymmsl.v0_2.program import Program
 from ymmsl.v0_2.resolver import resolve
@@ -59,6 +59,7 @@ __all__ = [
     "ImportStatement",
     "InconsistentTimelines",
     "KeepsStateForNextUse",
+    "MatchingTimelines",
     "Model",
     "MPICoresResReq",
     "MPINodesResReq",

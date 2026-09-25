@@ -265,3 +265,22 @@ models:
       micro1.final: macro.in1
       macro.out2: micro2.init
       micro2.final: macro.in2
+
+  interact_time_bridge:
+    components:
+      A:
+        description: A
+        ports:
+          o_i: clock_out
+          s: data_in
+      bridge:
+        description: Time bridge
+        ports:
+          timeline receiver:
+            o_i: data_out
+            s: clock_in
+    matching_timelines:
+      A: bridge.receiver
+    conduits:
+      A.clock_out: bridge.clock_in
+      bridge.data_out: A.data_in

@@ -55,6 +55,7 @@ _classes = (
     v0_2.ImportKind,
     v0_2.ImportStatement,
     v0_2.KeepsStateForNextUse,
+    v0_2.MatchingTimelines,
     v0_2.Model,
     v0_2.MPICoresResReq,
     v0_2.MPINodesResReq,
@@ -67,6 +68,7 @@ _classes = (
     v0_2.Settings,
     v0_2.SupportedSetting,
     v0_2.SupportedSettings,
+    v0_2.Timeline,
     v0_2.ThreadedResReq,
 )
 
