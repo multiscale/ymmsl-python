@@ -281,7 +281,7 @@ class TimelineChecker:
 
         F_INIT and O_F ports sit at the beginning and end of their timeline, and import
         messages from and to their parent timeline. As a result, for these ports the
-        timeline of the port is no the same as that of the message.
+        timeline of the port is not the same as that of the message.
 
         If ``message`` is ``True``, then the resulting timeline will be the one for the
         message, rather than for the port, so for O_F and F_INIT ports this will return
