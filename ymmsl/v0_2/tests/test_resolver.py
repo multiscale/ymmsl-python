@@ -1,6 +1,6 @@
 import logging
 import os
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from importlib.metadata import EntryPoint, EntryPoints
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -10,9 +10,25 @@ import pytest
 from ymmsl.io import load
 from ymmsl.v0_2.configuration import Configuration
 from ymmsl.v0_2.identity import Reference
-from ymmsl.v0_2.resolver import resolve
+from ymmsl.v0_2.resolver import resolve as resolve_impl, ymmsl_cache
 
 Ref = Reference
+Resolve = Callable[[Reference, Configuration], None]
+
+
+@pytest.fixture(autouse=True)
+def clear_resolver_cache() -> Generator[None, None, None]:
+    ymmsl_cache.clear()
+    yield
+    ymmsl_cache.clear()
+
+
+@pytest.fixture(params=[False, True])
+def resolve(request: pytest.FixtureRequest) -> Resolve:
+    def resolve_config(module: Reference, config: Configuration) -> None:
+        resolve_impl(module, config, reuse_cached_imports=request.param)
+
+    return resolve_config
 
 
 @pytest.fixture
@@ -29,7 +45,7 @@ def env_ymmsl_path() -> Generator[None, None, None]:
     del os.environ["YMMSL_PATH"]
 
 
-def test_resolve_imports(env_ymmsl_path: None) -> None:
+def test_resolve_imports(env_ymmsl_path: None, resolve: Resolve) -> None:
     ymmsl = (
         "ymmsl_version: v0.2\n"
         "description: Testing resolving imports\n"
@@ -51,7 +67,9 @@ def test_resolve_imports(env_ymmsl_path: None) -> None:
     assert config.programs[Reference("a.b.c.macro")].executable == Path("my_program")
 
 
-def test_apply_custom_implementations_simple(env_ymmsl_path: None) -> None:
+def test_apply_custom_implementations_simple(
+    env_ymmsl_path: None, resolve: Resolve
+) -> None:
     # should import a model, and substitute a local program into it
     # then check that we have a single root model
     ymmsl = (
@@ -77,7 +95,7 @@ def test_apply_custom_implementations_simple(env_ymmsl_path: None) -> None:
     assert c.implementation == "a.b.c.macro"
 
 
-def test_apply_custom_implementations(env_ymmsl_path: None) -> None:
+def test_apply_custom_implementations(env_ymmsl_path: None, resolve: Resolve) -> None:
     ymmsl = (
         "ymmsl_version: v0.2\n"
         "description: Testing resolving imports with custom_implementations\n"
@@ -119,7 +137,9 @@ def test_apply_custom_implementations(env_ymmsl_path: None) -> None:
     assert config.programs[Reference("a.g.macro2")].args == ["/home/user/macro2.py"]
 
 
-def test_apply_custom_implementations_double_use(env_ymmsl_path: None) -> None:
+def test_apply_custom_implementations_double_use(
+    env_ymmsl_path: None, resolve: Resolve
+) -> None:
     ymmsl = (
         "ymmsl_version: v0.2\n"
         "description: |\n"
@@ -171,7 +191,9 @@ def test_apply_custom_implementations_double_use(env_ymmsl_path: None) -> None:
     assert config.programs[Reference("a.h.macro2")].args == ["/home/user/macro2.py"]
 
 
-def test_apply_custom_implementations_set_none(env_ymmsl_path: None) -> None:
+def test_apply_custom_implementations_set_none(
+    env_ymmsl_path: None, resolve: Resolve
+) -> None:
     ymmsl = (
         "ymmsl_version: v0.2\n"
         "description: Testing resolving imports with custom_implementations\n"
@@ -203,7 +225,7 @@ def test_apply_custom_implementations_set_none(env_ymmsl_path: None) -> None:
     assert model.components[Reference("micro")].implementation is None
 
 
-def test_apply_custom_implementations_no_hidden_copies() -> None:
+def test_apply_custom_implementations_no_hidden_copies(resolve: Resolve) -> None:
     ymmsl = (
         "ymmsl_version: v0.2\n"
         "description: |\n"
@@ -276,7 +298,9 @@ def test_apply_custom_implementations_no_hidden_copies() -> None:
     assert a.components[Reference("c1")].implementation == "no_copies2.p"
 
 
-def test_apply_custom_implementations_everything_localised() -> None:
+def test_apply_custom_implementations_everything_localised(
+    env_ymmsl_path: None, resolve: Resolve
+) -> None:
     ymmsl = (
         "ymmsl_version: v0.2\n"
         "description: |\n"
@@ -333,7 +357,9 @@ def test_apply_custom_implementations_everything_localised() -> None:
     assert b.components[Ref("macro")].implementation == "el.p"
 
 
-def test_apply_custom_implementations_cut_branch(env_ymmsl_path: None) -> None:
+def test_apply_custom_implementations_cut_branch(
+    env_ymmsl_path: None, resolve: Resolve
+) -> None:
     ymmsl = (
         "ymmsl_version: v0.2\n"
         "description: |\n"
@@ -369,7 +395,9 @@ def test_apply_custom_implementations_cut_branch(env_ymmsl_path: None) -> None:
     assert len(config.models) == 1
 
 
-def test_apply_custom_implementations_errors(env_ymmsl_path: None) -> None:
+def test_apply_custom_implementations_errors(
+    env_ymmsl_path: None, resolve: Resolve
+) -> None:
     ymmsl = (
         "ymmsl_version: v0.2\n"
         "description: |\n"
@@ -445,7 +473,9 @@ def test_apply_custom_implementations_errors(env_ymmsl_path: None) -> None:
         resolve(Reference("test_resolve_imports"), config)
 
 
-def test_resolve_imports_module_not_found(env_ymmsl_path: None) -> None:
+def test_resolve_imports_module_not_found(
+    env_ymmsl_path: None, resolve: Resolve
+) -> None:
     ymmsl = (
         "ymmsl_version: v0.2\n"
         "description: Testing missing modules\n"
@@ -463,7 +493,7 @@ def test_resolve_imports_module_not_found(env_ymmsl_path: None) -> None:
     assert len(config.imports) == 1
 
 
-def test_resolve_imports_broken_module(env_ymmsl_path: None) -> None:
+def test_resolve_imports_broken_module(env_ymmsl_path: None, resolve: Resolve) -> None:
     ymmsl = (
         "ymmsl_version: v0.2\n"
         "description: Testing missing modules\n"
@@ -481,7 +511,9 @@ def test_resolve_imports_broken_module(env_ymmsl_path: None) -> None:
     assert len(config.imports) == 1
 
 
-def test_resolve_imports_implementation_not_found(env_ymmsl_path: None) -> None:
+def test_resolve_imports_implementation_not_found(
+    env_ymmsl_path: None, resolve: Resolve
+) -> None:
     ymmsl = (
         "ymmsl_version: v0.2\n"
         "description: Testing missing modules\n"
@@ -499,7 +531,7 @@ def test_resolve_imports_implementation_not_found(env_ymmsl_path: None) -> None:
     assert len(config.imports) == 1
 
 
-def test_resolve_imports_no_shadowing(env_ymmsl_path: None) -> None:
+def test_resolve_imports_no_shadowing(env_ymmsl_path: None, resolve: Resolve) -> None:
     ymmsl = (
         "ymmsl_version: v0.2\n"
         "description: Testing resolving imports\n"
@@ -551,7 +583,7 @@ def mock_entry_points() -> Generator[Mock]:
         yield mock_entry_points
 
 
-def test_resolve_entrypoints(mock_entry_points: Mock) -> None:
+def test_resolve_entrypoints(mock_entry_points: Mock, resolve: Resolve) -> None:
     config = load("""
         ymmsl_version: v0.2
         description: Test
@@ -568,8 +600,9 @@ def test_resolve_entrypoints(mock_entry_points: Mock) -> None:
 
 
 def test_resolve_entrypoints_duplicate_name(
-    mock_entry_points: Mock, caplog: pytest.LogCaptureFixture
+    mock_entry_points: Mock, caplog: pytest.LogCaptureFixture, resolve: Resolve
 ) -> None:
+
     config = load("""
         ymmsl_version: v0.2
         description: Test
@@ -593,7 +626,9 @@ def test_resolve_entrypoints_duplicate_name(
     assert config.programs[test_importing].args == ["test_program.py"]
 
 
-def test_resolve_entrypoints_loading_error(mock_entry_points: Mock) -> None:
+def test_resolve_entrypoints_loading_error(
+    mock_entry_points: Mock, resolve: Resolve
+) -> None:
     config = load("""
         ymmsl_version: v0.2
         description: Test
@@ -603,3 +638,48 @@ def test_resolve_entrypoints_loading_error(mock_entry_points: Mock) -> None:
     assert isinstance(config, Configuration)
     with pytest.raises(RuntimeError, match="Error while loading the entrypoint"):
         resolve(Reference("test_importing"), config)
+
+
+def test_resolve_cache_after_ymmsl_path_change() -> None:
+    cur_dir = Path(__file__).parent
+    ymmsl1 = cur_dir / "ymmsl1"
+    ymmsl_other = cur_dir / "ymmsl_other"
+
+    ymmsl = (
+        "ymmsl_version: v0.2\n"
+        "description: Testing cache after changing YMMSL_PATH\n"
+        "imports:\n"
+        "- from a.d import implementation test_importing\n"
+    )
+
+    os.environ["YMMSL_PATH"] = str(ymmsl1)
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+    resolve_impl(Reference("test_importing"), config)
+
+    module_path = Path("a/d.ymmsl")
+    assert module_path in ymmsl_cache
+    assert ymmsl_cache[module_path][1] == ymmsl1 / module_path
+
+    os.environ["YMMSL_PATH"] = str(ymmsl_other)
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+    resolve_impl(
+        Reference("test_importing"),
+        config,
+        reuse_cached_imports=True,
+    )
+
+    assert ymmsl_cache[module_path][1] == ymmsl1 / module_path
+
+    config = load(ymmsl)
+    assert isinstance(config, Configuration)
+    resolve_impl(
+        Reference("test_importing"),
+        config,
+        reuse_cached_imports=False,
+    )
+
+    assert ymmsl_cache[module_path][1] == ymmsl_other / module_path
