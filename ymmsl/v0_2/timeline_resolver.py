@@ -377,6 +377,8 @@ class TimelineChecker:
         """Create a formatted list of determined timelines per component."""
         return "\n".join(
             f"- Component '{comp}' has timeline '{tl}:{comp}'"
+            if tl
+            else f"- Component '{comp}' has timeline '{comp}'"
             for comp, tl in self._parent_timeline.items()
             if len(comp) > 0  # Ony print actual components
         )

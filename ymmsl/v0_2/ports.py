@@ -180,6 +180,14 @@ class Port:
         self.operator = operator
         if timeline is None:
             timeline = Timeline("")
+
+        lengthy = [ref for ref in timeline if len(ref) > 1]
+        if lengthy:
+            raise ValueError(
+                    "To avoid confusion, timeline annotations must have a single"
+                    " identifier between colons, so {timeline} is not valid. Please"
+                    " use names without periods instead of e.g. {lengthy[0]}.")
+
         self.timeline = timeline
 
     def __eq__(self, other: Any) -> bool:
