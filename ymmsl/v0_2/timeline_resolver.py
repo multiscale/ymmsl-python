@@ -273,8 +273,8 @@ class TimelineChecker:
         This returns the name of the timeline the given port communicates on. These are
         as follows:
 
-        - for a model port without timeline annotation, empty
-        - for a model port with a timeline annotation, that annotation
+        - for a model port without timeline annotation, <model>
+        - for a model port with a timeline annotation tl1:tl2, <model>.tl1:<model>.tl2
         - for a component port without timeline annotation, <parent_tl>:<component>
         - for a component O_I or S port with timeline annotation "subtl1",
           <parent_tl>:<component>.subtl1
@@ -296,9 +296,9 @@ class TimelineChecker:
             assert isinstance(model_port, Identifier)
             port = self._model.ports[model_port]
             if port.timeline:
-                result = port.timeline
+                result = Timeline([self._model.name + tl for tl in port.timeline])
             else:
-                result = ROOT_TIMELINE
+                result = Timeline([self._model.name])
 
         else:
             # Component port
