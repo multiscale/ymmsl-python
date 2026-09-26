@@ -1,9 +1,10 @@
 from collections import OrderedDict
 from copy import copy
 from enum import Enum
-from typing import Any, List, Self, Sequence, TypeAlias, cast
+from typing import Any, List, Sequence, TypeAlias, cast
 
 import yatiml
+from typing_extensions import Self
 
 from ymmsl.v0_2.component import Component
 from ymmsl.v0_2.identity import Identifier, Reference
