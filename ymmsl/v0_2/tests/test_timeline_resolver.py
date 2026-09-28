@@ -163,3 +163,16 @@ def test_interact_time_bridge_matching(timelines_configuration: Configuration) -
 
     assert model.components[Ref("A")].timeline == Timeline("A")
     assert model.components[Ref("bridge")].timeline == Timeline("bridge")
+
+
+def test_matching_timelines_check_all_conduits(
+    timelines_configuration: Configuration,
+) -> None:
+    model = timelines_configuration.models[Ref("interact_time_bridge")]
+    resolve_timelines(model)
+
+    # The first conduit connects matching timelines, the next one should still be
+    # checked
+    model.conduits[-1].filters.append(ConduitFilter.LAST)
+    with pytest.raises(ConduitTimelineError, match="remove a reducer"):
+        resolve_timelines(model)
