@@ -198,6 +198,31 @@ The conduit from ``macro.bc_out`` to ``meso.init_in`` isvalid because ``bc_out``
 ``o_i`` port on ``macro``'s component timeline ``macro``, and the messages received by
 the ``f_init`` port ``init_in`` are on ``meso``'s parent timeline, which is also
 ``macro``. The same reasoning applies to the other three conduits.
+
+In a dispatch coupling, by contrast, no extra level is added. Here, ``macro`` calls
+``solver``, which hands its result over to ``analysis``, which in turn returns to
+``macro``:
+
+.. literalinclude:: timelines_dispatch.ymmsl
+   :caption: ``docs/timelines_dispatch.ymmsl``
+   :language: yaml
+
+.. figure:: timelines_dispatch.svg
+   :align: center
+   :alt: macro connects through its O_I port to solver's F_INIT port, solver's O_F port
+         connects to analysis's F_INIT port, and analysis's O_F port connects back to
+         macro's S port. solver and analysis are drawn side by side below macro.
+
+   The same model, visualized with `ymmsl2svg
+   <https://github.com/multiscale/ymmsl2svg>`_. ``solver`` and ``analysis`` are drawn
+   side by side below ``macro``, since they share the same parent timeline.
+
+``solver`` is called by ``macro``, so its parent timeline is ``macro``. ``analysis``
+receives its ``f_init`` message from ``solver``'s ``o_f`` port, and those messages are on
+``solver``'s parent timeline, so ``analysis`` gets that same parent timeline ``macro``.
+The two components therefore end up side by side, on component timelines
+``macro:solver`` and ``macro:analysis``.
+
 None of these timelines are written in the yMMSL file itself: yMMSL works them out
 automatically from how the components are wired together with conduits.
 
@@ -222,17 +247,21 @@ a different subtimeline than the ports connecting to ``micro2``:
    side by side beneath it, each with its own pair of ports, one leading to ``micro1``
    and the other to ``micro2``.
 
+A named sub-timeline is written as the component name, a period, and the annotation.
+Here, ``macro``'s first pair of O_I and S ports is on timeline ``macro.tl1`` and its
+second pair on ``macro.tl2``, which puts ``micro1`` on ``macro.tl1:micro1`` and
+``micro2`` on ``macro.tl2:micro2``. A timeline annotation must be a single name without
+periods, so ``timeline tl1:`` is fine but ``timeline sub.tl1:`` is not.
+
 Matching timelines
 ^^^^^^^^^^^^^^^^^^^
 
-The timeline hierarchy above is worked out automatically from how ``f_init``/``o_f``
-and ``o_i``/``s`` ports are wired together, and a conduit can only connect ports whose
-timelines match. Sometimes, though, two components are expected to produce matching
-time points without one being nested inside the other's timeline this way, for example
-two components that call each other directly and are expected to stay in lock-step, or
-a component that adapts its output to another component's timeline, as time bridges do.
-``matching_timelines`` lets you declare such timelines equivalent, so that a conduit can
-still connect ports on them directly:
+The timeline hierarchy above is worked out automatically from how the ``f_init``/``o_f``
+and ``o_i``/``s`` ports are wired together, and a conduit is only valid if the messages
+on both of its ends are on the same timeline. Sometimes, though, two components step
+through the same time points without one being nested inside the other's timeline.
+``matching_timelines`` lets you declare the timelines of such components equivalent, so
+that a conduit can still connect their ports directly:
 
 .. code-block:: yaml
     :caption: Declaring matching timelines
@@ -250,42 +279,95 @@ still connect ports on them directly:
         description: Right side of the domain
 
     matching_timelines:
-      left: right
+      main: left right
 
     conduits:
       left.out: right.in
       right.out: left.in
 
-``left`` and ``right`` call each other directly rather than through a shared driver, so
-their O_I and S ports live on their own default timelines, ``:left`` and ``:right``,
-named after the component as usual. A conduit between these ports would therefore not be
-allowed. The entry under ``matching_timelines`` declares ``left`` and ``right``'s
-timelines equivalent, so that the conduits connecting them are valid after all.
+``left`` and ``right`` each run on their own component timeline, ``left`` and
+``right``, and their ``o_i`` and ``s`` ports are on those timelines. While running, they
+exchange messages with each other directly through these ports, in an interact coupling. 
+Because the two timelines are different, a conduit between these ports would not be
+allowed. The components do however step through the same time points, so their timelines
+are equivalent even though they are not the same. The entry under ``matching_timelines``
+declares exactly that, so that the conduits connecting them are valid after all.
+
+Each entry has a *head*, written on the left of the colon, and the timelines that match
+it, written on the right. The head doesn't have to be one of the component timelines:
+here it is a separate name, ``main``, so that neither ``left`` nor ``right`` is singled
+out as the one the other follows. If one of the timelines does lead, as in the time
+bridge example below, you can use that timeline as the head instead.
+
+Matching timelines are also what makes a time bridge work. A time bridge lets two
+components ``a`` and ``b`` that take different time steps exchange messages while they
+run. The bridge sits in between and converts the messages from one side to the other,
+so that each component receives messages with time stamps it can use. To do so, the
+bridge runs on timelines of its own: a named sub-timeline for each side, on which it
+follows the time points of the component on that side:
+
+.. code-block:: yaml
+    :caption: Two components on different timelines, connected through a time bridge
+
+    components:
+      a:
+        ports:
+          o_i: state_out
+          s: state_in
+        description: A model with its own time steps
+      b:
+        ports:
+          o_i: state_out
+          s: state_in
+        description: A model with different time steps
+      bridge:
+        ports:
+          timeline a_side:
+            o_i: a_out
+            s: a_in
+          timeline b_side:
+            o_i: b_out
+            s: b_in
+        description: Time bridge that converts messages between a and b
+
+    matching_timelines:
+      a: bridge.a_side
+      b: bridge.b_side
+
+    conduits:
+      a.state_out: bridge.a_in
+      bridge.a_out: a.state_in
+      b.state_out: bridge.b_in
+      bridge.b_out: b.state_in
+
+Like any component, the bridge runs on its own timelines, ``bridge.a_side`` and
+``bridge.b_side``, which differ from those of ``a`` and ``b``. Without
+``matching_timelines``, none of the conduits in this example would therefore be valid.
+But each side of the bridge does step through the same time points as the component on
+that side, and the two entries under ``matching_timelines`` declare exactly that:
+``bridge.a_side`` is equivalent to ``a``, and ``bridge.b_side`` to ``b``. 
+
+Deeper timelines are matched by writing out their full path, e.g.
+``macro1:micro1: macro2:micro2``. Matching timelines are taken into account after
+applying any conduit filters, so a conduit with a ``repeat`` or ``last`` filter can also
+connect to a timeline that matches the one it is filtered to.
 
 On the Python side, ``matching_timelines`` is a list of
 :class:`.ymmsl.v0_2.MatchingTimelines` objects, each representing a set of equivalent
 timelines, with a ``head`` attribute and a ``matches`` attribute holding the full set,
 including the head.
 
-A head can have more than one match, for example if ``left`` is expected to stay in
-lock-step with both ``right`` and ``top``. The matches can then be written as a
-whitespace-separated string:
+A head can have more than one match, as ``main`` does in the first example. The matches
+can be written as a whitespace-separated string, as above, or, equivalently, as a YAML
+list:
 
 .. code-block:: yaml
-    :caption: A head with multiple matches
+    :caption: The same matching timelines, as a YAML list
 
     matching_timelines:
-      left: right top
-
-or, equivalently, as a YAML list:
-
-.. code-block:: yaml
-    :caption: The same, as a YAML list
-
-    matching_timelines:
-      left:
+      main:
+      - left
       - right
-      - top
 
 
 Conduits
