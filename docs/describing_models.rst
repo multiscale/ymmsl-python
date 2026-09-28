@@ -138,19 +138,41 @@ Timelines
 Different components of a coupled simulation typically run at their own pace: a fast,
 detailed micro model may take many small steps for every single step of the macro model
 driving it, and a meso model may sit somewhere in between the two. yMMSL captures this
-idea of "running at a different pace" as a *timeline*. Wiring a component's ``o_i``/``s``
-ports to another component's ``f_init``/``o_f`` ports puts that other component, and anything
-it in turn drives, on a timeline nested inside the first. yMMSL works this out automatically
-from how components are wired together with conduits.
+idea of "running at a different pace" as a *timeline*.
 
-A component that nobody calls sits on the outermost, root timeline, written ``:``. Every
-level of nesting adds one more name, giving each timeline in the model an addressable
-path, a bit like a folder structure. 
+Timelines are determined separately for each model under ``models``, and are named
+relative to that model. Each component has two timelines associated with it:
+
+- Its *parent timeline* is the timeline of whatever calls it, i.e. the timeline on which
+  the messages to its ``f_init`` ports are sent and the messages from its ``o_f`` ports
+  are received. For a component that isn't called by any other component in the model,
+  the parent timeline is empty.
+- Its *component timeline* is the timeline it runs on itself. Its name is the name of
+  the parent timeline followed by the name of the component, joined with a colon. A
+  component that isn't called by anything therefore gets a timeline named after itself.
+
+A component is called by another one through a call-and-release coupling, in which the
+caller's ``o_i`` port sends to the callee's ``f_init`` port and the callee's ``o_f``
+port sends back to the caller's ``s`` port. The caller's component timeline then becomes
+the callee's parent timeline, so the callee's component timeline is nested inside the
+caller's. Every level of nesting adds one more name, giving each timeline in the model
+an addressable path, a bit like a folder structure. A dispatch coupling, in which one
+component's ``o_f`` port sends to the next component's ``f_init`` port, does not add a
+level: the second component gets the same parent timeline as the first, so the two end
+up side by side.
+
+Components and their ports are related to timelines in slightly different ways. A
+component's ``o_i`` and ``s`` ports send and receive during its run, so they are on its
+component timeline. Its ``f_init`` and ``o_f`` ports sit at the beginning and the end of
+the component timeline, where the component hands over to and from its caller, so the
+messages they receive and send belong to the parent timeline.
+
+To make a valid conduit, you should connect two ports whose messages live on the same
+timeline. :ref:`Conduit filters` and :ref:`Matching timelines` relax this rule
+in specific cases.
 
 Take a macro model that calls a meso model in a loop, and where that meso model in turn
-calls a micro model in its own loop. This produces three levels of timelines: the root
-timeline for ``macro``, a timeline nested inside it for ``meso``, and a timeline nested
-inside *that* for ``micro``:
+calls a micro model in its own loop:
 
 .. literalinclude:: timelines_macro_meso_micro.ymmsl
    :caption: ``docs/timelines_macro_meso_micro.ymmsl``
@@ -165,6 +187,19 @@ inside *that* for ``micro``:
    <https://github.com/multiscale/ymmsl2svg>`_. The order of the boxes in the figure,
    from top to bottom, mirrors the nesting in time: ``macro`` first, then ``meso``
    below it, then ``micro`` below ``meso``.
+
+``macro`` isn't called by anything, so its parent timeline is empty and its
+component timeline is ``macro``. ``macro`` calls ``meso``, so ``meso``'s parent
+timeline is ``macro`` and its component timeline is ``macro:meso``. Likewise,
+``micro`` has parent timeline ``macro:meso`` and component timeline
+``macro:meso:micro``. 
+
+The conduit from ``macro.bc_out`` to ``meso.init_in`` isvalid because ``bc_out`` is an
+``o_i`` port on ``macro``'s component timeline ``macro``, and the messages received by
+the ``f_init`` port ``init_in`` are on ``meso``'s parent timeline, which is also
+``macro``. The same reasoning applies to the other three conduits.
+None of these timelines are written in the yMMSL file itself: yMMSL works them out
+automatically from how the components are wired together with conduits.
 
 A single component can also be connected to more than one timeline at once, for example
 when it drives two other components that run at different rates. ``macro`` calling
