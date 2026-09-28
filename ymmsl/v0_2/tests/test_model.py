@@ -1,3 +1,4 @@
+from copy import copy
 from typing import Callable
 
 import pytest
@@ -194,7 +195,7 @@ def test_dump_multicast_conduits() -> None:
     assert text == ("sender: init.out\nreceiver:\n- c1.in\n- repeat pad c2.in\n")
 
 
-def test_create_matching_timeline() -> None:
+def test_create_matching_timelines() -> None:
     mt = MatchingTimelines(Timeline("tl1"), "tl2")
     assert isinstance(mt.head, Timeline)
     assert mt.head == Timeline("tl1")
@@ -222,6 +223,49 @@ def test_create_matching_timeline() -> None:
         Timeline("tl2"),
         Timeline("tl4"),
         Timeline("tl5"),
+    }
+
+
+def test_copy_matching_timelines() -> None:
+    tl1 = Timeline("tl1")
+    tl2 = Timeline("tl2")
+    mt1 = MatchingTimelines(tl1, [tl2])
+
+    mt2 = copy(mt1)
+
+    assert mt2.head is mt1.head
+    assert mt2.matches is not mt1.matches
+    for m2 in mt2.matches:
+        assert len([m1 for m1 in mt1.matches if m1 is m2]) > 0
+
+
+def test_merge_matching_timelines() -> None:
+    mt1 = MatchingTimelines(Timeline("tl1"), "tl2")
+    mt2 = MatchingTimelines(Timeline("tl2"), "tl3")
+
+    mt1 |= mt2
+    assert mt1.head == "tl1"
+    assert mt1.matches == {Timeline("tl1"), Timeline("tl2"), Timeline("tl3")}
+
+    mt3 = MatchingTimelines(Timeline("tl4"), "tl5")
+    mt1 |= mt3
+    assert mt1.head == "tl1"
+    assert mt1.matches == {
+        Timeline("tl1"),
+        Timeline("tl2"),
+        Timeline("tl3"),
+        Timeline("tl4"),
+        Timeline("tl5"),
+    }
+
+    mt4 = MatchingTimelines(Timeline("c1.c2.tl1"), "c1.c3.tl1")
+    mt4 |= mt3
+    assert mt4.head == "tl4"
+    assert mt4.matches == {
+        Timeline("tl4"),
+        Timeline("tl5"),
+        Timeline("c1.c2.tl1"),
+        Timeline("c1.c3.tl1"),
     }
 
 
