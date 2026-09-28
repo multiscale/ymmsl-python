@@ -10,7 +10,8 @@ import pytest
 from ymmsl.io import load
 from ymmsl.v0_2.configuration import Configuration
 from ymmsl.v0_2.identity import Reference
-from ymmsl.v0_2.resolver import resolve as resolve_impl, ymmsl_cache
+from ymmsl.v0_2.resolver import resolve as resolve_impl
+from ymmsl.v0_2.resolver import ymmsl_cache
 
 Ref = Reference
 
