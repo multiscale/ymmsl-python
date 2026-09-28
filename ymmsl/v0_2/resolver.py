@@ -1,12 +1,12 @@
 import logging
 import os
-import sys
 from collections.abc import MutableMapping
 from copy import copy
 from difflib import get_close_matches
+from importlib.metadata import EntryPoint, entry_points
 from pathlib import Path
 from textwrap import indent
-from typing import Dict, List, Optional, Set, Tuple, TypeVar, Union
+from typing import Dict, List, Set, Tuple, TypeAlias, TypeVar
 
 from yatiml import RecognitionError
 
@@ -18,15 +18,10 @@ from ymmsl.v0_2.imports import ImportKind, ImportStatement
 from ymmsl.v0_2.model import Model
 from ymmsl.v0_2.program import Program
 
-if sys.version_info < (3, 10):
-    from importlib_metadata import EntryPoint, entry_points
-else:
-    from importlib.metadata import EntryPoint, entry_points
-
 _logger = logging.getLogger(__name__)
 
 
-ModuleSource = Union[Path, EntryPoint]
+ModuleSource: TypeAlias = Path | EntryPoint
 """Source file (Path) or EntryPoint for a yMMSL module"""
 
 
@@ -246,9 +241,7 @@ def apply_custom_implementations(
         ylocals: Map from local to global names
     """
 
-    def impl_hint_msg(
-        unknown: Reference, known_impls: Optional[List[str]] = None
-    ) -> str:
+    def impl_hint_msg(unknown: Reference, known_impls: List[str] | None = None) -> str:
         if known_impls is None:
             known_impls = [str(k) for k in ylocals.keys()]
         matches = get_close_matches(str(unknown), known_impls)
@@ -516,7 +509,7 @@ ymmsl_cache: Dict[Path, Tuple[Configuration, ModuleSource]] = dict()
 
 def _load_from_entrypoints(
     module: Reference,
-) -> Optional[Tuple[Configuration, EntryPoint]]:
+) -> Tuple[Configuration, EntryPoint] | None:
     # Find entry point
     entrypoints = entry_points(group="ymmsl.module", name=str(module))
     if not entrypoints:
@@ -550,7 +543,7 @@ def _load_from_entrypoints(
 
 def _load_from_ymmsl_path(
     module_path: Path, ymmsl_path: list[Path]
-) -> Optional[Tuple[Configuration, Path]]:
+) -> Tuple[Configuration, Path] | None:
     for yp in ymmsl_path:
         try:
             loaded_file = yp / module_path

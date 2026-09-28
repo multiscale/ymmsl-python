@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import cast
 
 import yaml
 import yatiml
@@ -25,9 +25,9 @@ class Implementation:
     def __init__(
         self,
         name: str,
-        ports: Optional[Ports] = None,
+        ports: Ports | None = None,
         description: str = "Please add a description!",
-        supported_settings: Optional[SupportedSettings] = None,
+        supported_settings: SupportedSettings | None = None,
     ) -> None:
         """Create an Implementation
 

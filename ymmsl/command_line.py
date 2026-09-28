@@ -1,7 +1,7 @@
 import os
 import warnings
 from shutil import copyfile
-from typing import Dict, Optional, TextIO, Type, Union
+from typing import Dict, TextIO, Type
 
 import click
 
@@ -13,12 +13,12 @@ from ymmsl.io import load_as, save
 
 
 def showwarning(
-    message: Union[Warning, str],
+    message: Warning | str,
     category: Type[Warning],
     filename: str,
     lineno: int,
-    file: Optional[TextIO] = None,
-    line: Optional[str] = None,
+    file: TextIO | None = None,
+    line: str | None = None,
 ) -> None:
     print(f"WARNING: {message}", file=file)
 
@@ -68,7 +68,7 @@ _version_tag_to_type: Dict[str, Type] = {
     ),
 )
 @click.option("-t", "--to", default="v0.2", help='Version to convert to, e.g. "v0.2".')
-def convert(input_file: str, output_file: Optional[str], to: str) -> None:
+def convert(input_file: str, output_file: str | None, to: str) -> None:
     """Convert a yMMSL file to a later version
 
     When upgrading in place, and/or if an output file is specified and it exists, a

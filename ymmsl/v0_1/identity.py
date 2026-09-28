@@ -3,7 +3,7 @@
 import re
 from collections import UserString
 from copy import copy
-from typing import Any, Generator, Iterable, List, Union, overload
+from typing import Any, Generator, Iterable, List, overload
 
 import yatiml
 
@@ -11,7 +11,7 @@ import yatiml
 class Identifier(UserString):
     """A custom string type that represents an identifier.
 
-    An identifier may consist of upper- and lowercase characters, digits, and \
+    An identifier may consist of upper- and lowercase characters, digits, and
     underscores.
     """
 
@@ -37,7 +37,7 @@ class Identifier(UserString):
             )
 
 
-ReferencePart = Union[Identifier, int]
+ReferencePart = Identifier | int
 
 
 class Reference(yatiml.String):
@@ -49,9 +49,9 @@ class Reference(yatiml.String):
     -  a Reference followed by a period and an Identifier, or
     -  a Reference followed by an integer enclosed in square brackets.
 
-    In object form, they consist of a list of Identifiers and ints. The \
-    first list item is always an Identifier. For the rest of the list, \
-    an Identifier represents a period operator with that argument, \
+    In object form, they consist of a list of Identifiers and ints. The
+    first list item is always an Identifier. For the rest of the list,
+    an Identifier represents a period operator with that argument,
     while an int represents the indexing operator with that argument.
 
     Reference objects act like a list of Identifiers and ints, you can
@@ -68,7 +68,7 @@ class Reference(yatiml.String):
     modified, this will get your dictionary in a very confused state.
     """
 
-    def __init__(self, parts: Union[str, List[ReferencePart]]) -> None:
+    def __init__(self, parts: str | List[ReferencePart]) -> None:
         """Create a Reference.
 
         Creates a Reference from either a string, which will be parsed,
@@ -186,7 +186,7 @@ class Reference(yatiml.String):
     @overload
     def __getitem__(self, key: slice) -> "Reference": ...
 
-    def __getitem__(self, key: Union[int, slice]) -> Union["Reference", ReferencePart]:
+    def __getitem__(self, key: int | slice) -> "Reference | ReferencePart":
         """Get a part or a slice.
 
         If passed an int, e.g. ref[2], will return that part as an int
@@ -210,7 +210,7 @@ class Reference(yatiml.String):
             return Reference(self._parts[key])
         raise ValueError("Subscript must be either an int or a slice")
 
-    def __setitem__(self, key: Union[int, slice], value: Any) -> None:
+    def __setitem__(self, key: int | slice, value: Any) -> None:
         """Does not set the value of a part.
 
         References are immutable, so they should not be modified, and
@@ -225,7 +225,7 @@ class Reference(yatiml.String):
         )
 
     def __add__(
-        self, other: Union["Reference", Iterable[ReferencePart], ReferencePart]
+        self, other: "Reference | Iterable[ReferencePart] | ReferencePart"
     ) -> "Reference":
         """Concatenates something onto a Reference.
 

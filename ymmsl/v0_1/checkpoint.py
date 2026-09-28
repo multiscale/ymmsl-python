@@ -1,6 +1,6 @@
 """Definitions for describing checkpoints."""
 
-from typing import List, Optional, Union
+from typing import List
 
 import yaml
 import yatiml
@@ -36,9 +36,9 @@ class CheckpointRangeRule(CheckpointRule):
 
     def __init__(
         self,
-        start: Optional[Union[float, int]] = None,
-        stop: Optional[Union[float, int]] = None,
-        every: Union[float, int] = 0,
+        start: float | int | None = None,
+        stop: float | int | None = None,
+        every: float | int = 0,
     ) -> None:
         """Create a checkpoint range.
 
@@ -83,7 +83,7 @@ class CheckpointAtRule(CheckpointRule):
         at: List of checkpoints.
     """
 
-    def __init__(self, at: Optional[List[Union[float, int]]]) -> None:
+    def __init__(self, at: List[float | int] | None) -> None:
         """Create checkpoint rules.
 
         Args:
@@ -136,8 +136,8 @@ class Checkpoints:
     def __init__(
         self,
         at_end: bool = False,
-        wallclock_time: Optional[List[CheckpointRule]] = None,
-        simulation_time: Optional[List[CheckpointRule]] = None,
+        wallclock_time: List[CheckpointRule] | None = None,
+        simulation_time: List[CheckpointRule] | None = None,
     ) -> None:
         """Create checkpoint definitions.
 

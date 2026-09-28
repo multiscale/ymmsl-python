@@ -3,7 +3,7 @@ import itertools
 import logging
 from copy import copy
 from pathlib import Path
-from typing import Dict, List, MutableMapping, Optional, Sequence, Tuple, Union, cast
+from typing import Dict, List, MutableMapping, Sequence, Tuple, cast
 
 import yaml
 import yatiml
@@ -51,25 +51,17 @@ class Configuration(Document):
     def __init__(
         self,
         description: str = "",
-        imports: Optional[Sequence[ImportStatement]] = None,
-        models: Optional[
-            Union[Sequence[Model], MutableMapping[Reference, Model]]
-        ] = None,
-        custom_implementations: Optional[
-            MutableMapping[Reference, Optional[Reference]]
-        ] = None,
-        settings: Optional[Settings] = None,
-        programs: Optional[
-            Union[Sequence[Program], MutableMapping[Reference, Program]]
-        ] = None,
-        resources: Optional[
-            Union[
-                Sequence[ResourceRequirements],
-                MutableMapping[Reference, ResourceRequirements],
-            ]
-        ] = None,
-        checkpoints: Optional[Checkpoints] = None,
-        resume: Optional[Dict[Reference, Path]] = None,
+        imports: Sequence[ImportStatement] | None = None,
+        models: Sequence[Model] | MutableMapping[Reference, Model] | None = None,
+        custom_implementations: MutableMapping[Reference, Reference | None]
+        | None = None,
+        settings: Settings | None = None,
+        programs: Sequence[Program] | MutableMapping[Reference, Program] | None = None,
+        resources: Sequence[ResourceRequirements]
+        | MutableMapping[Reference, ResourceRequirements]
+        | None = None,
+        checkpoints: Checkpoints | None = None,
+        resume: Dict[Reference, Path] | None = None,
     ) -> None:
         """Create a Configuration.
 
@@ -116,7 +108,7 @@ class Configuration(Document):
         else:
             self.models = models
 
-        _CIType = MutableMapping[Reference, Optional[Reference]]  # noqa: F841
+        _CIType = MutableMapping[Reference, Reference | None]  # noqa: F841
 
         if custom_implementations is None:
             self.custom_implementations: _CIType = {}
@@ -201,7 +193,7 @@ class Configuration(Document):
         self.resume.update(overlay.resume)
 
     def check_consistent(
-        self, check_runnable: bool = True, selected_model: Optional[str] = None
+        self, check_runnable: bool = True, selected_model: str | None = None
     ) -> None:
         """Checks that the configuration is internally consistent.
 
@@ -271,7 +263,7 @@ class Configuration(Document):
             res_req = ThreadedResReq(name, 1)
         return res_req
 
-    def root_model(self, selected_model: Optional[Reference] = None) -> Model:
+    def root_model(self, selected_model: Reference | None = None) -> Model:
         """Return the root model of this configuration.
 
         If there are multiple models that are not used as an implementation in any
@@ -598,7 +590,7 @@ class Configuration(Document):
         return False
 
     def _check_resources(
-        self, component_paths: Dict[Reference, Component], selected_model: Optional[str]
+        self, component_paths: Dict[Reference, Component], selected_model: str | None
     ) -> List[str]:
         """Check that each component path has a corresponding resource request.
 

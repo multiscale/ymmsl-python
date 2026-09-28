@@ -4,7 +4,7 @@ import collections.abc as abc
 import logging
 from collections import OrderedDict
 from pathlib import Path
-from typing import Dict, List, MutableMapping, Optional, Sequence, Union, cast
+from typing import Dict, List, MutableMapping, Sequence, cast
 
 import yaml
 import yatiml
@@ -50,20 +50,17 @@ class PartialConfiguration(Document):
 
     def __init__(
         self,
-        model: Optional[ModelReference] = None,
-        settings: Optional[Settings] = None,
-        implementations: Optional[
-            Union[List[Implementation], Dict[Reference, Implementation]]
-        ] = None,
-        resources: Optional[
-            Union[
-                Sequence[ResourceRequirements],
-                MutableMapping[Reference, ResourceRequirements],
-            ]
-        ] = None,
-        description: Optional[str] = None,
-        checkpoints: Optional[Checkpoints] = None,
-        resume: Optional[Dict[Reference, Path]] = None,
+        model: ModelReference | None = None,
+        settings: Settings | None = None,
+        implementations: List[Implementation]
+        | Dict[Reference, Implementation]
+        | None = None,
+        resources: Sequence[ResourceRequirements]
+        | MutableMapping[Reference, ResourceRequirements]
+        | None = None,
+        description: str | None = None,
+        checkpoints: Checkpoints | None = None,
+        resume: Dict[Reference, Path] | None = None,
     ) -> None:
         """Create a Configuration.
 
@@ -271,19 +268,16 @@ class Configuration(PartialConfiguration):
     def __init__(
         self,
         model: Model,
-        settings: Optional[Settings] = None,
-        implementations: Optional[
-            Union[List[Implementation], Dict[Reference, Implementation]]
-        ] = None,
-        resources: Optional[
-            Union[
-                Sequence[ResourceRequirements],
-                MutableMapping[Reference, ResourceRequirements],
-            ]
-        ] = None,
-        description: Optional[str] = None,
-        checkpoints: Optional[Checkpoints] = None,
-        resume: Optional[Dict[Reference, Path]] = None,
+        settings: Settings | None = None,
+        implementations: List[Implementation]
+        | Dict[Reference, Implementation]
+        | None = None,
+        resources: Sequence[ResourceRequirements]
+        | MutableMapping[Reference, ResourceRequirements]
+        | None = None,
+        description: str | None = None,
+        checkpoints: Checkpoints | None = None,
+        resume: Dict[Reference, Path] | None = None,
     ) -> None:
         """Create a Configuration.
 

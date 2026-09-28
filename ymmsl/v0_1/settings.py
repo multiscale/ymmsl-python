@@ -3,22 +3,22 @@
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from copy import deepcopy
-from typing import Any, Dict, Iterator, List, Optional, Tuple, TypeVar, Union, overload
+from typing import Any, Dict, Iterator, List, Tuple, TypeAlias, TypeVar, overload
 
 import yatiml
 
 from ymmsl.v0_1.identity import Reference
 
-SettingValue = Union[
-    str,
-    int,
-    float,
-    bool,
-    List[int],
-    List[float],
-    List[List[float]],
-    yatiml.bool_union_fix,
-]
+SettingValue: TypeAlias = (
+    str
+    | int
+    | float
+    | bool
+    | List[int]
+    | List[float]
+    | List[List[float]]
+    | yatiml.bool_union_fix
+)
 
 
 _T = TypeVar("_T")
@@ -31,7 +31,7 @@ class Settings(MutableMapping):
     for the submodel scales, model parameters and any other configuration.
     """
 
-    def __init__(self, settings: Optional[Dict[str, SettingValue]] = None) -> None:
+    def __init__(self, settings: Dict[str, SettingValue] | None = None) -> None:
         """Create a Settings object.
 
         This will make a deep copy of the settings argument, if
@@ -68,19 +68,19 @@ class Settings(MutableMapping):
             return False
         return key in self._store
 
-    def __getitem__(self, key: Union[str, Reference]) -> SettingValue:
+    def __getitem__(self, key: str | Reference) -> SettingValue:
         """Returns an item, implements settings[name]."""
         if isinstance(key, str):
             key = Reference(key)
         return self._store[key]
 
-    def __setitem__(self, key: Union[str, Reference], value: SettingValue) -> None:
+    def __setitem__(self, key: str | Reference, value: SettingValue) -> None:
         """Sets a value, implements settings[name] = value."""
         if isinstance(key, str):
             key = Reference(key)
         self._store[key] = value
 
-    def __delitem__(self, key: Union[str, Reference]) -> None:
+    def __delitem__(self, key: str | Reference) -> None:
         """Deletes a value, implements del(settings[name])."""
         if isinstance(key, str):
             key = Reference(key)
@@ -95,12 +95,12 @@ class Settings(MutableMapping):
         return len(self._store)
 
     @overload
-    def get(self, key: Any, /) -> Union[Any, None]: ...
+    def get(self, key: Any, /) -> Any | None: ...
 
     @overload
-    def get(self, key: Any, /, default: _T) -> Union[Any, _T]: ...
+    def get(self, key: Any, /, default: _T) -> Any | _T: ...
 
-    def get(self, key: Any, /, default: Union[_T, None] = None) -> Union[Any, _T]:
+    def get(self, key: Any, /, default: _T | None = None) -> Any | _T:
         """Return the given setting, or default if it is not set.
 
         If default is not given, returns None.

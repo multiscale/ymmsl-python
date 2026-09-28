@@ -224,6 +224,7 @@ def test_configuration_update_model_error() -> None:
                         "micro", Ports(f_init="init", o_f="final"), "description"
                     ),
                 ],
+                None,
                 [
                     Conduit("macro.out", "micro.init"),
                     Conduit("micro.final", "macro.in"),
@@ -260,6 +261,7 @@ def test_configuration_update_model_error() -> None:
                 "description",
                 None,
                 [],
+                None,
                 [Conduit("micro.final", "macro.in2")],
             )
         ],

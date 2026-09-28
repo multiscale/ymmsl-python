@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Any, Iterator, List, Optional, Sequence, Union, cast, overload
+from typing import Any, Iterator, List, Sequence, cast, overload
 
 from ymmsl.v0_1.component import Operator  # also the v0.2 version, import from here
 from ymmsl.v0_2.identity import Identifier, Reference
@@ -8,30 +8,31 @@ from ymmsl.v0_2.identity import Identifier, Reference
 class Timeline:
     """Identify a timeline on which a port sends or receives.
 
-    Timeline objects describe when a port sends or receives, either relative to a parent
-    timeline that calls the component they're a part of, or by describing the whole list
-    of components calling each other from the root timeline down.
+    A timeline is a stretch of time with a beginning and an end that is subdivided into
+    zero or more time steps that step from one intermediate time point to the next.
 
-    A component c1 that is not called by any other component will have its F_INIT and
-    O_F ports (if any) on the root timeline, which is represented by ':'. If c1's
-    implementation has a loop in which it sends on an O_I port and receives on an S
-    port, then those ports are on a subtimeline, which is named after the component by
-    default, ':c1'.
+    F_INIT ports receive at the beginning of the timeline, O_F ports send at the end of
+    the timeline, O_I ports send at the first and intermediate points on the timeline,
+    and S ports receive at intermediate and the last time point of the timeline.
 
-    If we add a component c2 and connect its F_INIT and O_F to those ports, then we
-    create a macro-micro type coupling. The F_INIT and O_F ports of c2 will then be on
-    timeline ':c1', because they'll receive and send at the exact points in simulated
-    time that c1's O_I and S ports send and receive.
+    Timeline objects are used to annotate components and ports, to describe which
+    timeline they're on.
 
-    If c2 has its own O_I and S ports, then those will be on timeline ':c1:c2', this
-    being the concatenation of the parent timeline and the relative timeline within c2.
+    For components, the timeline depends on where in a call hierarchy the component
+    sits. A component ``c1`` that is not called (via an O_I to F_INIT conduit) by any
+    other model has timeline ``c1``, relative to the model it's in. If ``c2`` is called
+    by ``c1``, then it is in timeline ``c2`` relative to its *parent timeline* ``c1``,
+    and in ``c1:c2`` relative to the model. If ``c1`` dispatches (O_F to F_INIT) to
+    ``c3``, then ``c3``'s parent timeline is the same as ``c1``'s parent timeline, which
+    is the empty model timeline, putting component ``c3`` into timeline ``c3``.
 
-    Some implementations may have more than one set of O_I/S ports, on which they
-    communicate at different rates. In that case, each port should be given a local
-    relative timeline explicitly. In the above example, if c1's O_I and S ports were
-    specified to be on local relative timeline 'tl1', then their full relative timeline
-    is 'c1.tl' and their absolute timeline is ':c1.tl`, putting c2's O_I and S ports on
-    ':c1.tl:c2' unless they too have an explicit timeline designation.
+    Ports are on the timeline of the component they're associated with. Some components
+    however have multiple sets of O_I/S ports, on which they communicate at different
+    rates. Each group of such ports is annotated, using this class, with a timeline
+    annotation naming the sub-timeline that port is on. If an O_I port on component
+    ``c1`` is annotated with ``tl1``, then that port will be on timeline ``c1.tl1``
+    rather than on ``c1``, and if it were on ``c2`` then the full timeline would be
+    ``c1:c2.tl1``.
 
     Timelines have a technical representation as a list of References, and a string
     representation in which those References are joined using colons.
@@ -41,14 +42,11 @@ class Timeline:
     def __init__(self, timeline: str) -> None: ...
 
     @overload
-    def __init__(
-        self, timeline: Sequence[Union[str, Reference]], absolute: bool = True
-    ) -> None: ...
+    def __init__(self, timeline: Sequence[str | Reference]) -> None: ...
 
     def __init__(
         self,
-        timeline: Union[str, Sequence[Union[str, Reference]]],
-        absolute: bool = True,
+        timeline: str | Sequence[str | Reference],
     ) -> None:
         """Create a Timeline.
 
@@ -56,46 +54,43 @@ class Timeline:
         that are each a string that is also a valid Reference.
         """
 
-        def make_new_reference(x: Union[str, Reference]) -> Reference:
+        def make_new_reference(x: str | Reference) -> Reference:
             return Reference(str(x))
 
         if isinstance(timeline, str):
+            timeline = timeline.strip(":")
             if timeline == "":
-                self.absolute = False
-                parts: Sequence[Union[str, Reference]] = []
-            elif timeline == ":":
-                self.absolute = True
-                parts = []
-            else:
-                self.absolute = False
-                if timeline[0] == ":":
-                    self.absolute = True
-                    timeline = timeline[1:]
+                self._parts = []
+                return
 
-                parts = timeline.split(":")
+            timeline = timeline.split(":")
 
-            self._parts = list(map(make_new_reference, parts))
-
-        else:
-            self.absolute = absolute
-            self._parts = list(map(make_new_reference, timeline))
+        self._parts = list(map(make_new_reference, timeline))
 
     def __eq__(self, other: Any) -> bool:
         """Compare with another Timeline or a string for equality."""
         if isinstance(other, str):
             return str(self) == other
         elif isinstance(other, Timeline):
-            return self.absolute == other.absolute and self._parts == other._parts
+            return self._parts == other._parts
         return NotImplemented
 
     def __hash__(self) -> int:
         """Make this hashable so we can make sets of Timelines."""
         return hash(str(self))
 
+    def __lt__(self, other: Any) -> bool:
+        """Compare lexicographically by parts."""
+        if isinstance(other, str):
+            other_tl = Timeline(other)
+        else:
+            other_tl = other
+
+        return tuple(self._parts) < tuple(other_tl._parts)
+
     def __str__(self) -> str:
         """Return the string representation of this Timeline."""
-        anchor = ":" if self.absolute else ""
-        return anchor + ":".join(map(str, self._parts))
+        return ":".join(map(str, self._parts))
 
     def __repr__(self) -> str:
         """Return a representation of the object."""
@@ -105,42 +100,57 @@ class Timeline:
         """Return the number of parts in the Timeline."""
         return len(self._parts)
 
-    def __getitem__(self, index: int) -> Reference:
-        """Return the index'th item in the timeline."""
-        return self._parts[index]
+    @overload
+    def __getitem__(self, index: int) -> Reference: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> "Timeline": ...
+
+    def __getitem__(self, index: int | slice) -> "Reference | Timeline":
+        """Return an item or a subtimeline.
+
+        Args
+            key: Either an int, to retrieve the given item, or a slice, to return a new
+                Timeline object with the given items.
+        """
+        if isinstance(index, int):
+            return self._parts[index]
+        if isinstance(index, slice):
+            return Timeline(self._parts[index])
+        raise TypeError("Subscript must be either an int or a slice")
 
     def __iter__(self) -> Iterator[Reference]:
         """Iterate over the timeline parts."""
         yield from self._parts
 
     def __add__(self, other: Any) -> "Timeline":
-        """Concatenate this timeline with another (relative!) Timeline."""
+        """Concatenate this timeline with another Timeline."""
         if isinstance(other, Timeline):
-            if other.absolute:
-                raise ValueError(
-                    "Cannot concatenate an absolute Timeline onto another one"
-                )
-            return Timeline(self._parts + other._parts, self.absolute)
+            return Timeline(self._parts + other._parts)
+
+        if isinstance(other, Reference):
+            return Timeline(self._parts + [other])
+
         return NotImplemented
 
     @property
-    def parent(self) -> "Timeline | None":
-        """Get the parent of this timeline. Returns None when there is no parent."""
+    def parent(self) -> "Timeline":
+        """Get the parent of this timeline.
+
+        Raises:
+            RuntimeError if this is the root and there is no parent."""
         if not self._parts:
-            return None
-        return Timeline(self._parts[:-1], self.absolute)
+            raise RuntimeError("The root timeline does not have a parent")
+        return Timeline(self._parts[:-1])
 
     def relative_to(self, other: "Timeline") -> "Timeline":
         """Compute a version of this timeline relative to `other`.
 
-        Both timelines must be absolute, and the other timeline must be a parent
-        timeline of this one.
+        The other timeline must be a parent timeline of this one.
         """
-        if not self.absolute or not other.absolute:
-            raise ValueError("Both timelines must be absolute")
         if self._parts[: len(other)] != other._parts:
             raise ValueError(f"{self} is not a subtimeline of {other}")
-        return Timeline(self._parts[len(other) :], False)
+        return Timeline(self._parts[len(other) :])
 
 
 class Port:
@@ -156,7 +166,7 @@ class Port:
     """
 
     def __init__(
-        self, name: Identifier, operator: Operator, timeline: Optional[Timeline] = None
+        self, name: Identifier, operator: Operator, timeline: Timeline | None = None
     ) -> None:
         """Create a Port.
 
@@ -184,13 +194,13 @@ class Port:
         return NotImplemented
 
 
-_PortsSubAttrs = OrderedDict[str, Union[str, List[str]]]
+_PortsSubAttrs = OrderedDict[str, str | List[str]]
 
 
-_PortsAttrs = OrderedDict[str, Union[str, List[str], _PortsSubAttrs]]
+_PortsAttrs = OrderedDict[str, str | List[str] | _PortsSubAttrs]
 
 
-def _ensure_identifier(port_name: Union[str, Identifier]) -> Identifier:
+def _ensure_identifier(port_name: str | Identifier) -> Identifier:
     if isinstance(port_name, str):
         port_name = Identifier(port_name)
     return port_name
@@ -236,10 +246,10 @@ class Ports:
     @overload
     def __init__(
         self,
-        f_init: Union[None, str, List[str]] = None,
-        o_i: Union[None, str, List[str]] = None,
-        s: Union[None, str, List[str]] = None,
-        o_f: Union[None, str, List[str]] = None,
+        f_init: None | str | List[str] = None,
+        o_i: None | str | List[str] = None,
+        s: None | str | List[str] = None,
+        o_f: None | str | List[str] = None,
     ) -> None: ...
 
     @overload
@@ -247,10 +257,10 @@ class Ports:
 
     def __init__(
         self,
-        f_init: Union[None, str, List[str], List[Port]] = None,
-        o_i: Union[None, str, List[str]] = None,
-        s: Union[None, str, List[str]] = None,
-        o_f: Union[None, str, List[str]] = None,
+        f_init: None | str | List[str] | List[Port] = None,
+        o_i: None | str | List[str] = None,
+        s: None | str | List[str] = None,
+        o_f: None | str | List[str] = None,
     ) -> None:
         """Create a Ports declaration.
 
@@ -287,7 +297,7 @@ class Ports:
         else:
             self._ports = dict()
 
-            self._add_ports(Operator.F_INIT, cast(Union[None, str, List[str]], f_init))
+            self._add_ports(Operator.F_INIT, cast(None | str | List[str], f_init))
             self._add_ports(Operator.O_I, o_i)
             self._add_ports(Operator.S, s)
             self._add_ports(Operator.O_F, o_f)
@@ -295,13 +305,13 @@ class Ports:
     def __len__(self) -> int:
         return len(self._ports)
 
-    def __contains__(self, port_name: Union[str, Identifier]) -> bool:
+    def __contains__(self, port_name: str | Identifier) -> bool:
         return _ensure_identifier(port_name) in self._ports
 
-    def __getitem__(self, port_name: Union[str, Identifier]) -> Port:
+    def __getitem__(self, port_name: str | Identifier) -> Port:
         return self._ports[_ensure_identifier(port_name)]
 
-    def __setitem__(self, port_name: Union[str, Identifier], port: Port) -> None:
+    def __setitem__(self, port_name: str | Identifier, port: Port) -> None:
         self._ports[_ensure_identifier(port_name)] = port
 
     def __iter__(self) -> Iterator[Identifier]:
@@ -340,7 +350,7 @@ class Ports:
         ]
 
     def _add_ports(
-        self, op: Operator, ports: Union[None, str, List[str]], timeline: str = ""
+        self, op: Operator, ports: None | str | List[str], timeline: str = ""
     ) -> None:
         """Add the described ports to self._ports, helper function"""
         if ports is None:
@@ -370,10 +380,10 @@ class Ports:
     def _yatiml_init(
         self,
         _yatiml_extra: OrderedDict,
-        f_init: Union[None, str, List[str]] = None,
-        o_i: Union[None, str, List[str]] = None,
-        s: Union[None, str, List[str]] = None,
-        o_f: Union[None, str, List[str]] = None,
+        f_init: None | str | List[str] = None,
+        o_i: None | str | List[str] = None,
+        s: None | str | List[str] = None,
+        o_f: None | str | List[str] = None,
     ) -> None:
         """Alternative initialisation when loading from YAML."""
         self._ports = dict()

@@ -1,6 +1,6 @@
 from collections.abc import MutableMapping
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterator, List, Mapping, Tuple, cast
 
 import yaml
 import yatiml
@@ -93,8 +93,8 @@ class SupportedSetting:
 
     def __init__(
         self,
-        name: Union[str, Identifier],
-        typ: Union[str, SettingType],
+        name: str | Identifier,
+        typ: str | SettingType,
         description: str,
     ) -> None:
         """Create a SupportedSetting.
@@ -145,8 +145,8 @@ class SupportedSetting:
     def _yatiml_init(
         self,
         name: Identifier,
-        typ: Optional[SettingType] = None,
-        description: Optional[Union[str, List[str], List[List[str]]]] = None,
+        typ: SettingType | None = None,
+        description: str | List[str] | List[List[str]] | None = None,
     ) -> None:
         """
         Yeah, sorry. I wanted nice syntax for the users and couldn't find a cleaner
@@ -190,7 +190,7 @@ class SupportedSetting:
         """
 
         def list_to_setting_type(
-            description: Union[List[str], List[List[str]]],
+            description: List[str] | List[List[str]],
         ) -> SettingType:
             """convert ['something'] or [['something']] to a SettingType"""
             if len(description) == 0:
@@ -312,9 +312,7 @@ class SupportedSettings(MutableMapping):
 
     def __init__(
         self,
-        supported_settings: Union[
-            Mapping[str, str], List[SupportedSetting], None
-        ] = None,
+        supported_settings: Mapping[str, str] | List[SupportedSetting] | None = None,
     ) -> None:
         """Create a SupportedSettings object.
 
@@ -350,15 +348,13 @@ class SupportedSettings(MutableMapping):
         """Represent as a string, omitting the descriptions."""
         return ", ".join([f"{s.name}: {s.typ}" for s in self._store.values()])
 
-    def __getitem__(self, key: Union[str, Identifier]) -> SupportedSetting:
+    def __getitem__(self, key: str | Identifier) -> SupportedSetting:
         """Returns a supported setting, implements supported_settings[name]."""
         if isinstance(key, str):
             key = Identifier(key)
         return self._store[key]
 
-    def __setitem__(
-        self, key: Union[str, Identifier], value: Union[str, SupportedSetting]
-    ) -> None:
+    def __setitem__(self, key: str | Identifier, value: str | SupportedSetting) -> None:
         """Sets a value, implements supported_settings[name] = typ, desc."""
         if isinstance(key, str):
             key = Identifier(key)
@@ -366,7 +362,7 @@ class SupportedSettings(MutableMapping):
             value = self._to_supported_setting(key, value)
         self._store[key] = value
 
-    def __delitem__(self, key: Union[str, Identifier]) -> None:
+    def __delitem__(self, key: str | Identifier) -> None:
         """Deletes a value, implements del(supported_settings[name])."""
         if isinstance(key, str):
             key = Identifier(key)
@@ -411,7 +407,7 @@ class SupportedSettings(MutableMapping):
         node.map_attribute_to_seq("supported_settings", "name", "description")
 
     def _yatiml_init(
-        self, supported_settings: Optional[List[SupportedSetting]] = None
+        self, supported_settings: List[SupportedSetting] | None = None
     ) -> None:
         # Take that list of supported settings and initialise the object
         SupportedSettings.__init__(self, supported_settings)

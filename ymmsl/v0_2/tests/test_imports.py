@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import IO, Any, AnyStr, Callable, Union
+from typing import IO, Any, AnyStr, Callable
 
 import pytest
 import yatiml
@@ -7,7 +7,7 @@ import yatiml
 from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.imports import ImportKind, ImportStatement
 
-LoadImport = Callable[[Union[str, Path, IO[AnyStr]]], Any]
+LoadImport = Callable[[str | Path | IO[AnyStr]], Any]
 
 
 @pytest.fixture
