@@ -435,9 +435,9 @@ called many times for every step ``macro`` takes, and still produces a message o
 every one of those calls, even though there is no longer a ``meso`` in between to
 absorb the difference. A conduit filter reconciles that mismatch.
 
-Extending the macro-meso-micro example from :ref:`Timelines` with a conduit that
-bypasses ``meso`` to connect ``macro`` and ``micro`` directly shows both filters in
-use:
+Extending the macro-meso-micro example from :ref:`Timelines` with a fourth level,
+``pico``, called by ``micro``, and adding conduits that bypass the levels in between
+shows both kinds of filters in use, including combinations of them:
 
 .. literalinclude:: conduit_filters_bypass.ymmsl
    :caption: ``docs/conduit_filters_bypass.ymmsl``
@@ -445,21 +445,22 @@ use:
 
 .. figure:: conduit_filters_bypass.svg
    :align: center
-   :alt: macro and micro have an extra pair of ports directly connecting them,
-         bypassing meso, labeled "repeat" and "last".
+   :alt: macro, meso, micro and pico are nested inside each other. Extra pairs of
+         conduits connect macro directly to micro, bypassing meso, and macro directly
+         to pico, bypassing meso and micro.
 
    The same model, visualized with `ymmsl2svg
    <https://github.com/multiscale/ymmsl2svg>`_.
 
-``macro`` produces the ``bypass_out`` message once, but ``micro`` is called many times
+``macro`` produces the ``to_micro`` message once, but ``micro`` is called many times
 for every step of ``macro`` and needs the message on each of those calls. The conduit
-from ``macro.bypass_out`` to ``micro.bypass_in`` uses a ``repeat`` filter for this: the
+from ``macro.to_micro`` to ``micro.bypass_in`` uses a ``repeat`` filter for this: the
 single message ``macro`` sends is resent to ``micro`` every time it runs, without
 ``meso`` having to relay it.
 
 The reverse happens on the way back: ``micro`` produces a ``bypass_out`` message on
-every one of its many runs, but ``macro`` still expects only one message per call. The
-conduit from ``micro.bypass_out`` to ``macro.bypass_in`` uses a ``last`` filter to
+every one of its many runs, but ``macro`` still expects only one message per step. The
+conduit from ``micro.bypass_out`` to ``macro.from_micro`` uses a ``last`` filter to
 reduce those many messages down to the single most recently produced one.
 
 - ``repeat`` and ``pad`` go from the shallower side to the deeper one: a single message
@@ -468,17 +469,18 @@ reduce those many messages down to the single most recently produced one.
 - ``last`` goes from the deeper side back to the shallower one: of the many messages
   produced, only the last one is passed on.
 
-A conduit between two components that call each other directly doesn't skip anything,
-so it can't take a filter at all.
+Filters are written in front of the receiver, and each filter bridges exactly one level
+of nesting. To skip more than one level, you combine multiple filters on the same
+conduit. The conduits between ``macro`` and ``pico`` skip both ``meso`` and ``micro``,
+so each of them needs two filters. On the way down, ``repeat repeat`` repeats
+``macro``'s single message for every call of ``micro`` inside ``meso``, and then again
+for every call of ``pico`` inside ``micro``. On the way back up, ``last last`` first
+reduces ``pico``'s many messages to the last one per call of ``micro``, and then those
+to the last one per call of ``meso``, so that ``macro`` again receives a single message.
 
-Filters are written in front of the receiver and may be combined:
-
-.. code-block:: yaml
-    :caption: Specifying conduit filters in yMMSL
-
-    conduits:
-      macro.init_out: repeat micro.init_in
-      micro.state_out: last macro.final_in
+The number of filters has to equal the number of levels skipped: with only a single
+``repeat`` on the conduit to ``pico``, the timelines on its two ends would not match and
+the model would be rejected.
 
 
 Nesting models
