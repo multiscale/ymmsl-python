@@ -364,9 +364,11 @@ class TimelineChecker:
             filtered_tl1 = timeline1[:-num_reducers] if num_reducers else timeline1
             filtered_tl2 = timeline2[:-num_repeaters] if num_repeaters else timeline2
             if self._model.matching_timelines:
-                for mt in self._model.matching_timelines:
-                    if filtered_tl1 in mt and filtered_tl2 in mt:
-                        return
+                if any(
+                    filtered_tl1 in mt and filtered_tl2 in mt
+                    for mt in self._model.matching_timelines
+                ):
+                    continue
 
             common_idx = len(timeline1) - num_reducers
             self._check_consistent_equal_length(
