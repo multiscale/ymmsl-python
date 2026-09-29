@@ -194,7 +194,7 @@ timeline is ``macro`` and its component timeline is ``macro:meso``. Likewise,
 ``micro`` has parent timeline ``macro:meso`` and component timeline
 ``macro:meso:micro``. 
 
-The conduit from ``macro.bc_out`` to ``meso.init_in`` isvalid because ``bc_out`` is an
+The conduit from ``macro.bc_out`` to ``meso.init_in`` is valid because ``bc_out`` is an
 ``o_i`` port on ``macro``'s component timeline ``macro``, and the messages received by
 the ``f_init`` port ``init_in`` are on ``meso``'s parent timeline, which is also
 ``macro``. The same reasoning applies to the other three conduits.
@@ -347,8 +347,10 @@ But each side of the bridge does step through the same time points as the compon
 that side, and the two entries under ``matching_timelines`` declare exactly that:
 ``bridge.a_side`` is equivalent to ``a``, and ``bridge.b_side`` to ``b``. 
 
-Deeper timelines are matched by writing out their full path, e.g.
-``macro1:micro1: macro2:micro2``. Matching timelines are taken into account after
+Deeper timelines are matched by writing out their full path, relative to the model that
+contains the ``matching_timelines`` declaration. In the two-subtimelines example above,
+for instance, ``micro1`` and ``micro2`` could be declared equivalent from within
+``two_subtimelines_model`` with ``macro.tl1:micro1: macro.tl2:micro2``. Matching timelines are taken into account after
 applying any conduit filters, so a conduit with a ``repeat`` or ``last`` filter can also
 connect to a timeline that matches the one it is filtered to.
 
