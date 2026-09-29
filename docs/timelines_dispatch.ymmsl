@@ -1,0 +1,26 @@
+ymmsl_version: v0.2
+
+description: A dispatch coupling inside a call-and-release loop
+
+models:
+  dispatch_model:
+    components:
+      macro:
+        ports:
+          o_i: state_out
+          s: state_in
+        description: Macro model
+      solver:
+        ports:
+          f_init: init_in
+          o_f: final_out
+        description: Computes a new state
+      analysis:
+        ports:
+          f_init: init_in
+          o_f: final_out
+        description: Analyses the new state
+    conduits:
+      macro.state_out: solver.init_in
+      solver.final_out: analysis.init_in
+      analysis.final_out: macro.state_in

@@ -132,6 +132,246 @@ separated by periods. Depending on the context, this may represent a name in a n
 or an attribute of an object (as we will see below with Conduits).
 
 
+Timelines
+`````````
+
+Different components of a coupled simulation typically run at their own pace: a fast,
+detailed micro model may take many small steps for every single step of the macro model
+driving it, and a meso model may sit somewhere in between the two. yMMSL captures this
+idea of "running at a different pace" as a *timeline*.
+
+Timelines are determined separately for each model under ``models``, and are named
+relative to that model. Each component has two timelines associated with it:
+
+- Its *parent timeline* is the timeline of whatever calls it, i.e. the timeline on which
+  the messages to its ``f_init`` ports are sent and the messages from its ``o_f`` ports
+  are received. For a component that isn't called by any other component in the model,
+  the parent timeline is empty.
+- Its *component timeline* is the timeline it runs on itself. Its name is the name of
+  the parent timeline followed by the name of the component, joined with a colon. A
+  component that isn't called by anything therefore gets a timeline named after itself.
+
+A component is called by another one through a call-and-release coupling, in which the
+caller's ``o_i`` port sends to the callee's ``f_init`` port and the callee's ``o_f``
+port sends back to the caller's ``s`` port. The caller's component timeline then becomes
+the callee's parent timeline, so the callee's component timeline is nested inside the
+caller's. Every level of nesting adds one more name, giving each timeline in the model
+an addressable path, a bit like a folder structure. A dispatch coupling, in which one
+component's ``o_f`` port sends to the next component's ``f_init`` port, does not add a
+level: the second component gets the same parent timeline as the first, so the two end
+up side by side.
+
+Components and their ports are related to timelines in slightly different ways. A
+component's ``o_i`` and ``s`` ports send and receive during its run, so they are on its
+component timeline. Its ``f_init`` and ``o_f`` ports sit at the beginning and the end of
+the component timeline, where the component hands over to and from its caller, so the
+messages they receive and send belong to the parent timeline.
+
+To make a valid conduit, you should connect two ports whose messages live on the same
+timeline. :ref:`Conduit filters` and :ref:`Matching timelines` relax this rule
+in specific cases.
+
+Take a macro model that calls a meso model in a loop, and where that meso model in turn
+calls a micro model in its own loop:
+
+.. literalinclude:: timelines_macro_meso_micro.ymmsl
+   :caption: ``docs/timelines_macro_meso_micro.ymmsl``
+   :language: yaml
+
+.. figure:: timelines_macro_meso_micro.svg
+   :align: center
+   :alt: macro connects to meso through F_INIT/O_F and O_I/S ports, and meso connects to
+         micro the same way, producing three nested timelines.
+
+   The same model, visualized with `ymmsl2svg
+   <https://github.com/multiscale/ymmsl2svg>`_. The order of the boxes in the figure,
+   from top to bottom, mirrors the nesting in time: ``macro`` first, then ``meso``
+   below it, then ``micro`` below ``meso``.
+
+``macro`` isn't called by anything, so its parent timeline is empty and its
+component timeline is ``macro``. ``macro`` calls ``meso``, so ``meso``'s parent
+timeline is ``macro`` and its component timeline is ``macro:meso``. Likewise,
+``micro`` has parent timeline ``macro:meso`` and component timeline
+``macro:meso:micro``. 
+
+The conduit from ``macro.bc_out`` to ``meso.init_in`` is valid because ``bc_out`` is an
+``o_i`` port on ``macro``'s component timeline ``macro``, and the messages received by
+the ``f_init`` port ``init_in`` are on ``meso``'s parent timeline, which is also
+``macro``. The same reasoning applies to the other three conduits.
+
+In a dispatch coupling, by contrast, no extra level is added. Here, ``macro`` calls
+``solver``, which hands its result over to ``analysis``, which in turn returns to
+``macro``:
+
+.. literalinclude:: timelines_dispatch.ymmsl
+   :caption: ``docs/timelines_dispatch.ymmsl``
+   :language: yaml
+
+.. figure:: timelines_dispatch.svg
+   :align: center
+   :alt: macro connects through its O_I port to solver's F_INIT port, solver's O_F port
+         connects to analysis's F_INIT port, and analysis's O_F port connects back to
+         macro's S port. solver and analysis are drawn side by side below macro.
+
+   The same model, visualized with `ymmsl2svg
+   <https://github.com/multiscale/ymmsl2svg>`_. ``solver`` and ``analysis`` are drawn
+   side by side below ``macro``, since they share the same parent timeline.
+
+``solver`` is called by ``macro``, so its parent timeline is ``macro``. ``analysis``
+receives its ``f_init`` message from ``solver``'s ``o_f`` port, and those messages are on
+``solver``'s parent timeline, so ``analysis`` gets that same parent timeline ``macro``.
+The two components therefore end up side by side, on component timelines
+``macro:solver`` and ``macro:analysis``.
+
+None of these timelines are written in the yMMSL file itself: yMMSL works them out
+automatically from how the components are wired together with conduits.
+
+A single component can also be connected to more than one timeline at once, for example
+when it drives two other components that run at different rates. ``macro`` calling
+``micro1`` in one loop and ``micro2`` in a separate loop puts ``micro1`` and ``micro2`` on
+two independent sub-timelines of ``macro``. The following example shows how you can
+use ``timeline <name>:`` to indicate that the ports connecting to ``micro1`` belong to
+a different subtimeline than the ports connecting to ``micro2``:
+
+.. literalinclude:: timelines_two_subtimelines.ymmsl
+   :caption: ``docs/timelines_two_subtimelines.ymmsl``
+   :language: yaml
+
+.. figure:: timelines_two_subtimelines.svg
+   :align: center
+   :alt: macro has two separate pairs of O_I/S ports, one connecting down to micro1 and
+         one connecting down to micro2, side by side.
+
+   The same model, visualized with `ymmsl2svg
+   <https://github.com/multiscale/ymmsl2svg>`_. ``macro``'s two named timelines are drawn
+   side by side beneath it, each with its own pair of ports, one leading to ``micro1``
+   and the other to ``micro2``.
+
+A named sub-timeline is written as the component name, a period, and the annotation.
+Here, ``macro``'s first pair of O_I and S ports is on timeline ``macro.tl1`` and its
+second pair on ``macro.tl2``, which puts ``micro1`` on ``macro.tl1:micro1`` and
+``micro2`` on ``macro.tl2:micro2``. A timeline annotation must be a single name without
+periods, so ``timeline tl1:`` is fine but ``timeline sub.tl1:`` is not.
+
+Matching timelines
+^^^^^^^^^^^^^^^^^^^
+
+The timeline hierarchy above is worked out automatically from how the ``f_init``/``o_f``
+and ``o_i``/``s`` ports are wired together, and a conduit is only valid if the messages
+on both of its ends are on the same timeline. Sometimes, though, two components step
+through the same time points without one being nested inside the other's timeline.
+``matching_timelines`` lets you declare the timelines of such components equivalent, so
+that a conduit can still connect their ports directly:
+
+.. code-block:: yaml
+    :caption: Declaring matching timelines
+
+    components:
+      left:
+        ports:
+          o_i: out
+          s: in
+        description: Left side of the domain
+      right:
+        ports:
+          o_i: out
+          s: in
+        description: Right side of the domain
+
+    matching_timelines:
+      main: left right
+
+    conduits:
+      left.out: right.in
+      right.out: left.in
+
+``left`` and ``right`` each run on their own component timeline, ``left`` and
+``right``, and their ``o_i`` and ``s`` ports are on those timelines. While running, they
+exchange messages with each other directly through these ports, in an interact coupling. 
+Because the two timelines are different, a conduit between these ports would not be
+allowed. The components do however step through the same time points, so their timelines
+are equivalent even though they are not the same. The entry under ``matching_timelines``
+declares exactly that, so that the conduits connecting them are valid after all.
+
+Each entry has a *head*, written on the left of the colon, and the timelines that match
+it, written on the right. The head doesn't have to be one of the component timelines:
+here it is a separate name, ``main``, so that neither ``left`` nor ``right`` is singled
+out as the one the other follows. If one of the timelines does lead, as in the time
+bridge example below, you can use that timeline as the head instead.
+
+Matching timelines are also what makes a time bridge work. A time bridge lets two
+components ``a`` and ``b`` that take different time steps exchange messages while they
+run. The bridge sits in between and converts the messages from one side to the other,
+so that each component receives messages with time stamps it can use. To do so, the
+bridge runs on timelines of its own: a named sub-timeline for each side, on which it
+follows the time points of the component on that side:
+
+.. code-block:: yaml
+    :caption: Two components on different timelines, connected through a time bridge
+
+    components:
+      a:
+        ports:
+          o_i: state_out
+          s: state_in
+        description: A model with its own time steps
+      b:
+        ports:
+          o_i: state_out
+          s: state_in
+        description: A model with different time steps
+      bridge:
+        ports:
+          timeline a_side:
+            o_i: a_out
+            s: a_in
+          timeline b_side:
+            o_i: b_out
+            s: b_in
+        description: Time bridge that converts messages between a and b
+
+    matching_timelines:
+      a: bridge.a_side
+      b: bridge.b_side
+
+    conduits:
+      a.state_out: bridge.a_in
+      bridge.a_out: a.state_in
+      b.state_out: bridge.b_in
+      bridge.b_out: b.state_in
+
+Like any component, the bridge runs on its own timelines, ``bridge.a_side`` and
+``bridge.b_side``, which differ from those of ``a`` and ``b``. Without
+``matching_timelines``, none of the conduits in this example would therefore be valid.
+But each side of the bridge does step through the same time points as the component on
+that side, and the two entries under ``matching_timelines`` declare exactly that:
+``bridge.a_side`` is equivalent to ``a``, and ``bridge.b_side`` to ``b``. 
+
+Deeper timelines are matched by writing out their full path, relative to the model that
+contains the ``matching_timelines`` declaration. In the two-subtimelines example above,
+for instance, ``micro1`` and ``micro2`` could be declared equivalent from within
+``two_subtimelines_model`` with ``macro.tl1:micro1: macro.tl2:micro2``. Matching timelines are taken into account after
+applying any conduit filters, so a conduit with a ``repeat`` or ``last`` filter can also
+connect to a timeline that matches the one it is filtered to.
+
+On the Python side, ``matching_timelines`` is a list of
+:class:`.ymmsl.v0_2.MatchingTimelines` objects, each representing a set of equivalent
+timelines, with a ``head`` attribute and a ``matches`` attribute holding the full set,
+including the head.
+
+A head can have more than one match, as ``main`` does in the first example. The matches
+can be written as a whitespace-separated string, as above, or, equivalently, as a YAML
+list:
+
+.. code-block:: yaml
+    :caption: The same matching timelines, as a YAML list
+
+    matching_timelines:
+      main:
+      - left
+      - right
+
+
 Conduits
 ````````
 
@@ -185,6 +425,65 @@ sender:
     print(len(conduits))    # output: 2
     print(conduits[0])      # output: Conduit(sender.port -> receiver1.port)
     print(conduits[1])      # output: Conduit(sender.port -> receiver2.port)
+
+Conduit filters
+^^^^^^^^^^^^^^^
+
+A conduit connects two components that call each other directly, for example ``macro``
+and ``meso``, or ``meso`` and ``micro``. ``macro`` and ``micro`` are not directly
+connected in this sense: ``meso`` sits between them. Connecting ``macro`` and ``micro``
+directly, bypassing ``meso``, means their pace no longer matches: ``micro`` is still
+called many times for every step ``macro`` takes, and still produces a message on
+every one of those calls, even though there is no longer a ``meso`` in between to
+absorb the difference. A conduit filter reconciles that mismatch.
+
+Extending the macro-meso-micro example from :ref:`Timelines` with a fourth level,
+``pico``, called by ``micro``, and adding conduits that bypass the levels in between
+shows both kinds of filters in use, including combinations of them:
+
+.. literalinclude:: conduit_filters_bypass.ymmsl
+   :caption: ``docs/conduit_filters_bypass.ymmsl``
+   :language: yaml
+
+.. figure:: conduit_filters_bypass.svg
+   :align: center
+   :alt: macro, meso, micro and pico are nested inside each other. Extra pairs of
+         conduits connect macro directly to micro, bypassing meso, and macro directly
+         to pico, bypassing meso and micro.
+
+   The same model, visualized with `ymmsl2svg
+   <https://github.com/multiscale/ymmsl2svg>`_.
+
+``macro`` produces the ``to_micro`` message once, but ``micro`` is called many times
+for every step of ``macro`` and needs the message on each of those calls. The conduit
+from ``macro.to_micro`` to ``micro.bypass_in`` uses a ``repeat`` filter for this: the
+single message ``macro`` sends is resent to ``micro`` every time it runs, without
+``meso`` having to relay it.
+
+The reverse happens on the way back: ``micro`` produces a ``bypass_out`` message on
+every one of its many runs, but ``macro`` still expects only one message per step. The
+conduit from ``micro.bypass_out`` to ``macro.from_micro`` uses a ``last`` filter to
+reduce those many messages down to the single most recently produced one.
+
+- ``repeat`` and ``pad`` go from the shallower side to the deeper one: a single message
+  is repeated, or followed by empty messages, to match every time the deeper side
+  receives.
+- ``last`` goes from the deeper side back to the shallower one: of the many messages
+  produced, only the last one is passed on.
+
+Filters are written in front of the receiver, and each filter bridges exactly one level
+of nesting. To skip more than one level, you combine multiple filters on the same
+conduit. The conduits between ``macro`` and ``pico`` skip both ``meso`` and ``micro``,
+so each of them needs two filters. On the way down, ``repeat repeat`` repeats
+``macro``'s single message for every call of ``micro`` inside ``meso``, and then again
+for every call of ``pico`` inside ``micro``. On the way back up, ``last last`` first
+reduces ``pico``'s many messages to the last one per call of ``micro``, and then those
+to the last one per call of ``meso``, so that ``macro`` again receives a single message.
+
+The number of filters has to equal the number of levels skipped: with only a single
+``repeat`` on the conduit to ``pico``, the timelines on its two ends would not match and
+the model would be rejected.
+
 
 Nesting models
 ``````````````
