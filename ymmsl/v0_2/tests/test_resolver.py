@@ -10,8 +10,7 @@ import pytest
 from ymmsl.io import load
 from ymmsl.v0_2.configuration import Configuration
 from ymmsl.v0_2.identity import Reference
-from ymmsl.v0_2.resolver import resolve as resolve_impl
-from ymmsl.v0_2.resolver import ymmsl_cache
+from ymmsl.v0_2.resolver import resolve, ymmsl_cache
 
 Ref = Reference
 
@@ -54,7 +53,7 @@ def test_resolve_imports(env_ymmsl_path: None, reuse_cached_imports: bool) -> No
     assert isinstance(config, Configuration)
     assert config.models == {}
 
-    resolve_impl(
+    resolve(
         Reference("test_resolve_imports"),
         config,
         reuse_cached_imports=reuse_cached_imports,
@@ -86,7 +85,7 @@ def test_apply_custom_implementations_simple(
     config = load(ymmsl)
     assert isinstance(config, Configuration)
 
-    resolve_impl(
+    resolve(
         Reference("test_resolve_imports"),
         config,
         reuse_cached_imports=reuse_cached_imports,
@@ -113,7 +112,7 @@ def test_apply_custom_implementations(
     config = load(ymmsl)
     assert isinstance(config, Configuration)
 
-    resolve_impl(
+    resolve(
         Reference("test_resolve_imports"),
         config,
         reuse_cached_imports=reuse_cached_imports,
@@ -165,7 +164,7 @@ def test_apply_custom_implementations_double_use(
     config = load(ymmsl)
     assert isinstance(config, Configuration)
 
-    resolve_impl(
+    resolve(
         Reference("test_resolve_imports"),
         config,
         reuse_cached_imports=reuse_cached_imports,
@@ -234,7 +233,7 @@ def test_apply_custom_implementations_set_none(
     config = load(ymmsl)
     assert isinstance(config, Configuration)
 
-    resolve_impl(
+    resolve(
         Reference("test_resolve_imports"),
         config,
         reuse_cached_imports=reuse_cached_imports,
@@ -281,7 +280,7 @@ def test_apply_custom_implementations_no_hidden_copies(
     config.custom_implementations[Reference("B.c2")] = Reference("A")
     config.custom_implementations[Reference("B.c3")] = Reference("A")
 
-    resolve_impl(
+    resolve(
         Reference("no_copies"),
         config,
         reuse_cached_imports=reuse_cached_imports,
@@ -295,7 +294,7 @@ def test_apply_custom_implementations_no_hidden_copies(
     config.custom_implementations[Reference("B.c2")] = Reference("A")
     config.custom_implementations[Reference("B.c3")] = Reference("A")
 
-    resolve_impl(
+    resolve(
         Reference("no_copies"),
         config,
         reuse_cached_imports=reuse_cached_imports,
@@ -317,7 +316,7 @@ def test_apply_custom_implementations_no_hidden_copies(
     config.custom_implementations[Reference("B.c3")] = Reference("A")
     config.custom_implementations[Reference("A.c1")] = Reference("p")
 
-    resolve_impl(
+    resolve(
         Reference("no_copies2"),
         config,
         reuse_cached_imports=reuse_cached_imports,
@@ -368,7 +367,7 @@ def test_apply_custom_implementations_everything_localised(
     config.custom_implementations[Ref("A.c1")] = Ref("test_model")
     config.custom_implementations[Ref("test_model.macro")] = Ref("p")
 
-    resolve_impl(
+    resolve(
         Reference("el"),
         config,
         reuse_cached_imports=reuse_cached_imports,
@@ -386,7 +385,7 @@ def test_apply_custom_implementations_everything_localised(
     config.custom_implementations[Ref("A.c1")] = Ref("B")
     config.custom_implementations[Ref("B.macro")] = Ref("p")
 
-    resolve_impl(
+    resolve(
         Reference("el"),
         config,
         reuse_cached_imports=reuse_cached_imports,
@@ -433,7 +432,7 @@ def test_apply_custom_implementations_cut_branch(
     config = load(ymmsl)
     assert isinstance(config, Configuration)
 
-    resolve_impl(
+    resolve(
         Reference("nested"),
         config,
         reuse_cached_imports=reuse_cached_imports,
@@ -465,7 +464,7 @@ def test_apply_custom_implementations_errors(
 
     config = load(ymmsl)
     assert isinstance(config, Configuration)
-    resolve_impl(
+    resolve(
         Reference("test_resolve_imports"),
         config,
         reuse_cached_imports=reuse_cached_imports,
@@ -477,7 +476,7 @@ def test_apply_custom_implementations_errors(
         "macro3"
     )
     with pytest.raises(RuntimeError):
-        resolve_impl(
+        resolve(
             Reference("test_resolve_imports"),
             config,
             reuse_cached_imports=reuse_cached_imports,
@@ -489,7 +488,7 @@ def test_apply_custom_implementations_errors(
         "Macro3"
     )
     with pytest.raises(RuntimeError):
-        resolve_impl(
+        resolve(
             Reference("test_resolve_imports"),
             config,
             reuse_cached_imports=reuse_cached_imports,
@@ -501,7 +500,7 @@ def test_apply_custom_implementations_errors(
         "macro3"
     )
     with pytest.raises(RuntimeError):
-        resolve_impl(
+        resolve(
             Reference("test_resolve_imports"),
             config,
             reuse_cached_imports=reuse_cached_imports,
@@ -513,7 +512,7 @@ def test_apply_custom_implementations_errors(
         "macro3"
     )
     with pytest.raises(RuntimeError):
-        resolve_impl(
+        resolve(
             Reference("test_resolve_imports"),
             config,
             reuse_cached_imports=reuse_cached_imports,
@@ -525,7 +524,7 @@ def test_apply_custom_implementations_errors(
         Reference("macro3")
     )
     with pytest.raises(RuntimeError):
-        resolve_impl(
+        resolve(
             Reference("test_resolve_imports"),
             config,
             reuse_cached_imports=reuse_cached_imports,
@@ -540,7 +539,7 @@ def test_apply_custom_implementations_errors(
         Reference("macro3")
     )
     with pytest.raises(RuntimeError):
-        resolve_impl(
+        resolve(
             Reference("test_resolve_imports"),
             config,
             reuse_cached_imports=reuse_cached_imports,
@@ -561,7 +560,7 @@ def test_resolve_imports_module_not_found(
     assert isinstance(config, Configuration)
 
     with pytest.raises(RuntimeError) as e:
-        resolve_impl(
+        resolve(
             Reference("test_module_not_found"),
             config,
             reuse_cached_imports=reuse_cached_imports,
@@ -585,7 +584,7 @@ def test_resolve_imports_broken_module(
     assert isinstance(config, Configuration)
 
     with pytest.raises(RuntimeError) as e:
-        resolve_impl(
+        resolve(
             Reference("test_broken_module"),
             config,
             reuse_cached_imports=reuse_cached_imports,
@@ -609,7 +608,7 @@ def test_resolve_imports_implementation_not_found(
     assert isinstance(config, Configuration)
 
     with pytest.raises(RuntimeError) as e:
-        resolve_impl(
+        resolve(
             Reference("test_implementation_not_found"),
             config,
             reuse_cached_imports=reuse_cached_imports,
@@ -637,7 +636,7 @@ def test_resolve_imports_no_shadowing(
     assert isinstance(config, Configuration)
 
     with pytest.raises(RuntimeError) as e:
-        resolve_impl(
+        resolve(
             Reference("test_no_shadowing"),
             config,
             reuse_cached_imports=reuse_cached_imports,
@@ -688,7 +687,7 @@ def test_resolve_entrypoints(
     """)
     assert isinstance(config, Configuration)
 
-    resolve_impl(
+    resolve(
         Reference("test_importing"),
         config,
         reuse_cached_imports=reuse_cached_imports,
@@ -714,7 +713,7 @@ def test_resolve_entrypoints_duplicate_name(
     assert isinstance(config, Configuration)
 
     with caplog.at_level(logging.WARNING):
-        resolve_impl(
+        resolve(
             Reference("test_importing"),
             config,
             reuse_cached_imports=reuse_cached_imports,
@@ -746,7 +745,7 @@ def test_resolve_entrypoints_loading_error(
     assert isinstance(config, Configuration)
 
     with pytest.raises(RuntimeError, match="Error while loading the entrypoint"):
-        resolve_impl(
+        resolve(
             Reference("test_importing"),
             config,
             reuse_cached_imports=reuse_cached_imports,
@@ -769,7 +768,7 @@ def test_resolve_cache_after_ymmsl_path_change() -> None:
 
     config = load(ymmsl)
     assert isinstance(config, Configuration)
-    resolve_impl(Reference("test_importing"), config)
+    resolve(Reference("test_importing"), config)
 
     module_path = Path("a/d.ymmsl")
     assert module_path in ymmsl_cache
@@ -779,7 +778,7 @@ def test_resolve_cache_after_ymmsl_path_change() -> None:
 
     config = load(ymmsl)
     assert isinstance(config, Configuration)
-    resolve_impl(
+    resolve(
         Reference("test_importing"),
         config,
         reuse_cached_imports=True,
@@ -789,7 +788,7 @@ def test_resolve_cache_after_ymmsl_path_change() -> None:
 
     config = load(ymmsl)
     assert isinstance(config, Configuration)
-    resolve_impl(
+    resolve(
         Reference("test_importing"),
         config,
         reuse_cached_imports=False,
