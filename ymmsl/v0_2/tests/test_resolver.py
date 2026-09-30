@@ -56,7 +56,7 @@ def test_resolve_imports(env_ymmsl_path: None, reuse_cached_imports: bool) -> No
     resolve(
         Reference("test_resolve_imports"),
         config,
-        reuse_cached_imports=reuse_cached_imports,
+        reuse_cached_imports,
     )
 
     assert len(config.imports) == 0
@@ -88,7 +88,7 @@ def test_apply_custom_implementations_simple(
     resolve(
         Reference("test_resolve_imports"),
         config,
-        reuse_cached_imports=reuse_cached_imports,
+        reuse_cached_imports,
     )
 
     assert len(config.imports) == 0
@@ -115,7 +115,7 @@ def test_apply_custom_implementations(
     resolve(
         Reference("test_resolve_imports"),
         config,
-        reuse_cached_imports=reuse_cached_imports,
+        reuse_cached_imports,
     )
 
     assert len(config.imports) == 0
@@ -167,7 +167,7 @@ def test_apply_custom_implementations_double_use(
     resolve(
         Reference("test_resolve_imports"),
         config,
-        reuse_cached_imports=reuse_cached_imports,
+        reuse_cached_imports,
     )
 
     assert len(config.imports) == 0
@@ -236,7 +236,7 @@ def test_apply_custom_implementations_set_none(
     resolve(
         Reference("test_resolve_imports"),
         config,
-        reuse_cached_imports=reuse_cached_imports,
+        reuse_cached_imports,
     )
 
     model = config.models[Reference("test_resolve_imports.macro_micro")]
@@ -283,7 +283,7 @@ def test_apply_custom_implementations_no_hidden_copies(
     resolve(
         Reference("no_copies"),
         config,
-        reuse_cached_imports=reuse_cached_imports,
+        reuse_cached_imports,
     )
 
     # Same thing but using custom implementations for everything
@@ -297,7 +297,7 @@ def test_apply_custom_implementations_no_hidden_copies(
     resolve(
         Reference("no_copies"),
         config,
-        reuse_cached_imports=reuse_cached_imports,
+        reuse_cached_imports,
     )
 
     b = config.models[Reference("no_copies.B")]
@@ -319,7 +319,7 @@ def test_apply_custom_implementations_no_hidden_copies(
     resolve(
         Reference("no_copies2"),
         config,
-        reuse_cached_imports=reuse_cached_imports,
+        reuse_cached_imports,
     )
 
     b = config.models[Reference("no_copies2.B")]
@@ -370,7 +370,7 @@ def test_apply_custom_implementations_everything_localised(
     resolve(
         Reference("el"),
         config,
-        reuse_cached_imports=reuse_cached_imports,
+        reuse_cached_imports,
     )
 
     c1 = config.models[Ref("el.A")].components[Ref("c1")]
@@ -388,7 +388,7 @@ def test_apply_custom_implementations_everything_localised(
     resolve(
         Reference("el"),
         config,
-        reuse_cached_imports=reuse_cached_imports,
+        reuse_cached_imports,
     )
 
     c1 = config.models[Ref("el.A")].components[Ref("c1")]
@@ -435,7 +435,7 @@ def test_apply_custom_implementations_cut_branch(
     resolve(
         Reference("nested"),
         config,
-        reuse_cached_imports=reuse_cached_imports,
+        reuse_cached_imports,
     )
     assert len(config.models) == 1
 
@@ -467,7 +467,7 @@ def test_apply_custom_implementations_errors(
     resolve(
         Reference("test_resolve_imports"),
         config,
-        reuse_cached_imports=reuse_cached_imports,
+        reuse_cached_imports,
     )
 
     config = load(ymmsl)
@@ -479,7 +479,7 @@ def test_apply_custom_implementations_errors(
         resolve(
             Reference("test_resolve_imports"),
             config,
-            reuse_cached_imports=reuse_cached_imports,
+            reuse_cached_imports,
         )
 
     config = load(ymmsl)
@@ -491,7 +491,7 @@ def test_apply_custom_implementations_errors(
         resolve(
             Reference("test_resolve_imports"),
             config,
-            reuse_cached_imports=reuse_cached_imports,
+            reuse_cached_imports,
         )
 
     config = load(ymmsl)
@@ -503,7 +503,7 @@ def test_apply_custom_implementations_errors(
         resolve(
             Reference("test_resolve_imports"),
             config,
-            reuse_cached_imports=reuse_cached_imports,
+            reuse_cached_imports,
         )
 
     config = load(ymmsl)
@@ -515,7 +515,7 @@ def test_apply_custom_implementations_errors(
         resolve(
             Reference("test_resolve_imports"),
             config,
-            reuse_cached_imports=reuse_cached_imports,
+            reuse_cached_imports,
         )
 
     config = load(ymmsl)
@@ -527,7 +527,7 @@ def test_apply_custom_implementations_errors(
         resolve(
             Reference("test_resolve_imports"),
             config,
-            reuse_cached_imports=reuse_cached_imports,
+            reuse_cached_imports,
         )
 
     config = load(ymmsl)
@@ -542,7 +542,7 @@ def test_apply_custom_implementations_errors(
         resolve(
             Reference("test_resolve_imports"),
             config,
-            reuse_cached_imports=reuse_cached_imports,
+            reuse_cached_imports,
         )
 
 
@@ -563,7 +563,7 @@ def test_resolve_imports_module_not_found(
         resolve(
             Reference("test_module_not_found"),
             config,
-            reuse_cached_imports=reuse_cached_imports,
+            reuse_cached_imports,
         )
 
     assert "Failed to find a file" in str(e.value)
@@ -587,7 +587,7 @@ def test_resolve_imports_broken_module(
         resolve(
             Reference("test_broken_module"),
             config,
-            reuse_cached_imports=reuse_cached_imports,
+            reuse_cached_imports,
         )
 
     assert "model" in str(e.value) and "models" in str(e.value)
@@ -611,7 +611,7 @@ def test_resolve_imports_implementation_not_found(
         resolve(
             Reference("test_implementation_not_found"),
             config,
-            reuse_cached_imports=reuse_cached_imports,
+            reuse_cached_imports,
         )
 
     assert "Implementation mucro not found" in str(e.value)
@@ -639,7 +639,7 @@ def test_resolve_imports_no_shadowing(
         resolve(
             Reference("test_no_shadowing"),
             config,
-            reuse_cached_imports=reuse_cached_imports,
+            reuse_cached_imports,
         )
 
     assert "both defined and imported" in str(e.value)
@@ -690,7 +690,7 @@ def test_resolve_entrypoints(
     resolve(
         Reference("test_importing"),
         config,
-        reuse_cached_imports=reuse_cached_imports,
+        reuse_cached_imports,
     )
 
     test_importing = Reference("test.ymmsl1.test_importing")
@@ -716,7 +716,7 @@ def test_resolve_entrypoints_duplicate_name(
         resolve(
             Reference("test_importing"),
             config,
-            reuse_cached_imports=reuse_cached_imports,
+            reuse_cached_imports,
         )
 
     assert len(caplog.record_tuples) == 1  # Expect one warning log message
@@ -748,7 +748,7 @@ def test_resolve_entrypoints_loading_error(
         resolve(
             Reference("test_importing"),
             config,
-            reuse_cached_imports=reuse_cached_imports,
+            reuse_cached_imports,
         )
 
 
