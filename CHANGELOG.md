@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
+## 0.18.0
+
+### Added
+
+- Timeline checking and resolving
+- Conduit filters order checking
+- Matching timelines declaration
+- Ability to drop cache when resolving imports, in case `YMMSL_PATH` has changed
+- More iteration options on Ports class
+
+### Changed
+
+- Timeline declaration syntax
+- Removed distinction between absolute and relative timelines
+- Timeline class extended and improved
+
+### Removed
+
+- Support for Python 3.9 (no longer supported upstream)
+- Operator.NONE (unused)
+
+### Thanks
+
+- Iris and Maarten at Ignition Computing for most of the implementation
+- Kristoffer at Chalmers University for the import cache feature
+
+
 ## 0.17.0
 
 ### Added
