@@ -1,23 +1,25 @@
 """This module contains all the definitions for yMMSL."""
-from collections import OrderedDict
+
 import collections.abc as abc
 import logging
+from collections import OrderedDict
 from pathlib import Path
-from typing import (
-        Dict, List, MutableMapping, Optional, Sequence, Union, cast)
+from typing import Dict, List, MutableMapping, Sequence, cast
 
-import yatiml
 import yaml
+import yatiml
 
 from ymmsl.v0_1.checkpoint import Checkpoints
 from ymmsl.v0_1.document import Document
-from ymmsl.v0_1.identity import Reference
 from ymmsl.v0_1.execution import (
-        ExecutionModel, Implementation,
-        ResourceRequirements, ThreadedResReq)
-from ymmsl.v0_1.settings import Settings
+    ExecutionModel,
+    Implementation,
+    ResourceRequirements,
+    ThreadedResReq,
+)
+from ymmsl.v0_1.identity import Reference
 from ymmsl.v0_1.model import Model, ModelReference
-
+from ymmsl.v0_1.settings import Settings
 
 _logger = logging.getLogger(__name__)
 
@@ -45,19 +47,21 @@ class PartialConfiguration(Document):
         checkpoints: Defines when each model component should create a snapshot
         resume: Defines what snapshot each model component should resume from
     """
-    def __init__(self,
-                 model: Optional[ModelReference] = None,
-                 settings: Optional[Settings] = None,
-                 implementations: Optional[Union[
-                     List[Implementation],
-                     Dict[Reference, Implementation]]] = None,
-                 resources: Optional[Union[
-                     Sequence[ResourceRequirements],
-                     MutableMapping[Reference, ResourceRequirements]]] = None,
-                 description: Optional[str] = None,
-                 checkpoints: Optional[Checkpoints] = None,
-                 resume: Optional[Dict[Reference, Path]] = None
-                 ) -> None:
+
+    def __init__(
+        self,
+        model: ModelReference | None = None,
+        settings: Settings | None = None,
+        implementations: List[Implementation]
+        | Dict[Reference, Implementation]
+        | None = None,
+        resources: Sequence[ResourceRequirements]
+        | MutableMapping[Reference, ResourceRequirements]
+        | None = None,
+        description: str | None = None,
+        checkpoints: Checkpoints | None = None,
+        resume: Dict[Reference, Path] | None = None,
+    ) -> None:
         """Create a Configuration.
 
         Implementations and resources may be either a list of such
@@ -84,21 +88,21 @@ class PartialConfiguration(Document):
         if implementations is None:
             self.implementations: _ImplType = dict()
         elif isinstance(implementations, list):
-            self.implementations = OrderedDict([
-                (impl.name, impl) for impl in implementations])
+            self.implementations = OrderedDict(
+                [(impl.name, impl) for impl in implementations]
+            )
         else:
             self.implementations = implementations
 
         if resources is None:
             self.resources: _ResType = dict()
         elif isinstance(resources, abc.Sequence):
-            self.resources = OrderedDict([
-                (res.name, res) for res in resources])
+            self.resources = OrderedDict([(res.name, res) for res in resources])
         else:
             self.resources = resources
 
         if description is None:
-            self.description = ''
+            self.description = ""
         else:
             self.description = description
 
@@ -112,7 +116,7 @@ class PartialConfiguration(Document):
         else:
             self.resume = resume
 
-    def update(self, overlay: 'PartialConfiguration') -> None:
+    def update(self, overlay: "PartialConfiguration") -> None:
         """Update this configuration with the given overlay.
 
         This will update the model according to :meth:`Model.update`, copy
@@ -144,12 +148,12 @@ class PartialConfiguration(Document):
         if not self.description:
             self.description = overlay.description
         elif overlay.description:
-            self.description += '\n\n' + overlay.description
+            self.description += "\n\n" + overlay.description
 
         self.checkpoints.update(overlay.checkpoints)
         self.resume.update(overlay.resume)
 
-    def as_configuration(self) -> 'Configuration':
+    def as_configuration(self) -> "Configuration":
         """Converts to a full Configuration object.
 
         This checks that this PartialConfiguration has all the pieces
@@ -167,15 +171,23 @@ class PartialConfiguration(Document):
             ValueError: If this configuration isn't complete.
         """
         if (
-                self.model is not None and isinstance(self.model, Model) and
-                self.implementations and self.resources):
+            self.model is not None
+            and isinstance(self.model, Model)
+            and self.implementations
+            and self.resources
+        ):
             return Configuration(
-                    self.model, self.settings, self.implementations,
-                    self.resources, self.description, self.checkpoints,
-                    self.resume)
+                self.model,
+                self.settings,
+                self.implementations,
+                self.resources,
+                self.description,
+                self.checkpoints,
+                self.resume,
+            )
         raise ValueError(
-                'Model, implementations or resources are missing from the'
-                ' configuration.')
+            "Model, implementations or resources are missing from the configuration."
+        )
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
@@ -187,53 +199,45 @@ class PartialConfiguration(Document):
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        if not node.has_attribute('settings'):
-            node.set_attribute('settings', None)
-        node.map_attribute_to_index('implementations', 'name', 'script')
-        node.map_attribute_to_index('resources', 'name')
+        if not node.has_attribute("settings"):
+            node.set_attribute("settings", None)
+        node.map_attribute_to_index("implementations", "name", "script")
+        node.map_attribute_to_index("resources", "name")
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        if node.get_attribute('model').is_scalar(type(None)):
-            node.remove_attribute('model')
+        if node.get_attribute("model").is_scalar(type(None)):
+            node.remove_attribute("model")
 
-        if node.get_attribute('settings').is_scalar(type(None)):
-            node.remove_attribute('settings')
-        if len(node.get_attribute('settings').yaml_node.value) == 0:
-            node.remove_attribute('settings')
+        if node.get_attribute("settings").is_scalar(type(None)):
+            node.remove_attribute("settings")
+        if len(node.get_attribute("settings").yaml_node.value) == 0:
+            node.remove_attribute("settings")
 
-        impl = node.get_attribute('implementations')
-        if (
-                impl.is_scalar(type(None)) or
-                impl.is_mapping() and impl.is_empty()):
-            node.remove_attribute('implementations')
-        node.index_attribute_to_map('implementations', 'name', 'script')
+        impl = node.get_attribute("implementations")
+        if impl.is_scalar(type(None)) or impl.is_mapping() and impl.is_empty():
+            node.remove_attribute("implementations")
+        node.index_attribute_to_map("implementations", "name", "script")
 
-        res = node.get_attribute('resources')
-        if (
-                res.is_scalar(type(None)) or
-                res.is_mapping() and res.is_empty()):
-            node.remove_attribute('resources')
-        node.index_attribute_to_map('resources', 'name')
+        res = node.get_attribute("resources")
+        if res.is_scalar(type(None)) or res.is_mapping() and res.is_empty():
+            node.remove_attribute("resources")
+        node.index_attribute_to_map("resources", "name")
 
-        descr = node.get_attribute('description')
-        if descr.is_scalar(type(None)) or descr.get_value() == '':
-            node.remove_attribute('description')
-        if descr.is_scalar(str) and '\n' in cast(str, descr.get_value()):
+        descr = node.get_attribute("description")
+        if descr.is_scalar(type(None)) or descr.get_value() == "":
+            node.remove_attribute("description")
+        if descr.is_scalar(str) and "\n" in cast(str, descr.get_value()):
             # output multi-line string in literal mode
-            cast(yaml.ScalarNode, descr.yaml_node).style = '|'
+            cast(yaml.ScalarNode, descr.yaml_node).style = "|"
 
-        cp = node.get_attribute('checkpoints')
-        if (
-                cp.is_scalar(type(None)) or
-                cp.is_mapping() and cp.is_empty()):
-            node.remove_attribute('checkpoints')
+        cp = node.get_attribute("checkpoints")
+        if cp.is_scalar(type(None)) or cp.is_mapping() and cp.is_empty():
+            node.remove_attribute("checkpoints")
 
-        resu = node.get_attribute('resume')
-        if (
-                resu.is_scalar(type(None)) or
-                resu.is_mapping() and resu.is_empty()):
-            node.remove_attribute('resume')
+        resu = node.get_attribute("resume")
+        if resu.is_scalar(type(None)) or resu.is_mapping() and resu.is_empty():
+            node.remove_attribute("resume")
 
 
 class Configuration(PartialConfiguration):
@@ -260,19 +264,21 @@ class Configuration(PartialConfiguration):
         checkpoints: Defines when each model component should create a snapshot
         resume: Defines what snapshot each model component should resume from
     """
-    def __init__(self,
-                 model: Model,
-                 settings: Optional[Settings] = None,
-                 implementations: Union[
-                     List[Implementation],
-                     Dict[Reference, Implementation]] = [],
-                 resources: Union[
-                     Sequence[ResourceRequirements],
-                     MutableMapping[Reference, ResourceRequirements]] = [],
-                 description: Optional[str] = None,
-                 checkpoints: Optional[Checkpoints] = None,
-                 resume: Optional[Dict[Reference, Path]] = None
-                 ) -> None:
+
+    def __init__(
+        self,
+        model: Model,
+        settings: Settings | None = None,
+        implementations: List[Implementation]
+        | Dict[Reference, Implementation]
+        | None = None,
+        resources: Sequence[ResourceRequirements]
+        | MutableMapping[Reference, ResourceRequirements]
+        | None = None,
+        description: str | None = None,
+        checkpoints: Checkpoints | None = None,
+        resume: Dict[Reference, Path] | None = None,
+    ) -> None:
         """Create a Configuration.
 
         Implementations and resources may be either a list of such
@@ -293,8 +299,14 @@ class Configuration(PartialConfiguration):
         # Configuration.model always has type Model
         self.model: Model
         super().__init__(
-                model, settings, implementations, resources, description,
-                checkpoints, resume)
+            model,
+            settings,
+            implementations,
+            resources,
+            description,
+            checkpoints,
+            resume,
+        )
 
     def check_consistent(self) -> None:
         """Checks that the configuration is internally consistent.
@@ -311,13 +323,13 @@ class Configuration(PartialConfiguration):
 
         for comp in self.model.components:
             if comp.implementation not in self.implementations:
-                raise RuntimeError((
-                        'Model component {} is missing an'
-                        ' implementation').format(comp))
+                raise RuntimeError(
+                    f"Model component {comp} is missing an implementation."
+                )
             if comp.name not in self.resources:
-                raise RuntimeError((
-                        'Model component {} is missing a resource'
-                        ' allocation.').format(comp))
+                raise RuntimeError(
+                    f"Model component {comp} is missing a resource allocation."
+                )
 
             impl = self.implementations[comp.implementation]
             res = self.resources[comp.name]
@@ -325,23 +337,24 @@ class Configuration(PartialConfiguration):
                 if not isinstance(res, ThreadedResReq) and impl.script is None:
                     # Assume that people know what they're doing if they use
                     # script for specifying an implementation.
-                    raise RuntimeError((
-                        'Model component {}\'s implementation does not'
-                        ' specify MPI, but mpi_processes are specified in its'
+                    raise RuntimeError(
+                        f"Model component {comp}'s implementation specifies MPI,"
+                        " specify MPI, but mpi_processes are specified in its"
                         ' resources. Please either set "execution_model" to'
-                        ' an MPI model, or specify a number of threads.'
-                        ).format(comp))
+                        " an MPI model, or specify a number of threads."
+                    )
             else:
                 if isinstance(res, ThreadedResReq):
-                    raise RuntimeError((
-                        'Model component {}\'s implementation specifies MPI,'
-                        ' but threads are specified in its resources. Please'
+                    raise RuntimeError(
+                        f"Model component {comp}'s implementation specifies MPI,"
+                        " but threads are specified in its resources. Please"
                         ' either set "execution_model" to "direct", or'
-                        ' specify a number of mpi processes.').format(comp))
+                        " specify a number of mpi processes."
+                    )
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
         Document._yatiml_recognize(node)
-        node.require_attribute('model', Model)
-        node.require_attribute('implementations')
-        node.require_attribute('resources')
+        node.require_attribute("model", Model)
+        node.require_attribute("implementations")
+        node.require_attribute("resources")

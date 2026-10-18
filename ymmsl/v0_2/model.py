@@ -1,14 +1,15 @@
 from collections import OrderedDict
 from copy import copy
 from enum import Enum
-from typing import Any, cast, List, Optional, Sequence, Union
+from typing import Any, List, Sequence, TypeAlias, cast
 
 import yatiml
+from typing_extensions import Self
 
 from ymmsl.v0_2.component import Component
 from ymmsl.v0_2.identity import Identifier, Reference
 from ymmsl.v0_2.implementation import Implementation
-from ymmsl.v0_2.ports import Ports
+from ymmsl.v0_2.ports import Ports, Timeline
 from ymmsl.v0_2.supported_settings import SupportedSettings
 
 
@@ -28,13 +29,14 @@ class ConduitFilter(Enum):
 
     Objects of this class represent the different possible filters.
     """
-    LAST = 'last'
+
+    LAST = "last"
     """Pass only the last message and drop any preceding ones."""
 
-    REPEAT = 'repeat'
+    REPEAT = "repeat"
     """Repeat a single message as often as needed."""
 
-    PAD = 'pad'
+    PAD = "pad"
     """Pass a single message and then generate nil-messages as needed."""
 
     def is_reducer(self) -> bool:
@@ -82,9 +84,13 @@ class Conduit:
         receiver: The receiving port that this conduit is connected to.
         filters: A list of filters, or a string containing space-separated filter names
     """
+
     def __init__(
-            self, sender: str, receiver: str,
-            filters: Optional[Union[str, List[ConduitFilter]]] = None) -> None:
+        self,
+        sender: str,
+        receiver: str,
+        filters: str | List[ConduitFilter] | None = None,
+    ) -> None:
         """Create a Conduit.
 
         Args:
@@ -101,7 +107,8 @@ class Conduit:
         else:
             if filters:
                 raise ValueError(
-                        'Cannot specify filters both in receiver and in filters')
+                    "Cannot specify filters both in receiver and in filters"
+                )
 
             filters = recv_pieces[0]
             self.receiver = Reference(recv_pieces[1])
@@ -115,18 +122,33 @@ class Conduit:
                     try:
                         self.filters.append(ConduitFilter(f))
                     except ValueError:
-                        raise RuntimeError(f'Invalid conduit filter "{f}"')
+                        raise RuntimeError(f'Invalid conduit filter "{f}"') from None
 
         self.__check_reference(self.sender)
         self.__check_reference(self.receiver)
 
+        # Check if filters are in the correct order:
+        err_msg = None
+        for i in range(len(self.filters) - 1):
+            pair = self.filters[i : i + 2]
+            if pair == [ConduitFilter.REPEAT, ConduitFilter.LAST]:
+                err_msg = "'repeat' filter must come after 'last'"
+                break
+            if pair == [ConduitFilter.PAD, ConduitFilter.LAST]:
+                err_msg = "'pad' filter must come after 'last'"
+                break
+            if pair == [ConduitFilter.PAD, ConduitFilter.REPEAT]:
+                err_msg = "'pad' filter must come after 'repeat'"
+        if err_msg is not None:
+            raise RuntimeError(f"Invalid conduit filter for {self}: {err_msg}.")
+
     def __str__(self) -> str:
         """Return a string representation of the object."""
         if not self.filters:
-            filter_clause = ''
+            filter_clause = ""
         else:
-            filter_clause = ' -> ' + ' '.join([f.value for f in self.filters])
-        return f'Conduit({self.sender}{filter_clause} -> {self.receiver})'
+            filter_clause = " -> " + " ".join([f.value for f in self.filters])
+        return f"Conduit({self.sender}{filter_clause} -> {self.receiver})"
 
     def __eq__(self, other: Any) -> bool:
         """Returns whether the conduits are equal.
@@ -136,8 +158,10 @@ class Conduit:
         if not isinstance(other, Conduit):
             return NotImplemented
         return (
-                self.sender == other.sender and self.receiver == other.receiver and
-                self.filters == other.filters)
+            self.sender == other.sender
+            and self.receiver == other.receiver
+            and self.filters == other.filters
+        )
 
     @staticmethod
     def __check_reference(ref: Reference) -> None:
@@ -146,14 +170,16 @@ class Conduit:
         for part in ref:
             if isinstance(part, int):
                 raise ValueError(
-                        f'Reference {ref} contains a subscript, which is not allowed in'
-                        ' conduits.')
+                    f"Reference {ref} contains a subscript, which is not allowed in"
+                    " conduits."
+                )
 
         # check that the length is at least 1
         if len(ref) < 1:
             raise ValueError(
-                    'Senders and receivers in conduits must have either a port name,'
-                    ' or a component name, a period, and then a port name.')
+                "Senders and receivers in conduits must have either a port name,"
+                " or a component name, a period, and then a port name."
+            )
 
     def sending_component(self) -> Reference:
         """Returns a reference to the sending component."""
@@ -185,20 +211,19 @@ class Conduit:
 
         filter_strs = [f.value for f in self.filters]
         if filter_strs:
-            result = ' '.join(filter_strs) + ' ' + result
+            result = " ".join(filter_strs) + " " + result
         return result
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        filters = node.get_attribute('filters')
+        filters = node.get_attribute("filters")
         filter_strs = [v.value for v in filters.yaml_node.value]
 
         if filter_strs:
-            recv_str = cast(str, node.get_attribute('receiver').get_value())
-            node.set_attribute(
-                    'receiver', ' '.join(filter_strs) + ' ' + recv_str)
+            recv_str = cast(str, node.get_attribute("receiver").get_value())
+            node.set_attribute("receiver", " ".join(filter_strs) + " " + recv_str)
 
-        node.remove_attribute('filters')
+        node.remove_attribute("filters")
 
 
 class MulticastConduit:
@@ -216,6 +241,7 @@ class MulticastConduit:
     Once parsed and populated in :class:`Model`, a multicast is identified by
     two or more conduits with the same :attr:`Conduit.sender`.
     """
+
     def __init__(self, sender: str, receiver: List[str]) -> None:
         """Create a Multicast Conduit.
 
@@ -239,7 +265,113 @@ class MulticastConduit:
         return [Conduit(self.sender, recv_str) for recv_str in self.receiver]
 
 
-AnyConduit = Union[Conduit, MulticastConduit]
+AnyConduit: TypeAlias = Conduit | MulticastConduit
+
+
+class MatchingTimelines:
+    """Represents a set of matching timelines.
+
+    Matching timelines are timelines generated by different components that have the
+    same time points. This can happen if multiple components are configured to generate
+    the same time points, or if a component adapts its timeline to that of another
+    component, like time bridges do.
+
+    Semantically, this is an equivalence class and so all timelines are equivalent, but
+    we record a "head" of the set so that we can express which timeline is leading and
+    which ones are following it in asymmetric situations like with time bridges.
+
+    In YAML, these can be expressed as a dictionary, similarly to conduits:
+
+    timeline1: timeline2
+    timeline3:
+    - timeline4
+    - timeline5
+    timeline6: timeline7 timeline8
+    macro1:micro1: macro2:micro2
+
+    Attributes:
+        head: "Main" timeline of this set of matching timelines
+        matches: Set of all matching timelines, including the head
+    """
+
+    def __init__(
+        self,
+        head: str | Timeline,
+        matches: str | Timeline | List[str] | List[Timeline],
+    ) -> None:
+        """Create a MatchingTimelines.
+
+        The matches argument may be a string containing whitespace-separated timelines,
+        a Timeline object, a list of Timelines, or a list of strings representing a
+        single timeline each.
+
+        The "head" timeline doesn't have to be passed in both arguments, it will be
+        added to matches if needed.
+
+        Args:
+            head: "Main" timeline of this set of matching timelines
+            matches: Matching timelines
+        """
+        self.head = head if isinstance(head, Timeline) else Timeline(head)
+
+        if isinstance(matches, str):
+            self.matches = {Timeline(t) for t in matches.split()}
+        elif isinstance(matches, Timeline):
+            self.matches = {matches}
+        else:
+            if not matches:
+                raise RuntimeError(
+                    "To declare matching timelines, you need to specify at least two of"
+                    " them"
+                )
+            self.matches = {
+                Timeline(tl) if isinstance(tl, str) else tl for tl in matches
+            }
+        self.matches.add(self.head)
+
+    def __contains__(self, timeline: Timeline) -> bool:
+        return timeline in self.matches
+
+    def __copy__(self) -> "MatchingTimelines":
+        """Shallow-copy the object.
+
+        Since this class effectively models a container, a shallow copy should create a
+        new container with the same items in it, to which items can be added or removed
+        without affecting the original. By default, copy.copy() won't do that however,
+        as it will return a new MatchingTimelines containing the same self.matches. So
+        we override it to give more natural semantics.
+        """
+        return MatchingTimelines(self.head, list(self.matches))
+
+    def __ior__(self, other: "MatchingTimelines") -> Self:
+        """Merge another MatchingTimelines into this one.
+
+        This takes all of the matching timelines from other and adds them to this
+        object. If the head timeline of other is nested less deeply than the current
+        head, then it will replace the current head, otherwise the head remains
+        unchanged.
+        """
+
+        self.matches |= other.matches
+
+        this_depth = max([len(ref) for ref in self.head])
+        other_depth = max([len(ref) for ref in other.head])
+        if other_depth < this_depth:
+            self.head = other.head
+
+        return self
+
+    def _yatiml_attributes(self) -> OrderedDict:
+        matches: str | list[str] = list(map(str, sorted(self.matches - {self.head})))
+        if len(matches) < 6 and sum(len(m) for m in matches) < 60:
+            matches = " ".join(matches)
+
+        return OrderedDict(
+            [
+                ("head", str(self.head)),
+                ("matches", matches),
+            ]
+        )
 
 
 class Model(Implementation):
@@ -259,13 +391,19 @@ class Model(Implementation):
         supported_settings: Settings supported by this model.
         components: A list of components making up the model.
         conduits: A list of conduits connecting the components.
+        matching_timelines: A list of sets of matching timelines.
     """
+
     def __init__(
-            self, name: str, ports: Optional[Ports] = None,
-            description: str = '',
-            supported_settings: Optional[SupportedSettings] = None,
-            components: Optional[Sequence[Component]] = None,
-            conduits: Optional[Sequence[AnyConduit]] = None) -> None:
+        self,
+        name: str,
+        ports: Ports | None = None,
+        description: str = "",
+        supported_settings: SupportedSettings | None = None,
+        components: Sequence[Component] | None = None,
+        matching_timelines: Sequence[MatchingTimelines] | None = None,
+        conduits: Sequence[AnyConduit] | None = None,
+    ) -> None:
         """Create a Model.
 
         Args:
@@ -274,6 +412,7 @@ class Model(Implementation):
             description: Human-readable description of the model
             supported_settings: Settings supported by this model
             components: A list of components making up the model
+            matching_timelines: A list of matching timelines
             conduits: A list of conduits connecting the components
         """
         super().__init__(name, ports, description, supported_settings)
@@ -283,15 +422,17 @@ class Model(Implementation):
         else:
             for i1, c1 in enumerate(components):
                 num_conflicts = 0
-                for i2 in range(i1-1):
+                for i2 in range(i1 - 1):
                     if c1.name == components[i2].name:
                         num_conflicts += 1
                 if num_conflicts > 0:
                     raise ValueError(
-                            f'There are {num_conflicts + 1} components named'
-                            f' {c1.name}.')
+                        f"There are {num_conflicts + 1} components named {c1.name}."
+                    )
 
             self.components = {copy(c.name): c for c in components}
+
+        self.matching_timelines = matching_timelines
 
         self.conduits: list[Conduit] = list()
         if conduits:
@@ -322,64 +463,70 @@ class Model(Implementation):
         return errors
 
     def _check_sending_side(
-            self, conduit: Conduit, model_receiving_ports: List[Identifier]
-            ) -> List[str]:
+        self, conduit: Conduit, model_receiving_ports: List[Identifier]
+    ) -> List[str]:
         """Check the sending side of a conduit."""
         errors = list()
         if not conduit.sending_component():
             # from model input port
             if conduit.sending_port() not in model_receiving_ports:
                 errors.append(
-                    f'Conduit {conduit} refers to an incoming model port'
-                    f' {conduit.sending_port()} that does not exist.')
+                    f"Conduit {conduit} refers to an incoming model port"
+                    f" {conduit.sending_port()} that does not exist."
+                )
         else:
             # from component
             if conduit.sending_component() not in self.components:
                 errors.append(
-                        f'Conduit {conduit} refers to a component named'
-                        f' {conduit.sending_component()}, which is not present in'
-                        ' the model.')
+                    f"Conduit {conduit} refers to a component named"
+                    f" {conduit.sending_component()}, which is not present in"
+                    " the model."
+                )
             else:
                 snd_cmp = self.components[conduit.sending_component()]
                 cmp_sending_ports = snd_cmp.ports.sending_port_names()
                 if conduit.sending_port() not in cmp_sending_ports:
                     errors.append(
-                            f'Conduit {conduit} refers to a sending port named'
-                            f' {conduit.sending_port()}, which is not present on'
-                            f' sending component {snd_cmp.name}, or is not an O_I or'
-                            ' O_F port.')
+                        f"Conduit {conduit} refers to a sending port named"
+                        f" {conduit.sending_port()}, which is not present on"
+                        f" sending component {snd_cmp.name}, or is not an O_I or"
+                        " O_F port."
+                    )
         return errors
 
     def _check_receiving_side(
-            self, conduit: Conduit, model_sending_ports: List[Identifier]
-            ) -> List[str]:
+        self, conduit: Conduit, model_sending_ports: List[Identifier]
+    ) -> List[str]:
         """Check the receiving side of a conduit."""
         errors = list()
         if not conduit.receiving_component():
             # to model output port
             if conduit.receiving_port() not in model_sending_ports:
                 errors.append(
-                    f'Conduit {conduit} refers to an incoming model port'
-                    f' {conduit.receiving_port()} that does not exist.')
+                    f"Conduit {conduit} refers to an incoming model port"
+                    f" {conduit.receiving_port()} that does not exist."
+                )
         else:
             # to component
             if conduit.receiving_component() not in self.components:
                 errors.append(
-                        f'Conduit {conduit} refers to a component named'
-                        f' {conduit.receiving_component()}, which is not present in'
-                        ' the model.')
+                    f"Conduit {conduit} refers to a component named"
+                    f" {conduit.receiving_component()}, which is not present in"
+                    " the model."
+                )
             else:
                 rcvng_cmp = self.components[conduit.receiving_component()]
-                rcvr_recv_ports = (
-                        rcvng_cmp.ports.receiving_port_names() +
-                        ['muscle_settings_in'])
+                rcvr_recv_ports = rcvng_cmp.ports.receiving_port_names() + [
+                    "muscle_settings_in"
+                ]
 
                 if conduit.receiving_port() not in rcvr_recv_ports:
                     errors.append(
-                            f'Conduit {conduit} refers to a receiving port named'
-                            f' {conduit.receiving_port()}, which is not present on'
-                            f' receiving component {rcvng_cmp.name}, or is not an'
-                            ' F_INIT or S port.')
+                        f"Conduit {conduit} refers to a receiving port named"
+                        f" {conduit.receiving_port()}, which is not present on"
+                        f" receiving component {rcvng_cmp.name}, or is not an"
+                        " F_INIT or S port."
+                    )
         return errors
 
     def _conduits_for_export(self) -> List[AnyConduit]:
@@ -397,19 +544,26 @@ class Model(Implementation):
             if len(conduits) == 1:
                 conduit_list.append(conduits[0])
             else:
-                conduit_list.append(MulticastConduit(
+                conduit_list.append(
+                    MulticastConduit(
                         str(sender),
-                        [str(conduit._filters_receiver()) for conduit in conduits]))
+                        [str(conduit._filters_receiver()) for conduit in conduits],
+                    )
+                )
         return conduit_list
 
     def _yatiml_attributes(self) -> OrderedDict:
-        return OrderedDict([
-            ('name', self.name),
-            ('ports', self.ports),
-            ('description', self.description),
-            ('supported_settings', self.supported_settings),
-            ('components', self.components),
-            ('conduits', self._conduits_for_export())])
+        return OrderedDict(
+            [
+                ("name", self.name),
+                ("ports", self.ports),
+                ("description", self.description),
+                ("supported_settings", self.supported_settings),
+                ("components", self.components),
+                ("matching_timelines", self.matching_timelines),
+                ("conduits", self._conduits_for_export()),
+            ]
+        )
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
@@ -418,14 +572,21 @@ class Model(Implementation):
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        node.map_attribute_to_seq('components', 'name')
-        node.map_attribute_to_seq('conduits', 'sender', 'receiver')
+        node.map_attribute_to_seq("components", "name")
+        node.map_attribute_to_seq("conduits", "sender", "receiver")
+        node.map_attribute_to_seq("matching_timelines", "head", "matches")
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        node.index_attribute_to_map('components', 'name')
+        node.index_attribute_to_map("components", "name")
 
-        if len(node.get_attribute('conduits').seq_items()) == 0:
-            node.remove_attribute('conduits')
+        if len(node.get_attribute("conduits").seq_items()) == 0:
+            node.remove_attribute("conduits")
 
-        node.seq_attribute_to_map('conduits', 'sender', 'receiver')
+        node.seq_attribute_to_map("conduits", "sender", "receiver")
+
+        mt_node = node.get_attribute("matching_timelines")
+        if mt_node.is_scalar(None) or len(mt_node.seq_items()) == 0:
+            node.remove_attribute("matching_timelines")
+
+        node.seq_attribute_to_map("matching_timelines", "head", "matches")

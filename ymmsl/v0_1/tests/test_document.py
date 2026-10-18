@@ -17,16 +17,16 @@ def dump_document() -> Callable:
 
 
 def test_valid_document(load_document: Callable) -> None:
-    text = 'ymmsl_version: v0.1'
+    text = "ymmsl_version: v0.1"
     load_document(text)
 
 
 def test_load_unknown_version(load_document: Callable) -> None:
-    text = 'ymmsl_version: v0.2'
+    text = "ymmsl_version: v0.2"
     with pytest.raises(yatiml.RecognitionError):
         load_document(text)
 
 
 def test_dump_document(dump_document: Callable) -> None:
     text = dump_document(Document())
-    assert text == 'ymmsl_version: v0.1\n'
+    assert text == "ymmsl_version: v0.1\n"

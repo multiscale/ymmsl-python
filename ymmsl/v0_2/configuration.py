@@ -1,28 +1,30 @@
 import collections.abc as abc
-from copy import copy
 import itertools
 import logging
+from copy import copy
 from pathlib import Path
-from typing import (
-        Dict, List, MutableMapping, Optional, Sequence, Tuple, Union, cast)
+from typing import Dict, List, MutableMapping, Sequence, Tuple, cast
 
-import yatiml
 import yaml
+import yatiml
 
 from ymmsl.util import remove_trailing_whitespace
 from ymmsl.v0_2.checkpoint import Checkpoints
+from ymmsl.v0_2.document import Document
 from ymmsl.v0_2.execution import ExecutionModel
-from ymmsl.v0_2.resources import (
-    MPICoresResReq, MPINodesResReq, ResourceRequirements, ThreadedResReq)
 from ymmsl.v0_2.identity import Identifier, Reference
-from ymmsl.v0_2.implementation import Implementation    # noqa: F401
+from ymmsl.v0_2.implementation import Implementation  # noqa: F401
 from ymmsl.v0_2.imports import ImportStatement
+from ymmsl.v0_2.model import Component, Model
+from ymmsl.v0_2.program import Program
+from ymmsl.v0_2.resources import (
+    MPICoresResReq,
+    MPINodesResReq,
+    ResourceRequirements,
+    ThreadedResReq,
+)
 from ymmsl.v0_2.settings import Settings, SettingValue
 from ymmsl.v0_2.supported_settings import SettingType
-from ymmsl.v0_2.document import Document
-from ymmsl.v0_2.program import Program
-from ymmsl.v0_2.model import Component, Model
-
 
 _logger = logging.getLogger(__name__)
 
@@ -45,22 +47,22 @@ class Configuration(Document):
         checkpoints: Defines when each model component should create a snapshot
         resume: Defines what snapshot each model component should resume from
     """
+
     def __init__(
-            self, description: str = '',
-            imports: Optional[Sequence[ImportStatement]] = None,
-            models: Optional[Union[
-                Sequence[Model], MutableMapping[Reference, Model]]] = None,
-            custom_implementations: Optional[
-                MutableMapping[Reference, Optional[Reference]]] = None,
-            settings: Optional[Settings] = None,
-            programs: Optional[Union[
-                Sequence[Program], MutableMapping[Reference, Program]]] = None,
-            resources: Optional[Union[
-                Sequence[ResourceRequirements],
-                MutableMapping[Reference, ResourceRequirements]]] = None,
-            checkpoints: Optional[Checkpoints] = None,
-            resume: Optional[Dict[Reference, Path]] = None
-            ) -> None:
+        self,
+        description: str = "",
+        imports: Sequence[ImportStatement] | None = None,
+        models: Sequence[Model] | MutableMapping[Reference, Model] | None = None,
+        custom_implementations: MutableMapping[Reference, Reference | None]
+        | None = None,
+        settings: Settings | None = None,
+        programs: Sequence[Program] | MutableMapping[Reference, Program] | None = None,
+        resources: Sequence[ResourceRequirements]
+        | MutableMapping[Reference, ResourceRequirements]
+        | None = None,
+        checkpoints: Checkpoints | None = None,
+        resume: Dict[Reference, Path] | None = None,
+    ) -> None:
         """Create a Configuration.
 
         Implementations and resources may be either a list of such
@@ -78,13 +80,16 @@ class Configuration(Document):
             checkpoints: When each component should create a snapshot
             resume: What snapshot each component should resume from
         """
+
         def check_duplicate_impl_names(
-                typs: str, impls: abc.Sequence[Implementation]) -> None:
+            typs: str, impls: abc.Sequence[Implementation]
+        ) -> None:
             for i, impl in enumerate(impls):
                 for j in range(i):
                     if impls[j].name == impl.name:
                         raise ValueError(
-                                f'Found two {typs} that are both named "{impl.name}"')
+                            f'Found two {typs} that are both named "{impl.name}"'
+                        )
 
         self.description = description
 
@@ -96,14 +101,14 @@ class Configuration(Document):
         if models is None:
             self.models: MutableMapping[Reference, Model] = dict()
         elif isinstance(models, abc.Sequence):
-            check_duplicate_impl_names('models', models)
+            check_duplicate_impl_names("models", models)
             self.models = {copy(model.name): model for model in models}
         elif isinstance(models, Model):
             self.models = {models.name: models}
         else:
             self.models = models
 
-        _CIType = MutableMapping[Reference, Optional[Reference]]  # noqa: F841
+        _CIType = MutableMapping[Reference, Reference | None]  # noqa: F841
 
         if custom_implementations is None:
             self.custom_implementations: _CIType = {}
@@ -118,7 +123,7 @@ class Configuration(Document):
         if programs is None:
             self.programs: MutableMapping[Reference, Program] = dict()
         elif isinstance(programs, abc.Sequence):
-            check_duplicate_impl_names('programs', programs)
+            check_duplicate_impl_names("programs", programs)
             self.programs = {prog.name: prog for prog in programs}
         else:
             self.programs = programs
@@ -140,7 +145,7 @@ class Configuration(Document):
         else:
             self.resume = resume
 
-    def update(self, overlay: 'Configuration') -> None:
+    def update(self, overlay: "Configuration") -> None:
         """Update this configuration with the given overlay.
 
         This will copy settings from overlay on top of the current settings, and merge
@@ -152,9 +157,9 @@ class Configuration(Document):
         if not self.description.strip():
             self.description = overlay.description
         elif overlay.description.strip():
-            if not self.description.endswith('\n'):
-                self.description += '\n'
-            self.description += '\n' + overlay.description
+            if not self.description.endswith("\n"):
+                self.description += "\n"
+            self.description += "\n" + overlay.description
 
         if not self.imports:
             self.imports = overlay.imports
@@ -164,8 +169,9 @@ class Configuration(Document):
 
         if self.models and overlay.models:
             raise RuntimeError(
-                    'Multiple ymmsl files containing models specified. Please'
-                    ' use the import functionality instead.')
+                "Multiple ymmsl files containing models specified. Please"
+                " use the import functionality instead."
+            )
 
         self.models.update(overlay.models)
 
@@ -176,9 +182,10 @@ class Configuration(Document):
         overlap = [p for p in self.programs if p in overlay.programs]
         if any(overlap):
             raise RuntimeError(
-                    'Multiple programs with the same name were found. Please ensure'
-                    ' that all programs have a unique name. The duplicate names were:'
-                    f' {", ".join(map(str, overlap))}.')
+                "Multiple programs with the same name were found. Please ensure"
+                " that all programs have a unique name. The duplicate names were:"
+                f" {', '.join(map(str, overlap))}."
+            )
 
         self.programs.update(overlay.programs)
         self.resources.update(overlay.resources)
@@ -186,8 +193,8 @@ class Configuration(Document):
         self.resume.update(overlay.resume)
 
     def check_consistent(
-            self, check_runnable: bool = True, selected_model: Optional[str] = None
-            ) -> None:
+        self, check_runnable: bool = True, selected_model: str | None = None
+    ) -> None:
         """Checks that the configuration is internally consistent.
 
         This checks:
@@ -215,7 +222,7 @@ class Configuration(Document):
 
         for model in self.models.values():
             model_errors = model.check_consistent()
-            errors.extend([f'In model {model.name}: {e}' for e in model_errors])
+            errors.extend([f"In model {model.name}: {e}" for e in model_errors])
 
         errors.extend(self._check_duplicate_implementations())
 
@@ -231,9 +238,9 @@ class Configuration(Document):
 
         if errors:
             raise RuntimeError(
-                    'The configuration is internally inconsistent. The following'
-                    ' problems were found:\n- '
-                    + '\n- '.join(errors))
+                "The configuration is internally inconsistent. The following"
+                " problems were found:\n- " + "\n- ".join(errors)
+            )
 
     def get_resources(self, name: Reference) -> ResourceRequirements:
         """Get the resource requirements for a component.
@@ -251,11 +258,12 @@ class Configuration(Document):
         res_req = self.resources.get(name)
         if res_req is None:
             _logger.debug(
-                    f'No resources defined for {name}, using default of 1 thread.')
+                f"No resources defined for {name}, using default of 1 thread."
+            )
             res_req = ThreadedResReq(name, 1)
         return res_req
 
-    def root_model(self, selected_model: Optional[Reference] = None) -> Model:
+    def root_model(self, selected_model: Reference | None = None) -> Model:
         """Return the root model of this configuration.
 
         If there are multiple models that are not used as an implementation in any
@@ -279,25 +287,27 @@ class Configuration(Document):
         """
         root_models = self._root_models()
         if not root_models:
-            raise RuntimeError('No model was found in this configuration.')
+            raise RuntimeError("No model was found in this configuration.")
 
         if selected_model:
             match = [m for m in root_models if m.name == selected_model]
             if match:
                 return match[0]
 
-            models = '\n- '.join([str(m.name) for m in root_models])
+            models = "\n- ".join([str(m.name) for m in root_models])
             raise RuntimeError(
-                    f'The selected model "{selected_model}" could not be found in this'
-                    f' configuration. The following models are present:\n- {models}')
+                f'The selected model "{selected_model}" could not be found in this'
+                f" configuration. The following models are present:\n- {models}"
+            )
 
         if len(root_models) == 1:
             return root_models[0]
 
-        models = '\n- '.join([str(m.name) for m in root_models])
+        models = "\n- ".join([str(m.name) for m in root_models])
         raise RuntimeError(
-                'Multiple models were found in this configuration that are not used'
-                f' as implementations:\n\n- {models}')
+            "Multiple models were found in this configuration that are not used"
+            f" as implementations:\n\n- {models}"
+        )
 
     def _root_models(self) -> List[Model]:
         """Models in this configuration that are not used as implementations."""
@@ -330,28 +340,26 @@ class Configuration(Document):
             RuntimeError: if a loop is detected
         """
         result = dict()
-        queue: List[Tuple[Model, Reference, List[Tuple[Reference, Reference]]]] = \
-            [(m, m.name, []) for m in self._root_models()]
-        _logger.debug(f'cmp_paths: initial queue: {[t[0].name for t in queue]}')
+        queue: List[Tuple[Model, Reference, List[Tuple[Reference, Reference]]]] = [
+            (m, m.name, []) for m in self._root_models()
+        ]
+        _logger.debug(f"cmp_paths: initial queue: {[t[0].name for t in queue]}")
 
         while queue:
             model, prefix, seen = queue.pop(0)
-            _logger.debug(f'cmp_paths: {model.name} {prefix} {seen}')
+            _logger.debug(f"cmp_paths: {model.name} {prefix} {seen}")
             for component in model.components.values():
                 path = prefix + component.name
                 impl = self.custom_implementations.get(path, component.implementation)
                 if impl is not None:
                     if impl in self.models:
                         if [m for _, m in seen if m == impl]:
-                            msg = 'A loop of components and models was detected:\n'
+                            msg = "A loop of components and models was detected:\n"
                             for p, m in seen:
-                                msg += f'- component {p} is implemented using {m}\n'
-                            msg += (
-                                    f'- component {path} is implemented using'
-                                    f' {impl}\n')
+                                msg += f"- component {p} is implemented using {m}\n"
+                            msg += f"- component {path} is implemented using {impl}\n"
                             raise RuntimeError(msg)
-                        queue.append((
-                            self.models[impl], path, seen + [(path, impl)]))
+                        queue.append((self.models[impl], path, seen + [(path, impl)]))
                     result[path] = component
 
         return result
@@ -369,12 +377,14 @@ class Configuration(Document):
             for model_name in self.models:
                 if program_name == model_name:
                     errors.append(
-                            f'There is a program named "{program_name}" and also a'
-                            f' model named "{model_name}", which is not allowed')
+                        f'There is a program named "{program_name}" and also a'
+                        f' model named "{model_name}", which is not allowed'
+                    )
         return errors
 
     def _check_consistent_ports(
-            self, component_paths: Dict[Reference, Component]) -> List[str]:
+        self, component_paths: Dict[Reference, Component]
+    ) -> List[str]:
         """Check that components have implementations with compatible ports.
 
         This checks that each component declares ports that its implementation also
@@ -401,21 +411,24 @@ class Configuration(Document):
                 for port_name in component.ports:
                     if port_name not in impl.ports:
                         errors.append(
-                                f'Component "{component.name}" declares port'
-                                f' "{port_name}" that its implementation'
-                                f' "{impl.name}" does not have')
+                            f'Component "{component.name}" declares port'
+                            f' "{port_name}" that its implementation'
+                            f' "{impl.name}" does not have'
+                        )
                     else:
                         if component.ports[port_name] != impl.ports[port_name]:
                             errors.append(
-                                    f'Component "{component.name}" declares port'
-                                    f' "{port_name}" that its implementation'
-                                    f' "{impl.name}" has, but with a different'
-                                    ' operator or timeline.')
+                                f'Component "{component.name}" declares port'
+                                f' "{port_name}" that its implementation'
+                                f' "{impl.name}" has, but with a different'
+                                " operator or timeline."
+                            )
 
         return errors
 
     def _check_implementations_exist(
-            self, component_paths: Dict[Reference, Component]) -> List[str]:
+        self, component_paths: Dict[Reference, Component]
+    ) -> List[str]:
         """Check that all components with an implementation have a valid one.
 
         Components with implementation None are not considered broken if marked as
@@ -432,18 +445,21 @@ class Configuration(Document):
             if impl is None:
                 if not component.optional:
                     errors.append(
-                            f'Component "{path}" is not marked optional, and does not'
-                            ' have an implementation.')
+                        f'Component "{path}" is not marked optional, and does not'
+                        " have an implementation."
+                    )
             else:
                 if impl not in self.models and impl not in self.programs:
                     errors.append(
-                            f'Component "{path}" has implementation "{impl}", but no'
-                            ' program or model with that name was given. Did you forget'
-                            ' to import it?')
+                        f'Component "{path}" has implementation "{impl}", but no'
+                        " program or model with that name was given. Did you forget"
+                        " to import it?"
+                    )
         return errors
 
     def _check_custom_implementations(
-            self, component_paths: Dict[Reference, Component]) -> List[str]:
+        self, component_paths: Dict[Reference, Component]
+    ) -> List[str]:
         """Check that all custom implementations refer to a correct path.
 
         Args:
@@ -455,12 +471,14 @@ class Configuration(Document):
         for path in self.custom_implementations:
             if path not in component_paths:
                 errors.append(
-                        f'A custom implementation is specified for component "{path}",'
-                        ' but no such component is present in the model.')
+                    f'A custom implementation is specified for component "{path}",'
+                    " but no such component is present in the model."
+                )
         return errors
 
     def _check_consistent_settings(
-            self, component_paths: Dict[Reference, Component]) -> List[str]:
+        self, component_paths: Dict[Reference, Component]
+    ) -> List[str]:
         """Check that setting names and types match supported settings.
 
         This checks that every implementation with a supported_settings declaration will
@@ -489,24 +507,32 @@ class Configuration(Document):
             if impl.supported_settings:
                 for name, sup_set in impl.supported_settings:
                     errs.extend(
-                            self._check_supported_setting(
-                                component, path, name, sup_set.typ, impl))
+                        self._check_supported_setting(
+                            component, path, name, sup_set.typ, impl
+                        )
+                    )
 
             if len(errs) > 7:
                 n = len(errs) - 6
                 errs = errs[:6]
                 errs.append(
-                        f'Another {n} inconsistent settings were found. Is'
-                        f' "{impl.name}" the correct implementation for component'
-                        f' "{component.name}"?')
+                    f"Another {n} inconsistent settings were found. Is"
+                    f' "{impl.name}" the correct implementation for component'
+                    f' "{component.name}"?'
+                )
 
             errors.extend(errs)
 
         return errors
 
     def _check_supported_setting(
-            self, component: Component, component_path: Reference, name: Identifier,
-            typ: SettingType, impl: Implementation) -> List[str]:
+        self,
+        component: Component,
+        component_path: Reference,
+        name: Identifier,
+        typ: SettingType,
+        impl: Implementation,
+    ) -> List[str]:
         """Check that the value of the given setting matches the given type.
 
         This implements the standard setting lookup, then checks any found setting value
@@ -529,12 +555,13 @@ class Configuration(Document):
                         if isinstance(val, str):
                             val_str = f'"{val}"'
                         errors.append(
-                                f'Instance "{instance_path}" of component'
-                                f' "{component_path[1:]}" with implementation'
-                                f' "{impl.name}"'
-                                f' has a supported setting "{name}" with type'
-                                f' {typ.value}, but setting "{found_setting}" has value'
-                                f' {val_str}, which does not match that type')
+                            f'Instance "{instance_path}" of component'
+                            f' "{component_path[1:]}" with implementation'
+                            f' "{impl.name}"'
+                            f' has a supported setting "{name}" with type'
+                            f' {typ.value}, but setting "{found_setting}" has value'
+                            f" {val_str}, which does not match that type"
+                        )
                     break
 
         return errors
@@ -563,8 +590,8 @@ class Configuration(Document):
         return False
 
     def _check_resources(
-            self, component_paths: Dict[Reference, Component],
-            selected_model: Optional[str]) -> List[str]:
+        self, component_paths: Dict[Reference, Component], selected_model: str | None
+    ) -> List[str]:
         """Check that each component path has a corresponding resource request.
 
         For non-MPI components, resources are optional: if not specified,
@@ -574,19 +601,21 @@ class Configuration(Document):
         """
         errors = list()
         for path, component in component_paths.items():
-            _logger.debug(f'Checking resources for {path} {component.name}')
+            _logger.debug(f"Checking resources for {path} {component.name}")
             if selected_model is not None and path[0] != selected_model:
                 continue
 
             impl_ref = self.custom_implementations.get(path, component.implementation)
-            _logger.debug(f'Implementation: {impl_ref}')
+            _logger.debug(f"Implementation: {impl_ref}")
             if impl_ref is None or impl_ref not in self.programs:
                 continue
 
             impl = self.programs[impl_ref]
             em_mpi = impl.execution_model in (
-                    ExecutionModel.OPENMPI, ExecutionModel.INTELMPI,
-                    ExecutionModel.SRUNMPI)
+                ExecutionModel.OPENMPI,
+                ExecutionModel.INTELMPI,
+                ExecutionModel.SRUNMPI,
+            )
 
             em_nompi = impl.execution_model is ExecutionModel.DIRECT
 
@@ -595,18 +624,21 @@ class Configuration(Document):
                     errors.append(f'Component "{path}" is missing a resource request')
             else:
                 res_mpi = isinstance(
-                        self.resources[path], (MPICoresResReq, MPINodesResReq))
+                    self.resources[path], (MPICoresResReq, MPINodesResReq)
+                )
 
                 if em_mpi and not res_mpi:
                     errors.append(
-                            f'Component "{path}" has implementation "{impl_ref}",'
-                            ' which has an MPI execution model, but the resources'
-                            ' requested for it do not ask for MPI processes.')
+                        f'Component "{path}" has implementation "{impl_ref}",'
+                        " which has an MPI execution model, but the resources"
+                        " requested for it do not ask for MPI processes."
+                    )
                 elif res_mpi and em_nompi:
                     errors.append(
-                            f'Component "{path}" has implementation "{impl_ref}",'
-                            ' which has a non-MPI execution model, but the resources'
-                            ' requested for it ask for MPI processes.')
+                        f'Component "{path}" has implementation "{impl_ref}",'
+                        " which has a non-MPI execution model, but the resources"
+                        " requested for it ask for MPI processes."
+                    )
 
         return errors
 
@@ -620,64 +652,58 @@ class Configuration(Document):
 
     @classmethod
     def _yatiml_savorize(cls, node: yatiml.Node) -> None:
-        node.map_attribute_to_index('models', 'name')
-        if not node.has_attribute('settings'):
-            node.set_attribute('settings', None)
-        node.map_attribute_to_index('programs', 'name')
-        node.map_attribute_to_index('resources', 'name')
+        node.map_attribute_to_index("models", "name")
+        if not node.has_attribute("settings"):
+            node.set_attribute("settings", None)
+        node.map_attribute_to_index("programs", "name")
+        node.map_attribute_to_index("resources", "name")
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        descr = node.get_attribute('description')
+        descr = node.get_attribute("description")
         if descr.is_scalar(str):
-            if descr.get_value() == '':
-                node.remove_attribute('description')
+            if descr.get_value() == "":
+                node.remove_attribute("description")
             else:
                 # output in block style
                 ynode = cast(yaml.ScalarNode, descr.yaml_node)
-                ynode.style = '|'
+                ynode.style = "|"
                 # ensure PyYAML actually uses block style
                 ynode.value = remove_trailing_whitespace(ynode.value)
 
-        imports = node.get_attribute('imports')
+        imports = node.get_attribute("imports")
         if imports.is_sequence() and imports.is_empty():
-            node.remove_attribute('imports')
+            node.remove_attribute("imports")
 
-        models = node.get_attribute('models')
-        if (models.is_scalar(type(None)) or models.is_mapping() and models.is_empty()):
-            node.remove_attribute('models')
-        node.index_attribute_to_map('models', 'name')
+        models = node.get_attribute("models")
+        if models.is_scalar(type(None)) or models.is_mapping() and models.is_empty():
+            node.remove_attribute("models")
+        node.index_attribute_to_map("models", "name")
 
-        if node.get_attribute('custom_implementations').is_scalar(type(None)):
-            node.remove_attribute('custom_implementations')
-        if len(node.get_attribute('custom_implementations').yaml_node.value) == 0:
-            node.remove_attribute('custom_implementations')
+        if node.get_attribute("custom_implementations").is_scalar(type(None)):
+            node.remove_attribute("custom_implementations")
+        if len(node.get_attribute("custom_implementations").yaml_node.value) == 0:
+            node.remove_attribute("custom_implementations")
 
-        if node.get_attribute('settings').is_scalar(type(None)):
-            node.remove_attribute('settings')
-        if len(node.get_attribute('settings').yaml_node.value) == 0:
-            node.remove_attribute('settings')
+        if node.get_attribute("settings").is_scalar(type(None)):
+            node.remove_attribute("settings")
+        if len(node.get_attribute("settings").yaml_node.value) == 0:
+            node.remove_attribute("settings")
 
-        progs = node.get_attribute('programs')
-        if (progs.is_scalar(type(None)) or progs.is_mapping() and progs.is_empty()):
-            node.remove_attribute('programs')
-        node.index_attribute_to_map('programs', 'name')
+        progs = node.get_attribute("programs")
+        if progs.is_scalar(type(None)) or progs.is_mapping() and progs.is_empty():
+            node.remove_attribute("programs")
+        node.index_attribute_to_map("programs", "name")
 
-        res = node.get_attribute('resources')
-        if (
-                res.is_scalar(type(None)) or
-                res.is_mapping() and res.is_empty()):
-            node.remove_attribute('resources')
-        node.index_attribute_to_map('resources', 'name')
+        res = node.get_attribute("resources")
+        if res.is_scalar(type(None)) or res.is_mapping() and res.is_empty():
+            node.remove_attribute("resources")
+        node.index_attribute_to_map("resources", "name")
 
-        cp = node.get_attribute('checkpoints')
-        if (
-                cp.is_scalar(type(None)) or
-                cp.is_mapping() and cp.is_empty()):
-            node.remove_attribute('checkpoints')
+        cp = node.get_attribute("checkpoints")
+        if cp.is_scalar(type(None)) or cp.is_mapping() and cp.is_empty():
+            node.remove_attribute("checkpoints")
 
-        resu = node.get_attribute('resume')
-        if (
-                resu.is_scalar(type(None)) or
-                resu.is_mapping() and resu.is_empty()):
-            node.remove_attribute('resume')
+        resu = node.get_attribute("resume")
+        if resu.is_scalar(type(None)) or resu.is_mapping() and resu.is_empty():
+            node.remove_attribute("resume")

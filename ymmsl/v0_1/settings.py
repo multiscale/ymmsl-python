@@ -1,20 +1,27 @@
 """Definitions for specifying model settings."""
+
 from collections import OrderedDict
 from collections.abc import MutableMapping
 from copy import deepcopy
-from typing import Any, Dict, Iterator, List, Optional, overload, Tuple, TypeVar, Union
+from typing import Any, Dict, Iterator, List, Tuple, TypeAlias, TypeVar, overload
 
 import yatiml
 
 from ymmsl.v0_1.identity import Reference
 
+SettingValue: TypeAlias = (
+    str
+    | int
+    | float
+    | bool
+    | List[int]
+    | List[float]
+    | List[List[float]]
+    | yatiml.bool_union_fix
+)
 
-SettingValue = Union[
-        str, int, float, bool, List[int], List[float], List[List[float]],
-        yatiml.bool_union_fix]
 
-
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 
 
 class Settings(MutableMapping):
@@ -24,10 +31,7 @@ class Settings(MutableMapping):
     for the submodel scales, model parameters and any other configuration.
     """
 
-    def __init__(
-            self,
-            settings: Optional[Dict[str, SettingValue]] = None
-            ) -> None:
+    def __init__(self, settings: Dict[str, SettingValue] | None = None) -> None:
         """Create a Settings object.
 
         This will make a deep copy of the settings argument, if
@@ -64,20 +68,19 @@ class Settings(MutableMapping):
             return False
         return key in self._store
 
-    def __getitem__(self, key: Union[str, Reference]) -> SettingValue:
+    def __getitem__(self, key: str | Reference) -> SettingValue:
         """Returns an item, implements settings[name]."""
         if isinstance(key, str):
             key = Reference(key)
         return self._store[key]
 
-    def __setitem__(self, key: Union[str, Reference], value: SettingValue
-                    ) -> None:
+    def __setitem__(self, key: str | Reference, value: SettingValue) -> None:
         """Sets a value, implements settings[name] = value."""
         if isinstance(key, str):
             key = Reference(key)
         self._store[key] = value
 
-    def __delitem__(self, key: Union[str, Reference]) -> None:
+    def __delitem__(self, key: str | Reference) -> None:
         """Deletes a value, implements del(settings[name])."""
         if isinstance(key, str):
             key = Reference(key)
@@ -92,14 +95,12 @@ class Settings(MutableMapping):
         return len(self._store)
 
     @overload
-    def get(self, key: Any, /) -> Union[Any, None]: ...
+    def get(self, key: Any, /) -> Any | None: ...
 
     @overload
-    def get(
-            self, key: Any, /, default: _T) -> Union[Any, _T]: ...
+    def get(self, key: Any, /, default: _T) -> Any | _T: ...
 
-    def get(
-            self, key: Any, /, default: Union[_T, None] = None) -> Union[Any, _T]:
+    def get(self, key: Any, /, default: _T | None = None) -> Any | _T:
         """Return the given setting, or default if it is not set.
 
         If default is not given, returns None.
@@ -117,7 +118,7 @@ class Settings(MutableMapping):
             result.append((key, value))
         return result
 
-    def copy(self) -> 'Settings':
+    def copy(self) -> "Settings":
         """Makes a shallow copy of these settings and returns it."""
         new_settings = Settings()
         new_settings._store = self._store.copy()
@@ -148,16 +149,16 @@ class Settings(MutableMapping):
         # wrap the existing mapping into a new mapping with attribute settings
         setting_values = node.yaml_node
         node.make_mapping()
-        node.set_attribute('settings', setting_values)
+        node.set_attribute("settings", setting_values)
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
         # format lists and arrays nicely
         for _, value_node in node.yaml_node.value:
-            if value_node.tag == 'tag:yaml.org,2002:seq':
+            if value_node.tag == "tag:yaml.org,2002:seq":
                 # this attribute is a list or list-of-list
                 if len(value_node.value) > 0:
-                    if value_node.value[0].tag != 'tag:yaml.org,2002:seq':
+                    if value_node.value[0].tag != "tag:yaml.org,2002:seq":
                         value_node.flow_style = True
                     else:
                         value_node.flow_style = False

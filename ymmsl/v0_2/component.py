@@ -1,11 +1,11 @@
-from typing import cast, List, Optional, Union
+from typing import List, cast
 
 import yaml
 import yatiml
 
 from ymmsl.util import remove_trailing_whitespace
-from ymmsl.v0_2.ports import Ports
 from ymmsl.v0_2.identity import Reference
+from ymmsl.v0_2.ports import Ports, Timeline
 
 
 class Component:
@@ -30,12 +30,20 @@ class Component:
         implementation: A Model or Program implementing this component
         optional: Whether this component is optional
         multiplicity: The shape of the set of instances
+        timeline: The resolved (absolute) timeline for this component inside the model.
+            This will be ``None`` until resolved by
+            :meth:`~ymmsl.v0_2.resolve_timelines()`.
     """
+
     def __init__(
-            self, name: str, ports: Ports,
-            description: str, implementation: Optional[str] = None,
-            optional: bool = False,
-            multiplicity: Union[None, int, List[int]] = None) -> None:
+        self,
+        name: str,
+        ports: Ports,
+        description: str,
+        implementation: str | None = None,
+        optional: bool = False,
+        multiplicity: None | int | List[int] = None,
+    ) -> None:
         """Create a Component
 
         Args:
@@ -51,14 +59,16 @@ class Component:
         self.ports = ports
         self.description = description
         self.optional = optional
+        self.timeline: Timeline | None = None
 
         if implementation is not None:
-            self.implementation: Optional[Reference] = Reference(implementation)
+            self.implementation: Reference | None = Reference(implementation)
             for part in self.implementation:
                 if isinstance(part, int):
-                    raise ValueError('Component implementation {} contains a'
-                                     ' subscript, which is not'
-                                     ' allowed.'.format(self.name))
+                    raise ValueError(
+                        f"Component implementation {self.name} contains a"
+                        " subscript, which is not allowed."
+                    )
         else:
             self.implementation = None
 
@@ -73,12 +83,12 @@ class Component:
         """Returns a string representation of the object."""
         result = str(self.name)
         for dim in self.multiplicity:
-            result += '[0:{}]'.format(dim)
+            result += f"[0:{dim}]"
         return result
 
     def __repr__(self) -> str:
         """Returns a string representation of the object."""
-        return 'Component({})'.format(self.name)
+        return f"Component({self.name})"
 
     def instances(self) -> List[Reference]:
         """Creates a list of instances needed.
@@ -87,6 +97,7 @@ class Component:
             A list with one Reference for each instance of this
             component.
         """
+
         def increment(index: List[int], dims: List[int]) -> None:
             # assumes index and dims are the same length > 0
             # modifies index argument
@@ -123,27 +134,27 @@ class Component:
 
     @classmethod
     def _yatiml_recognize(cls, node: yatiml.UnknownNode) -> None:
-        node.require_attribute('name', str)
+        node.require_attribute("name", str)
 
     @classmethod
     def _yatiml_sweeten(cls, node: yatiml.Node) -> None:
-        ports_node = node.get_attribute('ports').yaml_node
-        if ports_node.tag == 'tag:yaml.org,2002:null':
-            node.remove_attribute('ports')
+        ports_node = node.get_attribute("ports").yaml_node
+        if ports_node.tag == "tag:yaml.org,2002:null":
+            node.remove_attribute("ports")
 
-        descr = node.get_attribute('description')
+        descr = node.get_attribute("description")
         if descr.is_scalar(str):
             # output in block style
             ynode = cast(yaml.ScalarNode, descr.yaml_node)
-            ynode.style = '|'
+            ynode.style = "|"
             # ensure PyYAML actually uses block style
             ynode.value = remove_trailing_whitespace(ynode.value)
 
-        multiplicity = node.get_attribute('multiplicity')
+        multiplicity = node.get_attribute("multiplicity")
         items = multiplicity.seq_items()
         if len(items) == 0:
-            node.remove_attribute('multiplicity')
+            node.remove_attribute("multiplicity")
         elif len(items) == 1:
-            node.set_attribute('multiplicity', items[0].get_value())
+            node.set_attribute("multiplicity", items[0].get_value())
 
         node.remove_attributes_with_default_values(cls)

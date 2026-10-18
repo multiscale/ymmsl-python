@@ -4,7 +4,7 @@ requires = ["setuptools>=64"]
 
 [project]
 name = "ymmsl"
-version = "0.17.0"
+version = "0.18.0"
 description = "Python bindings for the YAML version of the Multiscale Modeling and Simulation Language"
 readme = "README.rst"
 authors = [
@@ -18,14 +18,13 @@ classifiers = [
   "Intended Audience :: Developers",
   "Natural Language :: English",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
 ]
-requires-python = ">=3.9, <4"
+requires-python = ">=3.10, <4"
 dependencies = [
   "click>=6.5",
   "importlib-metadata; python_version<'3.10'",
@@ -81,13 +80,18 @@ select = [
   "E",
   # Pyflakes
   "F",
-  # TODO: enable these at some point?
   # pyupgrade
-  # "UP",
+  "UP",
   # flake8-bugbear
-  #"B",
+  "B",
+  # isort
+  "I",
+  # TODO: enable these at some point?
   # flake8-simplify
   #"SIM",
-  # isort
-  # "I",
+]
+ignore = [
+  # yatiml requires Dict, List, etc.
+  "UP006",
+  "UP035",
 ]
