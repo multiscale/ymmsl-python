@@ -185,8 +185,8 @@ class Port:
         if lengthy:
             raise ValueError(
                 "To avoid confusion, timeline annotations must have a single"
-                " identifier between colons, so {timeline} is not valid. Please"
-                " use names without periods instead of e.g. {lengthy[0]}."
+                f" identifier between colons, so {timeline} is not valid. Please"
+                f" use names without periods instead of e.g. {lengthy[0]}."
             )
 
         self.timeline = timeline
