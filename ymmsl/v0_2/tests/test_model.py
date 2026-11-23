@@ -483,3 +483,24 @@ def test_conduits_inconsistent() -> None:
 
     errors = model.check_consistent()
     assert len(errors) == 6
+
+
+def test_conduits_multiple_to_one_receiver() -> None:
+    a = Component("a", Ports(o_f=["out1", "out2"]), "a_impl")
+    b = Component("b", Ports(f_init=["in"]), "b_impl")
+    conduits = [Conduit("a.out1", "b.in"), Conduit("a.out2", "b.in")]
+    model = Model("m", components=[a, b], conduits=conduits)
+
+    errors = model.check_consistent()
+    assert len(errors) == 1
+    assert "b.in" in errors[0]
+
+
+def test_conduits_multiple_to_one_receiving_model_port() -> None:
+    a = Component("a", Ports(o_f=["out1", "out2"]), "a_impl")
+    conduits = [Conduit("a.out1", "final"), Conduit("a.out2", "final")]
+    model = Model("m", Ports(o_f=["final"]), components=[a], conduits=conduits)
+
+    errors = model.check_consistent()
+    assert len(errors) == 1
+    assert "final" in errors[0]

@@ -448,6 +448,7 @@ class Model(Implementation):
         This checks:
             - that every conduit is connected to two existing ports on existing
               components, or on the model itself.
+            - that every receiving port is connected by at most one conduit.
 
         Returns a list of errors, or an empty list if none were found.
         """
@@ -460,6 +461,25 @@ class Model(Implementation):
             errors.extend(self._check_sending_side(conduit, model_receiving_ports))
             errors.extend(self._check_receiving_side(conduit, model_sending_ports))
 
+        errors.extend(self._check_one_conduit_per_receiver())
+
+        return errors
+
+    def _check_one_conduit_per_receiver(self) -> List[str]:
+        """Check that no receiving port is connected by more than one conduit."""
+        cdts_by_receiver: OrderedDict[Reference, List[Conduit]] = OrderedDict()
+        for conduit in self.conduits:
+            cdts_by_receiver.setdefault(conduit.receiver, []).append(conduit)
+
+        errors = list()
+        for receiver, conduits in cdts_by_receiver.items():
+            if len(conduits) > 1:
+                conduits_str = ", ".join(str(conduit) for conduit in conduits)
+                errors.append(
+                    f"Receiving port {receiver} is connected by multiple conduits"
+                    f" ({conduits_str}), but a receiving port can only be connected"
+                    " by one conduit."
+                )
         return errors
 
     def _check_sending_side(
