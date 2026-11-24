@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from copy import copy
 from enum import Enum
 from typing import Any, List, Sequence, TypeAlias, cast
@@ -467,9 +467,9 @@ class Model(Implementation):
 
     def _check_one_conduit_per_receiver(self) -> List[str]:
         """Check that no receiving port is connected by more than one conduit."""
-        cdts_by_receiver: OrderedDict[Reference, List[Conduit]] = OrderedDict()
+        cdts_by_receiver: defaultdict[Reference, List[Conduit]] = defaultdict(list)
         for conduit in self.conduits:
-            cdts_by_receiver.setdefault(conduit.receiver, []).append(conduit)
+            cdts_by_receiver[conduit.receiver].append(conduit)
 
         errors = list()
         for receiver, conduits in cdts_by_receiver.items():
